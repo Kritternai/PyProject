@@ -39,7 +39,7 @@ _โปรเจคนี้เป็นส่วนหนึ่งของร�
 
 1.  **Clone a โปรเจค**
     ```bash
-    git clone https://github.com/[your-username]/EduMatch.git
+    git clone https://github.com/Kritternai/EduMatch.git
     cd EduMatch
     ```
 
