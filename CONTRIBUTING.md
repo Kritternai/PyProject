@@ -1,26 +1,35 @@
-# Contributing to Smart Learning Hub
+# การมีส่วนร่วมใน Smart Learning Hub
 
-ขอบคุณที่สนใจช่วยพัฒนาโปรเจกต์ของเรา! การมีส่วนร่วมของคุณมีความสำคัญอย่างยิ่ง
+ขอขอบคุณที่ให้ความสนใจในการมีส่วนร่วมพัฒนาโครงการของเรา การมีส่วนร่วมของท่านมีความสำคัญอย่างยิ่ง
 
-## Git Workflow
+## ขั้นตอนการทำงานด้วย Git
 
-เราใช้ Git Flow แบบง่ายๆ:
+เราใช้ Git Flow แบบง่าย:
 
-1.  **Fork the repository:** เริ่มจากการคัดลอกโปรเจกต์ไปที่บัญชีของคุณ
-2.  **Create a new branch:** แตก Branch ใหม่ออกจาก `main` สำหรับฟีเจอร์หรืองานที่คุณจะทำ
-    - ตั้งชื่อ Branch ให้สื่อความหมาย เช่น `feature/user-login` หรือ `fix/lesson-display-bug`
-    - `git checkout -b <branch-name>`
-3.  **Commit your changes:** ทำการ commit งานของคุณ โดยเขียน commit message ที่ชัดเจนและสื่อความหมาย
-4.  **Push to your branch:** `git push origin <branch-name>`
-5.  **Create a Pull Request (PR):** เปิด PR จาก Branch ของคุณมายัง `main` ของโปรเจกต์หลัก
-    - ในรายละเอียดของ PR ให้อธิบายว่าโค้ดของคุณทำอะไร และเกี่ยวข้องกับ Backlog item ไหน (ถ้ามี)
+1.  **Fork repository:** เริ่มต้นด้วยการคัดลอก repository ไปยังบัญชีของท่าน
+2.  **สร้าง branch ใหม่:** สร้าง branch ใหม่จาก `main` สำหรับฟีเจอร์หรืองานที่ท่านจะดำเนินการ
+    - ตั้งชื่อ branch ให้สื่อความหมาย เช่น `feature/user-login` หรือ `fix/lesson-display-bug`
+    - ใช้คำสั่ง `git checkout -b <branch-name>`
+3.  **Commit การเปลี่ยนแปลง:** ทำการ commit การเปลี่ยนแปลงของท่าน โดยเขียน commit message ที่ชัดเจนและสื่อความหมาย
+4.  **Push ไปยัง branch ของท่าน:** ใช้คำสั่ง `git push origin <branch-name>`
+5.  **สร้าง Pull Request (PR):** เปิด PR จาก branch ของท่านไปยัง `main` ของโครงการหลัก
+    - ในรายละเอียดของ PR โปรดอธิบายว่าโค้ดของท่านทำอะไร และเกี่ยวข้องกับรายการใน Backlog ใด (ถ้ามี)
 
-## Code Style
+## รูปแบบโค้ด
 
 - เราใช้ **PEP 8** เป็นมาตรฐานหลักในการเขียนโค้ด Python
-- เราใช้ Linter (เช่น Ruff หรือ Flake8) เพื่อช่วยตรวจสอบคุณภาพโค้ดโดยอัตโนมัติ กรุณารัน linter ก่อนทำการ commit
+- เราใช้ Linter **Ruff** เพื่อช่วยตรวจสอบคุณภาพโค้ดโดยอัตโนมัติ โปรดรัน `ruff check .` ก่อนทำการ commit
 
-## Submitting a Pull Request
+## การทดสอบ
 
-- Pull Request ของคุณจะต้องผ่านการตรวจสอบ CI (Continuous Integration) ทั้งหมด
-- จะต้องมีผู้ตรวจสอบ (Reviewer) อย่างน้อย 1 คนทำการ approve ก่อนที่จะ merge ได้
+- โปรดเขียน **Unit Tests** สำหรับฟังก์ชันหรือโมดูลใหม่ที่ท่านเพิ่มเข้ามา
+- ตรวจสอบให้แน่ใจว่า **Automated Tests ทั้งหมดผ่าน** ก่อนที่จะสร้าง Pull Request
+
+## การส่ง Pull Request
+
+- Pull Request ของท่านจะต้องผ่านการตรวจสอบ CI (Continuous Integration) ทั้งหมด
+- จะต้องมีผู้ตรวจสอบ (Reviewer) อย่างน้อย 1 ท่านทำการอนุมัติก่อนที่จะสามารถ merge ได้
+
+---
+
+*หากมีข้อสงสัยเพิ่มเติม สามารถสอบถามได้ใน Issues หรือช่องทางการติดต่ออื่นๆ*
