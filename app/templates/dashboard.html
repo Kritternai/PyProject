@@ -29,6 +29,14 @@
         {% endwith %}
         <h1 class="text-3xl font-bold text-blue-700 mb-4">Welcome, {{ user.username }}!</h1>
         <p class="text-lg mb-4">This is your dashboard. More features will be added here.</p>
+
+        <div class="mt-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-3">Your Modules</h2>
+            <ul class="list-disc list-inside space-y-2">
+                <li><a href="{{ url_for('list_lessons') }}" class="text-blue-500 hover:underline">Lesson Management</a></li>
+                <!-- Add links to other modules here -->
+            </ul>
+        </div>
     </main>
 </body>
 </html>

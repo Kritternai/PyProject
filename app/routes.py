@@ -2,10 +2,24 @@ from app import app, db
 from flask import render_template, request, flash, redirect, url_for, session
 from app.core.user_manager import UserManager
 from app.core.authenticator import Authenticator
+from app.core.lesson_manager import LessonManager
+from app.core.lesson import Lesson # Import Lesson model for query
+from functools import wraps
 
-# Initialize UserManager and Authenticator
+# Initialize Managers
 user_manager = UserManager()
 authenticator = Authenticator(user_manager)
+lesson_manager = LessonManager()
+
+# Decorator for login required
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/')
 @app.route('/index')
@@ -57,3 +71,83 @@ def logout():
     session.pop('user_id', None)
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
+
+# Lesson Management Routes
+@app.route('/lessons')
+@login_required
+def list_lessons():
+    user_id = session['user_id']
+    lessons = lesson_manager.get_lessons_by_user(user_id)
+    return render_template('lessons/list.html', title='My Lessons', lessons=lessons)
+
+@app.route('/lessons/add', methods=['GET', 'POST'])
+@login_required
+def add_lesson():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        status = request.form.get('status')
+        tags = request.form.get('tags')
+        user_id = session['user_id']
+
+        if not title:
+            flash('Title is required.', 'danger')
+            return redirect(url_for('add_lesson'))
+        
+        lesson = lesson_manager.add_lesson(user_id, title, description, status, tags)
+        if lesson:
+            flash('Lesson added successfully!', 'success')
+            return redirect(url_for('list_lessons'))
+        else:
+            flash('Error adding lesson.', 'danger')
+
+    return render_template('lessons/add.html', title='Add New Lesson')
+
+@app.route('/lessons/<lesson_id>')
+@login_required
+def lesson_detail(lesson_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    if not lesson or lesson.user_id != session['user_id']:
+        flash('Lesson not found or you do not have permission to view it.', 'danger')
+        return redirect(url_for('list_lessons'))
+    return render_template('lessons/detail.html', title=lesson.title, lesson=lesson)
+
+@app.route('/lessons/<lesson_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_lesson(lesson_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    if not lesson or lesson.user_id != session['user_id']:
+        flash('Lesson not found or you do not have permission to edit it.', 'danger')
+        return redirect(url_for('list_lessons'))
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        status = request.form.get('status')
+        tags = request.form.get('tags')
+
+        if not title:
+            flash('Title is required.', 'danger')
+            return redirect(url_for('edit_lesson', lesson_id=lesson_id))
+
+        if lesson_manager.update_lesson(lesson_id, title, description, status, tags):
+            flash('Lesson updated successfully!', 'success')
+            return redirect(url_for('lesson_detail', lesson_id=lesson_id))
+        else:
+            flash('Error updating lesson.', 'danger')
+
+    return render_template('lessons/edit.html', title='Edit Lesson', lesson=lesson)
+
+@app.route('/lessons/<lesson_id>/delete', methods=['POST'])
+@login_required
+def delete_lesson(lesson_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    if not lesson or lesson.user_id != session['user_id']:
+        flash('Lesson not found or you do not have permission to delete it.', 'danger')
+        return redirect(url_for('list_lessons'))
+
+    if lesson_manager.delete_lesson(lesson_id):
+        flash('Lesson deleted successfully!', 'success')
+    else:
+        flash('Error deleting lesson.', 'danger')
+    return redirect(url_for('list_lessons'))
