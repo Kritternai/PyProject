@@ -23,9 +23,10 @@
 
 **เป้าหมายหลัก:** เพิ่มฟีเจอร์ที่ช่วยให้การเรียนรู้สมบูรณ์และมีประสิทธิภาพมากขึ้น
 
-- **[Milestone] Task & Quiz System:**
+- **[Milestone] Task System:**
   - [ ] ระบบจัดการ Task และ To-Do List
-  - [ ] ระบบสร้างและทำแบบทดสอบเบื้องต้น
+- **[Milestone] Pomodoro Timer:**
+  - [ ] ระบบ Pomodoro Timer สำหรับช่วยในการโฟกัส
 - **[Milestone] Progress Tracking V1:**
   - [ ] แสดงผลความคืบหน้าของบทเรียนและ Task
 - **[Milestone] Data Persistence:**
