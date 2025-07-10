@@ -9,14 +9,16 @@
 **เป้าหมายหลัก:** กำหนดทิศทาง, วางรากฐานเอกสาร, และรวบรวมข้อมูลที่จำเป็นสำหรับการพัฒนา
 
 ### Week 1: Project Definition & Initial Setup
-- [ ] กำหนดวิสัยทัศน์และขอบเขตของโครงการอย่างละเอียด
-- [ ] จัดทำ `PROJECT_PROPOSAL.md` (ฉบับร่าง)
-- [ ] ตั้งค่า Git Repository และโครงสร้างโปรเจกต์เบื้องต้น
+- ⚠️ กำหนดวิสัยทัศน์และขอบเขตของโครงการอย่างละเอียด 
+- ✅ จัดทำ `PROJECT_PROPOSAL.md` (ฉบับร่าง) 
+- ✅ ตั้งค่า Git Repository และโครงสร้างโปรเจกต์เบื้องต้น
 
 ### Week 2: Core Principles & Collaboration Guidelines
-- [ ] จัดทำ `CODE_OF_CONDUCT.md`
-- [ ] จัดทำ `CONTRIBUTING.md`
-- [ ] กำหนด `DEFINITION_OF_DONE.md`
+- ✅ จัดทำ `CODE_OF_CONDUCT.md` 
+- ✅ จัดทำ `CONTRIBUTING.md`
+- ✅ กำหนด `DEFINITION_OF_DONE.md`
+- ⚠️ จัดทำ `แบบสอบถามปัญหาที่นักศึกษาพบเจอ`
+- ⚠️ 
 
 ### Week 3: Requirements Gathering & Backlog Refinement
 - [ ] รวบรวม User Stories และ Functional Requirements เบื้องต้น
