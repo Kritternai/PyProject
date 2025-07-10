@@ -40,6 +40,26 @@
   - **I want to** see a list of all my lessons,
   - **so that** I can choose which one to study.
 
+### Epic: Pomodoro Timer
+
+- **PT-01: Start Pomodoro Timer**
+  - **As a** user,
+  - **I want to** start a Pomodoro timer with customizable work and break durations,
+  - **so that** I can focus on my tasks and take regular breaks.
+  - **Acceptance Criteria:**
+    - [ ] User can set work duration (e.g., 25 minutes).
+    - [ ] User can set short break duration (e.g., 5 minutes).
+    - [ ] User can set long break duration (e.g., 15 minutes).
+    - [ ] Timer counts down and notifies the user when a session ends.
+
+- **PT-02: Track Pomodoro Sessions**
+  - **As a** user,
+  - **I want to** see a record of my completed Pomodoro sessions,
+  - **so that** I can track my focus time.
+  - **Acceptance Criteria:**
+    - [ ] System records the start and end time of each Pomodoro session.
+    - [ ] User can view a summary of daily/weekly Pomodoro sessions.
+
 ### Epic: Note-Taking
 
 - **NT-01: Create a Note**
