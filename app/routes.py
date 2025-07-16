@@ -1,9 +1,10 @@
 from app import app, db
-from flask import render_template, request, flash, redirect, url_for, session
+from flask import render_template, request, flash, redirect, url_for, session, jsonify
 from app.core.user_manager import UserManager
 from app.core.authenticator import Authenticator
 from app.core.lesson_manager import LessonManager
 from app.core.lesson import Lesson # Import Lesson model for query
+from app.core.imported_data import ImportedData # Import ImportedData model
 from functools import wraps
 
 # Initialize Managers
@@ -151,3 +152,65 @@ def delete_lesson(lesson_id):
     else:
         flash('Error deleting lesson.', 'danger')
     return redirect(url_for('list_lessons'))
+
+# API Endpoint for Chrome Extension
+@app.route('/api/import_data', methods=['POST'])
+def import_data_from_extension():
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    data = request.get_json()
+    platform = data.get('platform')
+    imported_data_content = data.get('data')
+
+    # TODO: Implement actual user authentication for the API endpoint
+    # For now, we'll assume a user is logged in via session for simplicity in development
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "User not authenticated"}), 401
+
+    if not platform or not imported_data_content:
+        return jsonify({"error": "Missing platform or data in request"}), 400
+
+    try:
+        new_imported_data = ImportedData(user_id=user_id, platform=platform, data=imported_data_content)
+        db.session.add(new_imported_data)
+        db.session.commit()
+        return jsonify({"message": f"Data from {platform} received and saved successfully!"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Failed to save data: {str(e)}"}), 500
+
+@app.route('/external_data/view')
+@login_required
+def view_external_data():
+    user_id = session['user_id']
+    imported_data_list = ImportedData.query.filter_by(user_id=user_id).order_by(ImportedData.imported_at.desc()).all()
+
+    google_classroom_data = []
+    ms_teams_data = []
+
+    for data_entry in imported_data_list:
+        if data_entry.platform == 'google_classroom':
+            # Assuming data_entry.data has a 'courses' key
+            if 'courses' in data_entry.data:
+                for course in data_entry.data['courses']:
+                    google_classroom_data.append({
+                        'name': course.get('name'),
+                        'instructor': course.get('instructor'),
+                        'section': course.get('section'),
+                        'assignments': course.get('assignments', [])
+                    })
+        elif data_entry.platform == 'ms_teams':
+            # Assuming data_entry.data has a 'teams' key
+            if 'teams' in data_entry.data:
+                for team in data_entry.data['teams']:
+                    ms_teams_data.append({
+                        'name': team.get('name'),
+                        'channels': team.get('channels', [])
+                    })
+
+    return render_template('external_data/view.html', 
+                           title='External Data', 
+                           google_classroom_data=google_classroom_data,
+                           ms_teams_data=ms_teams_data)
