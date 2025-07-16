@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Smart Learning Hub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans leading-normal">
+    <header class="bg-blue-600 text-white p-4 shadow-md">
+        <nav class="container mx-auto flex justify-between items-center">
+            <a href="{{ url_for('index') }}" class="text-2xl font-bold">Smart Learning Hub</a>
+            <div class="space-x-4">
+                <a href="{{ url_for('index') }}" class="hover:underline">Home</a>
+                <a href="{{ url_for('logout') }}" class="hover:underline">Logout</a>
+            </div>
+        </nav>
+    </header>
+    <main class="container mx-auto mt-8 p-4 bg-white rounded-lg shadow-md">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="mb-4">
+                    {% for category, message in messages %}
+                        <li class="p-3 rounded-md {% if category == 'success' %}bg-green-100 text-green-800{% elif category == 'danger' %}bg-red-100 text-red-800{% elif category == 'info' %}bg-blue-100 text-blue-800{% endif %} mb-2">
+                            {{ message }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        <h1 class="text-3xl font-bold text-blue-700 mb-6">{{ title }}</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">KMITL Study Table Courses</h2>
+                {% if kmitl_courses %}
+                    <div class="space-y-4">
+                        {% for kmitl_course in kmitl_courses %}
+                            <div class="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
+                                <p class="font-semibold">{{ kmitl_course.course_code }} - {{ kmitl_course.course_name }}</p>
+                                <p class="text-sm text-gray-600">Identifier: {{ kmitl_course.identifier }}</p>
+                                {% if linkage_map[kmitl_course.identifier] %}
+                                    <p class="text-sm text-green-600 mt-2">Linked to Google Classroom Course ID: {{ linkage_map[kmitl_course.identifier] }}</p>
+                                    <form action="{{ url_for('delete_course_linkage', kmitl_course_identifier=kmitl_course.identifier) }}" method="POST" onsubmit="return confirm('Are you sure you want to unlink this course?');" class="mt-2">
+                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-xs py-1 px-2 rounded">Unlink</button>
+                                    </form>
+                                {% else %}
+                                    <form action="{{ url_for('kmitl_classroom_link') }}" method="POST" class="mt-2">
+                                        <input type="hidden" name="kmitl_course_identifier" value="{{ kmitl_course.identifier }}">
+                                        <label for="google_classroom_course_id_{{ loop.index }}" class="block text-sm font-medium text-gray-700">Link to Google Classroom Course:</label>
+                                        <select id="google_classroom_course_id_{{ loop.index }}" name="google_classroom_course_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                            <option value="">-- Select Google Classroom Course --</option>
+                                            {% for gc_course in google_classroom_courses %}
+                                                <option value="{{ gc_course.id }}">{{ gc_course.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white text-xs py-1 px-2 rounded mt-2">Link Course</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-600">No KMITL Study Table data found. Please import data first.</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Google Classroom Courses</h2>
+                {% if google_classroom_courses %}
+                    <div class="space-y-4">
+                        {% for gc_course in google_classroom_courses %}
+                            <div class="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
+                                <p class="font-semibold">{{ gc_course.name }}</p>
+                                <p class="text-sm text-gray-600">ID: {{ gc_course.id }}</p>
+                                {% set linked_kmitl_courses = [] %}
+                                {% for kmitl_identifier, gc_id in linkage_map.items() %}
+                                    {% if gc_id == gc_course.id %}
+                                        {% set linked_kmitl_courses = linked_kmitl_courses + [kmitl_identifier] %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if linked_kmitl_courses %}
+                                    <p class="text-sm text-green-600 mt-2">Linked from KMITL Courses:</p>
+                                    <ul class="list-disc list-inside ml-4 text-sm text-gray-700">
+                                        {% for kmitl_id in linked_kmitl_courses %}
+                                            <li>{{ kmitl_id }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-600">No Google Classroom data found. Please import data first.</p>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+</body>
+</html>

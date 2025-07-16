@@ -85,6 +85,75 @@
                 <p class="text-gray-600">No Microsoft Teams data imported yet.</p>
             {% endif %}
         </div>
+
+        <div class="mt-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">KMITL Study Table Data</h2>
+            {% if kmitl_studytable_data %}
+                {% for data_entry in kmitl_studytable_data %}
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200 mb-4">
+                        <h3 class="text-xl font-semibold text-purple-600 mb-2">Student: {{ data_entry.student_name }} ({{ data_entry.student_id }})</h3>
+                        <p class="text-gray-700">Faculty: {{ data_entry.faculty }}</p>
+                        <p class="text-gray-700">Department: {{ data_entry.department }}</p>
+                        <p class="text-gray-700">Major: {{ data_entry.major }}</p>
+                        <p class="text-gray-700">Semester: {{ data_entry.semester }} / Academic Year: {{ data_entry.academic_year }}</p>
+
+                        {% if data_entry.courses %}
+                            <h4 class="text-lg font-medium text-gray-700 mt-4 mb-2">Courses:</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full bg-white border border-gray-300">
+                                    <thead>
+                                        <tr>
+                                            <th class="py-2 px-4 border-b">No.</th>
+                                            <th class="py-2 px-4 border-b">Code</th>
+                                            <th class="py-2 px-4 border-b">Name</th>
+                                            <th class="py-2 px-4 border-b">Credits</th>
+                                            <th class="py-2 px-4 border-b">Theory</th>
+                                            <th class="py-2 px-4 border-b">Practical</th>
+                                            <th class="py-2 px-4 border-b">Schedule</th>
+                                            <th class="py-2 px-4 border-b">Room</th>
+                                            <th class="py-2 px-4 border-b">Building</th>
+                                            <th class="py-2 px-4 border-b">Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for course in data_entry.courses %}
+                                            <tr class="{% if loop.index0 % 2 == 0 %}bg-gray-50{% else %}bg-white{% endif %}">
+                                                <td class="py-2 px-4 border-b text-center">{{ course.order }}</td>
+                                                <td class="py-2 px-4 border-b text-center">{{ course.course_code }}</td>
+                                                <td class="py-2 px-4 border-b">{{ course.course_name }}</td>
+                                                <td class="py-2 px-4 border-b text-center">{{ course.credits }}</td>
+                                                <td class="py-2 px-4 border-b text-center">{{ course.theory_section }}</td>
+                                                <td class="py-2 px-4 border-b text-center">{{ course.practical_section }}</td>
+                                                <td class="py-2 px-4 border-b">
+                                                    {% for sched in course.schedule %}
+                                                        {{ sched.day }} {{ sched.time }} ({{ sched.type }})<br>
+                                                    {% endfor %}
+                                                </td>
+                                                <td class="py-2 px-4 border-b">
+                                                    {% for room in course.room_raw %}
+                                                        {{ room }}<br>
+                                                    {% endfor %}
+                                                </td>
+                                                <td class="py-2 px-4 border-b">
+                                                    {% for building in course.building_raw %}
+                                                        {{ building }}<br>
+                                                    {% endfor %}
+                                                </td>
+                                                <td class="py-2 px-4 border-b">{{ course.remarks }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-gray-600 text-sm">No courses found for this study table.</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-600">No KMITL Study Table data imported yet.</p>
+            {% endif %}
+        </div>
     </main>
 </body>
 </html>

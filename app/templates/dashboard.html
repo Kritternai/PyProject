@@ -5,6 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - Smart Learning Hub</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css' rel='stylesheet' />
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js'></script>
+    <style>
+        /* Optional: Adjust FullCalendar styles */
+        .fc .fc-daygrid-event {
+            white-space: normal;
+        }
+        .fc-event-title {
+            font-weight: bold;
+        }
+        .fc-event-time {
+            font-size: 0.8em;
+        }
+        .fc-event-description {
+            font-size: 0.7em;
+            white-space: normal;
+        }
+
+        /* Custom styles for better symmetry and appearance */
+        .fc-timegrid-slot {
+            height: 60px; /* Adjust height of each time slot */
+        }
+        .fc-timegrid-col-header {
+            height: 40px; /* Adjust height of day headers */
+            line-height: 40px;
+        }
+        .fc-timegrid-event {
+            padding: 5px; /* Add padding inside event blocks */
+            border-radius: 8px; /* Rounded corners for events */
+            font-size: 0.85em; /* Adjust font size for event text */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .fc-timegrid-event .fc-event-time {
+            font-size: 0.75em;
+        }
+        .fc-timegrid-event .fc-event-title {
+            font-size: 0.9em;
+        }
+        .fc-timegrid-event .fc-event-description {
+            font-size: 0.65em;
+        }
+        .fc-timegrid-axis {
+            width: 70px; /* Adjust width of the time axis column */
+        }
+    </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans leading-normal">
     <header class="bg-blue-600 text-white p-4 shadow-md">
@@ -36,6 +86,7 @@
                 <li><a href="{{ url_for('list_lessons') }}" class="text-blue-500 hover:underline">Lesson Management</a></li>
                 <li><a href="{{ url_for('view_external_data') }}" class="text-blue-500 hover:underline">View External Data (from Extension)</a></li>
                 <li><a href="{{ url_for('authorize_google_classroom') }}" class="text-blue-500 hover:underline">Connect Google Classroom API</a></li>
+                <li><a href="{{ url_for('kmitl_classroom_link') }}" class="text-blue-500 hover:underline">Link KMITL & Google Classroom</a></li>
                 <!-- Add links to other modules here -->
             </ul>
         </div>
@@ -68,6 +119,61 @@
                 <p class="text-gray-600">No Google Classroom data found. <a href="{{ url_for('authorize_google_classroom') }}" class="text-blue-500 hover:underline">Connect your account</a> to see your courses.</p>
             {% endif %}
         </div>
+
+        <!-- KMITL Study Table Data Section (FullCalendar) -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Your KMITL Study Table</h2>
+            {% if fullcalendar_events %}
+                <div id='calendar' class="bg-white p-6 rounded-lg shadow-md"></div>
+            {% else %}
+                <p class="text-gray-600">No KMITL Study Table data imported yet. Please use the Chrome Extension to import your study table.</p>
+            {% endif %}
+        </div>
     </main>
+
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                initialDate: '{{ initial_date }}',
+                validRange: {
+                    start: '{{ initial_date }}',
+                    end: moment('{{ initial_date }}').add(16, 'weeks').format('YYYY-MM-DD')
+                },
+                headerToolbar: {
+                    left: '',
+                    center: '',
+                    right: ''
+                },
+                dayHeaderFormat: {
+                    weekday: 'short' // Display only short weekday name (e.g., Mon, Tue)
+                },
+                slotMinTime: '08:00:00',
+                slotMaxTime: '21:00:00',
+                weekends: false, // Hide weekends
+                allDaySlot: false,
+                events: {{ fullcalendar_events | tojson }},
+                eventClick: function(info) {
+                    if (info.event.url) {
+                        info.jsEvent.preventDefault(); // prevent browser from going to the url
+                        window.open(info.event.url); // open in a new tab
+                    }
+                },
+                eventDidMount: function(info) {
+                    // Add custom description to event element
+                    if (info.event.extendedProps.description) {
+                        let descriptionEl = document.createElement('div');
+                        descriptionEl.classList.add('fc-event-description');
+                        descriptionEl.innerHTML = info.event.extendedProps.description;
+                        info.el.querySelector('.fc-event-title').after(descriptionEl);
+                    }
+                }
+            });
+            calendar.render();
+        });
+    </script>
 </body>
 </html>

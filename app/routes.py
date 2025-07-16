@@ -6,6 +6,7 @@ from app.core.lesson_manager import LessonManager
 from app.core.lesson import Lesson # Import Lesson model for query
 from app.core.imported_data import ImportedData # Import ImportedData model
 from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
+from app.core.course_linkage_manager import CourseLinkageManager # Import CourseLinkageManager
 from functools import wraps
 import datetime # Import datetime
 
@@ -21,6 +22,7 @@ from googleapiclient.discovery import build
 user_manager = UserManager()
 authenticator = Authenticator(user_manager)
 lesson_manager = LessonManager()
+course_linkage_manager = CourseLinkageManager() # Initialize CourseLinkageManager
 
 # Google Classroom API Scopes - MATCHING EXACTLY WHAT GOOGLE RETURNS IN THE ERROR LOG
 SCOPES = [
@@ -51,15 +53,101 @@ def login_required(f):
 @app.route('/index')
 def index():
     if 'user_id' in session:
-        user = user_manager.get_user_by_id(session['user_id'])
+        user_id = session['user_id'] # Define user_id here
+        user = user_manager.get_user_by_id(user_id)
         if user:
             # Fetch Google Classroom data to display on the dashboard
             google_classroom_data = []
-            imported_data = ImportedData.query.filter_by(user_id=session['user_id'], platform='google_classroom_api').first()
-            if imported_data and 'courses' in imported_data.data:
-                google_classroom_data = imported_data.data['courses']
+            imported_data_gc = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
+            if imported_data_gc and 'courses' in imported_data_gc.data:
+                google_classroom_data = imported_data_gc.data['courses']
 
-            return render_template('dashboard.html', title='Dashboard', user=user, google_classroom_data=google_classroom_data)
+            # Fetch KMITL Study Table data for the dashboard
+            kmitl_studytable_data = None
+            imported_data_kmitl = ImportedData.query.filter_by(user_id=user_id, platform='kmitl_studytable').order_by(ImportedData.imported_at.desc()).first()
+            if imported_data_kmitl:
+                kmitl_studytable_data = imported_data_kmitl.data
+            print(f"DEBUG: kmitl_studytable_data: {kmitl_studytable_data}")
+
+            # Fetch existing linkages for KMITL courses
+            existing_linkages = course_linkage_manager.get_all_linkages_by_user(user_id)
+            linkage_map = {link.kmitl_course_identifier: link.google_classroom_course_id for link in existing_linkages}
+
+            # Prepare course blocks for timetable display (FullCalendar format)
+            fullcalendar_events = []
+            # Use a fixed week for display purposes (e.g., starting Monday, Jan 6, 2025)
+            # This is just for FullCalendar to correctly place events on days of the week
+            day_to_date_map = {
+                'จ': '2025-01-06', # Monday
+                'อ': '2025-01-07', # Tuesday
+                'พ': '2025-01-08', # Wednesday
+                'พฤ': '2025-01-09', # Thursday
+                'ศ': '2025-01-10', # Friday
+                'ส': '2025-01-11', # Saturday
+                'อา': '2025-01-12'  # Sunday
+            }
+
+            # Calculate initial date for FullCalendar (30th of last month)
+            today = datetime.date.today()
+            first_day_of_current_month = today.replace(day=1)
+            last_month_end = first_day_of_current_month - datetime.timedelta(days=1)
+            initial_date_day = 30
+            if initial_date_day > last_month_end.day:
+                initial_date_day = last_month_end.day # Ensure day exists in last month
+            initial_date = last_month_end.replace(day=initial_date_day)
+
+            # Use a dynamic week for display purposes based on initial_date
+            day_to_date_map = {
+                'จ': initial_date + datetime.timedelta(days=(0 - initial_date.weekday()) % 7), # Monday of the week containing initial_date
+                'อ': initial_date + datetime.timedelta(days=(1 - initial_date.weekday()) % 7),
+                'พ': initial_date + datetime.timedelta(days=(2 - initial_date.weekday()) % 7),
+                'พฤ': initial_date + datetime.timedelta(days=(3 - initial_date.weekday()) % 7),
+                'ศ': initial_date + datetime.timedelta(days=(4 - initial_date.weekday()) % 7),
+                'ส': initial_date + datetime.timedelta(days=(5 - initial_date.weekday()) % 7),
+                'อา': initial_date + datetime.timedelta(days=(6 - initial_date.weekday()) % 7)
+            }
+            # Convert datetime objects to string for JSON serialization
+            for day, date_obj in day_to_date_map.items():
+                day_to_date_map[day] = date_obj.strftime('%Y-%m-%d')
+
+            if kmitl_studytable_data and 'courses' in kmitl_studytable_data:
+                for course_idx, course in enumerate(kmitl_studytable_data['courses']):
+                    kmitl_identifier = f"{kmitl_studytable_data.get('student_id', '')}_{kmitl_studytable_data.get('academic_year', '')}_{kmitl_studytable_data.get('semester', '')}_{course.get('course_code', '')}"
+                    gc_course_id = linkage_map.get(kmitl_identifier)
+
+                    for sched in course.get('schedule', []):
+                        day_thai_abbr = sched.get('day', '').split('.')[0]
+                        print(f"DEBUG: Processing schedule for day: {day_thai_abbr}")
+                        if day_thai_abbr in day_to_date_map:
+                            base_date = day_to_date_map[day_thai_abbr]
+                            
+                            start_time_str = sched.get('time', '').split('-')[0].strip()
+                            end_time_str = sched.get('time', '').split('-')[1].strip()
+                            
+                            event_start = f"{base_date}T{start_time_str}:00"
+                            event_end = f"{base_date}T{end_time_str}:00"
+
+                            event_title = f"{course.get('course_name', '')} ({course.get('course_code', '')})"
+                            event_description = f"Room: { ', '.join(course.get('room_raw', []))} / Building: { ', '.join(course.get('building_raw', []))}"
+
+                            event_url = None
+                            if gc_course_id:
+                                event_url = url_for('course_detail', course_id=gc_course_id)
+
+                            fullcalendar_events.append({
+                                'title': event_title,
+                                'start': event_start,
+                                'end': event_end,
+                                'description': event_description,
+                                'url': event_url,
+                                'extendedProps': {
+                                    'room': ', '.join(course.get('room_raw', [])),
+                                    'building': ', '.join(course.get('building_raw', [])),
+                                    'credits': course.get('credits', '')
+                                }
+                            })
+
+            return render_template('dashboard.html', title='Dashboard', user=user, google_classroom_data=google_classroom_data, kmitl_studytable_data=kmitl_studytable_data, linkage_map=linkage_map, fullcalendar_events=fullcalendar_events, initial_date=initial_date.strftime('%Y-%m-%d'))
     return render_template('index.html', title='Home')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -218,6 +306,7 @@ def view_external_data():
 
     google_classroom_data = []
     ms_teams_data = []
+    kmitl_studytable_data = []
 
     for data_entry in imported_data_list:
         if data_entry.platform == 'google_classroom_api': # Changed platform name
@@ -236,11 +325,14 @@ def view_external_data():
                         'name': team.get('name'),
                         'channels': team.get('channels', [])
                     })
+        elif data_entry.platform == 'kmitl_studytable':
+            kmitl_studytable_data.append(data_entry.data)
 
     return render_template('external_data/view.html', 
                            title='External Data', 
                            google_classroom_data=google_classroom_data,
-                           ms_teams_data=ms_teams_data)
+                           ms_teams_data=ms_teams_data,
+                           kmitl_studytable_data=kmitl_studytable_data)
 
 # Google Classroom API Integration Routes
 @app.route('/google_classroom/authorize')
@@ -708,3 +800,57 @@ def material_item_detail(course_id, item_id):
                            title=material_item.get('title'), 
                            course=course_to_display,
                            item=material_item)
+
+@app.route('/integrations/kmitl_classroom_link', methods=['GET', 'POST'])
+@login_required
+def kmitl_classroom_link():
+    user_id = session['user_id']
+    
+    # Fetch KMITL Study Table data
+    kmitl_data_entry = ImportedData.query.filter_by(user_id=user_id, platform='kmitl_studytable').order_by(ImportedData.imported_at.desc()).first()
+    kmitl_courses = []
+    if kmitl_data_entry and 'courses' in kmitl_data_entry.data:
+        kmitl_courses = kmitl_data_entry.data['courses']
+        # Add a unique identifier for each KMITL course for mapping
+        for course in kmitl_courses:
+            course['identifier'] = f"{kmitl_data_entry.data.get('student_id', '')}_{kmitl_data_entry.data.get('academic_year', '')}_{kmitl_data_entry.data.get('semester', '')}_{course.get('course_code', '')}"
+
+    # Fetch Google Classroom data
+    google_classroom_data_entry = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').order_by(ImportedData.imported_at.desc()).first()
+    google_classroom_courses = []
+    if google_classroom_data_entry and 'courses' in google_classroom_data_entry.data:
+        google_classroom_courses = google_classroom_data_entry.data['courses']
+
+    # Fetch existing linkages
+    existing_linkages = course_linkage_manager.get_all_linkages_by_user(user_id)
+    linkage_map = {link.kmitl_course_identifier: link.google_classroom_course_id for link in existing_linkages}
+
+    if request.method == 'POST':
+        kmitl_identifier = request.form.get('kmitl_course_identifier')
+        google_course_id = request.form.get('google_classroom_course_id')
+
+        if kmitl_identifier and google_course_id:
+            linkage = course_linkage_manager.add_linkage(user_id, kmitl_identifier, google_course_id)
+            if linkage:
+                flash('Course linkage added/updated successfully!', 'success')
+            else:
+                flash('Error adding/updating course linkage.', 'danger')
+        else:
+            flash('Invalid linkage data.', 'danger')
+        return redirect(url_for('kmitl_classroom_link'))
+
+    return render_template('integrations/kmitl_classroom_link.html', 
+                           title='Link KMITL & Google Classroom',
+                           kmitl_courses=kmitl_courses,
+                           google_classroom_courses=google_classroom_courses,
+                           linkage_map=linkage_map)
+
+@app.route('/integrations/delete_linkage/<kmitl_course_identifier>', methods=['POST'])
+@login_required
+def delete_course_linkage(kmitl_course_identifier):
+    user_id = session['user_id']
+    if course_linkage_manager.delete_linkage_by_kmitl_identifier(user_id, kmitl_course_identifier):
+        flash('Course linkage deleted successfully!', 'success')
+    else:
+        flash('Error deleting course linkage.', 'danger')
+    return redirect(url_for('kmitl_classroom_link'))
