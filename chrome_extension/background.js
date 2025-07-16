@@ -1,21 +1,5 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'syncGoogleClassroom') {
-        // Inject content script into the active tab if it's Google Classroom
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            const activeTab = tabs[0];
-            if (activeTab.url.includes('classroom.google.com')) {
-                chrome.scripting.executeScript({
-                    target: { tabId: activeTab.id },
-                    files: ['content_scripts/google_classroom.js']
-                }, () => {
-                    sendResponse({ status: 'Google Classroom sync initiated.' });
-                });
-            } else {
-                sendResponse({ status: 'Please navigate to Google Classroom.' });
-            }
-        });
-        return true; // Indicates that sendResponse will be called asynchronously
-    } else if (request.action === 'syncMSTeams') {
+    if (request.action === 'syncMSTeams') {
         // Inject content script into the active tab if it's MS Teams
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             const activeTab = tabs[0];
