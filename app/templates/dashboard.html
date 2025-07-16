@@ -39,6 +39,26 @@
                 <!-- Add links to other modules here -->
             </ul>
         </div>
+
+        <!-- Google Classroom Data Section -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Your Google Classroom Courses</h2>
+            {% if google_classroom_data %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for course in google_classroom_data %}
+                        <div class="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
+                            <h3 class="text-xl font-semibold text-blue-600 mb-2">{{ course.name }}</h3>
+                            {% if course.section %}
+                                <p class="text-gray-600 mb-2">Section: {{ course.section }}</p>
+                            {% endif %}
+                            <a href="#" class="text-blue-500 hover:underline">View Details</a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-600">No Google Classroom data found. <a href="{{ url_for('authorize_google_classroom') }}" class="text-blue-500 hover:underline">Connect your account</a> to see your courses.</p>
+            {% endif %}
+        </div>
     </main>
 </body>
 </html>
