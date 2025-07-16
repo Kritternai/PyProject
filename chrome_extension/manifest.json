@@ -9,7 +9,6 @@
     "storage"
   ],
   "host_permissions": [
-    "*://classroom.google.com/*",
     "*://teams.microsoft.com/*",
     "http://127.0.0.1:5000/*"
   ],
@@ -25,11 +24,6 @@
     "service_worker": "background.js"
   },
   "content_scripts": [
-    {
-      "matches": ["*://classroom.google.com/*"],
-      "js": ["content_scripts/google_classroom.js"],
-      "run_at": "document_idle"
-    },
     {
       "matches": ["*://teams.microsoft.com/*"],
       "js": ["content_scripts/ms_teams.js"],
