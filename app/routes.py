@@ -400,8 +400,9 @@ def fetch_google_classroom_data():
         flash(f'Error fetching Google Classroom data: {e}', 'danger')
         print(f"ERROR: Error fetching Google Classroom data for user {user_id}: {e}")
         return redirect(url_for('index'))
-    
-@app.route('/note')
+
+# note
+@app.route('/note', methods=['GET', 'POST'])
 @login_required
 def note():
     user_id = session['user_id']
@@ -409,6 +410,48 @@ def note():
     if not user:
         flash('User not found.', 'danger')
         return redirect(url_for('index'))
-    
-    # For now, just render a simple note page
-    return render_template('notes/note.html', title='Notes', user=user)
+
+    if request.method == 'POST':
+        # รับข้อมูลจากฟอร์ม
+        title = request.form.get('title')
+        content = request.form.get('content')
+        note_date = request.form.get('note_date')
+
+        if not title or not content:
+            flash('Title and content are required.', 'danger')
+            return redirect(url_for('note'))
+
+        new_note = Note(user_id=user_id, title=title, content=content, note_date=note_date)
+        db.session.add(new_note)
+        db.session.commit()
+
+        flash('Note added successfully!', 'success')
+        return redirect(url_for('note'))
+
+    # GET: แสดงหน้ารายการโน้ต พร้อม notes
+    notes = Note.query.filter_by(user_id=user_id).order_by(Note.note_date.desc()).all()
+    return render_template('notes/note.html', title='Notes', user=user, notes=notes)
+
+# note add
+@app.route('/note/add', methods=['POST'])
+@login_required
+def add_note():
+    user_id = session['user_id']
+    user = user_manager.get_user_by_id(user_id)
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('index'))
+
+    title = request.form.get('title')
+    content = request.form.get('content')
+    note_date = request.form.get('note_date')
+
+    if not title or not content:
+        flash('Title and content are required.', 'danger')
+        return redirect(url_for('note'))
+
+    new_note = Note(user_id=user_id, title=title, content=content, note_date=note_date)
+    db.session.add(new_note)
+    db.session.commit()
+    flash('Note added successfully!', 'success')
+    return redirect(url_for('note'))
