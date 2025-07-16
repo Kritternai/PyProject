@@ -47,7 +47,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {% for course in google_classroom_data %}
                         <div class="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
-                            <h3 class="text-xl font-semibold text-blue-600 mb-2">{{ course.name }}</h3>
+                            <h3 class="text-xl font-semibold text-blue-600 mb-2">
+                                {% if course.alternateLink %}
+                                    <a href="{{ course.alternateLink }}" target="_blank" class="hover:underline">{{ course.name }}</a>
+                                {% else %}
+                                    {{ course.name }}
+                                {% endif %}
+                            </h3>
                             {% if course.section %}
                                 <p class="text-gray-600 mb-2">Section: {{ course.section }}</p>
                             {% endif %}
