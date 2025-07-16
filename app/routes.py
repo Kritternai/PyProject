@@ -24,12 +24,13 @@ lesson_manager = LessonManager()
 
 # Google Classroom API Scopes - MATCHING EXACTLY WHAT GOOGLE RETURNS IN THE ERROR LOG
 SCOPES = [
-    'https://www.googleapis.com/auth/classroom.coursework.students',
+    # 'https://www.googleapis.com/auth/classroom.coursework.me.readonly', # Temporarily disabled for debugging
     'https://www.googleapis.com/auth/userinfo.profile',
     'openid',
-    'https://www.googleapis.com/auth/classroom.student-submissions.students.readonly',
+    'https://www.googleapis.com/auth/classroom.student-submissions.me.readonly', # Correct scope for students to view their own submissions
     'https://www.googleapis.com/auth/classroom.courses.readonly',
-    'https://www.googleapis.com/auth/userinfo.email'
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/classroom.announcements.readonly'
 ]
 
 # Decorator for login required
@@ -262,8 +263,7 @@ def authorize_google_classroom():
 
     authorization_url, state = flow.authorization_url(
         access_type='offline',  # Request a refresh token
-        include_granted_scopes='true',
-        prompt='consent' # Added prompt=consent
+        prompt='consent' # Force consent screen to ensure new scopes are requested
     )
 
     session['oauth_state'] = state
@@ -380,18 +380,32 @@ def fetch_google_classroom_data():
         courses = courses_results.get('courses', [])
         print(f"DEBUG: Found {len(courses)} active courses for user {user_id}.")
 
-        # Get coursework for each course
+        # Get coursework and announcements for each course
         classroom_data = []
         for course in courses:
             course_info = {
                 'id': course['id'],
                 'name': course['name'],
                 'section': course.get('section', ''),
+                'announcements': [],
                 'courseWork': []
             }
             
-            # Removed student submissions and coursework fetching for now
-            # This part will be re-added once basic course fetching is confirmed working.
+            # Fetch announcements (Stream)
+            try:
+                print(f"DEBUG: Fetching announcements for course: {course['name']} ({course['id']})")
+                announcements_results = service.courses().announcements().list(courseId=course['id']).execute()
+                course_info['announcements'] = announcements_results.get('announcements', [])
+                print(f"DEBUG: Found {len(course_info['announcements'])} announcements for this course.")
+            except Exception as e:
+                print(f"ERROR: Could not fetch announcements for course {course['id']}: {e}")
+
+            # Fetch coursework (ClassWork) - Temporarily disabled
+            # try:
+            #     coursework_results = service.courses().courseWork().list(courseId=course['id']).execute()
+            #     course_info['courseWork'] = coursework_results.get('courseWork', [])
+            # except Exception as e:
+            #     print(f"Could not fetch coursework for course {course['id']}: {e}")
 
             classroom_data.append(course_info)
 
@@ -417,3 +431,67 @@ def fetch_google_classroom_data():
         flash(f'Error fetching Google Classroom data: {e}', 'danger')
         print(f"ERROR: Error fetching Google Classroom data for user {user_id}: {e}")
         return redirect(url_for('index'))
+
+# Google Classroom Course Details and Edit Routes
+@app.route('/classroom/course/<course_id>')
+@login_required
+def course_detail(course_id):
+    user_id = session['user_id']
+    imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
+    
+    course_to_display = None
+    if imported_data and 'courses' in imported_data.data:
+        for course in imported_data.data['courses']:
+            if str(course.get('id')) == str(course_id):
+                course_to_display = course
+                break
+
+    if not course_to_display:
+        flash('Course not found.', 'danger')
+        return redirect(url_for('index'))
+
+    return render_template('google_classroom/course_detail.html', title=course_to_display.get('name'), course=course_to_display)
+
+@app.route('/classroom/course/<course_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_course(course_id):
+    user_id = session['user_id']
+    imported_data_entry = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
+
+    if not imported_data_entry:
+        flash('No Google Classroom data found.', 'danger')
+        return redirect(url_for('index'))
+
+    course_to_edit = None
+    course_index = -1
+    if 'courses' in imported_data_entry.data:
+        for i, course in enumerate(imported_data_entry.data['courses']):
+            if str(course.get('id')) == str(course_id):
+                course_to_edit = course
+                course_index = i
+                break
+
+    if not course_to_edit:
+        flash('Course not found.', 'danger')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        new_name = request.form.get('new_name')
+        if not new_name:
+            flash('New name cannot be empty.', 'danger')
+        else:
+            # Update the name in the JSON data
+            imported_data_entry.data['courses'][course_index]['name'] = new_name
+            
+            # Mark the JSON field as modified to ensure SQLAlchemy detects the change
+            db.session.flag_modified(imported_data_entry, 'data')
+            
+            try:
+                db.session.commit()
+                flash('Course name updated successfully!', 'success')
+                return redirect(url_for('index'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error updating course name: {str(e)}', 'danger')
+
+    return render_template('google_classroom/edit_course.html', title='Edit Course Name', course=course_to_edit)
