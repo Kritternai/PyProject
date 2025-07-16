@@ -71,7 +71,7 @@ def index():
 
             # Fetch existing linkages for KMITL courses
             existing_linkages = course_linkage_manager.get_all_linkages_by_user(user_id)
-            linkage_map = {link.kmitl_course_identifier: link.google_classroom_course_id for link in existing_linkages}
+            linkage_map = {link.kmitl_course_identifier: link.google_classroom_id for link in existing_linkages}
 
             # Prepare course blocks for timetable display (FullCalendar format)
             fullcalendar_events = []
@@ -109,6 +109,7 @@ def index():
             # Convert datetime objects to string for JSON serialization
             for day, date_obj in day_to_date_map.items():
                 day_to_date_map[day] = date_obj.strftime('%Y-%m-%d')
+            print(f"DEBUG: Final day_to_date_map: {day_to_date_map}") # Add this line
 
             if kmitl_studytable_data and 'courses' in kmitl_studytable_data:
                 for course_idx, course in enumerate(kmitl_studytable_data['courses']):
@@ -116,8 +117,9 @@ def index():
                     gc_course_id = linkage_map.get(kmitl_identifier)
 
                     for sched in course.get('schedule', []):
-                        day_thai_abbr = sched.get('day', '').split('.')[0]
-                        print(f"DEBUG: Processing schedule for day: {day_thai_abbr}")
+                        day_thai_abbr = sched.get('day', '').split('.')[0].strip() # Added .strip()
+                        print(f"DEBUG: Processing schedule for day: '{day_thai_abbr}'") # Added quotes
+                        print(f"DEBUG: day_to_date_map keys: {day_to_date_map.keys()}") # Added this line
                         if day_thai_abbr in day_to_date_map:
                             base_date = day_to_date_map[day_thai_abbr]
                             
@@ -230,6 +232,37 @@ def lesson_detail(lesson_id):
     if not lesson or lesson.user_id != session['user_id']:
         flash('Lesson not found or you do not have permission to view it.', 'danger')
         return redirect(url_for('list_lessons'))
+
+    # If the lesson is from Google Classroom, parse the JSON data
+    if lesson.source_platform == 'google_classroom':
+        try:
+            if lesson.announcements_data:
+                lesson.announcements = json.loads(lesson.announcements_data)
+            if lesson.topics_data:
+                lesson.grouped_by_topic = json.loads(lesson.topics_data)
+            if lesson.roster_data:
+                lesson.roster = json.loads(lesson.roster_data)
+            if lesson.attachments_data:
+                lesson.all_attachments = json.loads(lesson.attachments_data)
+            
+            # Fetch drive_files from ImportedData if this is a Google Classroom lesson
+            if lesson.google_classroom_id:
+                imported_data_gc = ImportedData.query.filter_by(user_id=session['user_id'], platform='google_classroom_api').first()
+                if imported_data_gc and 'courses' in imported_data_gc.data:
+                    for course_data in imported_data_gc.data['courses']:
+                        if str(course_data.get('id')) == str(lesson.google_classroom_id):
+                            lesson.drive_files = course_data.get('drive_files', [])
+                            break
+
+        except json.JSONDecodeError as e:
+            flash(f"Error parsing Google Classroom data for this lesson: {e}", 'danger')
+            # Handle error, maybe set these fields to empty lists/dicts
+            lesson.announcements = []
+            lesson.grouped_by_topic = []
+            lesson.roster = {}
+            lesson.all_attachments = []
+            lesson.drive_files = [] # Initialize drive_files as empty list on error
+
     return render_template('lessons/detail.html', title=lesson.title, lesson=lesson)
 
 @app.route('/lessons/<lesson_id>/edit', methods=['GET', 'POST'])
@@ -801,6 +834,31 @@ def material_item_detail(course_id, item_id):
                            course=course_to_display,
                            item=material_item)
 
+@app.route('/google_classroom/add_to_lesson/<course_id>')
+@login_required
+def add_google_classroom_course_to_lesson(course_id):
+    user_id = session['user_id']
+    imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
+
+    course_data_to_import = None
+    if imported_data and 'courses' in imported_data.data:
+        for course in imported_data.data['courses']:
+            if str(course.get('id')) == str(course_id):
+                course_data_to_import = course
+                break
+
+    if not course_data_to_import:
+        flash('Google Classroom course not found in your imported data.', 'danger')
+        return redirect(url_for('view_external_data')) # Or wherever you list GC courses
+
+    try:
+        lesson = lesson_manager.import_google_classroom_course_as_lesson(user_id, course_data_to_import)
+        flash(f'Successfully added/updated "{lesson.title}" to your lessons!', 'success')
+        return redirect(url_for('lesson_detail', lesson_id=lesson.id))
+    except Exception as e:
+        flash(f'Error adding Google Classroom course to lessons: {str(e)}', 'danger')
+        return redirect(url_for('course_detail', course_id=course_id)) # Redirect back to GC course detail
+
 @app.route('/integrations/kmitl_classroom_link', methods=['GET', 'POST'])
 @login_required
 def kmitl_classroom_link():
@@ -823,11 +881,11 @@ def kmitl_classroom_link():
 
     # Fetch existing linkages
     existing_linkages = course_linkage_manager.get_all_linkages_by_user(user_id)
-    linkage_map = {link.kmitl_course_identifier: link.google_classroom_course_id for link in existing_linkages}
+    linkage_map = {link.kmitl_course_identifier: link.google_classroom_id for link in existing_linkages}
 
     if request.method == 'POST':
         kmitl_identifier = request.form.get('kmitl_course_identifier')
-        google_course_id = request.form.get('google_classroom_course_id')
+        google_course_id = request.form.get('google_classroom_id')
 
         if kmitl_identifier and google_course_id:
             linkage = course_linkage_manager.add_linkage(user_id, kmitl_identifier, google_course_id)
