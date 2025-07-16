@@ -7,6 +7,7 @@ from app.core.lesson import Lesson # Import Lesson model for query
 from app.core.imported_data import ImportedData # Import ImportedData model
 from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
 from functools import wraps
+import datetime # Import datetime
 
 # For Google Classroom API
 import os
@@ -21,12 +22,14 @@ user_manager = UserManager()
 authenticator = Authenticator(user_manager)
 lesson_manager = LessonManager()
 
-# Google Classroom API Scopes - Simplified to only courses.readonly
+# Google Classroom API Scopes - MATCHING EXACTLY WHAT GOOGLE RETURNS IN THE ERROR LOG
 SCOPES = [
-    'https://www.googleapis.com/auth/classroom.courses.readonly',
-    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/classroom.coursework.students',
     'https://www.googleapis.com/auth/userinfo.profile',
-    'openid'
+    'openid',
+    'https://www.googleapis.com/auth/classroom.student-submissions.students.readonly',
+    'https://www.googleapis.com/auth/classroom.courses.readonly',
+    'https://www.googleapis.com/auth/userinfo.email'
 ]
 
 # Decorator for login required
@@ -388,10 +391,18 @@ def fetch_google_classroom_data():
 
         # Save fetched data to ImportedData model
         print(f"DEBUG: Saving fetched data to ImportedData for user {user_id}.")
-        new_imported_data = ImportedData(user_id=user_id, platform='google_classroom_api', data={'courses': classroom_data})
-        db.session.add(new_imported_data)
-        db.session.commit()
-        print(f"DEBUG: Google Classroom data fetched and saved to ImportedData for user {user_id}.")
+        # Check if an existing entry for this platform and user exists
+        existing_imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
+        if existing_imported_data:
+            existing_imported_data.data = {'courses': classroom_data}
+            existing_imported_data.imported_at = datetime.datetime.utcnow() # Update timestamp
+            db.session.commit()
+            print(f"DEBUG: Updated existing ImportedData for user {user_id}.")
+        else:
+            new_imported_data = ImportedData(user_id=user_id, platform='google_classroom_api', data={'courses': classroom_data})
+            db.session.add(new_imported_data)
+            db.session.commit()
+            print(f"DEBUG: Created new ImportedData for user {user_id}.")
 
         flash('Google Classroom data fetched and saved successfully!', 'success')
         return redirect(url_for('view_external_data'))
