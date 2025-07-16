@@ -400,3 +400,15 @@ def fetch_google_classroom_data():
         flash(f'Error fetching Google Classroom data: {e}', 'danger')
         print(f"ERROR: Error fetching Google Classroom data for user {user_id}: {e}")
         return redirect(url_for('index'))
+    
+@app.route('/note')
+@login_required
+def note():
+    user_id = session['user_id']
+    user = user_manager.get_user_by_id(user_id)
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('index'))
+    
+    # For now, just render a simple note page
+    return render_template('notes/note.html', title='Notes', user=user)
