@@ -2,7 +2,7 @@ from app import db
 from app.core.course_linkage import CourseLinkage
 
 class CourseLinkageManager:
-    def add_linkage(self, user_id, kmitl_course_identifier, google_classroom_course_id):
+    def add_linkage(self, user_id, kmitl_course_identifier, google_classroom_id):
         # Check if a linkage already exists for the KMITL course identifier
         existing_linkage = CourseLinkage.query.filter_by(
             user_id=user_id,
@@ -11,16 +11,12 @@ class CourseLinkageManager:
 
         if existing_linkage:
             # Update existing linkage
-            existing_linkage.google_classroom_course_id = google_classroom_course_id
+            existing_linkage.google_classroom_id = google_classroom_id
             db.session.commit()
             return existing_linkage
         else:
             # Create new linkage
-            linkage = CourseLinkage(
-                user_id=user_id,
-                kmitl_course_identifier=kmitl_course_identifier,
-                google_classroom_course_id=google_classroom_course_id
-            )
+            linkage = CourseLinkage(user_id=user_id, kmitl_course_identifier=kmitl_course_identifier, google_classroom_id=google_classroom_id)
             db.session.add(linkage)
             db.session.commit()
             return linkage
