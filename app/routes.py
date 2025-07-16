@@ -4,9 +4,11 @@ from app.core.user_manager import UserManager
 from app.core.authenticator import Authenticator
 from app.core.lesson_manager import LessonManager
 from app.core.lesson import Lesson # Import Lesson model for query
+from app.core.note import Note # Import Note model for query
 from app.core.imported_data import ImportedData # Import ImportedData model
 from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
 from functools import wraps
+from datetime import datetime
 
 # For Google Classroom API
 import os
@@ -401,57 +403,87 @@ def fetch_google_classroom_data():
         print(f"ERROR: Error fetching Google Classroom data for user {user_id}: {e}")
         return redirect(url_for('index'))
 
-# note
-@app.route('/note', methods=['GET', 'POST'])
-@login_required
-def note():
-    user_id = session['user_id']
-    user = user_manager.get_user_by_id(user_id)
-    if not user:
-        flash('User not found.', 'danger')
-        return redirect(url_for('index'))
+# Note Management Routes
+from app.core.note_manager import NoteManager
+note_manager = NoteManager()
 
+@app.route('/notes')
+@login_required
+def list_notes():
+    user_id = session['user_id']
+    notes = note_manager.get_notes_by_user(user_id)
+    return render_template('notes/list.html', title='My Notes', notes=notes)
+
+@app.route('/notes/add', methods=['GET', 'POST'])
+@login_required
+def add_note():
     if request.method == 'POST':
-        # รับข้อมูลจากฟอร์ม
         title = request.form.get('title')
         content = request.form.get('content')
-        note_date = request.form.get('note_date')
+        note_date_str = request.form.get('note_date')
+        user_id = session['user_id']
 
         if not title or not content:
             flash('Title and content are required.', 'danger')
-            return redirect(url_for('note'))
+            return redirect(url_for('add_note'))
+        
+        note_date = datetime.strptime(note_date_str, '%Y-%m-%d') if note_date_str else None
 
-        new_note = Note(user_id=user_id, title=title, content=content, note_date=note_date)
-        db.session.add(new_note)
-        db.session.commit()
+        note = note_manager.add_note(user_id, title, content, note_date)
+        if note:
+            flash('Note added successfully!', 'success')
+            return redirect(url_for('list_notes'))
+        else:
+            flash('Error adding note.', 'danger')
 
-        flash('Note added successfully!', 'success')
-        return redirect(url_for('note'))
+    return render_template('notes/create.html', title='Create New Note')
 
-    # GET: แสดงหน้ารายการโน้ต พร้อม notes
-    notes = Note.query.filter_by(user_id=user_id).order_by(Note.note_date.desc()).all()
-    return render_template('notes/note.html', title='Notes', user=user, notes=notes)
-
-# note add
-@app.route('/note/add', methods=['POST'])
+@app.route('/notes/<note_id>')
 @login_required
-def add_note():
-    user_id = session['user_id']
-    user = user_manager.get_user_by_id(user_id)
-    if not user:
-        flash('User not found.', 'danger')
-        return redirect(url_for('index'))
+def view_note(note_id):
+    note = note_manager.get_note_by_id(note_id)
+    if not note or note.user_id != session['user_id']:
+        flash('Note not found or you do not have permission to view it.', 'danger')
+        return redirect(url_for('list_notes'))
+    return render_template('notes/note.html', title=note.title, note=note)
 
-    title = request.form.get('title')
-    content = request.form.get('content')
-    note_date = request.form.get('note_date')
+@app.route('/notes/<note_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_note(note_id):
+    note = note_manager.get_note_by_id(note_id)
+    if not note or note.user_id != session['user_id']:
+        flash('Note not found or you do not have permission to edit it.', 'danger')
+        return redirect(url_for('list_notes'))
 
-    if not title or not content:
-        flash('Title and content are required.', 'danger')
-        return redirect(url_for('note'))
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        note_date_str = request.form.get('note_date')
+        note_date = datetime.strptime(note_date_str, '%Y-%m-%d') if note_date_str else None
 
-    new_note = Note(user_id=user_id, title=title, content=content, note_date=note_date)
-    db.session.add(new_note)
-    db.session.commit()
-    flash('Note added successfully!', 'success')
-    return redirect(url_for('note'))
+        if not title or not content:
+            flash('Title and content are required.', 'danger')
+            return redirect(url_for('edit_note', note_id=note_id))
+
+        if note_manager.update_note(note_id, title, content, note_date):
+            flash('Note updated successfully!', 'success')
+            return redirect(url_for('view_note', note_id=note_id))
+        else:
+            flash('Error updating note.', 'danger')
+
+    return render_template('notes/edit.html', title='Edit Note', note=note)
+
+@app.route('/notes/<note_id>/delete', methods=['POST'])
+@login_required
+def delete_note(note_id):
+    note = note_manager.get_note_by_id(note_id)
+    if not note or note.user_id != session['user_id']:
+        flash('Note not found or you do not have permission to delete it.', 'danger')
+        return redirect(url_for('list_notes'))
+
+    if note_manager.delete_note(note_id):
+        flash('Note deleted successfully!', 'success')
+    else:
+        flash('Error deleting note.', 'danger')
+    return redirect(url_for('list_notes'))
+

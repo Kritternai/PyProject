@@ -16,6 +16,7 @@ db = SQLAlchemy(app)
 # Import models so SQLAlchemy knows about them
 from app.core.user import User
 from app.core.lesson import Lesson
+from app.core.note import Note
 from app.core.imported_data import ImportedData
 from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
 
