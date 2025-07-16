@@ -123,6 +123,52 @@
                     <p class="text-gray-600">No students found for this course.</p>
                 {% endif %}
             </div>
+
+            <!-- All Files / Attachments Section -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">All Files / Attachments (from Classroom Items)</h2>
+                {% if course.all_attachments %}
+                    <ul class="space-y-3">
+                        {% for attachment in course.all_attachments %}
+                            <li class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                {% if attachment.material.link %}
+                                    <a href="{{ attachment.material.link.url }}" target="_blank" class="text-blue-500 hover:underline font-semibold">{{ attachment.material.link.title if attachment.material.link.title else attachment.material.link.url }}</a>
+                                    <span class="text-sm text-gray-600 ml-2"> (Link)</span>
+                                {% elif attachment.material.driveFile %}
+                                    <a href="{{ attachment.material.driveFile.driveFile.alternateLink }}" target="_blank" class="text-blue-500 hover:underline font-semibold">{{ attachment.material.driveFile.driveFile.title }}</a>
+                                    <span class="text-sm text-gray-600 ml-2"> (Google Drive)</span>
+                                {% elif attachment.material.youtubeVideo %}
+                                    <a href="{{ attachment.material.youtubeVideo.alternateLink }}" target="_blank" class="text-blue-500 hover:underline font-semibold">YouTube Video: {{ attachment.material.youtubeVideo.title }}</a>
+                                    <span class="text-sm text-gray-600 ml-2"> (YouTube)</span>
+                                {% elif attachment.material.form %}
+                                    <a href="{{ attachment.material.form.formUrl }}" target="_blank" class="text-blue-500 hover:underline font-semibold">Google Form: {{ attachment.material.form.title }}</a>
+                                    <span class="text-sm text-gray-600 ml-2"> (Google Form)</span>
+                                {% endif %}
+                                <p class="text-xs text-gray-500 mt-1">Source: {{ attachment.source | title }} (ID: {{ attachment.item_id }})</p>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-gray-600">No files or attachments found from Classroom items for this course.</p>
+                {% endif %}
+            </div>
+
+            <!-- Files from Google Drive Folder Section -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Files from Google Drive Folder ({{ course.name }})</h2>
+                {% if course.drive_files %}
+                    <ul class="space-y-3">
+                        {% for drive_file in course.drive_files %}
+                            <li class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <a href="{{ drive_file.alternateLink }}" target="_blank" class="text-blue-500 hover:underline font-semibold">{{ drive_file.title }}</a>
+                                <span class="text-sm text-gray-600 ml-2"> ({{ drive_file.mimeType }})</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-gray-600">No files found in your Google Drive 'Classroom/{{ course.name }}' folder for this course.</p>
+                {% endif %}
+            </div>
         </div>
     </main>
 </body>
