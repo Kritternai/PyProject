@@ -24,13 +24,17 @@ lesson_manager = LessonManager()
 
 # Google Classroom API Scopes - MATCHING EXACTLY WHAT GOOGLE RETURNS IN THE ERROR LOG
 SCOPES = [
-    # 'https://www.googleapis.com/auth/classroom.coursework.me.readonly', # Temporarily disabled for debugging
+    'https://www.googleapis.com/auth/classroom.courses.readonly',
+    'https://www.googleapis.com/auth/classroom.announcements.readonly',
+    'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly',
+    'https://www.googleapis.com/auth/classroom.course-work.readonly', # New scope for viewing teacher-assigned work
+    # 'https://www.googleapis.com/auth/classroom.coursework.me.readonly', # Removed due to persistent permission issues, likely domain-specific restriction
+    'https://www.googleapis.com/auth/classroom.student-submissions.me.readonly',
+    'https://www.googleapis.com/auth/classroom.topics.readonly',
+    'https://www.googleapis.com/auth/classroom.rosters.readonly',
     'https://www.googleapis.com/auth/userinfo.profile',
     'openid',
-    'https://www.googleapis.com/auth/classroom.student-submissions.me.readonly', # Correct scope for students to view their own submissions
-    'https://www.googleapis.com/auth/classroom.courses.readonly',
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/classroom.announcements.readonly'
+    'https://www.googleapis.com/auth/userinfo.email'
 ]
 
 # Decorator for login required
@@ -377,20 +381,31 @@ def fetch_google_classroom_data():
         # Get courses
         print(f"DEBUG: Fetching courses for user {user_id}.")
         courses_results = service.courses().list(courseStates='ACTIVE').execute()
-        courses = courses_results.get('courses', [])
-        print(f"DEBUG: Found {len(courses)} active courses for user {user_id}.")
+        fetched_courses = courses_results.get('courses', [])
+        print(f"DEBUG: Found {len(fetched_courses)} active courses for user {user_id}.")
 
-        # Get coursework and announcements for each course
-        classroom_data = []
-        for course in courses:
-            course_info = {
-                'id': course['id'],
-                'name': course['name'],
-                'section': course.get('section', ''),
-                'announcements': [],
-                'courseWork': []
-            }
+        # Retrieve existing imported data for this user and platform
+        existing_imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
+        if existing_imported_data:
+            existing_courses_data = existing_imported_data.data.get('courses', [])
+        else:
+            existing_courses_data = []
+            existing_imported_data = ImportedData(user_id=user_id, platform='google_classroom_api', data={'courses': []})
+            db.session.add(existing_imported_data)
+
+        # Create a map of existing courses by ID for efficient lookup
+        existing_courses_map = {course['id']: course for course in existing_courses_data}
+        updated_courses_list = []
+
+        # Process fetched courses (upsert logic)
+        for course in fetched_courses:
+            course_id = course['id']
+            course_info = existing_courses_map.get(course_id, {'id': course_id, 'name': course['name'], 'section': course.get('section', '')})
             
+            # Update basic course info (name, section) in case it changed
+            course_info['name'] = course['name']
+            course_info['section'] = course.get('section', '')
+
             # Fetch announcements (Stream)
             try:
                 print(f"DEBUG: Fetching announcements for course: {course['name']} ({course['id']})")
@@ -400,34 +415,92 @@ def fetch_google_classroom_data():
             except Exception as e:
                 print(f"ERROR: Could not fetch announcements for course {course['id']}: {e}")
 
-            # Fetch coursework (ClassWork) - Temporarily disabled
-            # try:
-            #     coursework_results = service.courses().courseWork().list(courseId=course['id']).execute()
-            #     course_info['courseWork'] = coursework_results.get('courseWork', [])
-            # except Exception as e:
-            #     print(f"Could not fetch coursework for course {course['id']}: {e}")
+            # Fetch coursework (ClassWork)
+            try:
+                print(f"DEBUG: Fetching coursework for course: {course['name']} ({course['id']})")
+                coursework_results = service.courses().courseWork().list(courseId=course['id']).execute()
+                course_info['courseWork'] = coursework_results.get('courseWork', [])
+                print(f"DEBUG: Found {len(course_info['courseWork'])} coursework items for this course.")
+            except Exception as e:
+                print(f"ERROR: Could not fetch coursework for course {course['id']}: {e}")
 
-            classroom_data.append(course_info)
+            # Fetch courseWorkMaterials (Materials)
+            try:
+                print(f"DEBUG: Fetching materials for course: {course['name']} ({course['id']})")
+                materials_results = service.courses().courseWorkMaterials().list(courseId=course['id']).execute()
+                course_info['materials'] = materials_results.get('courseWorkMaterials', [])
+                print(f"DEBUG: Found {len(course_info['materials'])} materials for this course.")
+            except Exception as e:
+                print(f"ERROR: Could not fetch materials for course {course['id']}: {e}")
 
-        # Save fetched data to ImportedData model
-        print(f"DEBUG: Saving fetched data to ImportedData for user {user_id}.")
-        # Check if an existing entry for this platform and user exists
-        existing_imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
-        if existing_imported_data:
-            existing_imported_data.data = {'courses': classroom_data}
-            existing_imported_data.imported_at = datetime.datetime.utcnow() # Update timestamp
-            db.session.commit()
-            print(f"DEBUG: Updated existing ImportedData for user {user_id}.")
-        else:
-            new_imported_data = ImportedData(user_id=user_id, platform='google_classroom_api', data={'courses': classroom_data})
-            db.session.add(new_imported_data)
-            db.session.commit()
-            print(f"DEBUG: Created new ImportedData for user {user_id}.")
+            # Fetch topics
+            try:
+                print(f"DEBUG: Fetching topics for course: {course['name']} ({course['id']})")
+                topics_results = service.courses().topics().list(courseId=course['id']).execute()
+                course_info['topics'] = topics_results.get('topic', []) # Note: API returns 'topic' not 'topics'
+                print(f"DEBUG: Found {len(course_info['topics'])} topics for this course.")
+            except Exception as e:
+                print(f"ERROR: Could not fetch topics for course {course['id']}: {e}")
+
+            # Group coursework and materials by topic
+            grouped_by_topic = {"untopiced": {"name": "Unthemed", "courseWork": [], "materials": []}}
+            for topic in course_info['topics']:
+                grouped_by_topic[topic['topicId']] = {"name": topic['name'], "courseWork": [], "materials": []}
+            
+            for work in course_info['courseWork']:
+                topic_id = work.get('topicId', 'untopiced')
+                if topic_id in grouped_by_topic:
+                    grouped_by_topic[topic_id]['courseWork'].append(work)
+                else:
+                    # Fallback for any unexpected topicId
+                    grouped_by_topic['untopiced']['courseWork'].append(work)
+
+            for material in course_info['materials']:
+                topic_id = material.get('topicId', 'untopiced')
+                if topic_id in grouped_by_topic:
+                    grouped_by_topic[topic_id]['materials'].append(material)
+                else:
+                    # Fallback for any unexpected topicId
+                    grouped_by_topic['untopiced']['materials'].append(material)
+
+            # Replace original lists with grouped data
+            course_info['grouped_by_topic'] = list(grouped_by_topic.values())
+            print(f"DEBUG: Grouped data for course {course['id']}: {course_info['grouped_by_topic']}") # Added debug print
+            # Clear original lists as they are now grouped
+            course_info['courseWork'] = []
+            course_info['materials'] = []
+
+            # Fetch students (roster)
+            try:
+                print(f"DEBUG: Fetching students for course: {course['name']} ({course['id']})")
+                students_results = service.courses().students().list(courseId=course['id']).execute()
+                course_info['students'] = students_results.get('students', [])
+                print(f"DEBUG: Found {len(course_info['students'])} students for this course.")
+            except Exception as e:
+                print(f"ERROR: Could not fetch students for course {course['id']}: {e}")
+
+            # Fetch teachers (roster)
+            try:
+                print(f"DEBUG: Fetching teachers for course: {course['name']} ({course['id']})")
+                teachers_results = service.courses().teachers().list(courseId=course['id']).execute()
+                course_info['teachers'] = teachers_results.get('teachers', [])
+                print(f"DEBUG: Found {len(course_info['teachers'])} teachers for this course.")
+            except Exception as e:
+                print(f"ERROR: Could not fetch teachers for course {course['id']}: {e}")
+
+            updated_courses_list.append(course_info)
+
+        # Update the ImportedData entry with the new list of courses
+        existing_imported_data.data['courses'] = updated_courses_list
+        existing_imported_data.imported_at = datetime.datetime.utcnow() # Update timestamp
+        db.session.commit()
+        print(f"DEBUG: Google Classroom data fetched and saved/updated successfully for user {user_id}.")
 
         flash('Google Classroom data fetched and saved successfully!', 'success')
         return redirect(url_for('view_external_data'))
 
     except Exception as e:
+        db.session.rollback()
         flash(f'Error fetching Google Classroom data: {e}', 'danger')
         print(f"ERROR: Error fetching Google Classroom data for user {user_id}: {e}")
         return redirect(url_for('index'))
@@ -495,3 +568,63 @@ def edit_course(course_id):
                 flash(f'Error updating course name: {str(e)}', 'danger')
 
     return render_template('google_classroom/edit_course.html', title='Edit Course Name', course=course_to_edit)
+
+# Google Classroom CourseWork Item Detail
+@app.route('/classroom/course/<course_id>/coursework/<item_id>')
+@login_required
+def coursework_item_detail(course_id, item_id):
+    user_id = session['user_id']
+    imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
+    
+    course_to_display = None
+    coursework_item = None
+
+    if imported_data and 'courses' in imported_data.data:
+        for course in imported_data.data['courses']:
+            if str(course.get('id')) == str(course_id):
+                course_to_display = course
+                if 'courseWork' in course:
+                    for work in course['courseWork']:
+                        if str(work.get('id')) == str(item_id):
+                            coursework_item = work
+                            break
+                break
+
+    if not course_to_display or not coursework_item:
+        flash('CourseWork item not found.', 'danger')
+        return redirect(url_for('index'))
+
+    return render_template('google_classroom/coursework_detail.html', 
+                           title=coursework_item.get('title'), 
+                           course=course_to_display,
+                           item=coursework_item)
+
+# Google Classroom Material Item Detail
+@app.route('/classroom/course/<course_id>/material/<item_id>')
+@login_required
+def material_item_detail(course_id, item_id):
+    user_id = session['user_id']
+    imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
+    
+    course_to_display = None
+    material_item = None
+
+    if imported_data and 'courses' in imported_data.data:
+        for course in imported_data.data['courses']:
+            if str(course.get('id')) == str(course_id):
+                course_to_display = course
+                if 'materials' in course:
+                    for material in course['materials']:
+                        if str(material.get('id')) == str(item_id):
+                            material_item = material
+                            break
+                break
+
+    if not course_to_display or not material_item:
+        flash('Material item not found.', 'danger')
+        return redirect(url_for('index'))
+
+    return render_template('google_classroom/material_detail.html', 
+                           title=material_item.get('title'), 
+                           course=course_to_display,
+                           item=material_item)

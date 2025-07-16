@@ -46,25 +46,81 @@
                 {% endif %}
             </div>
 
-            <!-- Assignments Section -->
-            <div>
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4">ClassWork / Assignments</h2>
-                {% if course.courseWork %}
-                    <ul class="space-y-4">
-                        {% for work in course.courseWork %}
-                            <li class="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                <h3 class="font-semibold text-lg">{{ work.title }}</h3>
-                                {% if work.description %}
-                                    <p class="text-gray-700 mt-1">{{ work.description }}</p>
-                                {% endif %}
-                                {% if work.dueDate %}
-                                    <p class="text-sm text-gray-500 mt-2">Due: {{ work.dueDate.year }}/{{ work.dueDate.month }}/{{ work.dueDate.day }}</p>
-                                {% endif %}
-                            </li>
+            <!-- Topics Section -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Topics & Organized Content</h2>
+                {% if course.grouped_by_topic %}
+                    {% for topic_group in course.grouped_by_topic %}
+                        <div class="bg-gray-100 p-4 rounded-lg shadow-sm mb-6">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-3">{{ topic_group.name }}</h3>
+                            
+                            {% if topic_group.courseWork %}
+                                <h4 class="text-lg font-medium text-gray-600 mb-2">Assignments:</h4>
+                                <ul class="space-y-3 mb-4">
+                                    {% for work in topic_group.courseWork %}
+                                        <li class="p-3 bg-white rounded-lg border border-gray-200">
+                                            <a href="{{ work.alternateLink }}" target="_blank" class="block hover:bg-gray-50 -m-3 p-3 rounded-lg">
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="font-semibold">{{ work.title }}</span>
+                                                    {% if work.workType %}
+                                                        <span class="text-xs font-medium px-2 py-1 rounded-full bg-blue-200 text-blue-800">{{ work.workType | replace('_', ' ') | title }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                {% if work.dueDate %}
+                                                    <p class="text-sm text-gray-500">Due: {{ work.dueDate.year }}/{{ work.dueDate.month }}/{{ work.dueDate.day }}</p>
+                                                {% endif %}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+
+                            {% if topic_group.materials %}
+                                <h4 class="text-lg font-medium text-gray-600 mb-2">Materials:</h4>
+                                <ul class="space-y-3">
+                                    {% for material in topic_group.materials %}
+                                        <li class="p-3 bg-white rounded-lg border border-gray-200">
+                                            <a href="{{ material.alternateLink }}" target="_blank" class="block hover:bg-gray-50 -m-3 p-3 rounded-lg">
+                                                <span class="font-semibold">{{ material.title }}</span>
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+
+                            {% if not topic_group.courseWork and not topic_group.materials %}
+                                <p class="text-gray-600">No assignments or materials in this topic.</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-600">No topics or organized content found for this course.</p>
+                {% endif %}
+            </div>
+
+            <!-- Rosters Section -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Roster</h2>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Teachers:</h3>
+                {% if course.teachers %}
+                    <ul class="list-disc list-inside ml-4 space-y-2">
+                        {% for teacher in course.teachers %}
+                            <li>{{ teacher.profile.name.fullName }} ({{ teacher.profile.emailAddress }})</li>
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <p class="text-gray-600">No assignments found for this course.</p>
+                    <p class="text-gray-600">No teachers found for this course.</p>
+                {% endif %}
+
+                <h3 class="text-xl font-semibold text-gray-700 mt-4 mb-2">Students:</h3>
+                {% if course.students %}
+                    <ul class="list-disc list-inside ml-4 space-y-2">
+                        {% for student in course.students %}
+                            <li>{{ student.profile.name.fullName }} ({{ student.profile.emailAddress }})</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-gray-600">No students found for this course.</p>
                 {% endif %}
             </div>
         </div>
