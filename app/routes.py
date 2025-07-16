@@ -48,7 +48,13 @@ def index():
     if 'user_id' in session:
         user = user_manager.get_user_by_id(session['user_id'])
         if user:
-            return render_template('dashboard.html', title='Dashboard', user=user)
+            # Fetch Google Classroom data to display on the dashboard
+            google_classroom_data = []
+            imported_data = ImportedData.query.filter_by(user_id=session['user_id'], platform='google_classroom_api').first()
+            if imported_data and 'courses' in imported_data.data:
+                google_classroom_data = imported_data.data['courses']
+
+            return render_template('dashboard.html', title='Dashboard', user=user, google_classroom_data=google_classroom_data)
     return render_template('index.html', title='Home')
 
 @app.route('/register', methods=['GET', 'POST'])
