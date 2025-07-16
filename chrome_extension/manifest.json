@@ -10,6 +10,7 @@
   ],
   "host_permissions": [
     "*://teams.microsoft.com/*",
+    "https://www.reg.kmitl.ac.th/*",
     "http://127.0.0.1:5000/*"
   ],
   "action": {
@@ -27,6 +28,11 @@
     {
       "matches": ["*://teams.microsoft.com/*"],
       "js": ["content_scripts/ms_teams.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.reg.kmitl.ac.th/u_student/report_studytable_show.php*"],
+      "js": ["content_scripts/kmitl_studytable.js"],
       "run_at": "document_idle"
     }
   ],
