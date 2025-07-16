@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Smart Learning Hub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
+</head>
+<body class="min-h-screen p-6 bg-gray-100">
+    <div class="max-w-4xl p-6 mx-auto bg-white rounded shadow">
+        <h1 class="mb-6 text-3xl font-bold">Your Notes</h1>
+        <a href="{{ url_for('add_note') }}"
+            class="inline-block px-4 py-2 mb-4 text-white transition bg-blue-600 rounded hover:bg-blue-700">
+            + Create New Note
+        </a>
+        {% if notes %}
+        <ul class="divide-y divide-gray-200">
+            {% for note in notes %}
+            <li class="py-4">
+                <a href="{{ url_for('view_note', note_id=note.id) }}"
+                    class="text-xl font-semibold text-blue-700 hover:underline">
+                    {{ note.title }}
+                </a>
+                <p class="mt-1 text-sm text-gray-600">{{ note.note_date or 'No Date' }}</p>
+                <p class="mt-2 text-gray-800 line-clamp-3">{{ note.content|safe }}</p>
+                <div class="mt-2">
+                    <a href="{{ url_for('edit_note', note_id=note.id) }}" class="text-blue-500 hover:underline">Edit</a>
+                    <form action="{{ url_for('delete_note', note_id=note.id) }}" method="POST" class="inline ml-2">
+                        <button type="submit" class="text-red-500 hover:underline" onclick="return confirm('Are you sure you want to delete this note?');">Delete</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-500">You have no notes yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
