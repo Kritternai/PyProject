@@ -27,14 +27,14 @@ SCOPES = [
     'https://www.googleapis.com/auth/classroom.courses.readonly',
     'https://www.googleapis.com/auth/classroom.announcements.readonly',
     'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly',
-    'https://www.googleapis.com/auth/classroom.course-work.readonly', # New scope for viewing teacher-assigned work
-    # 'https://www.googleapis.com/auth/classroom.coursework.me.readonly', # Removed due to persistent permission issues, likely domain-specific restriction
+    'https://www.googleapis.com/auth/classroom.course-work.readonly',
     'https://www.googleapis.com/auth/classroom.student-submissions.me.readonly',
     'https://www.googleapis.com/auth/classroom.topics.readonly',
     'https://www.googleapis.com/auth/classroom.rosters.readonly',
     'https://www.googleapis.com/auth/userinfo.profile',
     'openid',
-    'https://www.googleapis.com/auth/userinfo.email'
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/drive.readonly' # New scope for Google Drive access
 ]
 
 # Decorator for login required
@@ -405,13 +405,20 @@ def fetch_google_classroom_data():
             # Update basic course info (name, section) in case it changed
             course_info['name'] = course['name']
             course_info['section'] = course.get('section', '')
+            course_info['alternateLink'] = course.get('alternateLink', '') # Ensure alternateLink is stored
+            course_info['all_attachments'] = [] # Initialize list for all attachments
 
             # Fetch announcements (Stream)
             try:
                 print(f"DEBUG: Fetching announcements for course: {course['name']} ({course['id']})")
                 announcements_results = service.courses().announcements().list(courseId=course['id']).execute()
-                course_info['announcements'] = announcements_results.get('announcements', [])
-                print(f"DEBUG: Found {len(course_info['announcements'])} announcements for this course.")
+                announcements = announcements_results.get('announcements', [])
+                course_info['announcements'] = announcements
+                print(f"DEBUG: Found {len(announcements)} announcements for this course.")
+                for ann in announcements:
+                    if 'materials' in ann:
+                        for mat in ann['materials']:
+                            course_info['all_attachments'].append({'source': 'announcement', 'item_id': ann['id'], 'material': mat})
             except Exception as e:
                 print(f"ERROR: Could not fetch announcements for course {course['id']}: {e}")
 
@@ -419,8 +426,13 @@ def fetch_google_classroom_data():
             try:
                 print(f"DEBUG: Fetching coursework for course: {course['name']} ({course['id']})")
                 coursework_results = service.courses().courseWork().list(courseId=course['id']).execute()
-                course_info['courseWork'] = coursework_results.get('courseWork', [])
-                print(f"DEBUG: Found {len(course_info['courseWork'])} coursework items for this course.")
+                coursework = coursework_results.get('courseWork', [])
+                course_info['courseWork'] = coursework
+                print(f"DEBUG: Found {len(coursework)} coursework items for this course.")
+                for cw in coursework:
+                    if 'materials' in cw:
+                        for mat in cw['materials']:
+                            course_info['all_attachments'].append({'source': 'coursework', 'item_id': cw['id'], 'material': mat})
             except Exception as e:
                 print(f"ERROR: Could not fetch coursework for course {course['id']}: {e}")
 
@@ -428,8 +440,13 @@ def fetch_google_classroom_data():
             try:
                 print(f"DEBUG: Fetching materials for course: {course['name']} ({course['id']})")
                 materials_results = service.courses().courseWorkMaterials().list(courseId=course['id']).execute()
-                course_info['materials'] = materials_results.get('courseWorkMaterials', [])
-                print(f"DEBUG: Found {len(course_info['materials'])} materials for this course.")
+                materials = materials_results.get('courseWorkMaterials', [])
+                course_info['materials'] = materials
+                print(f"DEBUG: Found {len(materials)} materials for this course.")
+                for mat_item in materials:
+                    if 'materials' in mat_item:
+                        for mat in mat_item['materials']:
+                            course_info['all_attachments'].append({'source': 'material', 'item_id': mat_item['id'], 'material': mat})
             except Exception as e:
                 print(f"ERROR: Could not fetch materials for course {course['id']}: {e}")
 
@@ -487,6 +504,68 @@ def fetch_google_classroom_data():
                 print(f"DEBUG: Found {len(course_info['teachers'])} teachers for this course.")
             except Exception as e:
                 print(f"ERROR: Could not fetch teachers for course {course['id']}: {e}")
+
+            # Fetch files from user's Google Drive 'Classroom' folder and subfolders for each course
+            course_info['drive_files'] = [] # Initialize list for drive files specific to this course
+            try:
+                print(f"DEBUG: Fetching files from Google Drive for course: {course['name']} ({course['id']})")
+                drive_service = build('drive', 'v3', credentials=credentials)
+                
+                # Search for the main 'Classroom' folder
+                classroom_folder_id = None
+                results = drive_service.files().list(
+                    q="name='Classroom' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+                    spaces='drive',
+                    fields='files(id, name)'
+                ).execute()
+                items = results.get('files', [])
+                if items:
+                    classroom_folder_id = items[0]['id']
+                    print(f"DEBUG: Found main 'Classroom' folder with ID: {classroom_folder_id}")
+
+                    # Search for the course-specific subfolder within 'Classroom' folder
+                    course_folder_id = None
+                    course_folder_name = course['name'] # Use course name as folder name
+                    subfolder_results = drive_service.files().list(
+                        q=f"'{classroom_folder_id}' in parents and name contains '{course_folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+                        spaces='drive',
+                        fields='files(id, name)'
+                    ).execute()
+                    subfolder_items = subfolder_results.get('files', [])
+                    if subfolder_items:
+                        course_folder_id = subfolder_items[0]['id']
+                        print(f"DEBUG: Found course folder '{course_folder_name}' with ID: {course_folder_id}")
+
+                        # List files within the course-specific folder
+                        files_in_course_folder = []
+                        page_token = None
+                        while True:
+                            response = drive_service.files().list(
+                                q=f"'{course_folder_id}' in parents and trashed=false",
+                                spaces='drive',
+                                fields='nextPageToken, files(id, name, mimeType, webViewLink)',
+                                pageToken=page_token
+                            ).execute()
+                            for file_item in response.get('files', []):
+                                if file_item['mimeType'] != 'application/vnd.google-apps.folder':
+                                    files_in_course_folder.append({
+                                        'type': 'driveFile',
+                                        'title': file_item['name'],
+                                        'alternateLink': file_item['webViewLink'],
+                                        'mimeType': file_item['mimeType']
+                                    })
+                            page_token = response.get('nextPageToken', None)
+                            if not page_token:
+                                break
+                        
+                        print(f"DEBUG: Found {len(files_in_course_folder)} files in course folder '{course_folder_name}'.")
+                        course_info['drive_files'] = files_in_course_folder
+                    else:
+                        print(f"DEBUG: Course folder '{course_folder_name}' not found in main 'Classroom' folder.")
+                else:
+                    print(f"DEBUG: Main 'Classroom' folder not found in Google Drive for user {user_id}.")
+            except Exception as e:
+                print(f"ERROR: Could not fetch files from Google Drive for course {course['id']}: {e}")
 
             updated_courses_list.append(course_info)
 
@@ -624,6 +703,7 @@ def material_item_detail(course_id, item_id):
         flash('Material item not found.', 'danger')
         return redirect(url_for('index'))
 
+    print(f"DEBUG: Material item details: {material_item}") # Added debug print
     return render_template('google_classroom/material_detail.html', 
                            title=material_item.get('title'), 
                            course=course_to_display,
