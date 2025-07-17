@@ -158,7 +158,7 @@
                 allDaySlot: false,
                 events: {{ fullcalendar_events | tojson }},
                 eventClick: function(info) {
-                    if (info.event.url) {
+                    if (info.event.url && info.event.url !== 'null') {
                         info.jsEvent.preventDefault(); // prevent browser from going to the url
                         window.open(info.event.url); // open in a new tab
                     }
