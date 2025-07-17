@@ -1,0 +1,166 @@
+<h1 class="h3 text-primary mb-4">{{ lesson.title }}</h1>
+<div class="mb-3">
+    <p class="text-muted mb-1"><strong>Description:</strong></p>
+    <p class="text-dark">{{ lesson.description or 'No description provided.' }}</p>
+</div>
+<div class="mb-3">
+    <p class="text-muted mb-1"><strong>Status:</strong></p>
+    <p class="fw-medium text-info">{{ lesson.status }}</p>
+</div>
+{% if lesson.tags %}
+    <div class="mb-3">
+        <p class="text-muted mb-1"><strong>Tags:</strong></p>
+        <p class="text-dark">{{ lesson.tags }}</p>
+    </div>
+{% endif %}
+
+{% if lesson.source_platform == 'google_classroom' %}
+    <hr class="my-4">
+    <h2 class="h4 text-primary mb-3">Google Classroom Details</h2>
+
+    <!-- Announcements Section -->
+    <div class="mb-4">
+        <h3 class="h5 text-secondary mb-3">Stream / Announcements</h3>
+        {% if lesson.announcements %}
+            <ul class="list-group list-group-flush">
+                {% for announcement in lesson.announcements %}
+                    <li class="list-group-item">
+                        <p class="mb-1">{{ announcement.text }}</p>
+                        <small class="text-muted">Posted on: {{ announcement.creationTime[:10] }}</small>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No announcements found for this course.</p>
+        {% endif %}
+    </div>
+
+    <!-- Topics Section -->
+    <div class="mb-4">
+        <h3 class="h5 text-secondary mb-3">Topics & Organized Content</h3>
+        {% if lesson.grouped_by_topic %}
+            {% for topic_group in lesson.grouped_by_topic %}
+                <div class="card mb-3">
+                    <div class="card-header h6">{{ topic_group.name }}</div>
+                    <div class="card-body">
+                        {% if topic_group.courseWork %}
+                            <h5 class="card-subtitle mb-2 text-muted">Assignments:</h5>
+                            <ul class="list-group list-group-flush mb-3">
+                                {% for work in topic_group.courseWork %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <a href="{{ work.alternateLink }}" target="_blank" class="text-decoration-none text-primary fw-bold">{{ work.title }}</a>
+                                        {% if work.workType %}
+                                            <span class="badge bg-info">{{ work.workType | replace('_', ' ') | title }}</span>
+                                        {% endif %}
+                                        {% if work.dueDate %}
+                                            <small class="text-muted">Due: {{ work.dueDate.year }}/{{ work.dueDate.month }}/{{ work.dueDate.day }}</small>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                        {% if topic_group.materials %}
+                            <h5 class="card-subtitle mb-2 text-muted">Materials:</h5>
+                            <ul class="list-group list-group-flush">
+                                {% for material in topic_group.materials %}
+                                    <li class="list-group-item">
+                                        <a href="{{ material.alternateLink }}" target="_blank" class="text-decoration-none text-primary fw-bold">{{ material.title }}</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                        {% if not topic_group.courseWork and not topic_group.materials %}
+                            <p class="text-muted">No assignments or materials in this topic.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted">No topics or organized content found for this course.</p>
+        {% endif %}
+    </div>
+
+    <!-- Rosters Section -->
+    <div class="mb-4">
+        <h3 class="h5 text-secondary mb-3">Roster</h3>
+        <h4 class="h6 text-muted mb-2">Teachers:</h4>
+        {% if lesson.roster.teachers %}
+            <ul class="list-group list-group-flush mb-3">
+                {% for teacher in lesson.roster.teachers %}
+                    <li class="list-group-item">{{ teacher.profile.name.fullName }} ({{ teacher.profile.emailAddress }})</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No teachers found for this course.</p>
+        {% endif %}
+
+        <h4 class="h6 text-muted mt-3 mb-2">Students:</h4>
+        {% if lesson.roster.students %}
+            <ul class="list-group list-group-flush">
+                {% for student in lesson.roster.students %}
+                    <li class="list-group-item">{{ student.profile.name.fullName }} ({{ student.profile.emailAddress }})</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No students found for this course.</p>
+        {% endif %}
+    </div>
+
+    <!-- All Files / Attachments Section -->
+    <div class="mb-4">
+        <h3 class="h5 text-secondary mb-3">All Files / Attachments (from Classroom Items)</h3>
+        {% if lesson.all_attachments %}
+            <ul class="list-group list-group-flush">
+                {% for attachment in lesson.all_attachments %}
+                    <li class="list-group-item">
+                        {% if attachment.material.link %}
+                            <a href="{{ attachment.material.link.url }}" target="_blank" class="text-primary fw-bold">{{ attachment.material.link.title if attachment.material.link.title else attachment.material.link.url }}</a>
+                            <span class="text-muted ms-2"> (Link)</span>
+                        {% elif attachment.material.driveFile %}
+                            <a href="{{ attachment.material.driveFile.driveFile.alternateLink }}" target="_blank" class="text-primary fw-bold">{{ attachment.material.driveFile.driveFile.title }}</a>
+                            <span class="text-muted ms-2"> (Google Drive)</span>
+                        {% elif attachment.material.youtubeVideo %}
+                            <a href="{{ attachment.material.youtubeVideo.alternateLink }}" target="_blank" class="text-primary fw-bold">YouTube Video: {{ attachment.material.youtubeVideo.title }}</a>
+                            <span class="text-muted ms-2"> (YouTube)</span>
+                        {% elif attachment.material.form %}
+                            <a href="{{ attachment.material.form.formUrl }}" target="_blank" class="text-primary fw-bold">Google Form: {{ attachment.material.form.title }}</a>
+                            <span class="text-muted ms-2"> (Google Form)</span>
+                        {% endif %}
+                        <small class="text-muted d-block mt-1">Source: {{ attachment.source | title }} (ID: {{ attachment.item_id }})</small>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No files or attachments found from Classroom items for this course.</p>
+        {% endif %}
+    </div>
+
+    <!-- Files from Google Drive Folder Section -->
+    <div class="mb-4">
+        <h3 class="h5 text-secondary mb-3">Files from Google Drive Folder</h3>
+        {% if lesson.drive_files %}
+            <ul class="list-group list-group-flush">
+                {% for drive_file in lesson.drive_files %}
+                    <li class="list-group-item">
+                        <a href="{{ drive_file.alternateLink }}" target="_blank" class="text-primary fw-bold">{{ drive_file.title }}</a>
+                        <span class="text-muted ms-2"> ({{ drive_file.mimeType }})</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No files found in your Google Drive 'Classroom/{{ lesson.title }}' folder for this course.</p>
+        {% endif %}
+    </div>
+{% endif %}
+
+<div class="d-flex justify-content-end mt-4">
+    <button type="button" class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#lessonModal" data-url="{{ url_for('edit_lesson', lesson_id=lesson.id) }}">
+        Edit Lesson
+    </button>
+    <form class="delete-lesson-form d-inline" data-lesson-id="{{ lesson.id }}">
+        <button type="submit" class="btn btn-danger me-2">Delete Lesson</button>
+    </form>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+</div>

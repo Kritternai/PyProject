@@ -1,5 +1,6 @@
 from app import app, db
-from flask import render_template, request, flash, redirect, url_for, session, jsonify
+from flask import render_template, request, flash, redirect, url_for, session, jsonify, make_response
+import json
 from app.core.user_manager import UserManager
 from app.core.authenticator import Authenticator
 from app.core.lesson_manager import LessonManager
@@ -214,6 +215,8 @@ def list_lessons():
 @app.route('/lessons/add', methods=['GET', 'POST'])
 @login_required
 def add_lesson():
+    is_htmx = 'HX-Request' in request.headers
+
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
@@ -222,23 +225,58 @@ def add_lesson():
         user_id = session['user_id']
 
         if not title:
+            if is_htmx:
+                response = make_response(render_template('lessons/_add.html', title='Add New Lesson'))
+                response.headers['HX-Trigger'] = json.dumps({
+                    'showMessage': {'message': 'Title is required.', 'category': 'danger'}
+                })
+                return response, 400 # Bad Request
             flash('Title is required.', 'danger')
             return redirect(url_for('add_lesson'))
         
         lesson = lesson_manager.add_lesson(user_id, title, description, status, tags)
         if lesson:
+            if is_htmx:
+                # Render the new lesson card and send it back
+                response = make_response(render_template('lessons/_lesson_card.html', lesson=lesson))
+                response.headers['HX-Trigger'] = json.dumps({
+                    'showMessage': {'message': 'Lesson added successfully!', 'category': 'success'},
+                    'lessonAdded': {
+                        'lesson_id': lesson.id,
+                        'lesson_title': lesson.title,
+                        'lesson_status': lesson.status,
+                        'lesson_tags': lesson.tags
+                    }
+                })
+                return response
             flash('Lesson added successfully!', 'success')
             return redirect(url_for('list_lessons'))
         else:
+            if is_htmx:
+                response = make_response(render_template('lessons/_add.html', title='Add New Lesson'))
+                response.headers['HX-Trigger'] = json.dumps({
+                    'showMessage': {'message': 'Error adding lesson.', 'category': 'danger'}
+                })
+                return response, 500 # Internal Server Error
             flash('Error adding lesson.', 'danger')
 
+    if is_htmx:
+        return render_template('lessons/_add.html', title='Add New Lesson')
     return render_template('lessons/add.html', title='Add New Lesson')
 
 @app.route('/lessons/<lesson_id>')
 @login_required
 def lesson_detail(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    is_htmx = 'HX-Request' in request.headers
+
     if not lesson or lesson.user_id != session['user_id']:
+        if is_htmx:
+            response = make_response('')
+            response.headers['HX-Trigger'] = json.dumps({
+                'showMessage': {'message': 'Lesson not found or you do not have permission to view it.', 'category': 'danger'}
+            })
+            return response, 404
         flash('Lesson not found or you do not have permission to view it.', 'danger')
         return redirect(url_for('list_lessons'))
 
@@ -264,6 +302,12 @@ def lesson_detail(lesson_id):
                             break
 
         except json.JSONDecodeError as e:
+            if is_htmx:
+                response = make_response('')
+                response.headers['HX-Trigger'] = json.dumps({
+                    'showMessage': {'message': f"Error parsing Google Classroom data for this lesson: {e}", 'category': 'danger'}
+                })
+                return response, 500
             flash(f"Error parsing Google Classroom data for this lesson: {e}", 'danger')
             # Handle error, maybe set these fields to empty lists/dicts
             lesson.announcements = []
@@ -272,13 +316,23 @@ def lesson_detail(lesson_id):
             lesson.all_attachments = []
             lesson.drive_files = [] # Initialize drive_files as empty list on error
 
+    if is_htmx:
+        return render_template('lessons/_detail.html', title=lesson.title, lesson=lesson)
     return render_template('lessons/detail.html', title=lesson.title, lesson=lesson)
 
 @app.route('/lessons/<lesson_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_lesson(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    is_htmx = 'HX-Request' in request.headers
+
     if not lesson or lesson.user_id != session['user_id']:
+        if is_htmx:
+            response = make_response('')
+            response.headers['HX-Trigger'] = json.dumps({
+                'showMessage': {'message': 'Lesson not found or you do not have permission to edit it.', 'category': 'danger'}
+            })
+            return response, 404
         flash('Lesson not found or you do not have permission to edit it.', 'danger')
         return redirect(url_for('list_lessons'))
 
@@ -289,30 +343,81 @@ def edit_lesson(lesson_id):
         tags = request.form.get('tags')
 
         if not title:
+            if is_htmx:
+                response = make_response(render_template('lessons/_edit.html', title='Edit Lesson', lesson=lesson))
+                response.headers['HX-Trigger'] = json.dumps({
+                    'showMessage': {'message': 'Title is required.', 'category': 'danger'}
+                })
+                return response, 400
             flash('Title is required.', 'danger')
             return redirect(url_for('edit_lesson', lesson_id=lesson_id))
 
         if lesson_manager.update_lesson(lesson_id, title, description, status, tags):
+            if is_htmx:
+                # Render the updated lesson card and send it back
+                updated_lesson = lesson_manager.get_lesson_by_id(lesson_id) # Fetch updated lesson object
+                response = make_response(render_template('lessons/_lesson_card.html', lesson=updated_lesson))
+                response.headers['HX-Trigger'] = json.dumps({
+                    'showMessage': {'message': 'Lesson updated successfully!', 'category': 'success'},
+                    'lessonUpdated': {
+                        'lesson_id': updated_lesson.id,
+                        'lesson_title': updated_lesson.title,
+                        'lesson_status': updated_lesson.status,
+                        'lesson_tags': updated_lesson.tags
+                    }
+                })
+                return response
             flash('Lesson updated successfully!', 'success')
             return redirect(url_for('lesson_detail', lesson_id=lesson_id))
         else:
+            if is_htmx:
+                response = make_response(render_template('lessons/_edit.html', title='Edit Lesson', lesson=lesson))
+                response.headers['HX-Trigger'] = json.dumps({
+                    'showMessage': {'message': 'Error updating lesson.', 'category': 'danger'}
+                })
+                return response, 500
             flash('Error updating lesson.', 'danger')
 
+    if is_htmx:
+        return render_template('lessons/_edit.html', title='Edit Lesson', lesson=lesson)
     return render_template('lessons/edit.html', title='Edit Lesson', lesson=lesson)
 
 @app.route('/lessons/<lesson_id>/delete', methods=['POST'])
 @login_required
 def delete_lesson(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    is_htmx = 'HX-Request' in request.headers
+
     if not lesson or lesson.user_id != session['user_id']:
+        if is_htmx:
+            response = make_response('')
+            response.headers['HX-Trigger'] = json.dumps({
+                'showMessage': {'message': 'Lesson not found or you do not have permission to delete it.', 'category': 'danger'}
+            })
+            return response, 404
         flash('Lesson not found or you do not have permission to delete it.', 'danger')
         return redirect(url_for('list_lessons'))
 
     if lesson_manager.delete_lesson(lesson_id):
+        if is_htmx:
+            response = make_response('') # No content needed, HTMX will remove the element
+            response.headers['HX-Trigger'] = json.dumps({
+                'showMessage': {'message': 'Lesson deleted successfully!', 'category': 'success'}
+            })
+            return response
         flash('Lesson deleted successfully!', 'success')
     else:
+        if is_htmx:
+            response = make_response('')
+            response.headers['HX-Trigger'] = json.dumps({
+                'showMessage': {'message': 'Error deleting lesson.', 'category': 'danger'}
+            })
+            return response, 500
         flash('Error deleting lesson.', 'danger')
-    return redirect(url_for('list_lessons'))
+    
+    if not is_htmx:
+        return redirect(url_for('list_lessons'))
+    return make_response('') # Fallback for HTMX if no specific error, though HX-Trigger should handle it
 
 # API Endpoint for Chrome Extension
 @app.route('/api/import_data', methods=['POST'])
