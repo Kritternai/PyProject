@@ -115,6 +115,7 @@ def index():
                 for course_idx, course in enumerate(kmitl_studytable_data['courses']):
                     kmitl_identifier = f"{kmitl_studytable_data.get('student_id', '')}_{kmitl_studytable_data.get('academic_year', '')}_{kmitl_studytable_data.get('semester', '')}_{course.get('course_code', '')}"
                     gc_course_id = linkage_map.get(kmitl_identifier)
+                    print(f"DEBUG: KMITL Identifier: {kmitl_identifier}, GC Course ID from linkage_map: {gc_course_id}")
 
                     for sched in course.get('schedule', []):
                         day_thai_abbr = sched.get('day', '').split('.')[0].strip() # Added .strip()
@@ -134,7 +135,15 @@ def index():
 
                             event_url = None
                             if gc_course_id:
-                                event_url = url_for('course_detail', course_id=gc_course_id)
+                                # Check if this Google Classroom course has been imported as a Lesson
+                                lesson = Lesson.query.filter_by(user_id=user_id, google_classroom_id=gc_course_id).first()
+                                print(f"DEBUG: Found Lesson for GC Course ID {gc_course_id}: {lesson is not None}")
+                                if lesson:
+                                    event_url = url_for('lesson_detail', lesson_id=lesson.id)
+                                else:
+                                    # Fallback to Google Classroom course detail if not imported as a lesson
+                                    event_url = url_for('course_detail', course_id=gc_course_id)
+                                print(f"DEBUG: Generated event_url: {event_url}")
 
                             fullcalendar_events.append({
                                 'title': event_title,
@@ -885,7 +894,7 @@ def kmitl_classroom_link():
 
     if request.method == 'POST':
         kmitl_identifier = request.form.get('kmitl_course_identifier')
-        google_course_id = request.form.get('google_classroom_id')
+        google_course_id = request.form.get('google_classroom_course_id')
 
         if kmitl_identifier and google_course_id:
             linkage = course_linkage_manager.add_linkage(user_id, kmitl_identifier, google_course_id)
