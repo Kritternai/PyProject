@@ -4,55 +4,345 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - Smart Learning Hub</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        /* Custom styles for blur effect, as Bootstrap doesn't have it by default */
+        .modal-backdrop.show {
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px); /* For Safari */
+            opacity: 0.5 !important; /* Adjust opacity as needed */
+        }
+        /* Ensure modal content is scrollable if it overflows */
+        .modal-body {
+            overflow-y: auto;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans leading-normal">
-    <header class="bg-blue-600 text-white p-4 shadow-md">
-        <nav class="container mx-auto flex justify-between items-center">
-            <a href="{{ url_for('index') }}" class="text-2xl font-bold">Smart Learning Hub</a>
-            <div class="space-x-4">
-                <a href="{{ url_for('index') }}" class="hover:underline">Home</a>
-                <a href="{{ url_for('logout') }}" class="hover:underline">Logout</a>
+<body class="bg-light text-dark font-sans leading-normal">
+    <header class="bg-primary text-white p-4 shadow-sm">
+        <nav class="container d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('index') }}" class="text-white text-decoration-none h4 mb-0">Smart Learning Hub</a>
+            <div class="d-flex">
+                <a href="{{ url_for('index') }}" class="text-white text-decoration-none me-3">Home</a>
+                <a href="{{ url_for('logout') }}" class="text-white text-decoration-none">Logout</a>
             </div>
         </nav>
     </header>
-    <main class="container mx-auto mt-8 p-4 bg-white rounded-lg shadow-md">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="mb-4">
-                    {% for category, message in messages %}
-                        <li class="p-3 rounded-md {% if category == 'success' %}bg-green-100 text-green-800{% elif category == 'danger' %}bg-red-100 text-red-800{% elif category == 'info' %}bg-blue-100 text-blue-800{% endif %} mb-2">
-                            {{ message }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
-        <h1 class="text-3xl font-bold text-blue-700 mb-6">My Lessons</h1>
-        <a href="{{ url_for('add_lesson') }}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mb-4 inline-block">Add New Lesson</a>
+    <main class="container mt-4 p-4 bg-white rounded shadow-sm">
+        <div id="flash-messages-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="list-unstyled mb-4">
+                        {% for category, message in messages %}
+                            <li class="alert alert-{{ category }} mb-2" role="alert">
+                                {{ message }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+        </div>
+        <h1 class="h3 text-primary mb-4">My Lessons</h1>
+        <button type="button" class="btn btn-success mb-4" data-bs-toggle="modal" data-bs-target="#lessonModal" data-url="{{ url_for('add_lesson') }}">
+            Add New Lesson
+        </button>
 
         {% if lessons %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            <div id="lessons-list" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-2">
                 {% for lesson in lessons %}
-                    <div class="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
-                        <h2 class="text-xl font-semibold text-blue-600 mb-2">{{ lesson.title }}</h2>
-                        <p class="text-gray-700 text-sm mb-2">Status: <span class="font-medium">{{ lesson.status }}</span></p>
-                        {% if lesson.tags %}
-                            <p class="text-gray-600 text-xs mb-2">Tags: {{ lesson.tags }}</p>
-                        {% endif %}
-                        <div class="flex space-x-2 mt-3">
-                            <a href="{{ url_for('lesson_detail', lesson_id=lesson.id) }}" class="text-blue-500 hover:underline text-sm">View Detail</a>
-                            <a href="{{ url_for('edit_lesson', lesson_id=lesson.id) }}" class="text-yellow-500 hover:underline text-sm">Edit</a>
-                            <form action="{{ url_for('delete_lesson', lesson_id=lesson.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this lesson?');">
-                                <button type="submit" class="text-red-500 hover:underline text-sm bg-transparent border-none p-0 cursor-pointer">Delete</button>
-                            </form>
+                    <div class="col">
+                        <div class="card h-100 lesson-card" id="lesson-{{ lesson.id }}">
+                            <div class="card-body">
+                                <h2 class="card-title h5 text-primary mb-2">{{ lesson.title }}</h2>
+                                <p class="card-text text-sm mb-2">Status: <span class="fw-medium">{{ lesson.status }}</span></p>
+                                {% if lesson.tags %}
+                                    <p class="card-text text-muted text-xs mb-2">Tags: {{ lesson.tags }}</p>
+                                {% endif %}
+                                <div class="d-flex justify-content-start mt-3">
+                                    <button type="button" class="btn btn-link btn-sm text-primary text-decoration-none view-detail-btn me-2" data-bs-toggle="modal" data-bs-target="#lessonModal" data-url="{{ url_for('lesson_detail', lesson_id=lesson.id) }}">
+                                        View Detail
+                                    </button>
+                                    <button type="button" class="btn btn-link btn-sm text-warning text-decoration-none edit-lesson-btn me-2" data-bs-toggle="modal" data-bs-target="#lessonModal" data-url="{{ url_for('edit_lesson', lesson_id=lesson.id) }}">
+                                        Edit
+                                    </button>
+                                    <form class="delete-lesson-form d-inline" data-lesson-id="{{ lesson.id }}">
+                                        <button type="submit" class="btn btn-link btn-sm text-danger text-decoration-none">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 {% endfor %}
             </div>
         {% else %}
-            <p class="text-gray-600">No lessons found. Start by adding a new lesson!</p>
+            <p id="no-lessons-message" class="text-muted">No lessons found. Start by adding a new lesson!</p>
         {% endif %}
     </main>
+
+    <!-- Bootstrap Modal Structure -->
+    <div class="modal fade" id="lessonModal" tabindex="-1" aria-labelledby="lessonModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="lessonModalLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalContent">
+                    <!-- Content will be loaded here -->
+                </div>
+                <div class="modal-footer" id="modalFooter">
+                    <!-- Form buttons or a simple close button will be here -->
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        const lessonModalElement = document.getElementById('lessonModal');
+        const lessonModal = new bootstrap.Modal(lessonModalElement);
+        const modalTitleElement = document.getElementById('lessonModalLabel');
+        const modalContentElement = document.getElementById('modalContent');
+        const modalFooterElement = document.getElementById('modalFooter');
+        const flashMessagesContainer = document.getElementById('flash-messages-container');
+        let lessonsList = document.getElementById('lessons-list');
+        const noLessonsMessage = document.getElementById('no-lessons-message');
+
+        // Function to show flash messages
+        function showFlashMessage(message, category) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${category} alert-dismissible fade show mb-2`;
+            alertDiv.setAttribute('role', 'alert');
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            flashMessagesContainer.prepend(alertDiv); // Add to top
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const bsAlert = bootstrap.Alert.getInstance(alertDiv);
+                if (bsAlert) bsAlert.close();
+                else alertDiv.remove();
+            }, 5000);
+        }
+
+        // Event listener for when the modal is shown
+        lessonModalElement.addEventListener('show.bs.modal', async function (event) {
+            const button = event.relatedTarget; // Button that triggered the modal
+            const url = button.getAttribute('data-url');
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest' // Identify as AJAX request
+                    }
+                });
+                const html = await response.text();
+                modalContentElement.innerHTML = html;
+
+                // Extract title from the loaded content's h1 and set modal title
+                const h1Element = modalContentElement.querySelector('h1');
+                if (h1Element) {
+                    modalTitleElement.textContent = h1Element.textContent;
+                    h1Element.remove(); // Remove the h1 from the content as it's now in the modal header
+                } else {
+                    modalTitleElement.textContent = 'Lesson'; // Default title
+                }
+
+                // Attach form submission listener if a form exists in the modal
+                const form = modalContentElement.querySelector('form');
+                if (form) {
+                    // Remove existing footer buttons if any, and add form-specific buttons
+                    modalFooterElement.innerHTML = '';
+                    const submitButton = document.createElement('button');
+                    submitButton.type = 'submit';
+                    submitButton.className = 'btn btn-primary';
+                    submitButton.textContent = form.querySelector('button[type="submit"]') ? form.querySelector('button[type="submit"]').textContent : 'Save';
+                    submitButton.addEventListener('click', () => form.requestSubmit()); // Trigger form submission
+
+                    const cancelButton = document.createElement('button');
+                    cancelButton.type = 'button';
+                    cancelButton.className = 'btn btn-secondary';
+                    cancelButton.textContent = 'Cancel';
+                    cancelButton.setAttribute('data-bs-dismiss', 'modal');
+
+                    modalFooterElement.appendChild(submitButton);
+                    modalFooterElement.appendChild(cancelButton);
+
+                    form.addEventListener('submit', handleModalFormSubmit);
+                } else {
+                    // For detail view, just show a close button
+                    modalFooterElement.innerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>';
+                }
+
+            } catch (error) {
+                console.error('Error fetching modal content:', error);
+                showFlashMessage('Failed to load content.', 'danger');
+                lessonModal.hide(); // Hide modal on error
+            }
+        });
+
+        // Event listener for when the modal is hidden
+        lessonModalElement.addEventListener('hidden.bs.modal', function () {
+            modalContentElement.innerHTML = ''; // Clear content
+            modalTitleElement.textContent = ''; // Clear title
+            modalFooterElement.innerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>'; // Reset footer
+        });
+
+        // Handle form submission within the modal
+        async function handleModalFormSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const url = form.action;
+            const method = form.method;
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await response.json(); // Assuming Flask returns JSON for form submissions
+
+                if (data.success) {
+                    showFlashMessage(data.message, 'success');
+                    lessonModal.hide(); // Hide modal on success
+                    updateLessonList(data.lesson_id, data.lesson_title, data.lesson_status, data.lesson_tags);
+                } else {
+                    showFlashMessage(data.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                showFlashMessage('An unexpected error occurred.', 'danger');
+            }
+        }
+
+        // Update lesson list after add/edit
+        function updateLessonList(lessonId, title, status, tags) {
+            let lessonCard = document.getElementById(`lesson-${lessonId}`);
+            if (lessonCard) {
+                // Update existing card
+                lessonCard.querySelector('h2').textContent = title;
+                lessonCard.querySelector('span').textContent = status;
+                let tagsP = lessonCard.querySelector('.card-text.text-muted');
+                if (tags) {
+                    if (!tagsP) {
+                        tagsP = document.createElement('p');
+                        tagsP.className = 'card-text text-muted text-xs mb-2';
+                        lessonCard.querySelector('.card-body').insertBefore(tagsP, lessonCard.querySelector('.d-flex'));
+                    }
+                    tagsP.textContent = `Tags: ${tags}`;
+                } else if (tagsP) {
+                    tagsP.remove();
+                }
+            } else {
+                // Add new card
+                if (noLessonsMessage) {
+                    noLessonsMessage.remove();
+                }
+                if (!lessonsList) {
+                    const main = document.querySelector('main');
+                    lessonsList = document.createElement('div');
+                    lessonsList.id = 'lessons-list';
+                    lessonsList.className = 'row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-2';
+                    main.appendChild(lessonsList);
+                }
+
+                const newLessonCardHtml = `
+                    <div class="col">
+                        <div class="card h-100 lesson-card" id="lesson-${lessonId}">
+                            <div class="card-body">
+                                <h2 class="card-title h5 text-primary mb-2">${title}</h2>
+                                <p class="card-text text-sm mb-2">Status: <span class="fw-medium">${status}</span></p>
+                                ${tags ? `<p class="card-text text-muted text-xs mb-2">Tags: ${tags}</p>` : ''}
+                                <div class="d-flex justify-content-start mt-3">
+                                    <button type="button" class="btn btn-link btn-sm text-primary text-decoration-none view-detail-btn me-2" data-bs-toggle="modal" data-bs-target="#lessonModal" data-url="{{ url_for('lesson_detail', lesson_id=0) }}".replace('0', lessonId)}>
+                                        View Detail
+                                    </button>
+                                    <button type="button" class="btn btn-link btn-sm text-warning text-decoration-none edit-lesson-btn me-2" data-bs-toggle="modal" data-bs-target="#lessonModal" data-url="{{ url_for('edit_lesson', lesson_id=0) }}".replace('0', lessonId)}>
+                                        Edit
+                                    </button>
+                                    <form class="delete-lesson-form d-inline" data-lesson-id="${lessonId}">
+                                        <button type="submit" class="btn btn-link btn-sm text-danger text-decoration-none">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                lessonsList.insertAdjacentHTML('afterbegin', newLessonCardHtml);
+                // Re-attach event listeners for the newly added card
+                const newCardElement = document.getElementById(`lesson-${lessonId}`);
+                if (newCardElement) {
+                    attachEventListenersToCard(newCardElement);
+                }
+            }
+        }
+
+        // Handle delete lesson
+        async function handleDeleteLesson(event) {
+            event.preventDefault();
+            if (!confirm('Are you sure you want to delete this lesson?')) {
+                return;
+            }
+
+            const form = event.target;
+            const lessonId = form.getAttribute('data-lesson-id');
+            const url = `{{ url_for('delete_lesson', lesson_id=0) }}`.replace('0', lessonId);
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await response.json(); // Assuming Flask returns JSON for delete
+
+                if (data.success) {
+                    showFlashMessage(data.message, 'success');
+                    document.getElementById(`lesson-${lessonId}`).closest('.col').remove();
+                    if (lessonsList.children.length === 0) {
+                        const main = document.querySelector('main');
+                        const newNoLessonsMessage = document.createElement('p');
+                        newNoLessonsMessage.id = 'no-lessons-message';
+                        newNoLessonsMessage.className = 'text-muted';
+                        newNoLessonsMessage.textContent = 'No lessons found. Start by adding a new lesson!';
+                        main.appendChild(newNoLessonsMessage);
+                    }
+                } else {
+                    showFlashMessage(data.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting lesson:', error);
+                showFlashMessage('An unexpected error occurred during deletion.', 'danger');
+            }
+        }
+
+        // Attach event listeners to dynamically added/updated cards
+        function attachEventListenersToCard(cardElement) {
+            cardElement.querySelector('.view-detail-btn').addEventListener('click', function() {
+                // Bootstrap's data-bs-toggle="modal" handles opening, just ensure URL is set
+            });
+            cardElement.querySelector('.edit-lesson-btn').addEventListener('click', function() {
+                // Bootstrap's data-bs-toggle="modal" handles opening, just ensure URL is set
+            });
+            cardElement.querySelector('.delete-lesson-form').addEventListener('submit', handleDeleteLesson);
+        }
+
+        // Attach event listeners to existing cards on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.lesson-card').forEach(card => {
+                attachEventListenersToCard(card);
+            });
+        });
+    </script>
 </body>
 </html>
