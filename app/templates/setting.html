@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}Login{% endblock %}
+{% block title %}Setting{% endblock %}
 {% block content %}
 <div class="container py-4">
   <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
       <div class="card shadow-sm">
         <div class="card-body">
-          <h2 class="h4 mb-3">Login</h2>
+          <h2 class="h4 mb-3">Settings</h2>
           {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
               <ul class="mb-4">
@@ -18,20 +18,15 @@
               </ul>
             {% endif %}
           {% endwith %}
-          <form method="POST" action="{{ url_for('login') }}">
-            <div class="mb-3">
-              <label for="username" class="form-label">Username</label>
-              <input type="text" id="username" name="username" required class="form-control">
-            </div>
-            <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
-              <input type="password" id="password" name="password" required class="form-control">
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Login</button>
-          </form>
+          <p class="mb-3">This is the basic setup for your web application.</p>
+          {% if 'user_id' in session %}
+            <p class="text-success">You are logged in.</p>
+          {% else %}
+            <p>Please <a href="{{ url_for('login') }}" class="text-primary">login</a> or <a href="{{ url_for('register') }}" class="text-primary">register</a>.</p>
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
 </div>
-{% endblock %}
+{% endblock %} 

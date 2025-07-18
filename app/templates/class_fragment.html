@@ -1,12 +1,9 @@
-{% extends 'base.html' %}
-{% block title %}My Lessons{% endblock %}
-{% block content %}
 <div class="container-fluid">
   <h1 class="h3 text-primary mb-4">My Lessons</h1>
   <div class="row g-4">
     <!-- Card เพิ่มวิชา -->
     <div class="col-md-3">
-      <div class="card add-class-card text-center" onclick="loadPage('class/add')">
+      <div class="card add-class-card text-center" style="cursor:pointer;" onclick="loadPage('class/add')">
         <div class="card-body d-flex justify-content-center align-items-center" style="height: 150px;">
           <span class="display-4">+</span>
         </div>
@@ -16,7 +13,7 @@
     <!-- Card วิชาแต่ละอัน -->
     {% for lesson in lessons %}
     <div class="col-md-3">
-      <div class="card lesson-card h-100" onclick="loadLessonDetail({{ lesson.id }})">
+      <div class="card lesson-card h-100" style="cursor:pointer;" onclick="loadLessonDetail({{ lesson.id }})">
         <div class="card-body">
           <h5 class="card-title">{{ lesson.title }}</h5>
           <p class="card-text">{{ lesson.description }}</p>
@@ -25,5 +22,4 @@
     </div>
     {% endfor %}
   </div>
-</div>
-{% endblock %}
+</div> 

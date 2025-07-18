@@ -53,114 +53,84 @@ def login_required(f):
 @app.route('/')
 @app.route('/index')
 def index():
+    return render_template('base.html')
+
+@app.route('/partial/dashboard')
+def partial_dashboard():
+    user = None
     if 'user_id' in session:
-        user_id = session['user_id'] # Define user_id here
+        user_id = session['user_id']
         user = user_manager.get_user_by_id(user_id)
-        if user:
-            # Fetch Google Classroom data to display on the dashboard
-            google_classroom_data = []
-            imported_data_gc = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
-            if imported_data_gc and 'courses' in imported_data_gc.data:
-                google_classroom_data = imported_data_gc.data['courses']
+    return render_template('dashboard_fragment.html', user=user)
 
-            # Fetch KMITL Study Table data for the dashboard
-            kmitl_studytable_data = None
-            imported_data_kmitl = ImportedData.query.filter_by(user_id=user_id, platform='kmitl_studytable').order_by(ImportedData.imported_at.desc()).first()
-            if imported_data_kmitl:
-                kmitl_studytable_data = imported_data_kmitl.data
-            print(f"DEBUG: kmitl_studytable_data: {kmitl_studytable_data}")
+@app.route('/partial/dev')
+def partial_dev():
+    user = None
+    if 'user_id' in session:
+        user_id = session['user_id']
+        user = user_manager.get_user_by_id(user_id)
+        google_classroom_data = []
+        imported_data_gc = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
+        if imported_data_gc and 'courses' in imported_data_gc.data:
+            google_classroom_data = imported_data_gc.data['courses']
+        kmitl_studytable_data = None
+        imported_data_kmitl = ImportedData.query.filter_by(user_id=user_id, platform='kmitl_studytable').order_by(ImportedData.imported_at.desc()).first()
+        if imported_data_kmitl:
+            kmitl_studytable_data = imported_data_kmitl.data
+        fullcalendar_events = []
+        today = datetime.date.today()
+        first_day_of_current_month = today.replace(day=1)
+        last_month_end = first_day_of_current_month - datetime.timedelta(days=1)
+        initial_date_day = 30
+        if initial_date_day > last_month_end.day:
+            initial_date_day = last_month_end.day
+        initial_date = last_month_end.replace(day=initial_date_day)
+        day_to_date_map = {
+            'จ': initial_date + datetime.timedelta(days=(0 - initial_date.weekday()) % 7),
+            'อ': initial_date + datetime.timedelta(days=(1 - initial_date.weekday()) % 7),
+            'พ': initial_date + datetime.timedelta(days=(2 - initial_date.weekday()) % 7),
+            'พฤ': initial_date + datetime.timedelta(days=(3 - initial_date.weekday()) % 7),
+            'ศ': initial_date + datetime.timedelta(days=(4 - initial_date.weekday()) % 7),
+            'ส': initial_date + datetime.timedelta(days=(5 - initial_date.weekday()) % 7),
+            'อา': initial_date + datetime.timedelta(days=(6 - initial_date.weekday()) % 7)
+        }
+        for day, date_obj in day_to_date_map.items():
+            day_to_date_map[day] = date_obj.strftime('%Y-%m-%d')
+        if kmitl_studytable_data and 'courses' in kmitl_studytable_data:
+            for course_idx, course in enumerate(kmitl_studytable_data['courses']):
+                for sched in course.get('schedule', []):
+                    day_thai_abbr = sched.get('day', '').split('.')[0].strip()
+                    if day_thai_abbr in day_to_date_map:
+                        base_date = day_to_date_map[day_thai_abbr]
+                        start_time_str = sched.get('time', '').split('-')[0].strip()
+                        end_time_str = sched.get('time', '').split('-')[1].strip()
+                        event_start = f"{base_date}T{start_time_str}:00"
+                        event_end = f"{base_date}T{end_time_str}:00"
+                        event_title = f"{course.get('course_name', '')} ({course.get('course_code', '')})"
+                        event_description = f"Room: { ', '.join(course.get('room_raw', []))} / Building: { ', '.join(course.get('building_raw', []))}"
+                        event_url = None
+                        fullcalendar_events.append({
+                            'title': event_title,
+                            'start': event_start,
+                            'end': event_end,
+                            'description': event_description,
+                            'url': event_url,
+                            'extendedProps': {
+                                'room': ', '.join(course.get('room_raw', [])),
+                                'building': ', '.join(course.get('building_raw', [])),
+                                'credits': course.get('credits', '')
+                            }
+                        })
+        return render_template('dev_fragment.html', user=user, google_classroom_data=google_classroom_data, fullcalendar_events=fullcalendar_events, initial_date=initial_date.strftime('%Y-%m-%d'))
+    return render_template('dev_fragment.html', user=None, google_classroom_data=[], fullcalendar_events=[], initial_date=None)
 
-            # Fetch existing linkages for KMITL courses
-            existing_linkages = course_linkage_manager.get_all_linkages_by_user(user_id)
-            linkage_map = {link.kmitl_course_identifier: link.google_classroom_id for link in existing_linkages}
-
-            # Prepare course blocks for timetable display (FullCalendar format)
-            fullcalendar_events = []
-            # Use a fixed week for display purposes (e.g., starting Monday, Jan 6, 2025)
-            # This is just for FullCalendar to correctly place events on days of the week
-            day_to_date_map = {
-                'จ': '2025-01-06', # Monday
-                'อ': '2025-01-07', # Tuesday
-                'พ': '2025-01-08', # Wednesday
-                'พฤ': '2025-01-09', # Thursday
-                'ศ': '2025-01-10', # Friday
-                'ส': '2025-01-11', # Saturday
-                'อา': '2025-01-12'  # Sunday
-            }
-
-            # Calculate initial date for FullCalendar (30th of last month)
-            today = datetime.date.today()
-            first_day_of_current_month = today.replace(day=1)
-            last_month_end = first_day_of_current_month - datetime.timedelta(days=1)
-            initial_date_day = 30
-            if initial_date_day > last_month_end.day:
-                initial_date_day = last_month_end.day # Ensure day exists in last month
-            initial_date = last_month_end.replace(day=initial_date_day)
-
-            # Use a dynamic week for display purposes based on initial_date
-            day_to_date_map = {
-                'จ': initial_date + datetime.timedelta(days=(0 - initial_date.weekday()) % 7), # Monday of the week containing initial_date
-                'อ': initial_date + datetime.timedelta(days=(1 - initial_date.weekday()) % 7),
-                'พ': initial_date + datetime.timedelta(days=(2 - initial_date.weekday()) % 7),
-                'พฤ': initial_date + datetime.timedelta(days=(3 - initial_date.weekday()) % 7),
-                'ศ': initial_date + datetime.timedelta(days=(4 - initial_date.weekday()) % 7),
-                'ส': initial_date + datetime.timedelta(days=(5 - initial_date.weekday()) % 7),
-                'อา': initial_date + datetime.timedelta(days=(6 - initial_date.weekday()) % 7)
-            }
-            # Convert datetime objects to string for JSON serialization
-            for day, date_obj in day_to_date_map.items():
-                day_to_date_map[day] = date_obj.strftime('%Y-%m-%d')
-            print(f"DEBUG: Final day_to_date_map: {day_to_date_map}") # Add this line
-
-            if kmitl_studytable_data and 'courses' in kmitl_studytable_data:
-                for course_idx, course in enumerate(kmitl_studytable_data['courses']):
-                    kmitl_identifier = f"{kmitl_studytable_data.get('student_id', '')}_{kmitl_studytable_data.get('academic_year', '')}_{kmitl_studytable_data.get('semester', '')}_{course.get('course_code', '')}"
-                    gc_course_id = linkage_map.get(kmitl_identifier)
-                    print(f"DEBUG: KMITL Identifier: {kmitl_identifier}, GC Course ID from linkage_map: {gc_course_id}")
-
-                    for sched in course.get('schedule', []):
-                        day_thai_abbr = sched.get('day', '').split('.')[0].strip() # Added .strip()
-                        print(f"DEBUG: Processing schedule for day: '{day_thai_abbr}'") # Added quotes
-                        print(f"DEBUG: day_to_date_map keys: {day_to_date_map.keys()}") # Added this line
-                        if day_thai_abbr in day_to_date_map:
-                            base_date = day_to_date_map[day_thai_abbr]
-                            
-                            start_time_str = sched.get('time', '').split('-')[0].strip()
-                            end_time_str = sched.get('time', '').split('-')[1].strip()
-                            
-                            event_start = f"{base_date}T{start_time_str}:00"
-                            event_end = f"{base_date}T{end_time_str}:00"
-
-                            event_title = f"{course.get('course_name', '')} ({course.get('course_code', '')})"
-                            event_description = f"Room: { ', '.join(course.get('room_raw', []))} / Building: { ', '.join(course.get('building_raw', []))}"
-
-                            event_url = None
-                            if gc_course_id:
-                                # Check if this Google Classroom course has been imported as a Lesson
-                                lesson = Lesson.query.filter_by(user_id=user_id, google_classroom_id=gc_course_id).first()
-                                print(f"DEBUG: Found Lesson for GC Course ID {gc_course_id}: {lesson is not None}")
-                                if lesson:
-                                    event_url = url_for('lesson_detail', lesson_id=lesson.id)
-                                else:
-                                    # Fallback to Google Classroom course detail if not imported as a lesson
-                                    event_url = url_for('course_detail', course_id=gc_course_id)
-                                print(f"DEBUG: Generated event_url: {event_url}")
-
-                            fullcalendar_events.append({
-                                'title': event_title,
-                                'start': event_start,
-                                'end': event_end,
-                                'description': event_description,
-                                'url': event_url,
-                                'extendedProps': {
-                                    'room': ', '.join(course.get('room_raw', [])),
-                                    'building': ', '.join(course.get('building_raw', [])),
-                                    'credits': course.get('credits', '')
-                                }
-                            })
-
-            return render_template('dashboard.html', title='Dashboard', user=user, google_classroom_data=google_classroom_data, kmitl_studytable_data=kmitl_studytable_data, linkage_map=linkage_map, fullcalendar_events=fullcalendar_events, initial_date=initial_date.strftime('%Y-%m-%d'))
-    return render_template('index.html', title='Home')
+@app.route('/partial/class')
+def partial_class():
+    lessons = []
+    if 'user_id' in session:
+        user_id = session['user_id']
+        lessons = lesson_manager.get_lessons_by_user(user_id)
+    return render_template('class_fragment.html', lessons=lessons)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
