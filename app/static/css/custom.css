@@ -1,0 +1,43 @@
+/* ปรับแต่งสีหลัก */
+.bg-primary, .btn-primary {
+    background-color: #003B8E !important;
+    border-color: #003B8E !important;
+}
+.text-primary {
+    color: #003B8E !important;
+}
+.sidebar {
+    background-color: #003B8E !important;
+}
+.sidebar .nav-link.active, .sidebar .nav-link:focus {
+    background: #e3eefd;
+    color: #003B8E !important;
+    font-weight: bold;
+    border-radius: 0.5rem;
+}
+.sidebar .nav-link {
+    transition: background 0.2s, color 0.2s;
+}
+.sidebar .nav-link:hover {
+    background: #e3eefd;
+    color: #003B8E !important;
+}
+.card.add-class-card {
+    border: 2px dashed #003B8E;
+    background: #f5faff;
+    color: #003B8E;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+.card.add-class-card:hover {
+    box-shadow: 0 0 0 2px #003B8E33;
+    background: #e3eefd;
+}
+.card.lesson-card {
+    border: 1px solid #003B8E22;
+    transition: box-shadow 0.2s;
+}
+.card.lesson-card:hover {
+    box-shadow: 0 2px 12px #003B8E22;
+    border-color: #003B8E;
+} 
