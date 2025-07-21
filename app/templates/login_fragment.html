@@ -1,24 +1,14 @@
-{% extends 'base.html' %}
-{% block title %}Login{% endblock %}
-{% block content %}
 <div class="container py-4">
   <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
       <div class="card shadow-sm">
         <div class="card-body">
           <h2 class="h4 mb-3">Login</h2>
-          {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-              <ul class="mb-4">
-                {% for category, message in messages %}
-                  <li class="p-3 rounded-md {% if category == 'success' %}bg-success-subtle text-success{% elif category == 'danger' %}bg-danger-subtle text-danger{% elif category == 'info' %}bg-info-subtle text-info{% endif %} mb-2">
-                    {{ message }}
-                  </li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          {% endwith %}
-          <form method="POST" action="{{ url_for('login') }}">
+          {% if message %}
+            <div class="alert {% if success %}alert-success{% else %}alert-danger{% endif %}">{{ message }}</div>
+          {% endif %}
+          {% if not success %}
+          <form method="POST" action="/partial/login" id="login-form">
             <div class="mb-3">
               <label for="username" class="form-label">Username</label>
               <input type="text" id="username" name="username" required class="form-control">
@@ -29,9 +19,9 @@
             </div>
             <button type="submit" class="btn btn-primary w-100">Login</button>
           </form>
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
-</div>
-{% endblock %}
+</div> 

@@ -5,10 +5,9 @@ import uuid
 class UserManager:
     def add_user(self, username, email, password):
         if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
-            return None  # User with this username or email already exists
-        
+            return None
         user = User(username=username, email=email, password=password)
-        user.id = str(uuid.uuid4()) # Assign UUID
+        user.id = str(uuid.uuid4())
         db.session.add(user)
         db.session.commit()
         return user
@@ -26,20 +25,16 @@ class UserManager:
         user = self.get_user_by_id(user_id)
         if not user:
             return False
-
         if new_username and new_username != user.username:
             if User.query.filter_by(username=new_username).first():
-                return False # Username already exists
+                return False
             user.username = new_username
-        
         if new_email and new_email != user.email:
             if User.query.filter_by(email=new_email).first():
-                return False # Email already exists
+                return False
             user.email = new_email
-
         if new_password:
             user.set_password(new_password)
-        
         db.session.commit()
         return True
 
@@ -49,4 +44,5 @@ class UserManager:
             db.session.delete(user)
             db.session.commit()
             return True
-        return False
+        return False 
+ 

@@ -7,9 +7,9 @@ class Authenticator:
     def login(self, username, password):
         user = self.user_manager.get_user_by_username(username)
         if user and user.check_password(password):
-            return user  # Return the user object if login is successful
-        return None  # Return None if login fails
+            return user
+        return None
 
     def register(self, username, email, password):
         user = self.user_manager.add_user(username, email, password)
-        return user # Returns User object on success, None on failure (e.g., user exists)
+        return user 

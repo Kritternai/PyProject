@@ -1,0 +1,7 @@
+{% if 'user_id' in session %}
+  <div class="mb-2 text-center text-white">Welcome, {{ g.user.username if g.user else 'User' }}!</div>
+  <a href="{{ url_for('logout') }}" class="btn btn-danger w-100 mb-2">Logout</a>
+{% else %}
+  <a href="#" onclick="loadPage('login');return false;" class="btn btn-primary w-100 mb-2">Login</a>
+  <a href="#" onclick="loadPage('register');return false;" class="btn btn-outline-primary w-100">Register</a>
+{% endif %} 
