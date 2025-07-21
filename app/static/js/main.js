@@ -12,6 +12,7 @@ function loadPage(page) {
           setupLessonForms();
           setupLessonEditForm(); // <-- เพิ่มตรงนี้
           setupSectionForms(); // เรียก setupSectionForms หลัง loadPage
+          setupSectionFilter(); // เรียก setupSectionFilter() หลัง loadPage
           // Auto show Lesson Content tab and scroll if on lesson detail
           if (page.startsWith('class/')) {
             // Activate Content tab
@@ -272,6 +273,14 @@ function setupSectionForms() {
     // Submit add section form
     addSectionForm.onsubmit = function(e) {
       e.preventDefault();
+      const typeSelect = document.getElementById('type');
+      const type = typeSelect ? typeSelect.value : '';
+      const filesInput = document.getElementById('files');
+      if (type === 'file' && filesInput && filesInput.files.length === 0) {
+        alert('Please select at least one file.');
+        filesInput.focus();
+        return;
+      }
       const formData = new FormData(addSectionForm);
       fetch(addSectionForm.action, {
         method: 'POST',
@@ -295,6 +304,42 @@ function setupSectionForms() {
       });
     };
   }
+}
+
+function setupSectionFilter() {
+  const filter = document.getElementById('section-type-filter');
+  const keywordInput = document.getElementById('section-keyword-filter');
+  const dueInput = document.getElementById('section-due-filter');
+  function doFilter() {
+    const val = filter ? filter.value : 'all';
+    const keyword = keywordInput ? keywordInput.value.trim().toLowerCase() : '';
+    const due = dueInput ? dueInput.value : '';
+    const cards = document.querySelectorAll('#lesson-sections-list .card');
+    cards.forEach(card => {
+      const type = card.getAttribute('data-type');
+      const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+      const content = card.querySelector('.mt-2')?.textContent.toLowerCase() || '';
+      let show = (val === 'all' || type === val);
+      if (keyword) {
+        show = show && (title.includes(keyword) || content.includes(keyword));
+      }
+      if (due && type === 'assignment') {
+        // หา due date ใน card
+        const dueText = card.querySelector('.text-danger.small')?.textContent || '';
+        // คาดว่า dueText มีรูปแบบ 'Due: YYYY-MM-DD HH:MM'
+        const match = dueText.match(/Due:\s*(\d{4}-\d{2}-\d{2})/);
+        if (match && match[1]) {
+          show = show && (match[1] === due);
+        } else {
+          show = false;
+        }
+      }
+      card.parentElement.style.display = show ? '' : 'none';
+    });
+  }
+  if (filter) filter.onchange = doFilter;
+  if (keywordInput) keywordInput.onkeyup = doFilter;
+  if (dueInput) dueInput.onchange = doFilter;
 }
 
 // Edit Section (inline)
