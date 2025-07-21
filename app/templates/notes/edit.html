@@ -10,26 +10,67 @@
 <body class="min-h-screen p-6 bg-gray-100">
     <div class="max-w-4xl p-6 mx-auto bg-white rounded shadow">
         <h1 class="mb-6 text-3xl font-bold">{{ title }}</h1>
-        <form method="POST" action="{{ url_for('edit_note', note_id=note.id) }}">
+        <form method="POST" action="{{ url_for('edit_note', note_id=note.id) }}" enctype="multipart/form-data">
             <div class="mb-4">
-                <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Title:</label>
-                <input type="text" id="title" name="title" value="{{ note.title }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                <label for="title" class="block mb-2 text-sm font-bold text-gray-700">Title:</label>
+                <input type="text" id="title" name="title" value="{{ note.title }}" class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline" required>
             </div>
             <div class="mb-4">
-                <label for="content" class="block text-gray-700 text-sm font-bold mb-2">Content:</label>
-                <textarea id="content" name="content" rows="10" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>{{ note.content }}</textarea>
+                <label for="content" class="block mb-2 text-sm font-bold text-gray-700">Content:</label>
+                <textarea id="content" name="content" rows="10" class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline" required>{{ note.content }}</textarea>
             </div>
             <div class="mb-4">
-                <label for="note_date" class="block text-gray-700 text-sm font-bold mb-2">Date (Optional):</label>
-                <input type="text" id="note_date" name="note_date" value="{{ note.note_date.strftime('%Y-%m-%d') if note.note_date else '' }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <label for="status" class="block mb-2 text-sm font-bold text-gray-700">Status:</label>
+                <select id="status" name="status"
+                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
+                    required>
+                    <option value="not started" {% if note.status == 'not started' %}selected{% endif %}>Not started</option>
+                    <option value="in progress" {% if note.status == 'in progress' %}selected{% endif %}>In progress</option>
+                    <option value="completed" {% if note.status == 'completed' %}selected{% endif %}>Completed</option>
+                </select>
             </div>
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Update Note</button>
+            <div class="mb-4">
+                <label for="tag" class="block mb-2 text-sm font-bold text-gray-700">Tag:</label>
+                <input type="text" id="tag" name="tag" value="{{ note.tags or '' }}"
+                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="mb-4">
+                <label for="note_date" class="block mb-2 text-sm font-bold text-gray-700">Date (Optional):</label>
+                <input type="text" id="note_date" name="note_date"
+                    value="{{ note.note_date.strftime('%Y-%m-%d') if note.note_date else '' }}"
+                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="mb-4">
+                <label for="due_date" class="block mb-2 text-sm font-bold text-gray-700">Date (Deadline):</label>
+                <input type="text" id="due_date" name="due_date"
+                    value="{{ note.due_date.strftime('%Y-%m-%d') if note.due_date else '' }}"
+                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
+            </div>
+            <div class="mb-4">
+                <label for="image" class="block mb-2 text-sm font-bold text-gray-700">Image:</label>
+                {% if image_url %}
+                <div class="mb-2">
+                    <img src="{{ image_url }}" alt="Current Image">
+                </div>
+                <div>
+                    <input type="checkbox" id="remove_image" name="remove_image" value="1">
+                    <label for="remove_image">Remove image</label>
+                </div>
+                {% endif %}
+                <input type="file" id="image" name="image" accept="image/*"
+                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
+            </div>
+            <button type="submit" class="px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline">Update Note</button>
             <a href="{{ url_for('view_note', note_id=note.id) }}" class="ml-4 text-gray-600 hover:underline">Cancel</a>
         </form>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         flatpickr("#note_date", {
+            dateFormat: "Y-m-d",
+            allowInput: true
+        });
+        flatpickr("#due_date", {
             dateFormat: "Y-m-d",
             allowInput: true
         });

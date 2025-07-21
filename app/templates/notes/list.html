@@ -14,15 +14,28 @@
             + Create New Note
         </a>
         {% if notes %}
-        <ul class="divide-y divide-gray-200">
+        <ul class="p-12 divide-y divide-gray-200">
             {% for note in notes %}
-            <li class="py-4">
+            <li class="py-4 border border-gray-200 bg-white rounded-2xl hover:shadow-xl transition duration-300 ease-in-out w-[200px] h-[200px] hover:scale-105">
                 <a href="{{ url_for('view_note', note_id=note.id) }}"
                     class="text-xl font-semibold text-blue-700 hover:underline">
                     {{ note.title }}
                 </a>
-                <p class="mt-1 text-sm text-gray-600">{{ note.note_date or 'No Date' }}</p>
                 <p class="mt-2 text-gray-800 line-clamp-3">{{ note.content|safe }}</p>
+                <p class="mt-2 text-gray-800 line-clamp-3">
+                    <span class="font-semibold">Tag:</span>
+                    {{ note.tags or '-' }}
+                </p>
+                <p class="mt-2 text-gray-800 line-clamp-3">
+                    <span class="font-semibold">Status:</span>
+                    {{ note.status or '-' }}
+                </p>
+                <p class="mt-1 text-sm text-gray-600">
+                Date: {{ note.note_date.strftime('%Y-%m-%d') if note.note_date else 'No Date' }}
+                </p>
+                <p class="mt-1 text-sm text-gray-600">
+                Due: {{ note.due_date.strftime('%Y-%m-%d') if note.due_date else 'No Due Date' }}
+                </p>
                 <div class="mt-2">
                     <a href="{{ url_for('edit_note', note_id=note.id) }}" class="text-blue-500 hover:underline">Edit</a>
                     <form action="{{ url_for('delete_note', note_id=note.id) }}" method="POST" class="inline ml-2">
