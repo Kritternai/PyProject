@@ -70,6 +70,31 @@ function setupAuthForms() {
       .catch(() => showAuthError(registerForm, 'Registration failed.'));
     };
   }
+  // change password
+  const changePasswordForm = document.getElementById('change-password-form');
+  if (changePasswordForm) {
+    changePasswordForm.onsubmit = function(e) {
+      e.preventDefault();
+      const formData = new FormData(changePasswordForm);
+      fetch('/partial/change_password', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          loadPage(data.redirect || 'profile');
+        } else {
+          showAuthError(changePasswordForm, data.message);
+        }
+      })
+      .catch(() => showAuthError(changePasswordForm, 'Change password failed.'));
+    };
+  }
 }
 
 function showAuthError(form, message) {
