@@ -1,12 +1,85 @@
 function loadPage(page) {
   fetch('/partial/' + page)
-    .then(response => response.text())
-    .then(html => {
-      document.getElementById('main-content').innerHTML = html;
-      if (page === 'dashboard') {
-        setupFullCalendar();
+    .then(response => {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return response.json().then(handleJsonRedirect);
+      } else {
+        return response.text().then(html => {
+          document.getElementById('main-content').innerHTML = html;
+          if (page === 'dashboard') setupFullCalendar();
+          setupAuthForms();
+        });
       }
     });
+}
+
+function updateSidebarAuth() {
+  fetch('/partial/sidebar-auth')
+    .then(r => r.text())
+    .then(html => {
+      document.querySelector('.sidebar-auth').innerHTML = html;
+    });
+}
+
+function handleJsonRedirect(data) {
+  if (data.redirect) {
+    updateSidebarAuth();
+    loadPage(data.redirect);
+  } else if (data.message) {
+    alert(data.message);
+  }
+}
+
+function setupAuthForms() {
+  // login
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) {
+    loginForm.onsubmit = function(e) {
+      e.preventDefault();
+      const formData = new FormData(loginForm);
+      fetch('/partial/login', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(handleJsonRedirect)
+      .catch(() => showAuthError(loginForm, 'Login failed.'));
+    };
+  }
+  // register
+  const registerForm = document.getElementById('register-form');
+  if (registerForm) {
+    registerForm.onsubmit = function(e) {
+      e.preventDefault();
+      const formData = new FormData(registerForm);
+      fetch('/partial/register', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(handleJsonRedirect)
+      .catch(() => showAuthError(registerForm, 'Registration failed.'));
+    };
+  }
+}
+
+function showAuthError(form, message) {
+  let alert = form.parentNode.querySelector('.alert');
+  if (!alert) {
+    alert = document.createElement('div');
+    alert.className = 'alert alert-danger mt-2';
+    form.parentNode.insertBefore(alert, form);
+  }
+  alert.textContent = message;
 }
 
 function loadLessonDetail(lessonId) {
@@ -58,4 +131,10 @@ function setupFullCalendar() {
     });
     calendar.render();
   }
-} 
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  setupAuthForms();
+});
+// ถ้าใช้ SPA หรือ htmx ให้เรียก checkRegisterRedirect หลังเปลี่ยนหน้า
+// หรือเรียก checkRegisterRedirect() หลังทุกครั้งที่ SPA เปลี่ยนหน้า 

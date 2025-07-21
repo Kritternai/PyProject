@@ -1,15 +1,15 @@
 from app import app, db
-from flask import render_template, request, flash, redirect, url_for, session, jsonify, make_response
+from flask import render_template, request, flash, redirect, url_for, session, jsonify, make_response, g
 import json
-from app.core.user_manager import UserManager
-from app.core.authenticator import Authenticator
 from app.core.lesson_manager import LessonManager
 from app.core.lesson import Lesson # Import Lesson model for query
 from app.core.imported_data import ImportedData # Import ImportedData model
 from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
 from app.core.course_linkage_manager import CourseLinkageManager # Import CourseLinkageManager
-from functools import wraps
 import datetime # Import datetime
+from app.core.user_manager import UserManager
+from app.core.authenticator import Authenticator
+from functools import wraps
 
 # For Google Classroom API
 import os
@@ -20,10 +20,11 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
 # Initialize Managers
-user_manager = UserManager()
-authenticator = Authenticator(user_manager)
 lesson_manager = LessonManager()
 course_linkage_manager = CourseLinkageManager() # Initialize CourseLinkageManager
+
+user_manager = UserManager()
+authenticator = Authenticator(user_manager)
 
 # Google Classroom API Scopes - MATCHING EXACTLY WHAT GOOGLE RETURNS IN THE ERROR LOG
 SCOPES = [
@@ -45,10 +46,17 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
+            if request.accept_mimetypes['application/json']:
+                return jsonify(success=False, message='Login required', redirect='login'), 401
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
+
+@app.before_request
+def load_logged_in_user():
+    user_id = session.get('user_id')
+    g.user = user_manager.get_user_by_id(user_id) if user_id else None
 
 @app.route('/')
 @app.route('/index')
@@ -57,11 +65,7 @@ def index():
 
 @app.route('/partial/dashboard')
 def partial_dashboard():
-    user = None
-    if 'user_id' in session:
-        user_id = session['user_id']
-        user = user_manager.get_user_by_id(user_id)
-    return render_template('dashboard_fragment.html', user=user)
+    return render_template('dashboard_fragment.html', user=g.user)
 
 @app.route('/partial/dev')
 def partial_dev():
@@ -69,60 +73,7 @@ def partial_dev():
     if 'user_id' in session:
         user_id = session['user_id']
         user = user_manager.get_user_by_id(user_id)
-        google_classroom_data = []
-        imported_data_gc = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
-        if imported_data_gc and 'courses' in imported_data_gc.data:
-            google_classroom_data = imported_data_gc.data['courses']
-        kmitl_studytable_data = None
-        imported_data_kmitl = ImportedData.query.filter_by(user_id=user_id, platform='kmitl_studytable').order_by(ImportedData.imported_at.desc()).first()
-        if imported_data_kmitl:
-            kmitl_studytable_data = imported_data_kmitl.data
-        fullcalendar_events = []
-        today = datetime.date.today()
-        first_day_of_current_month = today.replace(day=1)
-        last_month_end = first_day_of_current_month - datetime.timedelta(days=1)
-        initial_date_day = 30
-        if initial_date_day > last_month_end.day:
-            initial_date_day = last_month_end.day
-        initial_date = last_month_end.replace(day=initial_date_day)
-        day_to_date_map = {
-            'จ': initial_date + datetime.timedelta(days=(0 - initial_date.weekday()) % 7),
-            'อ': initial_date + datetime.timedelta(days=(1 - initial_date.weekday()) % 7),
-            'พ': initial_date + datetime.timedelta(days=(2 - initial_date.weekday()) % 7),
-            'พฤ': initial_date + datetime.timedelta(days=(3 - initial_date.weekday()) % 7),
-            'ศ': initial_date + datetime.timedelta(days=(4 - initial_date.weekday()) % 7),
-            'ส': initial_date + datetime.timedelta(days=(5 - initial_date.weekday()) % 7),
-            'อา': initial_date + datetime.timedelta(days=(6 - initial_date.weekday()) % 7)
-        }
-        for day, date_obj in day_to_date_map.items():
-            day_to_date_map[day] = date_obj.strftime('%Y-%m-%d')
-        if kmitl_studytable_data and 'courses' in kmitl_studytable_data:
-            for course_idx, course in enumerate(kmitl_studytable_data['courses']):
-                for sched in course.get('schedule', []):
-                    day_thai_abbr = sched.get('day', '').split('.')[0].strip()
-                    if day_thai_abbr in day_to_date_map:
-                        base_date = day_to_date_map[day_thai_abbr]
-                        start_time_str = sched.get('time', '').split('-')[0].strip()
-                        end_time_str = sched.get('time', '').split('-')[1].strip()
-                        event_start = f"{base_date}T{start_time_str}:00"
-                        event_end = f"{base_date}T{end_time_str}:00"
-                        event_title = f"{course.get('course_name', '')} ({course.get('course_code', '')})"
-                        event_description = f"Room: { ', '.join(course.get('room_raw', []))} / Building: { ', '.join(course.get('building_raw', []))}"
-                        event_url = None
-                        fullcalendar_events.append({
-                            'title': event_title,
-                            'start': event_start,
-                            'end': event_end,
-                            'description': event_description,
-                            'url': event_url,
-                            'extendedProps': {
-                                'room': ', '.join(course.get('room_raw', [])),
-                                'building': ', '.join(course.get('building_raw', [])),
-                                'credits': course.get('credits', '')
-                            }
-                        })
-        return render_template('dev_fragment.html', user=user, google_classroom_data=google_classroom_data, fullcalendar_events=fullcalendar_events, initial_date=initial_date.strftime('%Y-%m-%d'))
-    return render_template('dev_fragment.html', user=None, google_classroom_data=[], fullcalendar_events=[], initial_date=None)
+    return render_template('dev_fragment.html', user=user)
 
 @app.route('/partial/class')
 def partial_class():
@@ -132,41 +83,78 @@ def partial_class():
         lessons = lesson_manager.get_lessons_by_user(user_id)
     return render_template('class_fragment.html', lessons=lessons)
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = authenticator.login(username, password)
+        if user:
+            session['user_id'] = user.id
+            return redirect(url_for('dashboard'))
+        else:
+            return render_template('login_fragment.html', success=False, message='Invalid username or password.')
+    return render_template('login_fragment.html')
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
-
         if not username or not email or not password:
-            flash('Please fill out all fields.', 'danger')
-            return redirect(url_for('register'))
-
+            return render_template('register_fragment.html', success=False, message='Please fill out all fields.')
         user = authenticator.register(username, email, password)
         if user:
-            flash('Registration successful! Please log in.', 'success')
-            return redirect(url_for('login'))
+            return render_template('register_fragment.html', success=True, message='Registration successful! Please log in.')
         else:
-            flash('Username or email already exists.', 'danger')
+            return render_template('register_fragment.html', success=False, message='Username or email already exists.')
+    return render_template('register_fragment.html')
 
-    return render_template('register.html', title='Register')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.route('/partial/login', methods=['GET', 'POST'])
+def partial_login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-
         user = authenticator.login(username, password)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes['application/json']
         if user:
             session['user_id'] = user.id
-            flash('Logged in successfully!', 'success')
-            return redirect(url_for('index'))
+            if is_ajax:
+                return jsonify(success=True, message='Logged in successfully!', redirect='dashboard')
+            else:
+                return render_template('login_fragment.html', success=True, message='Logged in successfully!')
         else:
-            flash('Invalid username or password.', 'danger')
+            if is_ajax:
+                return jsonify(success=False, message='Invalid username or password.')
+            else:
+                return render_template('login_fragment.html', success=False, message='Invalid username or password.')
+    return render_template('login_fragment.html')
 
-    return render_template('login.html', title='Login')
+@app.route('/partial/register', methods=['GET', 'POST'])
+def partial_register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes['application/json']
+        if not username or not email or not password:
+            if is_ajax:
+                return jsonify(success=False, message='Please fill out all fields.')
+            else:
+                return render_template('register_fragment.html', success=False, message='Please fill out all fields.')
+        user = authenticator.register(username, email, password)
+        if user:
+            if is_ajax:
+                return jsonify(success=True, message='Registration successful! Please log in.', redirect='login')
+            else:
+                return render_template('register_fragment.html', success=True, message='Registration successful! Please log in.')
+        else:
+            if is_ajax:
+                return jsonify(success=False, message='Username or email already exists.')
+            else:
+                return render_template('register_fragment.html', success=False, message='Username or email already exists.')
+    return render_template('register_fragment.html')
 
 @app.route('/logout')
 def logout():
@@ -176,14 +164,12 @@ def logout():
 
 # Lesson Management Routes
 @app.route('/lessons')
-@login_required
 def list_lessons():
     user_id = session['user_id']
     lessons = lesson_manager.get_lessons_by_user(user_id)
     return render_template('lessons/list.html', title='My Lessons', lessons=lessons)
 
 @app.route('/lessons/add', methods=['GET', 'POST'])
-@login_required
 def add_lesson():
     is_htmx = 'HX-Request' in request.headers
 
@@ -235,7 +221,6 @@ def add_lesson():
     return render_template('lessons/add.html', title='Add New Lesson')
 
 @app.route('/lessons/<lesson_id>')
-@login_required
 def lesson_detail(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
     is_htmx = 'HX-Request' in request.headers
@@ -291,7 +276,6 @@ def lesson_detail(lesson_id):
     return render_template('lessons/detail.html', title=lesson.title, lesson=lesson)
 
 @app.route('/lessons/<lesson_id>/edit', methods=['GET', 'POST'])
-@login_required
 def edit_lesson(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
     is_htmx = 'HX-Request' in request.headers
@@ -353,7 +337,6 @@ def edit_lesson(lesson_id):
     return render_template('lessons/edit.html', title='Edit Lesson', lesson=lesson)
 
 @app.route('/lessons/<lesson_id>/delete', methods=['POST'])
-@login_required
 def delete_lesson(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
     is_htmx = 'HX-Request' in request.headers
@@ -416,7 +399,6 @@ def import_data_from_extension():
         return jsonify({"error": f"Failed to save data: {str(e)}"}), 500
 
 @app.route('/external_data/view')
-@login_required
 def view_external_data():
     user_id = session['user_id']
     imported_data_list = ImportedData.query.filter_by(user_id=user_id).order_by(ImportedData.imported_at.desc()).all()
@@ -453,7 +435,6 @@ def view_external_data():
 
 # Google Classroom API Integration Routes
 @app.route('/google_classroom/authorize')
-@login_required
 def authorize_google_classroom():
     if not app.config.get('GOOGLE_CLIENT_ID') or not app.config.get('GOOGLE_CLIENT_SECRET'):
         flash('Google API credentials are not configured.', 'danger')
@@ -483,7 +464,6 @@ def authorize_google_classroom():
     return redirect(authorization_url)
 
 @app.route('/google_classroom/oauth2callback')
-@login_required
 def oauth2callback():
     state = session.pop('oauth_state', None)
 
@@ -543,7 +523,6 @@ def oauth2callback():
     return redirect(url_for('fetch_google_classroom_data'))
 
 @app.route('/google_classroom/fetch_data')
-@login_required
 def fetch_google_classroom_data():
     user_id = session['user_id']
     google_creds = GoogleCredentials.query.filter_by(user_id=user_id).first()
@@ -795,7 +774,6 @@ def fetch_google_classroom_data():
 
 # Google Classroom Course Details and Edit Routes
 @app.route('/classroom/course/<course_id>')
-@login_required
 def course_detail(course_id):
     user_id = session['user_id']
     imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
@@ -814,7 +792,6 @@ def course_detail(course_id):
     return render_template('google_classroom/course_detail.html', title=course_to_display.get('name'), course=course_to_display)
 
 @app.route('/classroom/course/<course_id>/edit', methods=['GET', 'POST'])
-@login_required
 def edit_course(course_id):
     user_id = session['user_id']
     imported_data_entry = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
@@ -859,7 +836,6 @@ def edit_course(course_id):
 
 # Google Classroom CourseWork Item Detail
 @app.route('/classroom/course/<course_id>/coursework/<item_id>')
-@login_required
 def coursework_item_detail(course_id, item_id):
     user_id = session['user_id']
     imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
@@ -889,7 +865,6 @@ def coursework_item_detail(course_id, item_id):
 
 # Google Classroom Material Item Detail
 @app.route('/classroom/course/<course_id>/material/<item_id>')
-@login_required
 def material_item_detail(course_id, item_id):
     user_id = session['user_id']
     imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
@@ -919,7 +894,6 @@ def material_item_detail(course_id, item_id):
                            item=material_item)
 
 @app.route('/google_classroom/add_to_lesson/<course_id>')
-@login_required
 def add_google_classroom_course_to_lesson(course_id):
     user_id = session['user_id']
     imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
@@ -944,7 +918,6 @@ def add_google_classroom_course_to_lesson(course_id):
         return redirect(url_for('course_detail', course_id=course_id)) # Redirect back to GC course detail
 
 @app.route('/integrations/kmitl_classroom_link', methods=['GET', 'POST'])
-@login_required
 def kmitl_classroom_link():
     user_id = session['user_id']
     
@@ -988,7 +961,6 @@ def kmitl_classroom_link():
                            linkage_map=linkage_map)
 
 @app.route('/integrations/delete_linkage/<kmitl_course_identifier>', methods=['POST'])
-@login_required
 def delete_course_linkage(kmitl_course_identifier):
     user_id = session['user_id']
     if course_linkage_manager.delete_linkage_by_kmitl_identifier(user_id, kmitl_course_identifier):
@@ -996,3 +968,7 @@ def delete_course_linkage(kmitl_course_identifier):
     else:
         flash('Error deleting course linkage.', 'danger')
     return redirect(url_for('kmitl_classroom_link'))
+
+@app.route('/partial/sidebar-auth')
+def partial_sidebar_auth():
+    return render_template('sidebar_auth_fragment.html')
