@@ -972,3 +972,38 @@ def delete_course_linkage(kmitl_course_identifier):
 @app.route('/partial/sidebar-auth')
 def partial_sidebar_auth():
     return render_template('sidebar_auth_fragment.html')
+
+@app.route('/partial/profile')
+@login_required
+def partial_profile():
+    return render_template('profile_fragment.html', user=g.user)
+
+@app.route('/partial/change_password', methods=['GET', 'POST'])
+@login_required
+def partial_change_password():
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes['application/json']
+    message = None
+    success = False
+    if request.method == 'POST':
+        old_password = request.form.get('old_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        if not old_password or not new_password or not confirm_password:
+            message = 'Please fill out all fields.'
+        elif not g.user.check_password(old_password):
+            message = 'Old password is incorrect.'
+        elif new_password != confirm_password:
+            message = 'New passwords do not match.'
+        elif old_password == new_password:
+            message = 'New password must be different from old password.'
+        elif len(new_password) < 6:
+            message = 'New password must be at least 6 characters.'
+        else:
+            g.user.set_password(new_password)
+            from app import db
+            db.session.commit()
+            message = 'Password changed successfully!'
+            success = True
+    if is_ajax and request.method == 'POST':
+        return jsonify(success=success, message=message, redirect='profile' if success else None)
+    return render_template('change_password_fragment.html', user=g.user, message=message, success=success)
