@@ -2,34 +2,77 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ title }} - Smart Learning Hub</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 </head>
 <body class="min-h-screen p-6 bg-gray-100">
     <div class="max-w-4xl p-6 mx-auto bg-white rounded shadow">
         <h1 class="mb-6 text-3xl font-bold">{{ title }}</h1>
-        <form method="POST" action="{{ url_for('add_note') }}">
+        <form method="POST" action="{{ url_for('add_note') }}" enctype="multipart/form-data">
             <div class="mb-4">
-                <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Title:</label>
-                <input type="text" id="title" name="title" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                <label for="title" class="block mb-2 text-sm font-bold text-gray-700">Title:</label>
+                <input type="text" id="title" name="title"
+                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
+                    required />
             </div>
             <div class="mb-4">
-                <label for="content" class="block text-gray-700 text-sm font-bold mb-2">Content:</label>
-                <textarea id="content" name="content" rows="10" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required></textarea>
+                <label for="content" class="block mb-2 text-sm font-bold text-gray-700">Content:</label>
+                <textarea id="content" name="content" rows="10"
+                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
+                    required></textarea>
             </div>
             <div class="mb-4">
-                <label for="note_date" class="block text-gray-700 text-sm font-bold mb-2">Date (Optional):</label>
-                <input type="text" id="note_date" name="note_date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <label for="status" class="block mb-2 text-sm font-bold text-gray-700">Status:</label>
+                <select id="status" name="status"
+                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
+                    required>
+                    <option value="not started">Not started</option>
+                    <option value="in progress">In progress</option>
+                    <option value="completed">Completed</option>
+                </select>
             </div>
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Create Note</button>
+            <div class="mb-4">
+                <label for="tag" class="block mb-2 text-sm font-bold text-gray-700">Tag:</label>
+                <select id="tag" name="tag"
+                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
+                    required>
+                    <option value="not started">Not started</option>
+                    <option value="in progress">In progress</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="note_date" class="block mb-2 text-sm font-bold text-gray-700">Date (Optional):</label>
+                <input type="text" id="note_date" name="note_date" class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline" />
+            </div>
+            <div class="mb-4">
+                <label for="due_date" class="block mb-2 text-sm font-bold text-gray-700">Date (Deadline):</label>
+                <input type="text" id="due_date" name="due_date"class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline" />
+            </div>
+            <div class="mb-4">
+                <label for="image" class="block mb-2 text-sm font-bold text-gray-700">Image:</label>
+                <input type="file" id="image" name="image" accept="image/*"
+                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
+            </div>
+            {% if note and note.image %}
+                <img src="{{ url_for('static', filename=note.image) }}" alt="Note Image" class="mb-4" />
+            {% endif %}
+            <button type="submit"
+                class="px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline">
+                Create Note
+            </button>
             <a href="{{ url_for('list_notes') }}" class="ml-4 text-gray-600 hover:underline">Cancel</a>
         </form>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         flatpickr("#note_date", {
+            dateFormat: "Y-m-d",
+            allowInput: true
+        });
+        flatpickr("#due_date", {
             dateFormat: "Y-m-d",
             allowInput: true
         });

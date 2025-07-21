@@ -8,7 +8,9 @@ from app.core.note import Note # Import Note model for query
 from app.core.imported_data import ImportedData # Import ImportedData model
 from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
 from functools import wraps
-from datetime import datetime
+# import os 
+from datetime import datetime # note: Used for date handling
+from werkzeug.utils import secure_filename # note: Used for secure file names
 
 # For Google Classroom API
 import os
@@ -403,87 +405,211 @@ def fetch_google_classroom_data():
         print(f"ERROR: Error fetching Google Classroom data for user {user_id}: {e}")
         return redirect(url_for('index'))
 
+# === Start of note management routes ===
+
+# กำหนดโฟลเดอร์สำหรับเก็บไฟล์ที่อัพโหลด
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
+
+# สร้างโฟลเดอร์ถ้ายังไม่มี
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# กำหนดค่า config ให้ app
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# กำหนดประเภทไฟล์ที่อนุญาตให้อัพโหลด
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    # เช็คว่าไฟล์มี extension และอยู่ในรายการที่อนุญาตหรือเปล่า
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 # Note Management Routes
 from app.core.note_manager import NoteManager
 note_manager = NoteManager()
 
+# List Notes Route
 @app.route('/notes')
 @login_required
 def list_notes():
+    # เอา user_id จาก session
     user_id = session['user_id']
+    # ดึง notes ทั้งหมดของ user คนนี้
     notes = note_manager.get_notes_by_user(user_id)
+    # ส่งไปแสดงในหน้า list
     return render_template('notes/list.html', title='My Notes', notes=notes)
 
+def allowed_file(filename):
+    # เช็คว่าไฟล์มี extension และอยู่ในรายการที่อนุญาตหรือเปล่า
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Add Note Route
 @app.route('/notes/add', methods=['GET', 'POST'])
 @login_required
 def add_note():
+    # ถ้าเป็น POST แปลว่าส่งข้อมูลมาเพิ่ม note ใหม่
     if request.method == 'POST':
+        # รับข้อมูลจาก form
         title = request.form.get('title')
         content = request.form.get('content')
         note_date_str = request.form.get('note_date')
+        due_date_str = request.form.get('due_date')
+        tags = request.form.get('tag')
+        status = request.form.get('status')
         user_id = session['user_id']
 
+        # แปลง string เป็น datetime
+        note_date = datetime.strptime(note_date_str, '%Y-%m-%d') if note_date_str else None
+        due_date = datetime.strptime(due_date_str, '%Y-%m-%d') if due_date_str else None
+
+        # จัดการรูปภาพที่อัพโหลดมา
+        image_file = request.files.get('image')
+        image_path = None
+        if image_file and allowed_file(image_file.filename):
+            filename = secure_filename(image_file.filename)
+            image_path = os.path.join('static', 'uploads', filename).replace('\\', '/')
+            image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        # image_path จะถูกบันทึกลง database ในรูปแบบ 'static/uploads/filename.jpg'
+
+        # เช็คว่าต้องมี title และ content
         if not title or not content:
             flash('Title and content are required.', 'danger')
             return redirect(url_for('add_note'))
-        
-        note_date = datetime.strptime(note_date_str, '%Y-%m-%d') if note_date_str else None
 
-        note = note_manager.add_note(user_id, title, content, note_date)
-        if note:
-            flash('Note added successfully!', 'success')
-            return redirect(url_for('list_notes'))
-        else:
-            flash('Error adding note.', 'danger')
+        # เพิ่ม note ใหม่เข้าฐานข้อมูล
+        note = note_manager.add_note(
+            user_id=user_id,
+            title=title,
+            content=content,
+            note_date=note_date,
+            due_date=due_date,
+            tags=tags,
+            status=status,
+            image=image_path
+        )
+        db.session.commit()
+        flash('Note added successfully!', 'success')
+        return redirect(url_for('list_notes'))
 
-    return render_template('notes/create.html', title='Create New Note')
+    # ถ้าเป็น GET แสดงหน้าสร้าง note ใหม่
+    return render_template('notes/create.html', title='Create New Note', note=None)
 
+# View Note Route
 @app.route('/notes/<note_id>')
 @login_required
 def view_note(note_id):
+    # หา note ตาม ID ที่ส่งมา
     note = note_manager.get_note_by_id(note_id)
+    
+    # เช็คว่า note มีอยู่จริงและเป็นของ user ที่ login อยู่หรือเปล่า
     if not note or note.user_id != session['user_id']:
         flash('Note not found or you do not have permission to view it.', 'danger')
         return redirect(url_for('list_notes'))
-    return render_template('notes/note.html', title=note.title, note=note)
+    
+    # จัดการ URL ของรูปภาพสำหรับแสดงใน template
+    image_url = None
+    if note.image:
+        # ตัด 'static/' ออกถ้ามี เพื่อใช้กับ url_for('static', filename=...)
+        image_url = url_for('static', filename=note.image.replace('static/', ''))
+    
+    # ส่งไปแสดงหน้า note
+    return render_template('notes/note.html', title=note.title, note=note, image_url=image_url)
 
+# Edit Note Route
 @app.route('/notes/<note_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_note(note_id):
+    # หา note ตาม ID
     note = note_manager.get_note_by_id(note_id)
+    
+    # เช็คว่า note มีอยู่จริงและเป็นของ user ที่ login อยู่หรือเปล่า
     if not note or note.user_id != session['user_id']:
         flash('Note not found or you do not have permission to edit it.', 'danger')
         return redirect(url_for('list_notes'))
 
+    # ถ้าเป็น POST แปลว่าส่งข้อมูลมาแก้ไข
     if request.method == 'POST':
+        # รับข้อมูลจาก form
         title = request.form.get('title')
         content = request.form.get('content')
         note_date_str = request.form.get('note_date')
+        due_date_str = request.form.get('due_date')
+        tags = request.form.get('tag')
+        status = request.form.get('status')
+
+        # แปลง string เป็น datetime
         note_date = datetime.strptime(note_date_str, '%Y-%m-%d') if note_date_str else None
+        due_date = datetime.strptime(due_date_str, '%Y-%m-%d') if due_date_str else None
 
-        if not title or not content:
-            flash('Title and content are required.', 'danger')
-            return redirect(url_for('edit_note', note_id=note_id))
+        # จัดการเรื่องรูปภาพ
+        remove_image = request.form.get('remove_image')
+        image_file = request.files.get('image')
+        image_path = None
 
-        if note_manager.update_note(note_id, title, content, note_date):
-            flash('Note updated successfully!', 'success')
-            return redirect(url_for('view_note', note_id=note_id))
-        else:
-            flash('Error updating note.', 'danger')
+        # ถ้าต้องการลบรูปเก่า
+        if remove_image and note.image:
+            old_image_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(note.image))
+            if os.path.exists(old_image_path):
+                os.remove(old_image_path)
+            image_path = None
+        # ถ้าอัพโหลดรูปใหม่
+        elif image_file and allowed_file(image_file.filename):
+            # ลบรูปเก่าก่อน
+            if note.image:
+                old_image_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(note.image))
+                if os.path.exists(old_image_path):
+                    os.remove(old_image_path)
+            # บันทึกรูปใหม่
+            filename = secure_filename(image_file.filename)
+            image_path = os.path.join('static', 'uploads', filename).replace('\\', '/')
+            image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-    return render_template('notes/edit.html', title='Edit Note', note=note)
+        # อัพเดท note ในฐานข้อมูล
+        note_manager.update_note(
+            note_id=note_id,
+            title=title,
+            content=content,
+            note_date=note_date,
+            due_date=due_date,
+            tags=tags,
+            status=status,
+            image=image_path if (remove_image or image_file) else None
+        )
 
+        flash('Note updated successfully!', 'success')
+        return redirect(url_for('view_note', note_id=note_id))
+
+    # จัดการ URL ของรูปภาพสำหรับแสดงใน template
+    image_url = None
+    if note.image:                           # True
+        if note.image.startswith('static/'):  # True
+            image_filename = note.image.replace('static/', '')  # "uploads/image.jpg"
+        # ไม่เข้า else
+        
+        image_url = url_for('static', filename=image_filename)  # "/static/uploads/image.jpg"
+
+    # ส่งไปยัง Template
+    return render_template('notes/edit.html', title='Edit Note', note=note, image_url=image_url)
+
+# Delete Note Route
 @app.route('/notes/<note_id>/delete', methods=['POST'])
 @login_required
 def delete_note(note_id):
+    # หา note ตาม ID ที่ส่งมา
     note = note_manager.get_note_by_id(note_id)
+    
+    # เช็คว่า note มีอยู่จริงและเป็นของ user ที่ login อยู่หรือเปล่า
     if not note or note.user_id != session['user_id']:
         flash('Note not found or you do not have permission to delete it.', 'danger')
         return redirect(url_for('list_notes'))
 
+    # ลบ note และแสดงผลลัพธ์
     if note_manager.delete_note(note_id):
         flash('Note deleted successfully!', 'success')
     else:
         flash('Error deleting note.', 'danger')
+    
+    # กลับไปหน้าแสดงรายการ notes
     return redirect(url_for('list_notes'))
 
+# === End of note management routes ===
