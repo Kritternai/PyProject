@@ -89,6 +89,15 @@ class LessonManager:
         return False
 
     def add_section(self, lesson_id, title, content=None, type='text', file_url=None, assignment_due=None, order=0):
+        # Ensure assignment_due is None if not a datetime
+        import datetime
+        if not assignment_due or (isinstance(assignment_due, str) and assignment_due.strip() == ''):
+            assignment_due = None
+        elif isinstance(assignment_due, str):
+            try:
+                assignment_due = datetime.datetime.strptime(assignment_due, '%Y-%m-%dT%H:%M')
+            except Exception:
+                assignment_due = None
         section = LessonSection(
             lesson_id=lesson_id,
             title=title,
@@ -120,8 +129,18 @@ class LessonManager:
             section.type = type
         if file_url is not None:
             section.file_url = file_url
+        # Ensure assignment_due is None if not a datetime
+        import datetime
         if assignment_due is not None:
-            section.assignment_due = assignment_due
+            if not assignment_due or (isinstance(assignment_due, str) and assignment_due.strip() == ''):
+                section.assignment_due = None
+            elif isinstance(assignment_due, str):
+                try:
+                    section.assignment_due = datetime.datetime.strptime(assignment_due, '%Y-%m-%dT%H:%M')
+                except Exception:
+                    section.assignment_due = None
+            else:
+                section.assignment_due = assignment_due
         if order is not None:
             section.order = order
         db.session.commit()

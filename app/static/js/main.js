@@ -11,6 +11,20 @@ function loadPage(page) {
           setupAuthForms();
           setupLessonForms();
           setupLessonEditForm(); // <-- เพิ่มตรงนี้
+          setupSectionForms(); // เรียก setupSectionForms หลัง loadPage
+          // Auto show Lesson Content tab and scroll if on lesson detail
+          if (page.startsWith('class/')) {
+            // Activate Content tab
+            const contentTabBtn = document.getElementById('content-tab');
+            if (contentTabBtn) {
+              contentTabBtn.click();
+            }
+            // Scroll to Lesson Content section
+            setTimeout(() => {
+              const lessonContent = document.querySelector('.card-body');
+              if (lessonContent) lessonContent.scrollIntoView({behavior: 'smooth', block: 'start'});
+            }, 300);
+          }
         });
       }
     });
@@ -213,8 +227,162 @@ function setupLessonEditForm() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  setupAuthForms();
-});
-// ถ้าใช้ SPA หรือ htmx ให้เรียก checkRegisterRedirect หลังเปลี่ยนหน้า
-// หรือเรียก checkRegisterRedirect() หลังทุกครั้งที่ SPA เปลี่ยนหน้า 
+function setupSectionForms() {
+  // Modal logic
+  const addSectionModal = document.getElementById('addSectionModal');
+  const addSectionForm = document.getElementById('add-section-form');
+  if (addSectionModal && addSectionForm) {
+    addSectionModal.addEventListener('show.bs.modal', function () {
+      addSectionForm.reset();
+      const typeSelect = document.getElementById('type');
+      if (typeSelect) typeSelect.dispatchEvent(new Event('change'));
+      setTimeout(() => {
+        const titleInput = document.getElementById('title');
+        if (titleInput) titleInput.focus();
+      }, 300);
+    });
+    // Dynamic field toggle
+    const typeSelect = document.getElementById('type');
+    if (typeSelect) {
+      typeSelect.addEventListener('change', function() {
+        const type = typeSelect.value;
+        document.getElementById('content-group').classList.toggle('d-none', type === 'file');
+        document.getElementById('file-group').classList.toggle('d-none', type !== 'file');
+        document.getElementById('due-group').classList.toggle('d-none', type !== 'assignment');
+        document.getElementById('content').required = (type !== 'file');
+        document.getElementById('file').required = (type === 'file');
+        document.getElementById('assignment_due').required = (type === 'assignment');
+        // Dynamic label/placeholder
+        const contentLabel = document.getElementById('content-label');
+        const content = document.getElementById('content');
+        if (type === 'text') {
+          contentLabel.textContent = 'Content';
+          content.placeholder = 'Enter content or instructions';
+        } else if (type === 'assignment') {
+          contentLabel.textContent = 'Assignment Instructions';
+          content.placeholder = 'Enter assignment details or instructions';
+        } else if (type === 'note') {
+          contentLabel.textContent = 'Note';
+          content.placeholder = 'Enter your note';
+        }
+      });
+      // Trigger on load
+      typeSelect.dispatchEvent(new Event('change'));
+    }
+    // Submit add section form
+    addSectionForm.onsubmit = function(e) {
+      e.preventDefault();
+      const formData = new FormData(addSectionForm);
+      fetch(addSectionForm.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.html) {
+          document.getElementById('lesson-sections-list').innerHTML = data.html;
+          // ปิด modal
+          const modal = bootstrap.Modal.getOrCreateInstance(addSectionModal);
+          modal.hide();
+          addSectionForm.reset();
+        } else {
+          alert(data.message || 'Error adding content.');
+        }
+      });
+    };
+  }
+}
+
+// Edit Section (inline)
+window.editSection = function(lessonId, sectionId) {
+  // โหลดฟอร์มแก้ไขมาแสดงแทนฟอร์ม add
+  fetch(`/partial/class/${lessonId}/sections/${sectionId}/edit`)
+    .then(r => r.text())
+    .then(html => {
+      const addForm = document.getElementById('add-section-form');
+      if (addForm) addForm.classList.add('d-none');
+      let editDiv = document.getElementById('edit-section-form-wrapper');
+      if (!editDiv) {
+        editDiv = document.createElement('div');
+        editDiv.id = 'edit-section-form-wrapper';
+        addForm.parentNode.insertBefore(editDiv, addForm);
+      }
+      editDiv.innerHTML = html;
+      // setup dynamic field toggle for edit form
+      const typeSelect = document.getElementById('type');
+      if (typeSelect) {
+        typeSelect.addEventListener('change', function() {
+          const type = typeSelect.value;
+          document.getElementById('content-group').classList.toggle('d-none', type === 'file');
+          document.getElementById('file-group').classList.toggle('d-none', type !== 'file');
+          document.getElementById('due-group').classList.toggle('d-none', type !== 'assignment');
+          document.getElementById('content').required = (type !== 'file');
+          document.getElementById('file').required = (type === 'file');
+          document.getElementById('assignment_due').required = (type === 'assignment');
+          // Dynamic label/placeholder
+          const contentLabel = document.getElementById('content-label');
+          const content = document.getElementById('content');
+          if (type === 'text') {
+            contentLabel.textContent = 'Content';
+            content.placeholder = 'Enter content or instructions';
+          } else if (type === 'assignment') {
+            contentLabel.textContent = 'Assignment Instructions';
+            content.placeholder = 'Enter assignment details or instructions';
+          } else if (type === 'note') {
+            contentLabel.textContent = 'Note';
+            content.placeholder = 'Enter your note';
+          }
+        });
+        typeSelect.dispatchEvent(new Event('change'));
+      }
+      // setup submit
+      const editForm = document.getElementById('edit-section-form');
+      if (editForm) {
+        editForm.onsubmit = function(e) {
+          e.preventDefault();
+          const formData = new FormData(editForm);
+          fetch(editForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json'
+            }
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data.success && data.html) {
+              document.getElementById('lesson-sections-list').innerHTML = data.html;
+              editDiv.remove();
+            } else {
+              alert(data.message || 'Error updating content.');
+            }
+          });
+        };
+      }
+    });
+};
+
+// Delete Section (SPA)
+window.deleteSection = function(lessonId, sectionId) {
+  if (!confirm('Delete this content?')) return;
+  fetch(`/partial/class/${lessonId}/sections/${sectionId}/delete`, {
+    method: 'POST',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json'
+    }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success && data.html) {
+      document.getElementById('lesson-sections-list').innerHTML = data.html;
+    } else {
+      alert(data.message || 'Error deleting content.');
+    }
+  });
+}; 

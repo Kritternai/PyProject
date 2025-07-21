@@ -16,8 +16,8 @@
         {% endif %}
       </div>
       <div class="d-flex flex-column gap-1">
-        <button class="btn btn-sm btn-outline-warning" onclick="loadPage('class/{{ lesson.id }}/sections/{{ section.id }}/edit')">Edit</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="deleteSection('{{ lesson.id }}','{{ section.id }}')">Delete</button>
+        <button class="btn btn-sm btn-outline-warning" onclick="editSection('{{ lesson.id }}', '{{ section.id }}')">Edit</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteSection('{{ lesson.id }}', '{{ section.id }}')">Delete</button>
       </div>
     </li>
     {% endfor %}
@@ -25,23 +25,4 @@
 {% else %}
   <div class="text-muted">No content yet. Click + Add Content to start.</div>
 {% endif %}
-<script>
-function deleteSection(lessonId, sectionId) {
-  if (!confirm('Delete this content?')) return;
-  fetch(`/partial/class/${lessonId}/sections/${sectionId}/delete`, {
-    method: 'POST',
-    headers: {
-      'X-Requested-With': 'XMLHttpRequest',
-      'Accept': 'application/json'
-    }
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.success) {
-      loadLessonSections();
-    } else {
-      alert(data.message || 'Error deleting content.');
-    }
-  });
-}
-</script> 
+<!-- JS SPA logic for Edit/Delete will be in main.js --> 
