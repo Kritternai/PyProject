@@ -130,7 +130,9 @@ def partial_class_detail(lesson_id):
             lesson.all_attachments = json.loads(lesson.attachments_data) if lesson.attachments_data else []
         except Exception:
             lesson.all_attachments = []
-    return render_template('lessons/_detail.html', lesson=lesson)
+    # โหลด sections จาก db
+    sections = lesson_manager.get_sections(lesson.id)
+    return render_template('lessons/_detail.html', lesson=lesson, sections=sections)
 
 @app.route('/partial/class/<lesson_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -184,6 +186,16 @@ def partial_section_add(lesson_id):
         content = request.form.get('content')
         type_ = request.form.get('type')
         assignment_due = request.form.get('assignment_due')
+        # Convert assignment_due to datetime or None
+        if assignment_due:
+            assignment_due = assignment_due.strip()
+            if assignment_due == '':
+                assignment_due = None
+            else:
+                try:
+                    assignment_due = datetime.datetime.strptime(assignment_due, '%Y-%m-%dT%H:%M')
+                except Exception:
+                    assignment_due = None
         file_url = None
         # handle file upload
         if type_ == 'file' and 'file' in request.files:
@@ -195,7 +207,10 @@ def partial_section_add(lesson_id):
         if not title:
             return jsonify(success=False, message='Title is required.')
         section = lesson_manager.add_section(lesson_id, title, content, type_, file_url, assignment_due)
-        return jsonify(success=True, redirect=f'class/{lesson_id}/sections')
+        # Return updated section list as HTML fragment
+        sections = lesson_manager.get_sections(lesson_id)
+        html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
+        return jsonify(success=True, html=html)
     return render_template('lessons/section_add.html', lesson=lesson)
 
 @app.route('/partial/class/<lesson_id>/sections/<section_id>/edit', methods=['GET', 'POST'])
@@ -218,8 +233,21 @@ def partial_section_edit(lesson_id, section_id):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(UPLOAD_FOLDER, filename))
                 file_url = '/static/uploads/' + filename
+        # Convert assignment_due to datetime or None
+        if assignment_due:
+            assignment_due = assignment_due.strip()
+            if assignment_due == '':
+                assignment_due = None
+            else:
+                try:
+                    assignment_due = datetime.datetime.strptime(assignment_due, '%Y-%m-%dT%H:%M')
+                except Exception:
+                    assignment_due = None
         lesson_manager.update_section(section_id, title, content, type_, file_url, assignment_due)
-        return jsonify(success=True, redirect=f'class/{lesson_id}/sections')
+        # Return updated section list as HTML fragment
+        sections = lesson_manager.get_sections(lesson_id)
+        html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
+        return jsonify(success=True, html=html)
     return render_template('lessons/section_edit.html', lesson=lesson, section=section)
 
 @app.route('/partial/class/<lesson_id>/sections/<section_id>/delete', methods=['POST'])
@@ -230,7 +258,10 @@ def partial_section_delete(lesson_id, section_id):
     if not lesson or lesson.user_id != g.user.id or not section or section.lesson_id != lesson_id:
         return jsonify(success=False, message='Section not found or no permission.')
     lesson_manager.delete_section(section_id)
-    return jsonify(success=True, redirect=f'class/{lesson_id}/sections')
+    # Return updated section list as HTML fragment
+    sections = lesson_manager.get_sections(lesson_id)
+    html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
+    return jsonify(success=True, html=html)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
