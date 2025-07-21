@@ -1,5 +1,7 @@
 from app import db
-from app.core.lesson import Lesson
+from app.core.lesson import Lesson, LessonSection
+import uuid
+import datetime
 import json
 
 class LessonManager:
@@ -82,6 +84,53 @@ class LessonManager:
         lesson = self.get_lesson_by_id(lesson_id)
         if lesson:
             db.session.delete(lesson)
+            db.session.commit()
+            return True
+        return False
+
+    def add_section(self, lesson_id, title, content=None, type='text', file_url=None, assignment_due=None, order=0):
+        section = LessonSection(
+            lesson_id=lesson_id,
+            title=title,
+            content=content,
+            type=type,
+            file_url=file_url,
+            assignment_due=assignment_due,
+            order=order
+        )
+        db.session.add(section)
+        db.session.commit()
+        return section
+
+    def get_sections(self, lesson_id):
+        return LessonSection.query.filter_by(lesson_id=lesson_id).order_by(LessonSection.order).all()
+
+    def get_section_by_id(self, section_id):
+        return LessonSection.query.get(section_id)
+
+    def update_section(self, section_id, title=None, content=None, type=None, file_url=None, assignment_due=None, order=None):
+        section = self.get_section_by_id(section_id)
+        if not section:
+            return False
+        if title:
+            section.title = title
+        if content is not None:
+            section.content = content
+        if type:
+            section.type = type
+        if file_url is not None:
+            section.file_url = file_url
+        if assignment_due is not None:
+            section.assignment_due = assignment_due
+        if order is not None:
+            section.order = order
+        db.session.commit()
+        return True
+
+    def delete_section(self, section_id):
+        section = self.get_section_by_id(section_id)
+        if section:
+            db.session.delete(section)
             db.session.commit()
             return True
         return False

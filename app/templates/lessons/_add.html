@@ -1,29 +1,24 @@
-<h1 class="h3 text-primary mb-4">Add New Lesson</h1>
-<form method="POST" action="{{ url_for('add_lesson') }}">
-    <div class="mb-3">
-        <label for="title" class="form-label">Title:</label>
-        <input type="text" id="title" name="title" required class="form-control">
-    </div>
-    <div class="mb-3">
-        <label for="description" class="form-label">Description:</label>
-        <textarea id="description" name="description" rows="4" class="form-control"></textarea>
-    </div>
-    <div class="mb-3">
-        <label for="status" class="form-label">Status:</label>
-        <select id="status" name="status" class="form-select">
-            <option value="Not Started">Not Started</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-        </select>
-    </div>
-    <div class="mb-3">
-        <label for="tags" class="form-label">Tags (comma-separated):</label>
-        <input type="text" id="tags" name="tags" class="form-control">
-    </div>
-    <div class="d-flex justify-content-end">
-        <button type="submit" class="btn btn-primary me-2">
-            Add Lesson
-        </button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-    </div>
+<h2 class="h4 mb-3">Add New Lesson</h2>
+<form id="add-lesson-form">
+  <div class="mb-3">
+    <label for="title" class="form-label">Title</label>
+    <input type="text" id="title" name="title" required class="form-control">
+  </div>
+  <div class="mb-3">
+    <label for="description" class="form-label">Description</label>
+    <textarea id="description" name="description" class="form-control"></textarea>
+  </div>
+  <div class="mb-3">
+    <label for="status" class="form-label">Status</label>
+    <select id="status" name="status" class="form-select">
+      <option value="Not Started">Not Started</option>
+      <option value="In Progress">In Progress</option>
+      <option value="Completed">Completed</option>
+    </select>
+  </div>
+  <div class="mb-3">
+    <label for="tags" class="form-label">Tags (comma-separated)</label>
+    <input type="text" id="tags" name="tags" class="form-control">
+  </div>
+  <button type="submit" class="btn btn-primary w-100">Add Lesson</button>
 </form>

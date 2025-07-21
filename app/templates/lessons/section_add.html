@@ -1,0 +1,62 @@
+<h2 class="h5 mb-3">Add Content</h2>
+<form id="add-section-form" enctype="multipart/form-data">
+  <div class="mb-3">
+    <label for="type" class="form-label">Type</label>
+    <select id="type" name="type" class="form-select" required onchange="toggleSectionFields()">
+      <option value="text">Text</option>
+      <option value="file">File</option>
+      <option value="assignment">Assignment</option>
+      <option value="note">Note</option>
+    </select>
+  </div>
+  <div class="mb-3">
+    <label for="title" class="form-label">Title</label>
+    <input type="text" id="title" name="title" required class="form-control">
+  </div>
+  <div class="mb-3" id="content-group">
+    <label for="content" class="form-label">Content</label>
+    <textarea id="content" name="content" class="form-control"></textarea>
+  </div>
+  <div class="mb-3 d-none" id="file-group">
+    <label for="file" class="form-label">File</label>
+    <input type="file" id="file" name="file" class="form-control">
+  </div>
+  <div class="mb-3 d-none" id="due-group">
+    <label for="assignment_due" class="form-label">Due Date</label>
+    <input type="datetime-local" id="assignment_due" name="assignment_due" class="form-control">
+  </div>
+  <button type="submit" class="btn btn-primary w-100">Add</button>
+</form>
+<script>
+function toggleSectionFields() {
+  const type = document.getElementById('type').value;
+  document.getElementById('content-group').classList.toggle('d-none', type === 'file');
+  document.getElementById('file-group').classList.toggle('d-none', type !== 'file');
+  document.getElementById('due-group').classList.toggle('d-none', type !== 'assignment');
+}
+document.getElementById('type').addEventListener('change', toggleSectionFields);
+toggleSectionFields();
+const addSectionForm = document.getElementById('add-section-form');
+if (addSectionForm) {
+  addSectionForm.onsubmit = function(e) {
+    e.preventDefault();
+    const formData = new FormData(addSectionForm);
+    fetch('', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+      }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        loadPage('class/{{ lesson.id }}');
+      } else {
+        alert(data.message || 'Error adding content.');
+      }
+    });
+  };
+}
+</script> 

@@ -1,166 +1,244 @@
-<h1 class="h3 text-primary mb-4">{{ lesson.title }}</h1>
-<div class="mb-3">
-    <p class="text-muted mb-1"><strong>Description:</strong></p>
-    <p class="text-dark">{{ lesson.description or 'No description provided.' }}</p>
-</div>
-<div class="mb-3">
-    <p class="text-muted mb-1"><strong>Status:</strong></p>
-    <p class="fw-medium text-info">{{ lesson.status }}</p>
-</div>
-{% if lesson.tags %}
-    <div class="mb-3">
-        <p class="text-muted mb-1"><strong>Tags:</strong></p>
-        <p class="text-dark">{{ lesson.tags }}</p>
-    </div>
-{% endif %}
-
-{% if lesson.source_platform == 'google_classroom' %}
-    <hr class="my-4">
-    <h2 class="h4 text-primary mb-3">Google Classroom Details</h2>
-
-    <!-- Announcements Section -->
-    <div class="mb-4">
-        <h3 class="h5 text-secondary mb-3">Stream / Announcements</h3>
-        {% if lesson.announcements %}
-            <ul class="list-group list-group-flush">
-                {% for announcement in lesson.announcements %}
-                    <li class="list-group-item">
-                        <p class="mb-1">{{ announcement.text }}</p>
-                        <small class="text-muted">Posted on: {{ announcement.creationTime[:10] }}</small>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-muted">No announcements found for this course.</p>
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8">
+      <!-- Header -->
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <h1 class="display-5 fw-bold mb-0">{{ lesson.title }}</h1>
+          <span class="badge bg-primary ms-2">{{ lesson.status }}</span>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary btn-sm" onclick="loadPage('class')" title="Back"><i class="bi bi-arrow-left"></i> Back</button>
+          <button class="btn btn-outline-warning btn-sm" onclick="loadPage('class/{{ lesson.id }}/edit')" title="Edit"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-outline-danger btn-sm" onclick="deleteLesson('{{ lesson.id }}')" title="Delete"><i class="bi bi-trash"></i></button>
+        </div>
+      </div>
+      <!-- Tabs -->
+      <ul class="nav nav-tabs mb-3" id="lessonTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Overview</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="content-tab" data-bs-toggle="tab" data-bs-target="#content" type="button" role="tab" aria-controls="content" aria-selected="false">Content</button>
+        </li>
+        {% if lesson.source_platform == 'google_classroom' %}
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="gc-tab" data-bs-toggle="tab" data-bs-target="#googleclassroom" type="button" role="tab" aria-controls="googleclassroom" aria-selected="false">Google Classroom</button>
+        </li>
         {% endif %}
-    </div>
-
-    <!-- Topics Section -->
-    <div class="mb-4">
-        <h3 class="h5 text-secondary mb-3">Topics & Organized Content</h3>
-        {% if lesson.grouped_by_topic %}
-            {% for topic_group in lesson.grouped_by_topic %}
-                <div class="card mb-3">
-                    <div class="card-header h6">{{ topic_group.name }}</div>
-                    <div class="card-body">
-                        {% if topic_group.courseWork %}
-                            <h5 class="card-subtitle mb-2 text-muted">Assignments:</h5>
-                            <ul class="list-group list-group-flush mb-3">
-                                {% for work in topic_group.courseWork %}
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <a href="{{ work.alternateLink }}" target="_blank" class="text-decoration-none text-primary fw-bold">{{ work.title }}</a>
-                                        {% if work.workType %}
-                                            <span class="badge bg-info">{{ work.workType | replace('_', ' ') | title }}</span>
-                                        {% endif %}
-                                        {% if work.dueDate %}
-                                            <small class="text-muted">Due: {{ work.dueDate.year }}/{{ work.dueDate.month }}/{{ work.dueDate.day }}</small>
-                                        {% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-
-                        {% if topic_group.materials %}
-                            <h5 class="card-subtitle mb-2 text-muted">Materials:</h5>
-                            <ul class="list-group list-group-flush">
-                                {% for material in topic_group.materials %}
-                                    <li class="list-group-item">
-                                        <a href="{{ material.alternateLink }}" target="_blank" class="text-decoration-none text-primary fw-bold">{{ material.title }}</a>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-
-                        {% if not topic_group.courseWork and not topic_group.materials %}
-                            <p class="text-muted">No assignments or materials in this topic.</p>
-                        {% endif %}
-                    </div>
+      </ul>
+      <div class="tab-content" id="lessonTabContent">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+          <div class="row g-3 mb-4">
+            <div class="col-md-8">
+              <div class="card shadow-sm h-100">
+                <div class="card-body">
+                  <h6 class="text-muted mb-2">Description</h6>
+                  <div>{{ lesson.description or '-' }}</div>
                 </div>
-            {% endfor %}
-        {% else %}
-            <p class="text-muted">No topics or organized content found for this course.</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card shadow-sm h-100">
+                <div class="card-body">
+                  <h6 class="text-muted mb-2">Tags</h6>
+                  <div>
+                    {% for tag in (lesson.tags or '').split(',') if tag.strip() %}
+                      <span class="badge bg-info text-dark me-1">{{ tag.strip() }}</span>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Content Tab -->
+        <div class="tab-pane fade" id="content" role="tabpanel" aria-labelledby="content-tab">
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Lesson Content</h4>
+                <button class="btn btn-primary btn-sm" onclick="loadPage('class/{{ lesson.id }}/sections/add')"><i class="bi bi-plus-lg"></i> Add Content</button>
+              </div>
+              <div id="lesson-sections-list"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Google Classroom Tab -->
+        {% if lesson.source_platform == 'google_classroom' %}
+        <div class="tab-pane fade" id="googleclassroom" role="tabpanel" aria-labelledby="gc-tab">
+          <div class="row g-4">
+            <!-- Announcements -->
+            <div class="col-md-6">
+              <div class="card shadow-sm mb-4 h-100">
+                <div class="card-body">
+                  <h5 class="mb-3"><i class="bi bi-megaphone text-primary"></i> Announcements</h5>
+                  {% if lesson.announcements %}
+                    <ul class="list-group list-group-flush">
+                      {% for ann in lesson.announcements %}
+                        <li class="list-group-item">
+                          <div class="fw-bold"><i class="bi bi-chat-left-text me-1"></i> {{ ann.text }}</div>
+                          <div class="text-muted small"><i class="bi bi-calendar-event"></i> {{ ann.creationTime[:10] }}</div>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% else %}
+                    <div class="text-muted">No announcements.</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <!-- Topics & Organized Content -->
+            <div class="col-md-6">
+              <div class="card shadow-sm mb-4 h-100">
+                <div class="card-body">
+                  <h5 class="mb-3"><i class="bi bi-journal-bookmark text-success"></i> Topics & Organized Content</h5>
+                  {% if lesson.grouped_by_topic %}
+                    <div class="accordion" id="topicsAccordion">
+                      {% for topic in lesson.grouped_by_topic %}
+                        <div class="accordion-item">
+                          <h2 class="accordion-header" id="heading{{ loop.index }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                              <span class="fw-bold">{{ topic.name }}</span>
+                            </button>
+                          </h2>
+                          <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#topicsAccordion">
+                            <div class="accordion-body">
+                              {% if topic.courseWork %}
+                                <div class="mb-2"><i class="bi bi-clipboard-check text-info"></i> <strong>Assignments</strong></div>
+                                <ul class="list-group mb-2">
+                                  {% for work in topic.courseWork %}
+                                    <li class="list-group-item">
+                                      <span class="fw-bold">{{ work.title }}</span>
+                                      {% if work.dueDate %}<span class="text-danger small ms-2">Due: {{ work.dueDate.year }}/{{ work.dueDate.month }}/{{ work.dueDate.day }}</span>{% endif %}
+                                    </li>
+                                  {% endfor %}
+                                </ul>
+                              {% endif %}
+                              {% if topic.materials %}
+                                <div class="mb-2"><i class="bi bi-folder2-open text-warning"></i> <strong>Materials</strong></div>
+                                <ul class="list-group">
+                                  {% for mat in topic.materials %}
+                                    <li class="list-group-item">
+                                      <span class="fw-bold">{{ mat.title }}</span>
+                                      {% if mat.alternateLink %}<a href="{{ mat.alternateLink }}" target="_blank" class="ms-2"><i class="bi bi-link-45deg"></i> Link</a>{% endif %}
+                                    </li>
+                                  {% endfor %}
+                                </ul>
+                              {% endif %}
+                              {% if not topic.courseWork and not topic.materials %}
+                                <div class="text-muted">No assignments or materials in this topic.</div>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <div class="text-muted">No topics or organized content.</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-4">
+            <!-- Roster -->
+            <div class="col-md-6">
+              <div class="card shadow-sm mb-4 h-100">
+                <div class="card-body">
+                  <h5 class="mb-3"><i class="bi bi-people text-secondary"></i> Roster</h5>
+                  <div class="mb-2">
+                    <strong><i class="bi bi-person-badge text-primary"></i> Teachers:</strong>
+                    {% if lesson.roster.teachers %}
+                      <ul class="list-group mb-1">
+                        {% for t in lesson.roster.teachers %}
+                          <li class="list-group-item"><i class="bi bi-person-circle me-1"></i> {{ t.profile.name.fullName }} ({{ t.profile.emailAddress }})</li>
+                        {% endfor %}
+                      </ul>
+                    {% else %}
+                      <span class="text-muted">No teachers.</span>
+                    {% endif %}
+                  </div>
+                  <div class="mb-2">
+                    <strong><i class="bi bi-person-lines-fill text-success"></i> Students:</strong>
+                    {% if lesson.roster.students %}
+                      <ul class="list-group mb-1">
+                        {% for s in lesson.roster.students %}
+                          <li class="list-group-item"><i class="bi bi-person me-1"></i> {{ s.profile.name.fullName }} ({{ s.profile.emailAddress }})</li>
+                        {% endfor %}
+                      </ul>
+                    {% else %}
+                      <span class="text-muted">No students.</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Attachments -->
+            <div class="col-md-6">
+              <div class="card shadow-sm mb-4 h-100">
+                <div class="card-body">
+                  <h5 class="mb-3"><i class="bi bi-paperclip text-info"></i> Attachments</h5>
+                  {% if lesson.all_attachments %}
+                    <ul class="list-group">
+                      {% for att in lesson.all_attachments %}
+                        <li class="list-group-item">
+                          {% if att.material.link %}
+                            <i class="bi bi-link-45deg text-primary"></i> <a href="{{ att.material.link.url }}" target="_blank">{{ att.material.link.title or att.material.link.url }}</a> <span class="text-muted ms-2">(Link)</span>
+                          {% elif att.material.driveFile %}
+                            <i class="bi bi-file-earmark-text text-success"></i> <a href="{{ att.material.driveFile.driveFile.alternateLink }}" target="_blank">{{ att.material.driveFile.driveFile.title }}</a> <span class="text-muted ms-2">(Google Drive)</span>
+                          {% elif att.material.youtubeVideo %}
+                            <i class="bi bi-youtube text-danger"></i> <a href="{{ att.material.youtubeVideo.alternateLink }}" target="_blank">YouTube: {{ att.material.youtubeVideo.title }}</a> <span class="text-muted ms-2">(YouTube)</span>
+                          {% elif att.material.form %}
+                            <i class="bi bi-ui-checks-grid text-warning"></i> <a href="{{ att.material.form.formUrl }}" target="_blank">Google Form: {{ att.material.form.title }}</a> <span class="text-muted ms-2">(Google Form)</span>
+                          {% endif %}
+                          <small class="text-muted d-block">Source: {{ att.source|title }} (ID: {{ att.item_id }})</small>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% else %}
+                    <div class="text-muted">No attachments.</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         {% endif %}
+      </div>
     </div>
-
-    <!-- Rosters Section -->
-    <div class="mb-4">
-        <h3 class="h5 text-secondary mb-3">Roster</h3>
-        <h4 class="h6 text-muted mb-2">Teachers:</h4>
-        {% if lesson.roster.teachers %}
-            <ul class="list-group list-group-flush mb-3">
-                {% for teacher in lesson.roster.teachers %}
-                    <li class="list-group-item">{{ teacher.profile.name.fullName }} ({{ teacher.profile.emailAddress }})</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-muted">No teachers found for this course.</p>
-        {% endif %}
-
-        <h4 class="h6 text-muted mt-3 mb-2">Students:</h4>
-        {% if lesson.roster.students %}
-            <ul class="list-group list-group-flush">
-                {% for student in lesson.roster.students %}
-                    <li class="list-group-item">{{ student.profile.name.fullName }} ({{ student.profile.emailAddress }})</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-muted">No students found for this course.</p>
-        {% endif %}
-    </div>
-
-    <!-- All Files / Attachments Section -->
-    <div class="mb-4">
-        <h3 class="h5 text-secondary mb-3">All Files / Attachments (from Classroom Items)</h3>
-        {% if lesson.all_attachments %}
-            <ul class="list-group list-group-flush">
-                {% for attachment in lesson.all_attachments %}
-                    <li class="list-group-item">
-                        {% if attachment.material.link %}
-                            <a href="{{ attachment.material.link.url }}" target="_blank" class="text-primary fw-bold">{{ attachment.material.link.title if attachment.material.link.title else attachment.material.link.url }}</a>
-                            <span class="text-muted ms-2"> (Link)</span>
-                        {% elif attachment.material.driveFile %}
-                            <a href="{{ attachment.material.driveFile.driveFile.alternateLink }}" target="_blank" class="text-primary fw-bold">{{ attachment.material.driveFile.driveFile.title }}</a>
-                            <span class="text-muted ms-2"> (Google Drive)</span>
-                        {% elif attachment.material.youtubeVideo %}
-                            <a href="{{ attachment.material.youtubeVideo.alternateLink }}" target="_blank" class="text-primary fw-bold">YouTube Video: {{ attachment.material.youtubeVideo.title }}</a>
-                            <span class="text-muted ms-2"> (YouTube)</span>
-                        {% elif attachment.material.form %}
-                            <a href="{{ attachment.material.form.formUrl }}" target="_blank" class="text-primary fw-bold">Google Form: {{ attachment.material.form.title }}</a>
-                            <span class="text-muted ms-2"> (Google Form)</span>
-                        {% endif %}
-                        <small class="text-muted d-block mt-1">Source: {{ attachment.source | title }} (ID: {{ attachment.item_id }})</small>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-muted">No files or attachments found from Classroom items for this course.</p>
-        {% endif %}
-    </div>
-
-    <!-- Files from Google Drive Folder Section -->
-    <div class="mb-4">
-        <h3 class="h5 text-secondary mb-3">Files from Google Drive Folder</h3>
-        {% if lesson.drive_files %}
-            <ul class="list-group list-group-flush">
-                {% for drive_file in lesson.drive_files %}
-                    <li class="list-group-item">
-                        <a href="{{ drive_file.alternateLink }}" target="_blank" class="text-primary fw-bold">{{ drive_file.title }}</a>
-                        <span class="text-muted ms-2"> ({{ drive_file.mimeType }})</span>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-muted">No files found in your Google Drive 'Classroom/{{ lesson.title }}' folder for this course.</p>
-        {% endif %}
-    </div>
-{% endif %}
-
-<div class="d-flex justify-content-end mt-4">
-    <button type="button" class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#lessonModal" data-url="{{ url_for('edit_lesson', lesson_id=lesson.id) }}">
-        Edit Lesson
-    </button>
-    <form class="delete-lesson-form d-inline" data-lesson-id="{{ lesson.id }}">
-        <button type="submit" class="btn btn-danger me-2">Delete Lesson</button>
-    </form>
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+  </div>
 </div>
+<script>
+function deleteLesson(lessonId) {
+  if (!confirm('Are you sure you want to delete this lesson?')) return;
+  fetch(`/partial/class/${lessonId}/delete`, {
+    method: 'POST',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json'
+    }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      loadPage(data.redirect || 'class');
+    } else {
+      alert(data.message || 'Error deleting lesson.');
+    }
+  });
+}
+function loadLessonSections() {
+  fetch('/partial/class/{{ lesson.id }}/sections')
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('lesson-sections-list').innerHTML = html;
+    });
+}
+loadLessonSections();
+</script>
+<!-- Bootstrap Icons CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">

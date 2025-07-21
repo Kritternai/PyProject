@@ -9,6 +9,8 @@ function loadPage(page) {
           document.getElementById('main-content').innerHTML = html;
           if (page === 'dashboard') setupFullCalendar();
           setupAuthForms();
+          setupLessonForms();
+          setupLessonEditForm(); // <-- เพิ่มตรงนี้
         });
       }
     });
@@ -155,6 +157,59 @@ function setupFullCalendar() {
       }
     });
     calendar.render();
+  }
+}
+
+function setupLessonForms() {
+  const addLessonForm = document.getElementById('add-lesson-form');
+  if (addLessonForm) {
+    addLessonForm.onsubmit = function(e) {
+      e.preventDefault();
+      const formData = new FormData(addLessonForm);
+      fetch('/partial/class/add', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          loadPage(data.redirect || 'class');
+        } else {
+          alert(data.message || 'Error adding lesson.');
+        }
+      });
+    };
+  }
+}
+
+function setupLessonEditForm() {
+  const editLessonForm = document.getElementById('edit-lesson-form');
+  if (editLessonForm) {
+    editLessonForm.onsubmit = function(e) {
+      e.preventDefault();
+      const formData = new FormData(editLessonForm);
+      const lessonId = editLessonForm.dataset.lessonId;
+      fetch(`/partial/class/${lessonId}/edit`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          loadPage(data.redirect || `class/${lessonId}`);
+        } else {
+          alert(data.message || 'Error updating lesson.');
+        }
+      });
+    };
   }
 }
 
