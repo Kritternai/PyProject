@@ -94,9 +94,9 @@
                             <textarea id="content" name="content" class="form-control" rows="3" placeholder="Enter content or instructions"></textarea>
                           </div>
                           <div class="col-12 d-none" id="file-group">
-                            <label for="file" class="form-label">File</label>
-                            <input type="file" id="file" name="file" class="form-control">
-                            <div class="form-text">Upload a file (PDF, DOCX, etc.)</div>
+                            <label for="files" class="form-label">Files</label>
+                            <input type="file" id="files" name="files" class="form-control" multiple>
+                            <div class="form-text">Upload one or more files (images, PDF, DOCX, etc.)</div>
                           </div>
                           <div class="col-12 d-none" id="due-group">
                             <label for="assignment_due" class="form-label">Due Date</label>
@@ -114,6 +114,18 @@
                 </div>
               </div>
               <hr>
+              <div class="d-flex align-items-center mb-3">
+                <label class="me-2">Filter:</label>
+                <select id="section-type-filter" class="form-select form-select-sm w-auto">
+                  <option value="all">All</option>
+                  <option value="text">Text</option>
+                  <option value="file">File</option>
+                  <option value="assignment">Assignment</option>
+                  <option value="note">Note</option>
+                </select>
+                <input type="text" id="section-keyword-filter" class="form-control form-control-sm ms-2 w-auto" style="max-width:180px;" placeholder="Search...">
+                <input type="date" id="section-due-filter" class="form-control form-control-sm ms-2 w-auto" style="max-width:170px;" placeholder="Due date">
+              </div>
               <div id="lesson-sections-list">{% include 'lessons/section_list.html' %}</div>
             </div>
           </div>

@@ -172,7 +172,7 @@ def partial_section_list(lesson_id):
 
 import os
 from werkzeug.utils import secure_filename
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../static/uploads')
+UPLOAD_FOLDER = '/Users/kbbk/PyProject-3/app/static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route('/partial/class/<lesson_id>/sections/add', methods=['GET', 'POST'])
@@ -197,16 +197,26 @@ def partial_section_add(lesson_id):
                 except Exception:
                     assignment_due = None
         file_url = None
-        # handle file upload
-        if type_ == 'file' and 'file' in request.files:
-            file = request.files['file']
-            if file and file.filename:
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(UPLOAD_FOLDER, filename))
-                file_url = '/static/uploads/' + filename
+        file_urls = [] # Initialize file_urls list
+        # handle multiple file upload
+        if type_ == 'file' and 'files' in request.files:
+            files = request.files.getlist('files')
+            for file in files:
+                print('DEBUG: file in request.files:', file, file.filename)
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    save_path = os.path.join(UPLOAD_FOLDER, filename)
+                    print('DEBUG: saving to', save_path)
+                    file.save(save_path)
+                    print('DEBUG: file saved?', os.path.exists(save_path))
+                    url = '/static/uploads/' + filename
+                    file_urls.append(url)
+            if file_urls:
+                file_url = file_urls[0] # legacy, for UI เดิม
+        import json
         if not title:
             return jsonify(success=False, message='Title is required.')
-        section = lesson_manager.add_section(lesson_id, title, content, type_, file_url, assignment_due)
+        section = lesson_manager.add_section(lesson_id, title, content, type_, file_url, assignment_due, file_urls=json.dumps(file_urls) if file_urls else None)
         # Return updated section list as HTML fragment
         sections = lesson_manager.get_sections(lesson_id)
         html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
@@ -226,13 +236,22 @@ def partial_section_edit(lesson_id, section_id):
         type_ = request.form.get('type')
         assignment_due = request.form.get('assignment_due')
         file_url = section.file_url
-        # handle file upload
-        if type_ == 'file' and 'file' in request.files:
-            file = request.files['file']
-            if file and file.filename:
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(UPLOAD_FOLDER, filename))
-                file_url = '/static/uploads/' + filename
+        file_urls = [] # Initialize file_urls list
+        # handle multiple file upload
+        if type_ == 'file' and 'files' in request.files:
+            files = request.files.getlist('files')
+            for file in files:
+                print('DEBUG: file in request.files:', file, file.filename)
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    save_path = os.path.join(UPLOAD_FOLDER, filename)
+                    print('DEBUG: saving to', save_path)
+                    file.save(save_path)
+                    print('DEBUG: file saved?', os.path.exists(save_path))
+                    url = '/static/uploads/' + filename
+                    file_urls.append(url)
+            if file_urls:
+                file_url = file_urls[0] # legacy, for UI เดิม
         # Convert assignment_due to datetime or None
         if assignment_due:
             assignment_due = assignment_due.strip()
@@ -243,7 +262,8 @@ def partial_section_edit(lesson_id, section_id):
                     assignment_due = datetime.datetime.strptime(assignment_due, '%Y-%m-%dT%H:%M')
                 except Exception:
                     assignment_due = None
-        lesson_manager.update_section(section_id, title, content, type_, file_url, assignment_due)
+        import json
+        lesson_manager.update_section(section_id, title, content, type_, file_url, assignment_due, file_urls=json.dumps(file_urls) if file_urls else None)
         # Return updated section list as HTML fragment
         sections = lesson_manager.get_sections(lesson_id)
         html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
@@ -1187,3 +1207,12 @@ def partial_change_password():
     if is_ajax and request.method == 'POST':
         return jsonify(success=success, message=message, redirect='profile' if success else None)
     return render_template('change_password_fragment.html', user=g.user, message=message, success=success)
+
+# Register Jinja2 filter for json.loads
+@app.template_filter('loads')
+def jinja2_loads_filter(s):
+    import json
+    try:
+        return json.loads(s)
+    except Exception:
+        return []
