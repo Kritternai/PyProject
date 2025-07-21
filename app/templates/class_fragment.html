@@ -13,11 +13,13 @@
     <!-- Card วิชาแต่ละอัน -->
     {% for lesson in lessons %}
     <div class="col-md-3">
-      <div class="card lesson-card h-100" style="cursor:pointer;" onclick="loadLessonDetail({{ lesson.id }})">
+      <div class="card lesson-card h-100 position-relative" style="cursor:pointer;" onclick="loadPage('class/{{ lesson.id }}')">
         <div class="card-body">
           <h5 class="card-title">{{ lesson.title }}</h5>
           <p class="card-text">{{ lesson.description }}</p>
+          <span class="badge bg-secondary position-absolute top-0 end-0 m-2">{{ lesson.status }}</span>
         </div>
+        <!-- (ลบปุ่ม Edit ออก) -->
       </div>
     </div>
     {% endfor %}

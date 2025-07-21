@@ -69,19 +69,168 @@ def partial_dashboard():
 
 @app.route('/partial/dev')
 def partial_dev():
-    user = None
-    if 'user_id' in session:
-        user_id = session['user_id']
-        user = user_manager.get_user_by_id(user_id)
-    return render_template('dev_fragment.html', user=user)
+    user = g.user
+    google_classroom_data = []
+    if user:
+        imported_data_gc = ImportedData.query.filter_by(user_id=user.id, platform='google_classroom_api').first()
+        if imported_data_gc and 'courses' in imported_data_gc.data:
+            google_classroom_data = imported_data_gc.data['courses']
+    return render_template('dev_fragment.html', user=user, google_classroom_data=google_classroom_data)
 
+# --- SPA CRUD for Class (Lesson) ---
 @app.route('/partial/class')
+@login_required
 def partial_class():
-    lessons = []
-    if 'user_id' in session:
-        user_id = session['user_id']
-        lessons = lesson_manager.get_lessons_by_user(user_id)
+    lessons = lesson_manager.get_lessons_by_user(g.user.id)
     return render_template('class_fragment.html', lessons=lessons)
+
+@app.route('/partial/class/add', methods=['GET', 'POST'])
+@login_required
+def partial_class_add():
+    message = None
+    success = False
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        status = request.form.get('status')
+        tags = request.form.get('tags')
+        if not title:
+            message = 'Title is required.'
+        else:
+            lesson = lesson_manager.add_lesson(g.user.id, title, description, status, tags)
+            if lesson:
+                return jsonify(success=True, redirect='class')
+            else:
+                message = 'Error adding lesson.'
+        return jsonify(success=False, message=message)
+    return render_template('lessons/_add.html')
+
+@app.route('/partial/class/<lesson_id>')
+@login_required
+def partial_class_detail(lesson_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    if not lesson or lesson.user_id != g.user.id:
+        return '<div class="alert alert-danger">Lesson not found or no permission.</div>'
+    # แปลงข้อมูล Google Classroom
+    if lesson.source_platform == 'google_classroom':
+        import json
+        try:
+            lesson.announcements = json.loads(lesson.announcements_data) if lesson.announcements_data else []
+        except Exception:
+            lesson.announcements = []
+        try:
+            lesson.grouped_by_topic = json.loads(lesson.topics_data) if lesson.topics_data else []
+        except Exception:
+            lesson.grouped_by_topic = []
+        try:
+            lesson.roster = json.loads(lesson.roster_data) if lesson.roster_data else {}
+        except Exception:
+            lesson.roster = {}
+        try:
+            lesson.all_attachments = json.loads(lesson.attachments_data) if lesson.attachments_data else []
+        except Exception:
+            lesson.all_attachments = []
+    return render_template('lessons/_detail.html', lesson=lesson)
+
+@app.route('/partial/class/<lesson_id>/edit', methods=['GET', 'POST'])
+@login_required
+def partial_class_edit(lesson_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    if not lesson or lesson.user_id != g.user.id:
+        return '<div class="alert alert-danger">Lesson not found or no permission.</div>'
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        status = request.form.get('status')
+        tags = request.form.get('tags')
+        if not title:
+            return jsonify(success=False, message='Title is required.')
+        lesson_manager.update_lesson(lesson_id, title, description, status, tags)
+        return jsonify(success=True, redirect=f'class/{lesson_id}')
+    return render_template('lessons/_edit.html', lesson=lesson)
+
+@app.route('/partial/class/<lesson_id>/delete', methods=['POST'])
+@login_required
+def partial_class_delete(lesson_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    if not lesson or lesson.user_id != g.user.id:
+        return jsonify(success=False, message='Lesson not found or no permission.')
+    lesson_manager.delete_lesson(lesson_id)
+    return jsonify(success=True, redirect='class')
+
+# --- SPA CRUD for LessonSection (Section/Content) ---
+@app.route('/partial/class/<lesson_id>/sections')
+@login_required
+def partial_section_list(lesson_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    if not lesson or lesson.user_id != g.user.id:
+        return '<div class="alert alert-danger">Lesson not found or no permission.</div>'
+    sections = lesson_manager.get_sections(lesson_id)
+    return render_template('lessons/section_list.html', lesson=lesson, sections=sections)
+
+import os
+from werkzeug.utils import secure_filename
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../static/uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+@app.route('/partial/class/<lesson_id>/sections/add', methods=['GET', 'POST'])
+@login_required
+def partial_section_add(lesson_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    if not lesson or lesson.user_id != g.user.id:
+        return '<div class="alert alert-danger">Lesson not found or no permission.</div>'
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        type_ = request.form.get('type')
+        assignment_due = request.form.get('assignment_due')
+        file_url = None
+        # handle file upload
+        if type_ == 'file' and 'file' in request.files:
+            file = request.files['file']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(UPLOAD_FOLDER, filename))
+                file_url = '/static/uploads/' + filename
+        if not title:
+            return jsonify(success=False, message='Title is required.')
+        section = lesson_manager.add_section(lesson_id, title, content, type_, file_url, assignment_due)
+        return jsonify(success=True, redirect=f'class/{lesson_id}/sections')
+    return render_template('lessons/section_add.html', lesson=lesson)
+
+@app.route('/partial/class/<lesson_id>/sections/<section_id>/edit', methods=['GET', 'POST'])
+@login_required
+def partial_section_edit(lesson_id, section_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    section = lesson_manager.get_section_by_id(section_id)
+    if not lesson or lesson.user_id != g.user.id or not section or section.lesson_id != lesson_id:
+        return '<div class="alert alert-danger">Section not found or no permission.</div>'
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        type_ = request.form.get('type')
+        assignment_due = request.form.get('assignment_due')
+        file_url = section.file_url
+        # handle file upload
+        if type_ == 'file' and 'file' in request.files:
+            file = request.files['file']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(UPLOAD_FOLDER, filename))
+                file_url = '/static/uploads/' + filename
+        lesson_manager.update_section(section_id, title, content, type_, file_url, assignment_due)
+        return jsonify(success=True, redirect=f'class/{lesson_id}/sections')
+    return render_template('lessons/section_edit.html', lesson=lesson, section=section)
+
+@app.route('/partial/class/<lesson_id>/sections/<section_id>/delete', methods=['POST'])
+@login_required
+def partial_section_delete(lesson_id, section_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    section = lesson_manager.get_section_by_id(section_id)
+    if not lesson or lesson.user_id != g.user.id or not section or section.lesson_id != lesson_id:
+        return jsonify(success=False, message='Section not found or no permission.')
+    lesson_manager.delete_section(section_id)
+    return jsonify(success=True, redirect=f'class/{lesson_id}/sections')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

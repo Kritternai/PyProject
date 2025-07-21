@@ -1,0 +1,65 @@
+<h2 class="h5 mb-3">Edit Content</h2>
+<form id="edit-section-form" enctype="multipart/form-data">
+  <div class="mb-3">
+    <label for="type" class="form-label">Type</label>
+    <select id="type" name="type" class="form-select" required onchange="toggleSectionFields()">
+      <option value="text" {% if section.type == 'text' %}selected{% endif %}>Text</option>
+      <option value="file" {% if section.type == 'file' %}selected{% endif %}>File</option>
+      <option value="assignment" {% if section.type == 'assignment' %}selected{% endif %}>Assignment</option>
+      <option value="note" {% if section.type == 'note' %}selected{% endif %}>Note</option>
+    </select>
+  </div>
+  <div class="mb-3">
+    <label for="title" class="form-label">Title</label>
+    <input type="text" id="title" name="title" value="{{ section.title }}" required class="form-control">
+  </div>
+  <div class="mb-3" id="content-group">
+    <label for="content" class="form-label">Content</label>
+    <textarea id="content" name="content" class="form-control">{{ section.content or '' }}</textarea>
+  </div>
+  <div class="mb-3 d-none" id="file-group">
+    <label for="file" class="form-label">File</label>
+    {% if section.file_url %}
+      <div class="mb-2"><a href="{{ section.file_url }}" target="_blank">Current File</a></div>
+    {% endif %}
+    <input type="file" id="file" name="file" class="form-control">
+  </div>
+  <div class="mb-3 d-none" id="due-group">
+    <label for="assignment_due" class="form-label">Due Date</label>
+    <input type="datetime-local" id="assignment_due" name="assignment_due" class="form-control" value="{% if section.assignment_due %}{{ section.assignment_due.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
+  </div>
+  <button type="submit" class="btn btn-primary w-100">Update</button>
+</form>
+<script>
+function toggleSectionFields() {
+  const type = document.getElementById('type').value;
+  document.getElementById('content-group').classList.toggle('d-none', type === 'file');
+  document.getElementById('file-group').classList.toggle('d-none', type !== 'file');
+  document.getElementById('due-group').classList.toggle('d-none', type !== 'assignment');
+}
+document.getElementById('type').addEventListener('change', toggleSectionFields);
+toggleSectionFields();
+const editSectionForm = document.getElementById('edit-section-form');
+if (editSectionForm) {
+  editSectionForm.onsubmit = function(e) {
+    e.preventDefault();
+    const formData = new FormData(editSectionForm);
+    fetch('', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+      }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        loadPage('class/{{ lesson.id }}');
+      } else {
+        alert(data.message || 'Error updating content.');
+      }
+    });
+  };
+}
+</script> 
