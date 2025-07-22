@@ -12,6 +12,7 @@ function loadPage(page) {
           setupLessonForms();
           setupLessonEditForm(); // <-- เพิ่มตรงนี้
           setupSectionForms(); // เรียก setupSectionForms หลัง loadPage
+          setupNoteForms(); // เรียก setupNoteForms หลัง loadPage
           setupSectionFilter(); // เรียก setupSectionFilter() หลัง loadPage
           // Auto show Lesson Content tab and scroll if on lesson detail
           if (page.startsWith('class/')) {
@@ -431,3 +432,41 @@ window.deleteSection = function(lessonId, sectionId) {
     }
   });
 }; 
+
+function setupNoteForms() {
+  const addNoteModal = document.getElementById('addNoteModal');
+  const addNoteForm = document.getElementById('add-note-form');
+  if (addNoteModal && addNoteForm) {
+    addNoteModal.addEventListener('show.bs.modal', function () {
+      addNoteForm.reset();
+      setTimeout(() => {
+        const titleInput = addNoteForm.querySelector('#title');
+        if (titleInput) titleInput.focus();
+      }, 300);
+    });
+
+    addNoteForm.onsubmit = function(e) {
+      e.preventDefault();
+      const formData = new FormData(addNoteForm);
+      fetch(addNoteForm.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.html) {
+          document.getElementById('main-content').innerHTML = data.html;
+          const modal = bootstrap.Modal.getInstance(addNoteModal);
+          modal.hide();
+          addNoteForm.reset();
+        } else {
+          alert(data.message || 'Error adding note.');
+        }
+      });
+    };
+  }
+}

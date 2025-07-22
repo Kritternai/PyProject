@@ -35,6 +35,8 @@ class LessonSection(db.Model):
     body = db.Column(db.Text, nullable=True)
     image_path = db.Column(db.String(255), nullable=True)
     external_link = db.Column(db.String(255), nullable=True)
+    tags = db.Column(db.String(200), nullable=True)
+    status = db.Column(db.String(50), default='pending')
 
     def __repr__(self):
         return f'<LessonSection {self.title} ({self.type})>'

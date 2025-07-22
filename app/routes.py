@@ -82,8 +82,26 @@ def partial_note_add_standalone():
     if request.method == 'POST':
         title = request.form.get('title')
         body = request.form.get('body')
+        tags = request.form.get('tags')
+        status = request.form.get('status')
+        external_link = request.form.get('external_link')
+
         if not title or not body:
             return jsonify(success=False, message='Title and body are required.')
+
+        image_file = request.files.get('image')
+        image_path = None
+        if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
+            filename = secure_filename(image_file.filename)
+            image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+            image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
+
+        file_file = request.files.get('file')
+        file_path = None
+        if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
+            filename = secure_filename(file_file.filename)
+            file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+            file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
 
         # Find or create the "General Notes" lesson
         general_notes_lesson = Lesson.query.filter_by(user_id=g.user.id, title="General Notes").first()
@@ -94,11 +112,22 @@ def partial_note_add_standalone():
             lesson_id=general_notes_lesson.id,
             title=title,
             body=body,
-            type='note'
+            type='note',
+            tags=tags,
+            status=status,
+            image_path=image_path,
+            file_url=file_path,
+            external_link=external_link
         )
-        return jsonify(success=True, redirect='note')
+        # After adding, redirect to the main note list to see the new note
+        notes = db.session.query(LessonSection).join(Lesson).filter(
+            Lesson.user_id == g.user.id,
+            LessonSection.type == 'note'
+        ).order_by(LessonSection.created_at.desc()).all()
+        html = render_template('note_fragment.html', notes=notes)
+        return jsonify(success=True, html=html)
 
-    return render_template('notes/create.html', lesson=None) # lesson=None because it's a general note
+    return render_template('notes/create.html', lesson=None)
 
 
 @app.route('/partial/dev')
