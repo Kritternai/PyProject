@@ -45,7 +45,7 @@ SCOPES = [
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
+        if 'user_id' not in session or g.user is None: # Added g.user is None check
             if request.accept_mimetypes['application/json']:
                 return jsonify(success=False, message='Login required', redirect='login'), 401
             flash('Please log in to access this page.', 'warning')
