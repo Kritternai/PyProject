@@ -182,17 +182,17 @@ def import_data_from_extension():
 
     data = request.get_json()
     platform = data.get('platform')
-    imported_data_content = data.get('data')
+    imported_data_body = data.get('data')
 
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({"error": "User not authenticated"}), 401
 
-    if not platform or not imported_data_content:
+    if not platform or not imported_data_body:
         return jsonify({"error": "Missing platform or data in request"}), 400
 
     try:
-        new_imported_data = ImportedData(user_id=user_id, platform=platform, data=imported_data_content)
+        new_imported_data = ImportedData(user_id=user_id, platform=platform, data=imported_data_body)
         db.session.add(new_imported_data)
         db.session.commit()
         return jsonify({"message": f"Data from {platform} received and saved successfully!"}), 200
@@ -409,20 +409,47 @@ def fetch_google_classroom_data():
 
 # กำหนดโฟลเดอร์สำหรับเก็บไฟล์ที่อัพโหลด
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
+IMAGE_FOLDER = os.path.join(UPLOAD_FOLDER, 'image')  # โฟลเดอร์สำหรับรูปภาพ
+FILE_FOLDER = os.path.join(UPLOAD_FOLDER, 'files')   # โฟลเดอร์สำหรับไฟล์เอกสาร
 
 # สร้างโฟลเดอร์ถ้ายังไม่มี
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
+# สร้างโฟลเดอร์ image ถ้ายังไม่มี
+if not os.path.exists(IMAGE_FOLDER):
+    os.makedirs(IMAGE_FOLDER)
+
+# สร้างโฟลเดอร์ files ถ้ายังไม่มี
+if not os.path.exists(FILE_FOLDER):
+    os.makedirs(FILE_FOLDER)
+
 # กำหนดค่า config ให้ app
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['IMAGE_FOLDER'] = IMAGE_FOLDER
+app.config['FILE_FOLDER'] = FILE_FOLDER
 
 # กำหนดประเภทไฟล์ที่อนุญาตให้อัพโหลด
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_FILE_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt', 'xlsx', 'xlsm', 'xls', 'ppt', 'pptx', 'pptm'}
+ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS | ALLOWED_FILE_EXTENSIONS
 
-def allowed_file(filename):
-    # เช็คว่าไฟล์มี extension และอยู่ในรายการที่อนุญาตหรือเปล่า
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+def allowed_file(filename, file_type='all'):
+    """
+    เช็คว่าไฟล์มี extension และอยู่ในรายการที่อนุญาตหรือเปล่า
+    file_type: 'image', 'document', 'all'
+    """
+    if '.' not in filename:
+        return False
+    
+    extension = filename.rsplit('.', 1)[1].lower()
+    
+    if file_type == 'image':
+        return extension in ALLOWED_IMAGE_EXTENSIONS
+    elif file_type == 'document':
+        return extension in ALLOWED_FILE_EXTENSIONS
+    else:  # 'all'
+        return extension in ALLOWED_EXTENSIONS
 
 # Note Management Routes
 from app.core.note_manager import NoteManager
@@ -439,53 +466,61 @@ def list_notes():
     # ส่งไปแสดงในหน้า list
     return render_template('notes/list.html', title='My Notes', notes=notes)
 
-def allowed_file(filename):
-    # เช็คว่าไฟล์มี extension และอยู่ในรายการที่อนุญาตหรือเปล่า
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 # Add Note Route
 @app.route('/notes/add', methods=['GET', 'POST'])
 @login_required
 def add_note():
     # ถ้าเป็น POST แปลว่าส่งข้อมูลมาเพิ่ม note ใหม่
     if request.method == 'POST':
-        # รับข้อมูลจาก form
+        # รับข้อมูลจาก form 
+        user_id = session['user_id']
         title = request.form.get('title')
-        content = request.form.get('content')
-        note_date_str = request.form.get('note_date')
-        due_date_str = request.form.get('due_date')
+        body = request.form.get('body')
+        created_at_str = request.form.get('created_at')
+        deadline_str = request.form.get('deadline')
         tags = request.form.get('tag')
         status = request.form.get('status')
-        user_id = session['user_id']
+        external_link = request.form.get('external_link')
 
         # แปลง string เป็น datetime
-        note_date = datetime.strptime(note_date_str, '%Y-%m-%d') if note_date_str else None
-        due_date = datetime.strptime(due_date_str, '%Y-%m-%d') if due_date_str else None
+        created_at = datetime.strptime(created_at_str, '%Y-%m-%d') if created_at_str else None
+        deadline = datetime.strptime(deadline_str, '%Y-%m-%d') if deadline_str else None
 
         # จัดการรูปภาพที่อัพโหลดมา
         image_file = request.files.get('image')
         image_path = None
-        if image_file and allowed_file(image_file.filename):
+        if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
             filename = secure_filename(image_file.filename)
-            image_path = os.path.join('static', 'uploads', filename).replace('\\', '/')
-            image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        # image_path จะถูกบันทึกลง database ในรูปแบบ 'static/uploads/filename.jpg'
+            # บันทึกไฟล์ใน folder image
+            image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+            image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
 
-        # เช็คว่าต้องมี title และ content
-        if not title or not content:
-            flash('Title and content are required.', 'danger')
+        # จัดการไฟล์เอกสารที่อัพโหลดมา
+        document_file = request.files.get('file')
+        file_path = None
+        if document_file and document_file.filename != '' and allowed_file(document_file.filename, 'document'):
+            filename = secure_filename(document_file.filename)
+            # บันทึกไฟล์ใน folder files
+            file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+            document_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
+
+        # เช็คว่าต้องมี title และ body
+        if not title or not body:
+            flash('Title and body are required.', 'danger')
             return redirect(url_for('add_note'))
 
         # เพิ่ม note ใหม่เข้าฐานข้อมูล
         note = note_manager.add_note(
             user_id=user_id,
             title=title,
-            content=content,
-            note_date=note_date,
-            due_date=due_date,
+            body=body,
             tags=tags,
             status=status,
-            image=image_path
+            created_at=created_at,
+            deadline=deadline,
+            image_path=image_path,
+            file_path=file_path,
+            external_link=external_link
         )
         db.session.commit()
         flash('Note added successfully!', 'success')
@@ -508,12 +543,19 @@ def view_note(note_id):
     
     # จัดการ URL ของรูปภาพสำหรับแสดงใน template
     image_url = None
-    if note.image:
+    if note.image_path:
         # ตัด 'static/' ออกถ้ามี เพื่อใช้กับ url_for('static', filename=...)
-        image_url = url_for('static', filename=note.image.replace('static/', ''))
+        image_url = url_for('static', filename=note.image_path.replace('static/', ''))
+    
+    # จัดการ URL ของไฟล์เอกสารสำหรับแสดงใน template
+    file_url = None
+    file_name = None
+    if note.file_path:
+        file_url = url_for('static', filename=note.file_path.replace('static/', ''))
+        file_name = os.path.basename(note.file_path)
     
     # ส่งไปแสดงหน้า note
-    return render_template('notes/note.html', title=note.title, note=note, image_url=image_url)
+    return render_template('notes/note.html', title=note.title, note=note, image_url=image_url, file_url=file_url, file_name=file_name)
 
 # Edit Note Route
 @app.route('/notes/<note_id>/edit', methods=['GET', 'POST'])
@@ -531,49 +573,81 @@ def edit_note(note_id):
     if request.method == 'POST':
         # รับข้อมูลจาก form
         title = request.form.get('title')
-        content = request.form.get('content')
-        note_date_str = request.form.get('note_date')
-        due_date_str = request.form.get('due_date')
+        body = request.form.get('body')
+        created_at_str = request.form.get('created_at')
+        deadline_str = request.form.get('deadline')
         tags = request.form.get('tag')
         status = request.form.get('status')
+        external_link = request.form.get('external_link')
 
         # แปลง string เป็น datetime
-        note_date = datetime.strptime(note_date_str, '%Y-%m-%d') if note_date_str else None
-        due_date = datetime.strptime(due_date_str, '%Y-%m-%d') if due_date_str else None
+        created_at = datetime.strptime(created_at_str, '%Y-%m-%d') if created_at_str else None
+        deadline = datetime.strptime(deadline_str, '%Y-%m-%d') if deadline_str else None
 
         # จัดการเรื่องรูปภาพ
         remove_image = request.form.get('remove_image')
         image_file = request.files.get('image')
-        image_path = None
+        image_path = note.image_path  # เก็บค่าเดิมไว้ก่อน
+
+        # จัดการเรื่องไฟล์เอกสาร
+        remove_file = request.form.get('remove_file')
+        document_file = request.files.get('file')
+        file_path = note.file_path  # เก็บค่าเดิมไว้ก่อน
 
         # ถ้าต้องการลบรูปเก่า
-        if remove_image and note.image:
-            old_image_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(note.image))
+        if remove_image and note.image_path:
+            old_image_filename = os.path.basename(note.image_path)
+            old_image_path = os.path.join(app.config['IMAGE_FOLDER'], old_image_filename)
             if os.path.exists(old_image_path):
                 os.remove(old_image_path)
             image_path = None
         # ถ้าอัพโหลดรูปใหม่
-        elif image_file and allowed_file(image_file.filename):
-            # ลบรูปเก่าก่อน
-            if note.image:
-                old_image_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(note.image))
+        elif image_file and allowed_file(image_file.filename, 'image'):
+            # ลบรูปเก่าก่อน (ถ้ามี)
+            if note.image_path:
+                old_image_filename = os.path.basename(note.image_path)
+                old_image_path = os.path.join(app.config['IMAGE_FOLDER'], old_image_filename)
                 if os.path.exists(old_image_path):
                     os.remove(old_image_path)
-            # บันทึกรูปใหม่
+            
+            # บันทึกรูปใหม่ในโฟลเดอร์ image
             filename = secure_filename(image_file.filename)
-            image_path = os.path.join('static', 'uploads', filename).replace('\\', '/')
-            image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+            image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
+
+        # ถ้าต้องการลบไฟล์เก่า
+        if remove_file and note.file_path:
+            old_file_filename = os.path.basename(note.file_path)
+            old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
+            if os.path.exists(old_file_path):
+                os.remove(old_file_path)
+            file_path = None
+        # ถ้าอัพโหลดไฟล์ใหม่
+        elif document_file and allowed_file(document_file.filename, 'document'):
+            # ลบไฟล์เก่าก่อน (ถ้ามี)
+            if note.file_path:
+                old_file_filename = os.path.basename(note.file_path)
+                old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
+                if os.path.exists(old_file_path):
+                    os.remove(old_file_path)
+
+            # บันทึกไฟล์ใหม่ในโฟลเดอร์ files
+            filename = secure_filename(document_file.filename)
+            file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+            document_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
 
         # อัพเดท note ในฐานข้อมูล
         note_manager.update_note(
             note_id=note_id,
             title=title,
-            content=content,
-            note_date=note_date,
-            due_date=due_date,
+            body=body,
             tags=tags,
             status=status,
-            image=image_path if (remove_image or image_file) else None
+            created_at=created_at,
+            deadline=deadline,
+            image_path=image_path,
+            file_path=file_path,
+            external_link=external_link
         )
 
         flash('Note updated successfully!', 'success')
@@ -581,35 +655,60 @@ def edit_note(note_id):
 
     # จัดการ URL ของรูปภาพสำหรับแสดงใน template
     image_url = None
-    if note.image:                           # True
-        if note.image.startswith('static/'):  # True
-            image_filename = note.image.replace('static/', '')  # "uploads/image.jpg"
-        # ไม่เข้า else
+    if note.image_path:
+        if note.image_path.startswith('static/'):
+            image_filename = note.image_path.replace('static/', '')
+            image_url = url_for('static', filename=image_filename)
+        else:
+            # กรณีที่ path ไม่ได้ขึ้นต้นด้วย static/ (สำหรับข้อมูลเก่า)
+            image_url = url_for('static', filename=f'uploads/image/{os.path.basename(note.image_path)}')
+
+    # จัดการ URL ของไฟล์เอกสารสำหรับแสดงใน template
+    file_url = None
+    file_name = None
+    if note.file_path:
+        if note.file_path.startswith('static/'):
+            file_filename = note.file_path.replace('static/', '')
+            file_url = url_for('static', filename=file_filename)
+        else:
+            # กรณีที่ path ไม่ได้ขึ้นต้นด้วย static/ (สำหรับข้อมูลเก่า)
+            file_url = url_for('static', filename=f'uploads/files/{os.path.basename(note.file_path)}')
         
-        image_url = url_for('static', filename=image_filename)  # "/static/uploads/image.jpg"
+        file_name = os.path.basename(note.file_path)
 
     # ส่งไปยัง Template
-    return render_template('notes/edit.html', title='Edit Note', note=note, image_url=image_url)
+    return render_template('notes/edit.html', title='Edit Note', note=note, image_url=image_url, file_url=file_url, file_name=file_name)
 
 # Delete Note Route
 @app.route('/notes/<note_id>/delete', methods=['POST'])
 @login_required
 def delete_note(note_id):
-    # หา note ตาม ID ที่ส่งมา
+    # หา note ตาม ID
     note = note_manager.get_note_by_id(note_id)
     
     # เช็คว่า note มีอยู่จริงและเป็นของ user ที่ login อยู่หรือเปล่า
     if not note or note.user_id != session['user_id']:
         flash('Note not found or you do not have permission to delete it.', 'danger')
         return redirect(url_for('list_notes'))
-
-    # ลบ note และแสดงผลลัพธ์
-    if note_manager.delete_note(note_id):
-        flash('Note deleted successfully!', 'success')
-    else:
-        flash('Error deleting note.', 'danger')
     
-    # กลับไปหน้าแสดงรายการ notes
+    # ลบไฟล์รูปภาพ (ถ้ามี)
+    if note.image_path:
+        image_filename = os.path.basename(note.image_path)
+        image_path = os.path.join(app.config['IMAGE_FOLDER'], image_filename)
+        if os.path.exists(image_path):
+            os.remove(image_path)
+    
+    # ลบไฟล์เอกสาร (ถ้ามี)
+    if note.file_path:
+        file_filename = os.path.basename(note.file_path)
+        file_path = os.path.join(app.config['FILE_FOLDER'], file_filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    
+    # ลบ note จากฐานข้อมูล
+    note_manager.delete_note(note_id)
+    
+    flash('Note deleted successfully!', 'success')
     return redirect(url_for('list_notes'))
 
 # === End of note management routes ===
