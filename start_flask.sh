@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Go to the project directory (optional, but good practice if you run from elsewhere)
-cd /Users/kbbk/PyProject-1
+cd /Users/kbbk/PyProject-3
 
 # Set Environment Variables
 export GOOGLE_CLIENT_ID="40820229782-0f7uoqd5ab94cuipmbdk09jeradqvac0.apps.googleusercontent.com"
