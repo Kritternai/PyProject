@@ -1,0 +1,27 @@
+<div class="container-fluid">
+  <div class="row g-4">
+    <div class="col-md-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h2 class="h4 mb-3">Welcome, {{ user.username if user else 'User' }}!</h2>
+          <p class="mb-0">This is your dashboard. Quick access to your modules and summary.</p>
+        </div>
+      </div>
+      <!-- Add summary cards, charts, etc. here -->
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Quick Links</h5>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item"><a href="#" onclick="setActiveNav(document.querySelector('[data-page=class]'));loadPage('class')">Go to Class</a></li>
+            <li class="list-group-item"><a href="#" onclick="setActiveNav(document.querySelector('[data-page=note]'));loadPage('note')">Go to Note</a></li>
+            <li class="list-group-item"><a href="#" onclick="setActiveNav(document.querySelector('[data-page=track]'));loadPage('track')">Go to Track</a></li>
+            <li class="list-group-item"><a href="#" onclick="setActiveNav(document.querySelector('[data-page=pomodoro]'));loadPage('pomodoro')">Go to Pomodoro</a></li>
+            <li class="list-group-item"><a href="#" onclick="setActiveNav(document.querySelector('[data-page=setting]'));loadPage('setting')">Go to Setting</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

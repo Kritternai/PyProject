@@ -1,0 +1,88 @@
+<!-- Modal for Add Content -->
+<div class="modal fade" id="addSectionModal" tabindex="-1" aria-labelledby="addSectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="addSectionModalLabel"><i class="bi bi-plus-circle me-2"></i>Add Content</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="add-section-form" enctype="multipart/form-data" autocomplete="off">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="type" class="form-label">Type</label>
+              <select id="type" name="type" class="form-select" required onchange="toggleSectionFields()">
+                <option value="text">📝 Text</option>
+                <option value="file">📎 File</option>
+                <option value="assignment">📅 Assignment</option>
+                <option value="note">🗒️ Note</option>
+              </select>
+              <div class="form-text">Choose the type of content to add.</div>
+            </div>
+            <div class="col-md-8">
+              <label for="title" class="form-label">Title</label>
+              <input type="text" id="title" name="title" required class="form-control" maxlength="100" placeholder="Enter content title">
+            </div>
+          </div>
+          <div class="row g-3 mt-1">
+            <div class="col-12" id="content-group">
+              <label for="content" class="form-label">Content</label>
+              <textarea id="content" name="content" class="form-control" rows="3" placeholder="Enter content or instructions"></textarea>
+            </div>
+            <div class="col-12 d-none" id="file-group">
+              <label for="file" class="form-label">File</label>
+              <input type="file" id="file" name="file" class="form-control">
+              <div class="form-text">Upload a file (PDF, DOCX, etc.)</div>
+            </div>
+            <div class="col-12 d-none" id="due-group">
+              <label for="assignment_due" class="form-label">Due Date</label>
+              <input type="datetime-local" id="assignment_due" name="assignment_due" class="form-control">
+              <div class="form-text">Set a due date for assignments (optional)</div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end mt-4">
+            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function toggleSectionFields() {
+  const type = document.getElementById('type').value;
+  document.getElementById('content-group').classList.toggle('d-none', type === 'file');
+  document.getElementById('file-group').classList.toggle('d-none', type !== 'file');
+  document.getElementById('due-group').classList.toggle('d-none', type !== 'assignment');
+}
+document.getElementById('type').addEventListener('change', toggleSectionFields);
+toggleSectionFields();
+const addSectionForm = document.getElementById('add-section-form');
+if (addSectionForm) {
+  addSectionForm.onsubmit = function(e) {
+    e.preventDefault();
+    const formData = new FormData(addSectionForm);
+    fetch('', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+      }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        var modal = bootstrap.Modal.getInstance(document.getElementById('addSectionModal'));
+        if (modal) modal.hide();
+        loadLessonSections();
+      } else {
+        alert(data.message || 'Error adding content.');
+      }
+    });
+  };
+}
+</script>
+<!-- Bootstrap Icons CDN (if not already included) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"> 
