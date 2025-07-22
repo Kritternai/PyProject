@@ -75,9 +75,8 @@ class NoteManager:
 # note.py, note_manager.py, routes.py, note.html, create.html, edit.html, list.html, static/uploads/image_paths/, static/uploads/files/
 
 # การทำ static/uploads/image_paths/ เพื่อเก็บไฟล์รูปภาพที่แนบมากับ note, static/uploads/files/ เพื่อเก็บไฟล์เอกสารที่แนบมากับ note Date: 21/10/2023 - 23/10/2023
-# สิ่งที่จะทำเพิ่ม การเก็บ file แบบ all file
-# สิ่งที่จะทำเพิ่ม การเก็บไฟล์แนบ เช่น รูปภาพ, ไฟล์เอกสาร แบบ Hash
-# สิ่งที่จะทำเพิ่ม การเก็บ link เช่น https://www.example.com
+# สิ่งที่จะทำเพิ่ม การเก็บ link เช่น https://www.example.com Date: 21/10/2023 - 23/10/2023
+# สิ่งที่จะทำเพิ่ม การเก็บไฟล์แนบ เช่น รูปภาพ, ไฟล์เอกสาร แบบ Hash Date: 24/10/2023 - 25/10/2023
 # สิ่งที่จะทำเพิ่ม การทำ search note คือการทำ search note โดยการใช้ library เช่น elasticsearch หรือ lunr.js
 # สิ่งที่จะทำเพิ่ม การทำ filter note คือการทำ filter note โดยการใช้ library เช่น react-select หรือ vue-select
 # สิ่งที่จะทำเพิ่ม การทำ note เป็นแบบ markdown คือการทำ note เป็นแบบ markdown editor โดยการใช้ library เช่น markdown-it หรือ showdown.js
