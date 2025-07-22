@@ -23,13 +23,16 @@
                 </a>
                 <p class="mt-2 text-gray-800 line-clamp-3">{{ note.body|safe }}</p>
                 <p class="mt-2 text-gray-800 line-clamp-3">
-                    <span class="font-semibold">Tag:</span>
-                    {{ note.tags or '-' }}
-                </p>
-                <p class="mt-2 text-gray-800 line-clamp-3">
                     <span class="font-semibold">Status:</span>
                     {{ note.status or '-' }}
                 </p>
+                {% if note.tags %}
+                    <ul class="flex flex-wrap gap-2 mt-2 text-sm">
+                        {% for tag in note.tags.split(',') %}
+                            <li class="px-2 py-1 text-gray-800 bg-gray-200 rounded-full">{{ tag.strip() }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
                 <p class="mt-1 text-sm text-gray-600">
                 Date: {{ note.created_at.strftime('%Y-%m-%d') if note.created_at else 'No Date' }}
                 </p>

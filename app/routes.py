@@ -576,7 +576,7 @@ def edit_note(note_id):
         body = request.form.get('body')
         created_at_str = request.form.get('created_at')
         deadline_str = request.form.get('deadline')
-        tags = request.form.get('tag')
+        tags = request.form.get('tags')
         status = request.form.get('status')
         external_link = request.form.get('external_link')
 

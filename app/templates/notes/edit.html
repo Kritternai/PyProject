@@ -29,10 +29,14 @@
                     <option value="completed" {% if note.status == 'completed' %}selected{% endif %}>Completed</option>
                 </select>
             </div>
+            <!-- Tags -->   
             <div class="mb-4">
-                <label for="tag" class="block mb-2 text-sm font-bold text-gray-700">Tag:</label>
-                <input type="text" id="tag" name="tag" value="{{ note.tags or '' }}"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
+                <label for="tags" class="block mb-2 text-sm font-bold text-gray-700">Tags (comma separated):</label>
+                <input type="text" id="tags" name="tags"
+                    value="{{ note.tags }}"
+                    placeholder="e.g. student, math, sci"
+                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
+                    required>
             </div>
             <div class="mb-4">
                 <label for="created_at" class="block mb-2 text-sm font-bold text-gray-700">Date (Optional):</label>
@@ -82,7 +86,6 @@
                 <input type="url" id="external_link" name="external_link" placeholder="https://example.com"
                     value="{{ note.external_link or '' }}"
                     class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
-
                 {% if note and note.external_link %}
                     <div class="mt-2">
                         <p class="text-sm text-gray-600">Current link:</p>
