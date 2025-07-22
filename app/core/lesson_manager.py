@@ -88,7 +88,7 @@ class LessonManager:
             return True
         return False
 
-    def add_section(self, lesson_id, title, content=None, type='text', file_url=None, assignment_due=None, order=0, file_urls=None, body=None, image_path=None, external_link=None):
+    def add_section(self, lesson_id, title, content=None, type='text', file_url=None, assignment_due=None, order=0, file_urls=None, body=None, image_path=None, external_link=None, tags=None, status=None):
         # Ensure assignment_due is None if not a datetime
         import datetime
         if not assignment_due or (isinstance(assignment_due, str) and assignment_due.strip() == ''):
@@ -109,7 +109,9 @@ class LessonManager:
             file_urls=file_urls,
             body=body,
             image_path=image_path,
-            external_link=external_link
+            external_link=external_link,
+            tags=tags,
+            status=status
         )
         db.session.add(section)
         db.session.commit()
@@ -121,7 +123,7 @@ class LessonManager:
     def get_section_by_id(self, section_id):
         return LessonSection.query.get(section_id)
 
-    def update_section(self, section_id, title=None, content=None, type=None, file_url=None, assignment_due=None, order=None, file_urls=None, body=None, image_path=None, external_link=None):
+    def update_section(self, section_id, title=None, content=None, type=None, file_url=None, assignment_due=None, order=None, file_urls=None, body=None, image_path=None, external_link=None, tags=None, status=None):
         section = self.get_section_by_id(section_id)
         if not section:
             return False
@@ -141,6 +143,10 @@ class LessonManager:
             section.image_path = image_path
         if external_link is not None:
             section.external_link = external_link
+        if tags is not None:
+            section.tags = tags
+        if status is not None:
+            section.status = status
         # Ensure assignment_due is None if not a datetime
         import datetime
         if assignment_due is not None:

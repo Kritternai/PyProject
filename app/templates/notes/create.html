@@ -1,115 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ title }} - Smart Learning Hub</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-</head>
-<body class="min-h-screen p-6 bg-gray-100">
-    <div class="max-w-4xl p-6 mx-auto bg-white rounded shadow">
-        <h1 class="mb-6 text-3xl font-bold">{{ title }}</h1>
-        <form method="POST" action="{{ url_for('add_note') }}" enctype="multipart/form-data">
-            <!-- title -->
-            <div class="mb-4">
-                <label for="title" class="block mb-2 text-sm font-bold text-gray-700">Title:</label>
-                <input type="text" id="title" name="title"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                    required />
+<div class="modal-header">
+    <h5 class="modal-title" id="addNoteModalLabel">Add New Note</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<form hx-post="/partial/note/add" hx-target="#main-content" hx-swap="innerHTML" hx-encoding="multipart/form-data">
+    <div class="modal-body">
+        <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+        </div>
+        <div class="mb-3">
+            <label for="body" class="form-label">Body</label>
+            <textarea class="form-control" id="body" name="body" rows="5" required></textarea>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="tags" class="form-label">Tags (comma-separated)</label>
+                <input type="text" class="form-control" id="tags" name="tags">
             </div>
-            <!-- body -->
-            <div class="mb-4">
-                <label for="body" class="block mb-2 text-sm font-bold text-gray-700">Content:</label>
-                <textarea id="body" name="body" rows="10"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                    required></textarea>
-            </div>
-            <!-- Status -->
-            <div class="mb-4">
-                <label for="status" class="block mb-2 text-sm font-bold text-gray-700">Status:</label>
-                <select id="status" name="status"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                    required>
-                    <option value="not started">Not started</option>
-                    <option value="in progress">In progress</option>
+            <div class="col-md-6 mb-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
                     <option value="completed">Completed</option>
                 </select>
-            </div>  
-            <!-- Tags -->
-            <div class="mb-4">
-                <label for="tags" class="block mb-2 text-sm font-bold text-gray-700">Tags (comma separated):</label>
-                <input type="text" id="tags" name="tags"
-                    placeholder="e.g. student, sci, math"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                    required>
             </div>
-            <!-- note date -->
-            <div class="mb-4">
-                <label for="created_at" class="block mb-2 text-sm font-bold text-gray-700">Date (Optional):</label>
-                <input type="text" id="created_at" name="created_at" class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline" />
-            </div>
-            <!-- deadline -->
-            <div class="mb-4">
-                <label for="deadline" class="block mb-2 text-sm font-bold text-gray-700">Date (Deadline):</label>
-                <input type="text" id="deadline" name="deadline"class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline" />
-            </div>
-            <!-- image -->
-            <div class="mb-4">
-                <label for="image" class="block mb-2 text-sm font-bold text-gray-700">Image:</label>
-                <input type="file" id="image" name="image" accept="image/*"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
-            </div>
-            {% if note and note.image_path %}
-                <img src="{{ url_for('static', filename=note.image_path) }}" alt="Note Image" class="mb-4" />
-            {% endif %}
-            <!-- file -->
-            <div class="mb-4">
-                <label for="file" class="block mb-2 text-sm font-bold text-gray-700">File:</label>
-                <input type="file" id="file" name="file"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                    accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx" />
-            </div>
-            {% if note and note.file_path %}
-                <div class="mb-4">
-                    <label class="block mb-2 text-sm font-bold text-gray-700">Attached File:</label>
-                    <a href="{{ url_for('static', filename=note.file_path) }}" class="text-blue-500 hover:underline" download>
-                        {{ note.file.split('/')[-1] }}
-                    </a>
-                </div>
-            {% endif %}
-            <!-- link -->
-            <div class="mb-4">
-                <label for="external_link" class="block mb-2 text-sm font-bold text-gray-700">External Link:</label>
-                <input type="url" id="external_link" name="external_link"
-                    placeholder="https://example.com"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline" />
-            </div>
-            {% if note and note.external_link %}
-                <div class="mb-4">
-                    <label class="block mb-2 text-sm font-bold text-gray-700">Attached Link:</label>
-                    <a href="{{ note.external_link }}" class="text-blue-500 hover:underline" target="_blank">
-                        {{ note.external_link }}
-                    </a>
-                </div>
-            {% endif %}
-            <button type="submit"
-                class="px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline">
-                Create Note
-            </button>
-            <a href="{{ url_for('list_notes') }}" class="ml-4 text-gray-600 hover:underline">Cancel</a>
-        </form>
+        </div>
+        <div class="mb-3">
+            <label for="external_link" class="form-label">External Link</label>
+            <input type="url" class="form-control" id="external_link" name="external_link">
+        </div>
+        <div class="mb-3">
+            <label for="image" class="form-label">Image</label>
+            <input class="form-control" type="file" id="image" name="image" accept="image/*">
+        </div>
+        <div class="mb-3">
+            <label for="file" class="form-label">File Attachment</label>
+            <input class="form-control" type="file" id="file" name="file">
+        </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        flatpickr("#created_at", {
-            dateFormat: "Y-m-d",
-            allowInput: true
-        });
-        flatpickr("#deadline", {
-            dateFormat: "Y-m-d",
-            allowInput: true
-        });
-    </script>
-</body>
-</html>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Save Note</button>
+    </div>
+</form>
+
+<script>
+// This script will be evaluated by HTMX after the form is submitted successfully
+(function(){
+    var modal = bootstrap.Modal.getInstance(document.getElementById('addNoteModal'));
+    if(modal) {
+        modal.hide();
+    }
+})();
+</script>
