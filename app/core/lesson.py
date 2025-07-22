@@ -31,6 +31,10 @@ class LessonSection(db.Model):
     order = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+    # Fields for note type
+    body = db.Column(db.Text, nullable=True)
+    image_path = db.Column(db.String(255), nullable=True)
+    external_link = db.Column(db.String(255), nullable=True)
 
     def __repr__(self):
         return f'<LessonSection {self.title} ({self.type})>'
