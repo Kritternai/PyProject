@@ -2,7 +2,7 @@ from app import app, db
 from flask import render_template, request, flash, redirect, url_for, session, jsonify, make_response, g
 import json
 from app.core.lesson_manager import LessonManager
-from app.core.lesson import Lesson # Import Lesson model for query
+from app.core.lesson import Lesson, LessonSection # Import Lesson model for query
 from app.core.imported_data import ImportedData # Import ImportedData model
 from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
 from app.core.course_linkage_manager import CourseLinkageManager # Import CourseLinkageManager
@@ -66,6 +66,40 @@ def index():
 @app.route('/partial/dashboard')
 def partial_dashboard():
     return render_template('dashboard_fragment.html', user=g.user)
+
+@app.route('/partial/note')
+@login_required
+def partial_note_list():
+    notes = db.session.query(LessonSection).join(Lesson).filter(
+        Lesson.user_id == g.user.id,
+        LessonSection.type == 'note'
+    ).order_by(LessonSection.created_at.desc()).all()
+    return render_template('note_fragment.html', notes=notes)
+
+@app.route('/partial/note/add', methods=['GET', 'POST'])
+@login_required
+def partial_note_add_standalone():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        body = request.form.get('body')
+        if not title or not body:
+            return jsonify(success=False, message='Title and body are required.')
+
+        # Find or create the "General Notes" lesson
+        general_notes_lesson = Lesson.query.filter_by(user_id=g.user.id, title="General Notes").first()
+        if not general_notes_lesson:
+            general_notes_lesson = lesson_manager.add_lesson(g.user.id, "General Notes", "A place for your general notes.")
+
+        lesson_manager.add_section(
+            lesson_id=general_notes_lesson.id,
+            title=title,
+            body=body,
+            type='note'
+        )
+        return jsonify(success=True, redirect='note')
+
+    return render_template('notes/create.html', lesson=None) # lesson=None because it's a general note
+
 
 @app.route('/partial/dev')
 def partial_dev():
@@ -282,6 +316,171 @@ def partial_section_delete(lesson_id, section_id):
     sections = lesson_manager.get_sections(lesson_id)
     html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
     return jsonify(success=True, html=html)
+
+# === Start of note management routes ===
+
+# กำหนดโฟลเดอร์สำหรับเก็บไฟล์ที่อัพโหลด
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
+IMAGE_FOLDER = os.path.join(UPLOAD_FOLDER, 'image')  # โฟลเดอร์สำหรับรูปภาพ
+FILE_FOLDER = os.path.join(UPLOAD_FOLDER, 'files')   # โฟลเดอร์สำหรับไฟล์เอกสาร
+
+# สร้างโฟลเดอร์ถ้ายังไม่มี
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# สร้างโฟลเดอร์ image ถ้ายังไม่มี
+if not os.path.exists(IMAGE_FOLDER):
+    os.makedirs(IMAGE_FOLDER)
+
+# สร้างโฟลเดอร์ files ถ้ายังไม่มี
+if not os.path.exists(FILE_FOLDER):
+    os.makedirs(FILE_FOLDER)
+
+# กำหนดค่า config ให้ app
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['IMAGE_FOLDER'] = IMAGE_FOLDER
+app.config['FILE_FOLDER'] = FILE_FOLDER
+
+# กำหนดประเภทไฟล์ที่อนุญาตให้อัพโหลด
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_FILE_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt', 'xlsx', 'xlsm', 'xls', 'ppt', 'pptx', 'pptm'}
+ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS | ALLOWED_FILE_EXTENSIONS
+
+def allowed_file(filename, file_type='all'):
+    """
+    เช็คว่าไฟล์มี extension และอยู่ในรายการที่อนุญาตหรือเปล่า
+    file_type: 'image', 'document', 'all'
+    """
+    if '.' not in filename:
+        return False
+    
+    extension = filename.rsplit('.', 1)[1].lower()
+    
+    if file_type == 'image':
+        return extension in ALLOWED_IMAGE_EXTENSIONS
+    elif file_type == 'document':
+        return extension in ALLOWED_FILE_EXTENSIONS
+    else:  # 'all'
+        return extension in ALLOWED_EXTENSIONS
+
+# Note Management Routes is now part of LessonSection
+@app.route('/partial/class/<lesson_id>/notes/add', methods=['GET', 'POST'])
+@login_required
+def partial_note_add(lesson_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    if not lesson or lesson.user_id != g.user.id:
+        return '<div class="alert alert-danger">Lesson not found or no permission.</div>'
+    if request.method == 'POST':
+        title = request.form.get('title')
+        body = request.form.get('body')
+        tags = request.form.get('tags')
+        status = request.form.get('status')
+        external_link = request.form.get('external_link')
+        
+        image_file = request.files.get('image')
+        image_path = None
+        if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
+            filename = secure_filename(image_file.filename)
+            image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+            image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
+
+        file_file = request.files.get('file')
+        file_path = None
+        if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
+            filename = secure_filename(file_file.filename)
+            file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+            file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
+
+        if not title or not body:
+            return jsonify(success=False, message='Title and body are required.')
+
+        section = lesson_manager.add_section(
+            lesson_id=lesson_id,
+            title=title,
+            body=body,
+            type='note',
+            tags=tags,
+            status=status,
+            image_path=image_path,
+            file_url=file_path,
+            external_link=external_link
+        )
+        sections = lesson_manager.get_sections(lesson_id)
+        html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
+        return jsonify(success=True, html=html)
+    return render_template('notes/create.html', lesson=lesson)
+
+@app.route('/partial/class/<lesson_id>/notes/<section_id>/edit', methods=['GET', 'POST'])
+@login_required
+def partial_note_edit(lesson_id, section_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    section = lesson_manager.get_section_by_id(section_id)
+    if not lesson or lesson.user_id != g.user.id or not section or section.lesson_id != lesson_id:
+        return '<div class="alert alert-danger">Note not found or no permission.</div>'
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        body = request.form.get('body')
+        tags = request.form.get('tags')
+        status = request.form.get('status')
+        external_link = request.form.get('external_link')
+
+        image_path = section.image_path
+        if request.form.get('remove_image'):
+            if section.image_path:
+                old_image_filename = os.path.basename(section.image_path)
+                old_image_path = os.path.join(app.config['IMAGE_FOLDER'], old_image_filename)
+                if os.path.exists(old_image_path):
+                    os.remove(old_image_path)
+                image_path = None
+        elif 'image' in request.files and request.files['image'].filename != '':
+            image_file = request.files['image']
+            if allowed_file(image_file.filename, 'image'):
+                if section.image_path:
+                    old_image_filename = os.path.basename(section.image_path)
+                    old_image_path = os.path.join(app.config['IMAGE_FOLDER'], old_image_filename)
+                    if os.path.exists(old_image_path):
+                        os.remove(old_image_path)
+                filename = secure_filename(image_file.filename)
+                image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+                image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
+
+        file_path = section.file_url
+        if request.form.get('remove_file'):
+            if section.file_url:
+                old_file_filename = os.path.basename(section.file_url)
+                old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
+                if os.path.exists(old_file_path):
+                    os.remove(old_file_path)
+                file_path = None
+        elif 'file' in request.files and request.files['file'].filename != '':
+            file_file = request.files['file']
+            if allowed_file(file_file.filename, 'document'):
+                if section.file_url:
+                    old_file_filename = os.path.basename(section.file_url)
+                    old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
+                    if os.path.exists(old_file_path):
+                        os.remove(old_file_path)
+                filename = secure_filename(file_file.filename)
+                file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+                file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
+
+        lesson_manager.update_section(
+            section_id=section_id,
+            title=title,
+            body=body,
+            tags=tags,
+            status=status,
+            image_path=image_path,
+            file_url=file_path,
+            external_link=external_link
+        )
+        sections = lesson_manager.get_sections(lesson_id)
+        html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
+        return jsonify(success=True, html=html)
+    return render_template('notes/edit.html', lesson=lesson, note=section)
+
+# === End of note management routes ===
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
