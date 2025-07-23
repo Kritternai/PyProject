@@ -2,7 +2,7 @@ from app import app, db
 from flask import render_template, request, flash, redirect, url_for, session, jsonify, make_response, g
 import json
 from app.core.lesson_manager import LessonManager
-from app.core.lesson import Lesson, LessonSection # Import Lesson model for query
+from app.core.lesson import Lesson # Import Lesson model for query
 from app.core.imported_data import ImportedData # Import ImportedData model
 from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
 from app.core.course_linkage_manager import CourseLinkageManager # Import CourseLinkageManager
@@ -10,6 +10,9 @@ import datetime # Import datetime
 from app.core.user_manager import UserManager
 from app.core.authenticator import Authenticator
 from functools import wraps
+# import os 
+from datetime import datetime # note: Used for date handling
+from werkzeug.utils import secure_filename # note: Used for secure file names
 
 # For Google Classroom API
 import os
@@ -861,17 +864,17 @@ def import_data_from_extension():
 
     data = request.get_json()
     platform = data.get('platform')
-    imported_data_content = data.get('data')
+    imported_data_body = data.get('data')
 
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({"error": "User not authenticated"}), 401
 
-    if not platform or not imported_data_content:
+    if not platform or not imported_data_body:
         return jsonify({"error": "Missing platform or data in request"}), 400
 
     try:
-        new_imported_data = ImportedData(user_id=user_id, platform=platform, data=imported_data_content)
+        new_imported_data = ImportedData(user_id=user_id, platform=platform, data=imported_data_body)
         db.session.add(new_imported_data)
         db.session.commit()
         return jsonify({"message": f"Data from {platform} received and saved successfully!"}), 200
@@ -1252,248 +1255,3 @@ def fetch_google_classroom_data():
         flash(f'Error fetching Google Classroom data: {e}', 'danger')
         print(f"ERROR: Error fetching Google Classroom data for user {user_id}: {e}")
         return redirect(url_for('index'))
-
-# Google Classroom Course Details and Edit Routes
-@app.route('/classroom/course/<course_id>')
-def course_detail(course_id):
-    user_id = session['user_id']
-    imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
-    
-    course_to_display = None
-    if imported_data and 'courses' in imported_data.data:
-        for course in imported_data.data['courses']:
-            if str(course.get('id')) == str(course_id):
-                course_to_display = course
-                break
-
-    if not course_to_display:
-        flash('Course not found.', 'danger')
-        return redirect(url_for('index'))
-
-    return render_template('google_classroom/course_detail.html', title=course_to_display.get('name'), course=course_to_display)
-
-@app.route('/classroom/course/<course_id>/edit', methods=['GET', 'POST'])
-def edit_course(course_id):
-    user_id = session['user_id']
-    imported_data_entry = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
-
-    if not imported_data_entry:
-        flash('No Google Classroom data found.', 'danger')
-        return redirect(url_for('index'))
-
-    course_to_edit = None
-    course_index = -1
-    if 'courses' in imported_data_entry.data:
-        for i, course in enumerate(imported_data_entry.data['courses']):
-            if str(course.get('id')) == str(course_id):
-                course_to_edit = course
-                course_index = i
-                break
-
-    if not course_to_edit:
-        flash('Course not found.', 'danger')
-        return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        new_name = request.form.get('new_name')
-        if not new_name:
-            flash('New name cannot be empty.', 'danger')
-        else:
-            # Update the name in the JSON data
-            imported_data_entry.data['courses'][course_index]['name'] = new_name
-            
-            # Mark the JSON field as modified to ensure SQLAlchemy detects the change
-            db.session.flag_modified(imported_data_entry, 'data')
-            
-            try:
-                db.session.commit()
-                flash('Course name updated successfully!', 'success')
-                return redirect(url_for('index'))
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Error updating course name: {str(e)}', 'danger')
-
-    return render_template('google_classroom/edit_course.html', title='Edit Course Name', course=course_to_edit)
-
-# Google Classroom CourseWork Item Detail
-@app.route('/classroom/course/<course_id>/coursework/<item_id>')
-def coursework_item_detail(course_id, item_id):
-    user_id = session['user_id']
-    imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
-    
-    course_to_display = None
-    coursework_item = None
-
-    if imported_data and 'courses' in imported_data.data:
-        for course in imported_data.data['courses']:
-            if str(course.get('id')) == str(course_id):
-                course_to_display = course
-                if 'courseWork' in course:
-                    for work in course['courseWork']:
-                        if str(work.get('id')) == str(item_id):
-                            coursework_item = work
-                            break
-                break
-
-    if not course_to_display or not coursework_item:
-        flash('CourseWork item not found.', 'danger')
-        return redirect(url_for('index'))
-
-    return render_template('google_classroom/coursework_detail.html', 
-                           title=coursework_item.get('title'), 
-                           course=course_to_display,
-                           item=coursework_item)
-
-# Google Classroom Material Item Detail
-@app.route('/classroom/course/<course_id>/material/<item_id>')
-def material_item_detail(course_id, item_id):
-    user_id = session['user_id']
-    imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
-    
-    course_to_display = None
-    material_item = None
-
-    if imported_data and 'courses' in imported_data.data:
-        for course in imported_data.data['courses']:
-            if str(course.get('id')) == str(course_id):
-                course_to_display = course
-                if 'materials' in course:
-                    for material in course['materials']:
-                        if str(material.get('id')) == str(item_id):
-                            material_item = material
-                            break
-                break
-
-    if not course_to_display or not material_item:
-        flash('Material item not found.', 'danger')
-        return redirect(url_for('index'))
-
-    print(f"DEBUG: Material item details: {material_item}") # Added debug print
-    return render_template('google_classroom/material_detail.html', 
-                           title=material_item.get('title'), 
-                           course=course_to_display,
-                           item=material_item)
-
-@app.route('/google_classroom/add_to_lesson/<course_id>')
-def add_google_classroom_course_to_lesson(course_id):
-    user_id = session['user_id']
-    imported_data = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').first()
-
-    course_data_to_import = None
-    if imported_data and 'courses' in imported_data.data:
-        for course in imported_data.data['courses']:
-            if str(course.get('id')) == str(course_id):
-                course_data_to_import = course
-                break
-
-    if not course_data_to_import:
-        flash('Google Classroom course not found in your imported data.', 'danger')
-        return redirect(url_for('view_external_data')) # Or wherever you list GC courses
-
-    try:
-        lesson = lesson_manager.import_google_classroom_course_as_lesson(user_id, course_data_to_import)
-        flash(f'Successfully added/updated "{lesson.title}" to your lessons!', 'success')
-        return redirect(url_for('lesson_detail', lesson_id=lesson.id))
-    except Exception as e:
-        flash(f'Error adding Google Classroom course to lessons: {str(e)}', 'danger')
-        return redirect(url_for('course_detail', course_id=course_id)) # Redirect back to GC course detail
-
-@app.route('/integrations/kmitl_classroom_link', methods=['GET', 'POST'])
-def kmitl_classroom_link():
-    user_id = session['user_id']
-    
-    # Fetch KMITL Study Table data
-    kmitl_data_entry = ImportedData.query.filter_by(user_id=user_id, platform='kmitl_studytable').order_by(ImportedData.imported_at.desc()).first()
-    kmitl_courses = []
-    if kmitl_data_entry and 'courses' in kmitl_data_entry.data:
-        kmitl_courses = kmitl_data_entry.data['courses']
-        # Add a unique identifier for each KMITL course for mapping
-        for course in kmitl_courses:
-            course['identifier'] = f"{kmitl_data_entry.data.get('student_id', '')}_{kmitl_data_entry.data.get('academic_year', '')}_{kmitl_data_entry.data.get('semester', '')}_{course.get('course_code', '')}"
-
-    # Fetch Google Classroom data
-    google_classroom_data_entry = ImportedData.query.filter_by(user_id=user_id, platform='google_classroom_api').order_by(ImportedData.imported_at.desc()).first()
-    google_classroom_courses = []
-    if google_classroom_data_entry and 'courses' in google_classroom_data_entry.data:
-        google_classroom_courses = google_classroom_data_entry.data['courses']
-
-    # Fetch existing linkages
-    existing_linkages = course_linkage_manager.get_all_linkages_by_user(user_id)
-    linkage_map = {link.kmitl_course_identifier: link.google_classroom_id for link in existing_linkages}
-
-    if request.method == 'POST':
-        kmitl_identifier = request.form.get('kmitl_course_identifier')
-        google_course_id = request.form.get('google_classroom_course_id')
-
-        if kmitl_identifier and google_course_id:
-            linkage = course_linkage_manager.add_linkage(user_id, kmitl_identifier, google_course_id)
-            if linkage:
-                flash('Course linkage added/updated successfully!', 'success')
-            else:
-                flash('Error adding/updating course linkage.', 'danger')
-        else:
-            flash('Invalid linkage data.', 'danger')
-        return redirect(url_for('kmitl_classroom_link'))
-
-    return render_template('integrations/kmitl_classroom_link.html', 
-                           title='Link KMITL & Google Classroom',
-                           kmitl_courses=kmitl_courses,
-                           google_classroom_courses=google_classroom_courses,
-                           linkage_map=linkage_map)
-
-@app.route('/integrations/delete_linkage/<kmitl_course_identifier>', methods=['POST'])
-def delete_course_linkage(kmitl_course_identifier):
-    user_id = session['user_id']
-    if course_linkage_manager.delete_linkage_by_kmitl_identifier(user_id, kmitl_course_identifier):
-        flash('Course linkage deleted successfully!', 'success')
-    else:
-        flash('Error deleting course linkage.', 'danger')
-    return redirect(url_for('kmitl_classroom_link'))
-
-@app.route('/partial/sidebar-auth')
-def partial_sidebar_auth():
-    return render_template('sidebar_auth_fragment.html')
-
-@app.route('/partial/profile')
-@login_required
-def partial_profile():
-    return render_template('profile_fragment.html', user=g.user)
-
-@app.route('/partial/change_password', methods=['GET', 'POST'])
-@login_required
-def partial_change_password():
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes['application/json']
-    message = None
-    success = False
-    if request.method == 'POST':
-        old_password = request.form.get('old_password')
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-        if not old_password or not new_password or not confirm_password:
-            message = 'Please fill out all fields.'
-        elif not g.user.check_password(old_password):
-            message = 'Old password is incorrect.'
-        elif new_password != confirm_password:
-            message = 'New passwords do not match.'
-        elif old_password == new_password:
-            message = 'New password must be different from old password.'
-        elif len(new_password) < 6:
-            message = 'New password must be at least 6 characters.'
-        else:
-            g.user.set_password(new_password)
-            from app import db
-            db.session.commit()
-            message = 'Password changed successfully!'
-            success = True
-    if is_ajax and request.method == 'POST':
-        return jsonify(success=success, message=message, redirect='profile' if success else None)
-    return render_template('change_password_fragment.html', user=g.user, message=message, success=success)
-
-# Register Jinja2 filter for json.loads
-@app.template_filter('loads')
-def jinja2_loads_filter(s):
-    import json
-    try:
-        return json.loads(s)
-    except Exception:
-        return []
