@@ -145,6 +145,58 @@ def partial_dev():
 @login_required
 def partial_class():
     lessons = lesson_manager.get_lessons_by_user(g.user.id)
+    
+    # Fetch imported Google Classroom data for the current user
+    google_classroom_imported_data = ImportedData.query.filter_by(
+        user_id=g.user.id, 
+        platform='google_classroom_api'
+    ).first()
+
+    classroom_courses_map = {}
+    if google_classroom_imported_data and 'courses' in google_classroom_imported_data.data:
+        for course_data in google_classroom_imported_data.data['courses']:
+            classroom_courses_map[str(course_data.get('id'))] = course_data
+
+    for lesson in lessons:
+        if lesson.source_platform == 'google_classroom' and lesson.google_classroom_id:
+            course_id_str = str(lesson.google_classroom_id)
+            if course_id_str in classroom_courses_map:
+                classroom_course = classroom_courses_map[course_id_str]
+                
+                # Set author_name to Roster teacher
+                if 'teachers' in classroom_course and classroom_course['teachers']:
+                    # Assuming the first teacher in the roster is the primary one
+                    first_teacher = classroom_course['teachers'][0]
+                    if 'profile' in first_teacher and 'name' in first_teacher['profile']:
+                        lesson.author_name = first_teacher['profile']['name'].get('fullName', 'Classroom Teacher')
+                else:
+                    lesson.author_name = 'Classroom Teacher' # Fallback if no teachers found
+
+                # Set classroom_assignments_count
+                if 'courseWork' in classroom_course:
+                    lesson.classroom_assignments_count = len(classroom_course['courseWork'])
+                else:
+                    lesson.classroom_assignments_count = 0
+                
+                # Add 'Google Classroom' tag if not already present
+                current_tags = lesson.tags.split(',') if lesson.tags else []
+                if 'Google Classroom' not in current_tags:
+                    current_tags.append('Google Classroom')
+                lesson.tags = ', '.join(current_tags)
+            else:
+                # If linked to GC but course data not found, set defaults
+                lesson.author_name = 'Classroom Teacher (Data Missing)'
+                lesson.classroom_assignments_count = 0
+                current_tags = lesson.tags.split(',') if lesson.tags else []
+                if 'Google Classroom' not in current_tags:
+                    current_tags.append('Google Classroom')
+                lesson.tags = ', '.join(current_tags)
+        else:
+            # For lessons not from Google Classroom
+            lesson.classroom_assignments_count = 0 # Ensure it's 0 for non-GC lessons
+            if not hasattr(lesson, 'author_name') or not lesson.author_name:
+                lesson.author_name = 'Your Lesson' # Default author for non-GC lessons
+
     return render_template('class_fragment.html', lessons=lessons)
 
 @app.route('/partial/class/add', methods=['GET', 'POST'])
@@ -157,10 +209,11 @@ def partial_class_add():
         description = request.form.get('description')
         status = request.form.get('status')
         tags = request.form.get('tags')
+        author_name = request.form.get('author_name') # Get author_name from form
         if not title:
             message = 'Title is required.'
         else:
-            lesson = lesson_manager.add_lesson(g.user.id, title, description, status, tags)
+            lesson = lesson_manager.add_lesson(g.user.id, title, description, status, tags, author_name=author_name) # Pass author_name
             if lesson:
                 return jsonify(success=True, redirect='class')
             else:

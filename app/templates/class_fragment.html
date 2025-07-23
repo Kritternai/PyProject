@@ -25,7 +25,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <i class="fas fa-book-open text-muted me-1"></i> {{ lesson.lessons_count | default(0) }}
+              <i class="fas fa-clipboard-list text-muted me-1"></i> {{ lesson.classroom_assignments_count | default(0) }}
             </div>
             <div>
               <i class="fas fa-users text-muted me-1"></i> {{ lesson.participants_count | default(0) }}
@@ -39,7 +39,6 @@
           <hr>
           <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center author-info">
-              <img src="{{ lesson.author_image | default(url_for('static', filename='images/default_profile.png')) }}" alt="{{ lesson.author_name | default('Unknown Author') }}" class="img-fluid">
               <span>{{ lesson.author_name | default('Unknown Author') }}</span>
             </div>
             <span class="badge bg-primary rounded-pill">{{ lesson.certification_text | default('No Certification') }}</span>
