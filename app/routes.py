@@ -9,7 +9,8 @@ from app.core.course_linkage_manager import CourseLinkageManager # Import Course
 import datetime # Import datetime
 from app.core.user_manager import UserManager
 from app.core.authenticator import Authenticator
-from app.core.note_section_manager import NoteSectionManager # Import NoteSectionManager
+from app.core.note_manager import NoteManager # Import NoteManager
+
 from functools import wraps
 
 # For Google Classroom API
@@ -71,7 +72,8 @@ course_linkage_manager = CourseLinkageManager() # Initialize CourseLinkageManage
 
 user_manager = UserManager()
 authenticator = Authenticator(user_manager)
-note_section_manager = NoteSectionManager(db, lesson_manager) # Initialize NoteSectionManager
+note_manager = NoteManager() # Initialize NoteManager
+
 
 # Google Classroom API Scopes - MATCHING EXACTLY WHAT GOOGLE RETURNS IN THE ERROR LOG
 SCOPES = [
@@ -103,7 +105,13 @@ def login_required(f):
 @app.before_request
 def load_logged_in_user():
     user_id = session.get('user_id')
-    g.user = user_manager.get_user_by_id(user_id) if user_id else None
+    if user_id:
+        g.user = user_manager.get_user_by_id(user_id)
+        if g.user is None: # User ID in session but user not found in DB
+            session.pop('user_id', None) # Clear invalid session
+            flash('Your session has expired or user not found. Please log in again.', 'info')
+    else:
+        g.user = None
 
 @app.route('/')
 @app.route('/index')
@@ -118,7 +126,7 @@ def partial_dashboard():
 @app.route('/partial/note')
 @login_required
 def partial_note_list():
-    notes = note_section_manager.get_all_user_notes(g.user.id)
+    notes = note_manager.get_all_user_notes(g.user.id)
     return render_template('notes/list.html', notes=notes)
 
 # Add Note
@@ -149,10 +157,10 @@ def partial_note_add_standalone():
             file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
             file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
 
-        note = note_section_manager.create_user_note(
+        note = note_manager.create_user_note(
             user_id=g.user.id,
             title=title,
-            content=body,
+            body=body,
             tags=tags,
             status=status,
             image_path=image_path,
@@ -160,19 +168,17 @@ def partial_note_add_standalone():
             external_link=external_link
         )
         if note:
-            notes = note_section_manager.get_all_user_notes(g.user.id)
-            html = render_template('notes/list.html', notes=notes)
-            return jsonify(success=True, html=html)
+            return jsonify(success=True, redirect=url_for('partial_note_list'))
         else:
             return jsonify(success=False, message='Error creating note.')
 
-    return render_template('notes/create.html', lesson=None)
+    return render_template('notes/create.html')
 
 # Edit Note
 @app.route('/partial/note/edit/<string:note_id>', methods=['GET', 'POST'])
 @login_required
 def partial_note_edit_standalone(note_id):
-    note = note_section_manager.get_user_note_by_id(note_id, g.user.id)
+    note = note_manager.get_user_note_by_id(note_id, g.user.id)
     if not note:
         return '<div class="alert alert-danger">Note not found or no permission.</div>'
 
@@ -226,11 +232,11 @@ def partial_note_edit_standalone(note_id):
                 file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
                 file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
 
-        updated_note = note_section_manager.update_user_note(
+        updated_note = note_manager.update_user_note(
             note_id=note_id,
             user_id=g.user.id,
             title=title,
-            content=body,
+            body=body,
             tags=tags,
             status=status,
             image_path=image_path,
@@ -239,9 +245,7 @@ def partial_note_edit_standalone(note_id):
         )
 
         if updated_note:
-            notes = note_section_manager.get_all_user_notes(g.user.id)
-            html = render_template('notes/list.html', notes=notes)
-            return jsonify(success=True, html=html)
+            return jsonify(success=True, redirect=url_for('partial_note_list'))
         else:
             return jsonify(success=False, message='Error updating note.')
 
@@ -250,10 +254,8 @@ def partial_note_edit_standalone(note_id):
 @app.route('/partial/note/delete/<string:note_id>', methods=['POST'])
 @login_required
 def partial_note_delete_standalone(note_id):
-    if note_section_manager.delete_user_note(note_id, g.user.id):
-        notes = note_section_manager.get_all_user_notes(g.user.id)
-        html = render_template('notes/list.html', notes=notes)
-        return jsonify(success=True, html=html)
+    if note_manager.delete_user_note(note_id, g.user.id):
+        return jsonify(success=True, redirect=url_for('partial_note_list'))
     else:
         return jsonify(success=False, message='Note not found or no permission.')
 
@@ -476,9 +478,10 @@ def partial_section_delete(lesson_id, section_id):
     html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
     return jsonify(success=True, html=html)
 
-# === End of note management routes ===
+# === end note management routes ===
 
-@app.route('/login', methods=['GET', 'POST'])
+
+@app.route('/partial/dev')
 def login():
     if request.method == 'POST':
         username = request.form.get('username')

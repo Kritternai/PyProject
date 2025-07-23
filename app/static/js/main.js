@@ -1,5 +1,9 @@
 function loadPage(page) {
-  fetch('/partial/' + page)
+  let url = page;
+  if (!page.startsWith('/')) {
+    url = '/partial/' + page;
+  }
+  fetch(url)
     .then(response => {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
@@ -458,11 +462,11 @@ function setupNoteForms() {
       })
       .then(r => r.json())
       .then(data => {
-        if (data.success && data.html) {
-          document.getElementById('main-content').innerHTML = data.html;
+        if (data.success) {
           const modal = bootstrap.Modal.getInstance(addNoteModal);
           modal.hide();
           addNoteForm.reset();
+          handleJsonRedirect(data); // Use handleJsonRedirect to manage redirection
         } else {
           alert(data.message || 'Error adding note.');
         }

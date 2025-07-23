@@ -24,19 +24,13 @@ class LessonSection(db.Model):
     lesson_id = db.Column(db.String(36), db.ForeignKey('lesson.id'), nullable=False)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=True)
-    type = db.Column(db.String(20), default='text') # text, file, assignment, note
+    type = db.Column(db.String(20), default='text') # text, file, assignment
     file_url = db.Column(db.String(255), nullable=True) # legacy, for single file
     file_urls = db.Column(db.Text, nullable=True) # JSON array of file urls (for multiple files)
     assignment_due = db.Column(db.DateTime, nullable=True)
     order = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
-    # Fields for note type
-    body = db.Column(db.Text, nullable=True)
-    image_path = db.Column(db.String(255), nullable=True)
-    external_link = db.Column(db.String(255), nullable=True)
-    tags = db.Column(db.String(200), nullable=True)
-    status = db.Column(db.String(50), default='pending')
 
     def __repr__(self):
         return f'<LessonSection {self.title} ({self.type})>'

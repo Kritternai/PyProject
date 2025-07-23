@@ -19,5 +19,6 @@ from app.core.lesson import Lesson
 from app.core.imported_data import ImportedData
 from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
 from app.core.course_linkage import CourseLinkage # Import CourseLinkage model
+from app.core.note import Note # Import Note model
 
 from app import routes
