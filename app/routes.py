@@ -66,6 +66,11 @@ def load_logged_in_user():
 def index():
     return render_template('base.html')
 
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('dashboard.html', user=g.user)
+
 @app.route('/partial/dashboard')
 def partial_dashboard():
     return render_template('dashboard_fragment.html', user=g.user)
@@ -678,6 +683,36 @@ def partial_register():
             else:
                 return render_template('register_fragment.html', success=False, message='Username or email already exists.')
     return render_template('register_fragment.html')
+
+@app.route('/partial/sidebar-auth')
+def partial_sidebar_auth():
+    return render_template('sidebar_auth_fragment.html')
+
+@app.route('/partial/profile')
+@login_required
+def partial_profile():
+    return render_template('profile_fragment.html', user=g.user)
+
+@app.route('/partial/change_password', methods=['GET', 'POST'])
+@login_required
+def partial_change_password():
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        user = g.user
+        if not user.check_password(current_password):
+            return jsonify(success=False, message='Incorrect current password.')
+
+        if new_password != confirm_password:
+            return jsonify(success=False, message='New passwords do not match.')
+
+        if user_manager.update_user(user.id, new_password=new_password):
+            return jsonify(success=True, message='Password updated successfully!', redirect='profile')
+        else:
+            return jsonify(success=False, message='Error updating password.')
+    return render_template('change_password_fragment.html', user=g.user)
 
 @app.route('/logout')
 def logout():
