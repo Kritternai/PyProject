@@ -88,3 +88,36 @@ body {
 }
 
 /* Add any other custom styles here */
+.course-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    max-width: 400px; /* Adjust as needed */
+    margin: 20px auto;
+    background-color: #fff;
+}
+.card-image-container {
+    position: relative;
+    background-color: #f0f0f0; /* Light background for the image area */
+    height: 200px; /* Fixed height for the image section */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    overflow: hidden; /* Ensure image doesn't overflow rounded corners */
+}
+
+.tag-badge {
+    font-size: 0.75rem;
+    padding: 0.3em 0.6em;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+.author-info img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+}
