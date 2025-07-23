@@ -714,6 +714,66 @@ def partial_change_password():
             return jsonify(success=False, message='Error updating password.')
     return render_template('change_password_fragment.html', user=g.user)
 
+@app.route('/integrations/kmitl_classroom_link', methods=['GET', 'POST'])
+@login_required
+def kmitl_classroom_link():
+    user_id = g.user.id
+    kmitl_courses = []
+    linkage_map = {}
+
+    # Fetch KMITL Study Table data
+    kmitl_imported_data = ImportedData.query.filter_by(user_id=user_id, platform='kmitl_studytable').first()
+    if kmitl_imported_data and kmitl_imported_data.data:
+        # Assuming kmitl_studytable data is a list of course dictionaries
+        kmitl_courses = kmitl_imported_data.data.get('courses', []) 
+        # Ensure each course has an 'identifier' for linking
+        for course in kmitl_courses:
+            if 'course_code' in course and 'semester' in course and 'academic_year' in course and 'section' in course:
+                course['identifier'] = f"{course['course_code']}_{course['academic_year']}_{course['semester']}_{course['section']}"
+            else:
+                course['identifier'] = None # Or handle error/missing data
+
+    # Fetch existing linkages
+    linkages = CourseLinkage.query.filter_by(user_id=user_id).all()
+    for linkage in linkages:
+        linkage_map[linkage.kmitl_course_identifier] = linkage.google_classroom_id
+
+    if request.method == 'POST':
+        kmitl_course_identifier = request.form.get('kmitl_course_identifier')
+        google_classroom_id = request.form.get('google_classroom_id')
+
+        if kmitl_course_identifier and google_classroom_id:
+            # Check if linkage already exists
+            existing_linkage = CourseLinkage.query.filter_by(
+                user_id=user_id, 
+                kmitl_course_identifier=kmitl_course_identifier
+            ).first()
+
+            if existing_linkage:
+                flash('This KMITL course is already linked.', 'warning')
+            else:
+                course_linkage_manager.add_linkage(user_id, kmitl_course_identifier, google_classroom_id)
+                flash('Course linked successfully!', 'success')
+            return redirect(url_for('kmitl_classroom_link'))
+        else:
+            flash('Missing KMITL course identifier or Google Classroom ID.', 'danger')
+
+    return render_template(
+        'integrations/kmitl_classroom_link.html',
+        kmitl_courses=kmitl_courses,
+        linkage_map=linkage_map
+    )
+
+@app.route('/delete_course_linkage/<kmitl_course_identifier>', methods=['POST'])
+@login_required
+def delete_course_linkage(kmitl_course_identifier):
+    user_id = g.user.id
+    if course_linkage_manager.delete_linkage_by_kmitl_identifier(user_id, kmitl_course_identifier):
+        flash('Course unlinked successfully!', 'success')
+    else:
+        flash('Error unlinking course.', 'danger')
+    return redirect(url_for('kmitl_classroom_link'))
+
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)

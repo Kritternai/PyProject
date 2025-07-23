@@ -1,3 +1,8 @@
+/* Universal box-sizing for consistent layout */
+* {
+  box-sizing: border-box;
+}
+
 :root {
   --primary-blue: #4285F4; /* Google Blue */
   --primary-blue-dark: #3367D6;
@@ -18,8 +23,9 @@
 
 body {
   font-family: 'Roboto', sans-serif;
-  background-color: var(--bg-light);
+  background-color: var(--secondary-background);
   color: var(--text-dark);
+  padding-left: 240px; /* Space for fixed sidebar */
 }
 
 /* General UI adjustments */
@@ -42,7 +48,7 @@ body {
 
 .card {
   border-radius: 0.75rem;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-color);
 }
 
 /* Specific styles for lesson cards */
@@ -56,15 +62,13 @@ body {
   color: white;
 }
 
-
-
 .lesson-card .dropdown-menu {
   border-radius: 0.5rem;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
 .lesson-card .dropdown-item:hover {
-  background-color: var(--bg-light);
+  background-color: var(--secondary-background);
   color: var(--primary-blue);
 }
 
@@ -85,6 +89,12 @@ body {
 
 .bg-success {
   background-color: var(--accent-success) !important;
+}
+
+/* Custom styles for sidebar buttons */
+.sidebar-auth .btn {
+  text-align: left; /* Align text to the left */
+  padding-left: 1.5rem; /* Add some padding for icons */
 }
 
 /* Add any other custom styles here */
@@ -120,4 +130,44 @@ body {
     border-radius: 50%;
     object-fit: cover;
     margin-right: 10px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  body {
+    padding-left: 0; /* Remove padding when sidebar is not fixed */
+  }
+  .sidebar {
+    position: static; /* Revert to static on small screens */
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    flex-direction: row; /* Arrange items horizontally */
+    justify-content: space-around; /* Distribute items evenly */
+    padding: 0.5rem 0;
+  }
+  .sidebar-logo {
+    display: none; /* Hide logo on small screens */
+  }
+  .sidebar-menu {
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100%;
+  }
+  .sidebar .nav-link {
+    font-size: 0.9rem;
+    margin: 0 0.1rem;
+    padding: 0.5rem 0.5rem;
+    text-align: center; /* Center text for small buttons */
+  }
+  .sidebar .nav-link i {
+    margin-right: 0; /* Remove margin for icons on small screens */
+  }
+  .sidebar-auth {
+    display: none; /* Hide auth section on small screens, or make it a modal/offcanvas */
+  }
+  main.flex-grow-1 {
+    margin-left: 0; /* Remove margin on small screens */
+  }
 }
