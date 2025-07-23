@@ -16,13 +16,16 @@
       display: flex; flex-direction: column; align-items: stretch;
       position: fixed; top: 0; left: 0; bottom: 0; /* Fixed positioning */
       z-index: 1000; /* Ensure it's above other content */
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Added shadow */
+      border-top-right-radius: 0.5rem;
+      border-bottom-right-radius: 0.5rem;
     }
     .sidebar-logo { font-size: 1.5rem; font-weight: bold; color: #fff; text-align: center; padding: 2rem 0 1rem 0; }
-    .sidebar-menu { flex: 1 1 0; display: flex; flex-direction: column; justify-content: center; gap: 0.5rem; }
-    .sidebar .nav-link { color: #fff; font-size: 1.1rem; text-align: center; border-radius: 0.5rem; margin: 0 1rem; padding: 0.75rem 0; transition: background 0.2s, color 0.2s; }
-    .sidebar .nav-link.active, .sidebar .nav-link:focus { background: #e3eefd; color: #003B8E !important; font-weight: bold; }
-    .sidebar .nav-link:hover { background: #e3eefd; color: #003B8E !important; }
-    .sidebar-auth { padding: 1.5rem 1rem 1.5rem 1rem; }
+    .sidebar-menu { flex: 1 1 0; display: flex; flex-direction: column; justify-content: flex-start; gap: 0.5rem; padding-top: 1rem; }
+    .sidebar .nav-link { color: #fff; font-size: 1.1rem; text-align: left; border-radius: 0.5rem; margin: 0 1rem; padding: 0.75rem 1rem; transition: background 0.2s, color 0.2s; display: flex; align-items: center; }
+    .sidebar .nav-link.active, .sidebar .nav-link:focus { background: #e3eefd; color: #003B8E !important; font-weight: bold; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); }
+    .sidebar .nav-link:hover { background: #e3eefd; color: #003B8E !important; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); }
+    .sidebar-auth { padding: 1.5rem 0.5rem 1.5rem 0.5rem; }
     /* Adjust main content to not be hidden by fixed sidebar */
     main.flex-grow-1 { margin-left: 200px; /* Same as sidebar max-width */ }
 
