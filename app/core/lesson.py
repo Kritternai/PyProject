@@ -7,6 +7,7 @@ class Lesson(db.Model):
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(50), default='Not Started') # e.g., Not Started, In Progress, Completed
     tags = db.Column(db.String(200), nullable=True) # Comma-separated tags
+    author_name = db.Column(db.String(100), nullable=True) # New field for lesson author
     user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
     google_classroom_id = db.Column(db.String(100), nullable=True) # New field for Google Classroom Course ID
     source_platform = db.Column(db.String(50), default='manual') # e.g., 'manual', 'google_classroom'
