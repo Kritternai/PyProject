@@ -2,7 +2,7 @@ from app import app, db
 from flask import render_template, request, flash, redirect, url_for, session, jsonify, make_response, g
 import json
 from app.core.lesson_manager import LessonManager
-from app.core.lesson import Lesson # Import Lesson model for query
+from app.core.lesson import Lesson, LessonSection # Import Lesson model for query
 from app.core.imported_data import ImportedData # Import ImportedData model
 from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
 from app.core.course_linkage_manager import CourseLinkageManager # Import CourseLinkageManager
@@ -564,6 +564,45 @@ def partial_note_edit(lesson_id, section_id):
         html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
         return jsonify(success=True, html=html)
     return render_template('notes/edit.html', lesson=lesson, note=section)
+
+@app.route('/partial/note/<section_id>/edit', methods=['GET', 'POST'])
+@login_required
+def partial_note_edit_standalone(section_id):
+    section = lesson_manager.get_section_by_id(section_id)
+    if not section or section.lesson.user_id != g.user.id or section.type != 'note':
+        return '<div class="alert alert-danger">Note not found or no permission.</div>', 404
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        body = request.form.get('body')
+        lesson_manager.update_section(section_id, title=title, content=body)
+        
+        # After update, return the updated list of all notes
+        notes = db.session.query(LessonSection).join(Lesson).filter(
+            Lesson.user_id == g.user.id,
+            LessonSection.type == 'note'
+        ).order_by(LessonSection.created_at.desc()).all()
+        return render_template('note_fragment.html', notes=notes)
+
+    return render_template('notes/edit.html', section=section)
+
+@app.route('/partial/note/<section_id>/delete', methods=['POST'])
+@login_required
+def partial_note_delete_standalone(section_id):
+    section = lesson_manager.get_section_by_id(section_id)
+    if not section or section.lesson.user_id != g.user.id or section.type != 'note':
+        return jsonify(success=False, message='Note not found or permission denied'), 404
+
+    lesson_manager.delete_section(section_id)
+    
+    # Return the updated list of all notes
+    notes = db.session.query(LessonSection).join(Lesson).filter(
+        Lesson.user_id == g.user.id,
+        LessonSection.type == 'note'
+    ).order_by(LessonSection.created_at.desc()).all()
+    return render_template('note_fragment.html', notes=notes)
+
+
 
 # === End of note management routes ===
 

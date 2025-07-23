@@ -30,8 +30,11 @@ class CourseLinkageManager:
     def get_all_linkages_by_user(self, user_id):
         return CourseLinkage.query.filter_by(user_id=user_id).all()
 
-    def delete_linkage(self, linkage_id):
-        linkage = CourseLinkage.query.get(linkage_id)
+    def get_linkage_by_id(self, user_id, linkage_id):
+        return CourseLinkage.query.filter_by(id=linkage_id, user_id=user_id).first()
+
+    def delete_linkage(self, user_id, linkage_id):
+        linkage = self.get_linkage_by_id(user_id, linkage_id)
         if linkage:
             db.session.delete(linkage)
             db.session.commit()
