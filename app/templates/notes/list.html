@@ -9,15 +9,14 @@
 <body class="min-h-screen p-6 bg-gray-100">
     <div class="max-w-4xl p-6 mx-auto bg-white rounded shadow">
         <h1 class="mb-6 text-3xl font-bold">Your Notes</h1>
-        <a href="{{ url_for('add_note') }}"
-            class="inline-block px-4 py-2 mb-4 text-white transition bg-blue-600 rounded hover:bg-blue-700">
+        <button type="button" class="inline-block px-4 py-2 mb-4 text-white transition bg-blue-600 rounded hover:bg-blue-700" data-bs-toggle="modal" data-bs-target="#addNoteModal">
             + Create New Note
-        </a>
+        </button>
         {% if notes %}
         <ul class="p-12 divide-y divide-gray-200">
             {% for note in notes %}
             <li class="py-4 border border-gray-200 bg-white rounded-2xl hover:shadow-xl transition duration-300 ease-in-out w-[200px] h-[200px] hover:scale-105">
-                <a href="{{ url_for('view_note', note_id=note.id) }}"
+                <a href="{{ url_for('partial_note_edit_standalone', note_id=note.id) }}"
                     class="text-xl font-semibold text-blue-700 hover:underline">
                     {{ note.title }}
                 </a>
@@ -40,8 +39,8 @@
                 Due: {{ note.deadline.strftime('%Y-%m-%d') if note.deadline else 'No Due Date' }}
                 </p>
                 <div class="mt-2">
-                    <a href="{{ url_for('edit_note', note_id=note.id) }}" class="text-blue-500 hover:underline">Edit</a>
-                    <form action="{{ url_for('delete_note', note_id=note.id) }}" method="POST" class="inline ml-2">
+                    <a href="{{ url_for('partial_note_edit_standalone', note_id=note.id) }}" class="text-blue-500 hover:underline">Edit</a>
+                    <form action="{{ url_for('partial_note_delete_standalone', note_id=note.id) }}" method="POST" class="inline ml-2">
                         <button type="submit" class="text-red-500 hover:underline" onclick="return confirm('Are you sure you want to delete this note?');">Delete</button>
                     </form>
                 </div>
@@ -51,6 +50,60 @@
         {% else %}
         <p class="text-gray-500">You have no notes yet.</p>
         {% endif %}
+    </div>
+    </div>
+    <!-- Add Note Modal -->
+    <div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addNoteModalLabel">Add New Note</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-note-form" action="/partial/note/add" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="body" class="form-label">Body</label>
+                            <textarea class="form-control" id="body" name="body" rows="5" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="mb-3 col-md-6">
+                                <label for="tags" class="form-label">Tags (comma-separated)</label>
+                                <input type="text" class="form-control" id="tags" name="tags">
+                            </div>
+                            <div class="mb-3 col-md-6">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="pending">Pending</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="external_link" class="form-label">External Link</label>
+                            <input type="url" class="form-control" id="external_link" name="external_link">
+                        </div>
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Image</label>
+                            <input class="form-control" type="file" id="image" name="image" accept="image/*">
+                        </div>
+                        <div class="mb-3">
+                            <label for="file" class="form-label">File Attachment</label>
+                            <input class="form-control" type="file" id="file" name="file">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save Note</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>

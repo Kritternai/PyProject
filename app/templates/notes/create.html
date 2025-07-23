@@ -2,7 +2,7 @@
     <h5 class="modal-title" id="addNoteModalLabel">Add New Note</h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
-<form hx-post="/partial/note/add" hx-target="#main-content" hx-swap="innerHTML" hx-encoding="multipart/form-data">
+<form id="add-note-form" action="/partial/note/add" method="post" enctype="multipart/form-data">
     <div class="modal-body">
         <div class="mb-3">
             <label for="title" class="form-label">Title</label>
