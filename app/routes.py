@@ -67,6 +67,7 @@ def index():
 def partial_dashboard():
     return render_template('dashboard_fragment.html', user=g.user)
 
+# === start note management routes ===
 @app.route('/partial/note')
 @login_required
 def partial_note_list():
@@ -74,8 +75,9 @@ def partial_note_list():
         Lesson.user_id == g.user.id,
         LessonSection.type == 'note'
     ).order_by(LessonSection.created_at.desc()).all()
-    return render_template('note_fragment.html', notes=notes)
+    return render_template('note.html', notes=notes)
 
+# Add Note
 @app.route('/partial/note/add', methods=['GET', 'POST'])
 @login_required
 def partial_note_add_standalone():
@@ -128,6 +130,63 @@ def partial_note_add_standalone():
         return jsonify(success=True, html=html)
 
     return render_template('notes/create.html', lesson=None)
+
+# Edit Note
+@app.route('/partial/note/edit/<int:note_id>', methods=['GET', 'POST'])
+@login_required
+def partial_note_edit_standalone(note_id):
+    note = db.session.query(LessonSection).join(Lesson).filter(
+        LessonSection.id == note_id,
+        LessonSection.type == 'note',
+        Lesson.user_id == g.user.id
+    ).first_or_404()
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        body = request.form.get('body')
+        tags = request.form.get('tags')
+        status = request.form.get('status')
+        external_link = request.form.get('external_link')
+
+        if not title or not body:
+            return jsonify(success=False, message='Title and body are required.')
+
+        note.title = title
+        note.body = body
+        note.tags = tags
+        note.status = status
+        note.external_link = external_link
+
+        # Image
+        image_file = request.files.get('image')
+        if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
+            filename = secure_filename(image_file.filename)
+            image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+            image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
+            note.image_path = image_path
+
+        # File
+        file_file = request.files.get('file')
+        if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
+            filename = secure_filename(file_file.filename)
+            file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+            file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
+            note.file_url = file_path
+
+        db.session.commit()
+
+        # Render updated note list
+        notes = db.session.query(LessonSection).join(Lesson).filter(
+            Lesson.user_id == g.user.id,
+            LessonSection.type == 'note'
+        ).order_by(LessonSection.created_at.desc()).all()
+        html = render_template('note_fragment.html', notes=notes)
+        return jsonify(success=True, html=html)
+
+    return render_template('notes/edit.html', note=note)
+
+
+# === end note management routes ===
 
 
 @app.route('/partial/dev')

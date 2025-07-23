@@ -1,115 +1,73 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - Smart Learning Hub</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-</head>
-<body class="min-h-screen p-6 bg-gray-100">
-    <div class="max-w-4xl p-6 mx-auto bg-white rounded shadow">
-        <h1 class="mb-6 text-3xl font-bold">{{ title }}</h1>
-        <form method="POST" action="{{ url_for('edit_note', note_id=note.id) }}" enctype="multipart/form-data">
-            <div class="mb-4">
-                <label for="title" class="block mb-2 text-sm font-bold text-gray-700">Title:</label>
-                <input type="text" id="title" name="title" value="{{ note.title }}" class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline" required>
-            </div>
-            <div class="mb-4">
-                <label for="body" class="block mb-2 text-sm font-bold text-gray-700">Content:</label>
-                <textarea id="body" name="body" rows="10" class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline" required>{{ note.body }}</textarea>
-            </div>
-            <div class="mb-4">
-                <label for="status" class="block mb-2 text-sm font-bold text-gray-700">Status:</label>
-                <select id="status" name="status"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                    required>
-                    <option value="not started" {% if note.status == 'not started' %}selected{% endif %}>Not started</option>
-                    <option value="in progress" {% if note.status == 'in progress' %}selected{% endif %}>In progress</option>
-                    <option value="completed" {% if note.status == 'completed' %}selected{% endif %}>Completed</option>
-                </select>
-            </div>
-            <!-- Tags -->   
-            <div class="mb-4">
-                <label for="tags" class="block mb-2 text-sm font-bold text-gray-700">Tags (comma separated):</label>
-                <input type="text" id="tags" name="tags"
-                    value="{{ note.tags }}"
-                    placeholder="e.g. student, math, sci"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                    required>
-            </div>
-            <div class="mb-4">
-                <label for="created_at" class="block mb-2 text-sm font-bold text-gray-700">Date (Optional):</label>
-                <input type="text" id="created_at" name="created_at"
-                    value="{{ note.created_at.strftime('%Y-%m-%d') if note.created_at else '' }}"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
-            </div>
-            <div class="mb-4">
-                <label for="deadline" class="block mb-2 text-sm font-bold text-gray-700">Date (Deadline):</label>
-                <input type="text" id="deadline" name="deadline"
-                    value="{{ note.deadline.strftime('%Y-%m-%d') if note.deadline else '' }}"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
-            </div>
-            <!-- image -->
-            <div class="mb-4">
-                <label for="image" class="block mb-2 text-sm font-bold text-gray-700">Image:</label>
-                {% if image_url %}
-                <div class="mb-2">
-                    <img src="{{ image_url }}" alt="Current Image">
-                </div>
-                <div>
-                    <input type="checkbox" id="remove_image" name="remove_image" value="1">
-                    <label for="remove_image">Remove image</label>
-                </div>
-                {% endif %}
-                <input type="file" id="image" name="image" accept="image/*" class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
-            </div>
-            <!-- file -->
-            <div class="mb-4">
-                <label for="file" class="block mb-2 text-sm font-bold text-gray-700">File:</label>
-                <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
-                
-                {% if note and note.file_path %}
-                    <div class="mt-2">
-                        <p class="text-sm text-gray-600">Current file:</p>
-                        <a href="{{ url_for('static', filename=note.file_path) }}" download
-                        class="text-blue-500 hover:underline">
-                            {{ note.file_path.split('/')[-1] }}
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
-            <!-- link -->
-            <div class="mb-4">
-                <label for="external_link" class="block mb-2 text-sm font-bold text-gray-700">External Link:</label>
-                <input type="url" id="external_link" name="external_link" placeholder="https://example.com"
-                    value="{{ note.external_link or '' }}"
-                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
-                {% if note and note.external_link %}
-                    <div class="mt-2">
-                        <p class="text-sm text-gray-600">Current link:</p>
-                        <a href="{{ note.external_link }}" target="_blank" class="text-blue-500 hover:underline">
-                            {{ note.external_link }}
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
-            <!-- submit -->
-            <button type="submit" class="px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline">Update Note</button>
-            <a href="{{ url_for('view_note', note_id=note.id) }}" class="ml-4 text-gray-600 hover:underline">Cancel</a>
-        </form>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        flatpickr("#created_at", {
-            dateFormat: "Y-m-d",
-            allowInput: true
-        });
-        flatpickr("#deadline", {
-            dateFormat: "Y-m-d",
-            allowInput: true
-        });
-    </script>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h3>Edit Note</h3>
+    <form method="POST" enctype="multipart/form-data" id="edit-note-form">
+        <!-- Title -->
+        <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ note.title }}" required>
+        </div>
+
+        <!-- Body -->
+        <div class="mb-3">
+            <label for="body" class="form-label">Body</label>
+            <textarea class="form-control" id="body" name="body" rows="5" required>{{ note.body }}</textarea>
+        </div>
+
+        <!-- Tags -->
+        <div class="mb-3">
+            <label for="tags" class="form-label">Tags (comma-separated)</label>
+            <input type="text" class="form-control" id="tags" name="tags" value="{{ note.tags }}">
+        </div>
+
+        <!-- Status -->
+        <div class="mb-3">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select" id="status" name="status">
+                <option value="">Select status</option>
+                <option value="active" {% if note.status == 'active' %}selected{% endif %}>Active</option>
+                <option value="archived" {% if note.status == 'archived' %}selected{% endif %}>Archived</option>
+            </select>
+        </div>
+
+        <!-- External Link -->
+        <div class="mb-3">
+            <label for="external_link" class="form-label">External Link</label>
+            <input type="url" class="form-control" id="external_link" name="external_link" value="{{ note.external_link }}">
+        </div>
+
+        <!-- Image Preview -->
+        {% if note.image_path %}
+        <div class="mb-3">
+            <label class="form-label">Current Image:</label><br>
+            <img src="{{ url_for('static', filename=note.image_path.split('static/')[-1]) }}" alt="Current Image" class="img-thumbnail" style="max-height: 200px;">
+        </div>
+        {% endif %}
+
+        <!-- Upload Image -->
+        <div class="mb-3">
+            <label for="image" class="form-label">Replace Image</label>
+            <input class="form-control" type="file" name="image" id="image" accept="image/*">
+        </div>
+
+        <!-- File Preview -->
+        {% if note.file_url %}
+        <div class="mb-3">
+            <label class="form-label">Current File:</label><br>
+            <a href="{{ url_for('static', filename=note.file_url.split('static/')[-1]) }}" target="_blank" class="btn btn-sm btn-outline-primary">View File</a>
+        </div>
+        {% endif %}
+
+        <!-- Upload File -->
+        <div class="mb-3">
+            <label for="file" class="form-label">Replace File</label>
+            <input class="form-control" type="file" name="file" id="file" accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx">
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="#" class="btn btn-secondary" onclick="window.history.back()">Cancel</a>
+    </form>
+</div>
+{% endblock %}
