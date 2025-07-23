@@ -1,28 +1,47 @@
-<h2 class="h4 mb-3">Add New Lesson</h2>
+<h2 class="h4 mb-4 text-primary text-center"><i class="fas fa-plus-circle me-2"></i>Add New Lesson</h2>
 <form id="add-lesson-form">
   <div class="mb-3">
-    <label for="title" class="form-label">Title</label>
-    <input type="text" id="title" name="title" required class="form-control">
+    <label for="title" class="form-label visually-hidden">Title</label>
+    <div class="input-group shadow-sm">
+      <span class="input-group-text"><i class="fas fa-book"></i></span>
+      <input type="text" id="title" name="title" required class="form-control" placeholder="Enter Lesson Title">
+    </div>
   </div>
   <div class="mb-3">
-    <label for="description" class="form-label">Description</label>
-    <textarea id="description" name="description" class="form-control"></textarea>
+    <label for="description" class="form-label visually-hidden">Description</label>
+    <div class="input-group shadow-sm">
+      <span class="input-group-text"><i class="fas fa-align-left"></i></span>
+      <textarea id="description" name="description" class="form-control" rows="3" placeholder="Lesson Description (Optional)"></textarea>
+    </div>
   </div>
   <div class="mb-3">
-    <label for="status" class="form-label">Status</label>
-    <select id="status" name="status" class="form-select">
-      <option value="Not Started">Not Started</option>
-      <option value="In Progress">In Progress</option>
-      <option value="Completed">Completed</option>
-    </select>
+    <label for="status" class="form-label visually-hidden">Status</label>
+    <div class="input-group shadow-sm">
+      <span class="input-group-text"><i class="fas fa-info-circle"></i></span>
+      <select id="status" name="status" class="form-select">
+        <option value="Not Started">Not Started</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Completed">Completed</option>
+      </select>
+    </div>
   </div>
   <div class="mb-3">
-    <label for="tags" class="form-label">Tags (comma-separated)</label>
-    <input type="text" id="tags" name="tags" class="form-control">
+    <label for="tags" class="form-label visually-hidden">Tags</label>
+    <div class="input-group shadow-sm">
+      <span class="input-group-text"><i class="fas fa-tags"></i></span>
+      <input type="text" id="tags" name="tags" class="form-control" placeholder="Tags (e.g., Math, Science, History)">
+    </div>
+    <div id="tagsHelp" class="form-text">Separate tags with commas.</div>
   </div>
-  <div class="mb-3">
-    <label for="author_name" class="form-label">Author (Optional)</label>
-    <input type="text" id="author_name" name="author_name" class="form-control">
+  <div class="mb-4">
+    <label for="author_name" class="form-label visually-hidden">Author</label>
+    <div class="input-group shadow-sm">
+      <span class="input-group-text"><i class="fas fa-user-edit"></i></span>
+      <input type="text" id="author_name" name="author_name" class="form-control" placeholder="Author Name (Optional)">
+    </div>
   </div>
-  <button type="submit" class="btn btn-primary w-100">Add Lesson</button>
+  <div class="d-grid gap-2">
+    <button type="submit" class="btn btn-primary btn-lg shadow-sm"><i class="fas fa-save me-2"></i>Add Lesson</button>
+    <button type="reset" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('add-lesson-form').reset();"><i class="fas fa-eraser me-2"></i>Clear Form</button>
+  </div>
 </form>

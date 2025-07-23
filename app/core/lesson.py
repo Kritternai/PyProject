@@ -20,6 +20,19 @@ class Lesson(db.Model):
     def __repr__(self):
         return f'<Lesson {self.title}>'
 
+    @property
+    def note_count(self):
+        # Count sections of type 'note'
+        return len([s for s in self.sections if s.type == 'note'])
+
+    @property
+    def manual_assignment_count(self):
+        # Count sections of type 'assignment' for manually created lessons
+        # Google Classroom assignments are handled by classroom_assignments_count
+        if self.source_platform == 'manual':
+            return len([s for s in self.sections if s.type == 'assignment'])
+        return 0
+
 class LessonSection(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     lesson_id = db.Column(db.String(36), db.ForeignKey('lesson.id'), nullable=False)

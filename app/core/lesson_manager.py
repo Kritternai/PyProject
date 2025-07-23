@@ -33,7 +33,7 @@ class LessonManager:
                 user_id=user_id,
                 title=gc_course_data.get('name', 'Untitled Google Classroom Course'),
                 description=gc_course_data.get('description', ''),
-                status='Imported',
+                status='Active',
                 tags='google-classroom',
                 source_platform='google_classroom',
                 google_classroom_id=gc_course_data.get('id'),
@@ -53,7 +53,7 @@ class LessonManager:
         return Lesson.query.get(lesson_id)
 
     def get_lessons_by_user(self, user_id):
-        return Lesson.query.filter_by(user_id=user_id).all()
+        return Lesson.query.filter_by(user_id=user_id).options(db.joinedload(Lesson.sections)).all()
 
     def update_lesson(self, lesson_id, title=None, description=None, status=None, tags=None, announcements_data=None, topics_data=None, roster_data=None, attachments_data=None):
         lesson = self.get_lesson_by_id(lesson_id)
