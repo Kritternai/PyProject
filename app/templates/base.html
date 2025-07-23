@@ -12,7 +12,7 @@
   <style>
     body { background: #f5f7fa; }
     .sidebar {
-      min-width: 220px; max-width: 240px; background: #003B8E; color: #fff; min-height: 100vh;
+      min-width: 180px; max-width: 200px; background: #003B8E; color: #fff; min-height: 100vh;
       display: flex; flex-direction: column; align-items: stretch;
       position: fixed; top: 0; left: 0; bottom: 0; /* Fixed positioning */
       z-index: 1000; /* Ensure it's above other content */
@@ -24,7 +24,7 @@
     .sidebar .nav-link:hover { background: #e3eefd; color: #003B8E !important; }
     .sidebar-auth { padding: 1.5rem 1rem 1.5rem 1rem; }
     /* Adjust main content to not be hidden by fixed sidebar */
-    main.flex-grow-1 { margin-left: 240px; /* Same as sidebar max-width */ }
+    main.flex-grow-1 { margin-left: 200px; /* Same as sidebar max-width */ }
 
     @media (max-width: 768px) {
       .sidebar { min-width: 0; max-width: 100vw; flex-direction: row; height: 60px; min-height: 0; position: static; /* Revert to static on small screens */ }
