@@ -83,11 +83,6 @@ def partial_note_list():
         LessonSection.type == 'note'
     ).order_by(LessonSection.created_at.desc()).all()
     
-    # Debug: Print note information
-    print(f"DEBUG: Found {len(notes)} notes for user {g.user.id}")
-    for note in notes:
-        print(f"DEBUG: Note ID: {note.id}, Title: {note.title}, Type: {note.type}")
-    
     return render_template('note_fragment.html', notes=notes)
 
 @app.route('/partial/note/add', methods=['GET', 'POST'])
@@ -597,25 +592,16 @@ def partial_note_delete_standalone(section_id):
 @app.route('/partial/note/<section_id>/edit', methods=['GET', 'POST'])
 @login_required
 def partial_note_edit_standalone(section_id):
-    print(f"DEBUG: Edit note request - section_id: {section_id}, method: {request.method}")
-    print(f"DEBUG: User ID: {g.user.id if g.user else None}")
-    
     section = lesson_manager.get_section_by_id(section_id)
-    print(f"DEBUG: Section found: {section}")
     
     if not section:
-        print(f"DEBUG: Section not found for ID: {section_id}")
         return jsonify(success=False, message='Note not found.')
     
     if section.lesson.user_id != g.user.id:
-        print(f"DEBUG: User permission denied - section user: {section.lesson.user_id}, current user: {g.user.id}")
         return jsonify(success=False, message='No permission.')
     
     if section.type != 'note':
-        print(f"DEBUG: Wrong section type - expected 'note', got '{section.type}'")
         return jsonify(success=False, message='Not a note.')
-    
-    print(f"DEBUG: Permission check passed, rendering template")
     
     if request.method == 'POST':
         title = request.form.get('title')
@@ -640,10 +626,8 @@ def partial_note_edit_standalone(section_id):
         except Exception as e:
             return jsonify(success=False, message=f'Error updating note: {str(e)}')
     
-    print(f"DEBUG: Rendering template with section: {section.title}")
-    html = render_template('notes/_edit.html', section=section)
-    print(f"DEBUG: Template rendered, HTML length: {len(html)}")
-    return html
+    # For GET requests, return the edit form template
+    return render_template('notes/_edit.html', section=section)
 
 
 # === End of note management routes ===
