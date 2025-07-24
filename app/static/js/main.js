@@ -434,6 +434,85 @@ window.deleteSection = function(lessonId, sectionId) {
   });
 }; 
 
+// Global functions for note operations
+window.loadNoteEdit = function(noteId) {
+  console.log('DEBUG: Loading note edit for ID:', noteId);
+  
+  const mainContent = document.getElementById('main-content');
+  console.log('DEBUG: Target element:', mainContent);
+  
+  if (!mainContent) {
+    console.error('DEBUG: main-content element not found!');
+    alert('Error: main-content element not found');
+    return;
+  }
+  
+  const url = `/partial/note/${noteId}/edit`;
+  console.log('DEBUG: Fetching URL:', url);
+  
+  fetch(url)
+    .then(response => {
+      console.log('DEBUG: Response status:', response.status);
+      console.log('DEBUG: Response headers:', response.headers);
+      return response.text();
+    })
+    .then(html => {
+      console.log('DEBUG: Received HTML response length:', html.length);
+      console.log('DEBUG: HTML preview:', html.substring(0, 200));
+      mainContent.innerHTML = html;
+      setupNoteEditForm();
+    })
+    .catch(error => {
+      console.error('Error loading note edit page:', error);
+      alert('Error loading note edit page');
+    });
+};
+
+window.deleteNote = function(noteId) {
+  console.log('DEBUG: Deleting note with ID:', noteId);
+  if (confirm('Are you sure you want to delete this note?')) {
+    fetch(`/partial/note/${noteId}/delete`, {
+      method: 'POST'
+    })
+    .then(response => response.text())
+    .then(html => {
+      console.log('DEBUG: Delete successful, updating HTML');
+      document.getElementById('note-list-container').outerHTML = html;
+    })
+    .catch(error => {
+      console.error('Error deleting note:', error);
+      alert('Error deleting note');
+    });
+  }
+};
+
+function setupNoteEditForm() {
+  const editNoteForm = document.getElementById('edit-note-form');
+  if (editNoteForm) {
+    editNoteForm.onsubmit = function(e) {
+      e.preventDefault();
+      const formData = new FormData(editNoteForm);
+      const sectionId = editNoteForm.dataset.sectionId;
+      fetch(`/partial/note/${sectionId}/edit`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          loadPage(data.redirect || 'note');
+        } else {
+          alert(data.message || 'Error updating note.');
+        }
+      });
+    };
+  }
+}
+
 function setupNoteForms() {
   const addNoteModal = document.getElementById('addNoteModal');
   const addNoteForm = document.getElementById('add-note-form');
