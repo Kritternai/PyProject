@@ -1,0 +1,28 @@
+<h2 class="h4 mb-3">Edit Note</h2>
+<form id="edit-note-form" data-section-id="{{ section.id }}">
+  <div class="mb-3">
+    <label for="title" class="form-label">Title</label>
+    <input type="text" id="title" name="title" value="{{ section.title }}" required class="form-control">
+  </div>
+  <div class="mb-3">
+    <label for="body" class="form-label">Body</label>
+    <textarea id="body" name="body" class="form-control" rows="5">{{ section.body or '' }}</textarea>
+  </div>
+  <div class="mb-3">
+    <label for="tags" class="form-label">Tags (comma-separated)</label>
+    <input type="text" id="tags" name="tags" value="{{ section.tags or '' }}" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label for="status" class="form-label">Status</label>
+    <select id="status" name="status" class="form-select">
+      <option value="pending" {% if section.status == 'pending' %}selected{% endif %}>Pending</option>
+      <option value="in-progress" {% if section.status == 'in-progress' %}selected{% endif %}>In Progress</option>
+      <option value="completed" {% if section.status == 'completed' %}selected{% endif %}>Completed</option>
+    </select>
+  </div>
+  <div class="mb-3">
+    <label for="external_link" class="form-label">External Link</label>
+    <input type="url" id="external_link" name="external_link" value="{{ section.external_link or '' }}" class="form-control">
+  </div>
+  <button type="submit" class="btn btn-primary w-100">Update Note</button>
+</form> 
