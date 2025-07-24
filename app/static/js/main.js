@@ -486,14 +486,42 @@ window.deleteNote = function(noteId) {
   }
 };
 
+// Function to populate edit note modal with data
+window.populateEditNoteModal = function(button) {
+  const noteId = button.getAttribute('data-note-id');
+  const noteTitle = button.getAttribute('data-note-title');
+  const noteBody = button.getAttribute('data-note-body');
+  const noteTags = button.getAttribute('data-note-tags');
+  const noteStatus = button.getAttribute('data-note-status');
+  const noteExternalLink = button.getAttribute('data-note-external-link');
+  
+  console.log('DEBUG: Populating edit modal with note ID:', noteId);
+  
+  // Set form action
+  const editForm = document.getElementById('edit-note-form');
+  editForm.action = `/partial/note/${noteId}/edit`;
+  editForm.method = 'post';
+  
+  // Populate form fields
+  document.getElementById('edit-note-id').value = noteId;
+  document.getElementById('edit-title').value = noteTitle;
+  document.getElementById('edit-body').value = noteBody;
+  document.getElementById('edit-tags').value = noteTags;
+  document.getElementById('edit-status').value = noteStatus;
+  document.getElementById('edit-external-link').value = noteExternalLink;
+};
+
 function setupNoteEditForm() {
   const editNoteForm = document.getElementById('edit-note-form');
   if (editNoteForm) {
     editNoteForm.onsubmit = function(e) {
       e.preventDefault();
       const formData = new FormData(editNoteForm);
-      const sectionId = editNoteForm.dataset.sectionId;
-      fetch(`/partial/note/${sectionId}/edit`, {
+      const noteId = document.getElementById('edit-note-id').value;
+      
+      console.log('DEBUG: Submitting edit form for note ID:', noteId);
+      
+      fetch(`/partial/note/${noteId}/edit`, {
         method: 'POST',
         body: formData,
         headers: {
@@ -504,16 +532,25 @@ function setupNoteEditForm() {
       .then(r => r.json())
       .then(data => {
         if (data.success) {
-          loadPage(data.redirect || 'note');
+          // Close modal
+          const modal = bootstrap.Modal.getInstance(document.getElementById('editNoteModal'));
+          modal.hide();
+          // Reload note list
+          loadPage('note');
         } else {
           alert(data.message || 'Error updating note.');
         }
+      })
+      .catch(error => {
+        console.error('Error updating note:', error);
+        alert('Error updating note');
       });
     };
   }
 }
 
 function setupNoteForms() {
+  // Add Note Modal
   const addNoteModal = document.getElementById('addNoteModal');
   const addNoteForm = document.getElementById('add-note-form');
   if (addNoteModal && addNoteForm) {
@@ -549,6 +586,28 @@ function setupNoteForms() {
       });
     };
   }
+  
+  // Edit Note Modal
+  const editNoteModal = document.getElementById('editNoteModal');
+  if (editNoteModal) {
+    editNoteModal.addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
+      if (button) {
+        populateEditNoteModal(button);
+      }
+    });
+    
+    editNoteModal.addEventListener('hidden.bs.modal', function () {
+      // Reset form when modal is closed
+      const editForm = document.getElementById('edit-note-form');
+      if (editForm) {
+        editForm.reset();
+      }
+    });
+  }
+  
+  // Setup edit note form
+  setupNoteEditForm();
 }
 
 function setupLessonAddModal() {

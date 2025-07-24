@@ -17,7 +17,7 @@
                         </div>
                         <div class="card-footer">
                             <a href="#" onclick="loadLessonDetail({{ note.lesson_id }})" class="btn btn-sm btn-outline-primary">View Lesson</a>
-                            <a href="#" onclick="loadNoteEdit('{{ note.id }}')" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editNoteModal" data-note-id="{{ note.id }}" data-note-title="{{ note.title }}" data-note-body="{{ note.body or '' }}" data-note-tags="{{ note.tags or '' }}" data-note-status="{{ note.status or 'pending' }}" data-note-external-link="{{ note.external_link or '' }}">Edit</button>
                             <button onclick="deleteNote('{{ note.id }}')" class="btn btn-sm btn-outline-danger">Delete</button>
                         </div>
                     </div>
@@ -85,4 +85,57 @@
   </div>
 </div>
 
-
+<!-- Edit Note Modal -->
+<div class="modal fade" id="editNoteModal" tabindex="-1" aria-labelledby="editNoteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="editNoteModalLabel">Edit Note</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <form id="edit-note-form" enctype="multipart/form-data">
+                <input type="hidden" id="edit-note-id" name="note_id">
+                <div class="mb-3">
+                    <label for="edit-title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="edit-title" name="title" required>
+                </div>
+                <div class="mb-3">
+                    <label for="edit-body" class="form-label">Body</label>
+                    <textarea class="form-control" id="edit-body" name="body" rows="5" required></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="edit-tags" class="form-label">Tags (comma-separated)</label>
+                        <input type="text" class="form-control" id="edit-tags" name="tags">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="edit-status" class="form-label">Status</label>
+                        <select class="form-select" id="edit-status" name="status">
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="edit-external-link" class="form-label">External Link</label>
+                    <input type="url" class="form-control" id="edit-external-link" name="external_link">
+                </div>
+                <div class="mb-3">
+                    <label for="edit-image" class="form-label">Image</label>
+                    <input class="form-control" type="file" id="edit-image" name="image" accept="image/*">
+                </div>
+                <div class="mb-3">
+                    <label for="edit-file" class="form-label">File Attachment</label>
+                    <input class="form-control" type="file" id="edit-file" name="file">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+  </div>
+</div>
