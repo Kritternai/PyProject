@@ -511,6 +511,120 @@ function setupLessonAddModal() {
   }
 }
 
+// Make setupAddLessonModal globally available
+window.setupAddLessonModal = function() {
+  console.log('setupAddLessonModal called'); // Debug log
+  
+  // Color selection functionality
+  const colorOptions = document.querySelectorAll('.color-option');
+  const previewCardHeader = document.getElementById('previewCardHeader');
+  const colorInput = document.getElementById('selectedColor');
+
+  // Color definitions
+  const colors = {
+    1: { primary: '#007bff', secondary: '#0056b3' },
+    2: { primary: '#28a745', secondary: '#1e7e34' },
+    3: { primary: '#dc3545', secondary: '#c82333' },
+    4: { primary: '#ffc107', secondary: '#e0a800' },
+    5: { primary: '#6f42c1', secondary: '#5a2d91' },
+    6: { primary: '#fd7e14', secondary: '#e8690b' }
+  };
+
+  // Reset color selection and preview
+  colorOptions.forEach(opt => opt.classList.remove('active'));
+  if (colorOptions[0]) colorOptions[0].classList.add('active');
+  if (previewCardHeader) {
+    previewCardHeader.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+  }
+  if (colorInput) colorInput.value = '1';
+
+  // Remove old event listeners and add new ones
+  colorOptions.forEach(option => {
+    option.onclick = function() {
+      colorOptions.forEach(opt => opt.classList.remove('active'));
+      this.classList.add('active');
+      const colorId = this.getAttribute('data-color');
+      const color = colors[colorId];
+      if (previewCardHeader && color) {
+        previewCardHeader.style.background = `linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%)`;
+      }
+      if (colorInput) colorInput.value = colorId;
+    };
+  });
+
+  // Live preview updates
+  const titleInput = document.getElementById('title');
+  const descriptionInput = document.getElementById('description');
+  const authorInput = document.getElementById('author_name');
+  const statusSelect = document.getElementById('status');
+
+  const previewTitle = document.getElementById('previewTitle');
+  const previewDescription = document.getElementById('previewDescription');
+  const previewAuthor = document.getElementById('previewAuthor');
+  const previewStatus = document.getElementById('previewStatus');
+
+  if (titleInput && previewTitle) {
+    titleInput.oninput = function() {
+      previewTitle.textContent = this.value || 'Your Lesson Title';
+    };
+  }
+  if (descriptionInput && previewDescription) {
+    descriptionInput.oninput = function() {
+      previewDescription.textContent = this.value || 'Your lesson description will appear here...';
+    };
+  }
+  if (authorInput && previewAuthor) {
+    authorInput.oninput = function() {
+      previewAuthor.textContent = this.value || 'Unknown Author';
+    };
+  }
+  if (statusSelect && previewStatus) {
+    statusSelect.onchange = function() {
+      previewStatus.textContent = this.value;
+    };
+  }
+
+  // Reset preview on form reset
+  const form = document.getElementById('add-lesson-form');
+  if (form) {
+    form.onreset = function() {
+      setTimeout(() => {
+        if (previewTitle) previewTitle.textContent = 'Your Lesson Title';
+        if (previewDescription) previewDescription.textContent = 'Your lesson description will appear here...';
+        if (previewAuthor) previewAuthor.textContent = 'Unknown Author';
+        if (previewStatus) previewStatus.textContent = 'Not Started';
+        colorOptions.forEach(opt => opt.classList.remove('active'));
+        if (colorOptions[0]) colorOptions[0].classList.add('active');
+        if (previewCardHeader) previewCardHeader.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+        if (colorInput) colorInput.value = '1';
+      }, 10);
+    };
+  }
+
+  // Form validation (unchanged)
+  if (form) {
+    form.addEventListener('submit', function(event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    });
+    // Real-time validation
+    if (titleInput) {
+      titleInput.addEventListener('input', function() {
+        if (this.value.trim() === '') {
+          this.classList.remove('is-valid');
+          this.classList.add('is-invalid');
+        } else {
+          this.classList.remove('is-invalid');
+          this.classList.add('is-valid');
+        }
+      });
+    }
+  }
+}
+
 function setupLessonSearchAndFilter() {
   const searchInput = document.getElementById('lessonSearch');
   const filterSelect = document.getElementById('lessonFilter');
@@ -606,4 +720,35 @@ function setupLessonSearchAndFilter() {
   
   // Initial filter
   filterLessons();
+}
+
+// Global color selection function
+window.selectColor = function(element, colorId) {
+  console.log('selectColor called with colorId:', colorId);
+  
+  // Remove active class from all color options
+  const colorOptions = document.querySelectorAll('.color-option');
+  colorOptions.forEach(opt => opt.classList.remove('active'));
+  
+  // Add active class to clicked element
+  element.classList.add('active');
+  
+  // Update preview card header
+  const previewCardHeader = document.getElementById('previewCardHeader');
+  const colorInput = document.getElementById('selectedColor');
+  
+  const colors = {
+    1: { primary: '#007bff', secondary: '#0056b3' },
+    2: { primary: '#28a745', secondary: '#1e7e34' },
+    3: { primary: '#dc3545', secondary: '#c82333' },
+    4: { primary: '#ffc107', secondary: '#e0a800' },
+    5: { primary: '#6f42c1', secondary: '#5a2d91' },
+    6: { primary: '#fd7e14', secondary: '#e8690b' }
+  };
+  
+  const color = colors[colorId];
+  if (previewCardHeader && color) {
+    previewCardHeader.style.background = `linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%)`;
+  }
+  if (colorInput) colorInput.value = colorId;
 }

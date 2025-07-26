@@ -1,47 +1,496 @@
-<h2 class="h4 mb-4 text-primary text-center"><i class="fas fa-plus-circle me-2"></i>Add New Lesson</h2>
-<form id="add-lesson-form">
-  <div class="mb-3">
-    <label for="title" class="form-label visually-hidden">Title</label>
-    <div class="input-group shadow-sm">
-      <span class="input-group-text"><i class="fas fa-book"></i></span>
-      <input type="text" id="title" name="title" required class="form-control" placeholder="Enter Lesson Title">
+<div class="add-lesson-fullscreen">
+  <div class="row g-0 h-100 flex-grow-1">
+    <!-- Left Side - Form -->
+    <div class="col-lg-8">
+      <div class="form-container">
+        <!-- Header Section -->
+        <div class="text-center mb-4">
+          <div class="add-lesson-icon mb-3">
+            <i class="fas fa-graduation-cap fa-3x text-primary"></i>
+          </div>
+          <h2 class="h3 text-primary fw-bold mb-2">Create New Lesson</h2>
+          <p class="text-muted mb-0">Fill in the details below to create your new lesson</p>
+        </div>
+
+        <form id="add-lesson-form" class="needs-validation" novalidate>
+          <input type="hidden" id="selectedColor" name="selectedColor" value="1">
+          <!-- Basic Information Section -->
+          <div class="form-section mb-4">
+            <div class="section-header mb-3">
+              <h5 class="text-primary mb-0">
+                <i class="fas fa-info-circle me-2"></i>Basic Information
+              </h5>
+              <div class="section-divider"></div>
+            </div>
+            
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="title" class="form-label fw-semibold">
+                  <i class="fas fa-book me-1"></i>Lesson Title <span class="text-danger">*</span>
+                </label>
+                <input type="text" 
+                       id="title" 
+                       name="title" 
+                       class="form-control form-control-lg" 
+                       placeholder="Enter a descriptive title for your lesson"
+                       required>
+                <div class="invalid-feedback">
+                  Please provide a lesson title.
+                </div>
+              </div>
+              
+              <div class="col-12">
+                <label for="description" class="form-label fw-semibold">
+                  <i class="fas fa-align-left me-1"></i>Description
+                </label>
+                <textarea id="description" 
+                          name="description" 
+                          class="form-control" 
+                          rows="4" 
+                          placeholder="Provide a brief description of what this lesson covers..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lesson Details Section -->
+          <div class="form-section mb-4">
+            <div class="section-header mb-3">
+              <h5 class="text-primary mb-0">
+                <i class="fas fa-cog me-2"></i>Lesson Details
+              </h5>
+              <div class="section-divider"></div>
+            </div>
+            
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="status" class="form-label fw-semibold">
+                  <i class="fas fa-chart-line me-1"></i>Status
+                </label>
+                <select id="status" name="status" class="form-select">
+                  <option value="Not Started" selected>📋 Not Started</option>
+                  <option value="In Progress">🔄 In Progress</option>
+                  <option value="Completed">✅ Completed</option>
+                </select>
+              </div>
+              
+              <div class="col-md-6">
+                <label for="author_name" class="form-label fw-semibold">
+                  <i class="fas fa-user-edit me-1"></i>Author Name
+                </label>
+                <input type="text" 
+                       id="author_name" 
+                       name="author_name" 
+                       class="form-control" 
+                       placeholder="Who created this lesson?">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tags Section -->
+          <div class="form-section mb-4">
+            <div class="section-header mb-3">
+              <h5 class="text-primary mb-0">
+                <i class="fas fa-tags me-2"></i>Tags & Categories
+              </h5>
+              <div class="section-divider"></div>
+            </div>
+            
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="tags" class="form-label fw-semibold">
+                  <i class="fas fa-tag me-1"></i>Tags
+                </label>
+                <input type="text" 
+                       id="tags" 
+                       name="tags" 
+                       class="form-control" 
+                       placeholder="e.g., Mathematics, Science, Programming, Beginner">
+                <div class="form-text">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Separate multiple tags with commas. Tags help organize and find your lessons.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="form-actions mt-auto">
+            <div class="row g-3">
+              <div class="col-md-8">
+                <button type="submit" class="btn btn-primary btn-lg w-100 shadow-sm">
+                  <i class="fas fa-plus-circle me-2"></i>Create Lesson
+                </button>
+              </div>
+              <div class="col-md-4">
+                <button type="reset" class="btn btn-outline-secondary w-100" onclick="resetForm()">
+                  <i class="fas fa-undo me-2"></i>Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right Side - Preview & Customization -->
+    <div class="col-lg-4">
+      <div class="preview-container">
+        <div class="preview-header">
+          <h5 class="text-primary fw-bold mb-3">
+            <i class="fas fa-eye me-2"></i>Lesson Preview
+          </h5>
+          <p class="text-muted">See how your lesson will appear</p>
+        </div>
+
+        <!-- Card Color Selection -->
+        <div class="customization-section mb-4">
+          <h6 class="fw-semibold mb-3">
+            <i class="fas fa-palette me-2"></i>Card Color
+          </h6>
+          <div class="color-picker">
+            <div class="color-option active" data-color="1" style="background-color: #007bff;" onclick="selectColor(this, 1)">
+              <i class="fas fa-check text-white"></i>
+            </div>
+            <div class="color-option" data-color="2" style="background-color: #28a745;" onclick="selectColor(this, 2)">
+              <i class="fas fa-check text-white"></i>
+            </div>
+            <div class="color-option" data-color="3" style="background-color: #dc3545;" onclick="selectColor(this, 3)">
+              <i class="fas fa-check text-white"></i>
+            </div>
+            <div class="color-option" data-color="4" style="background-color: #ffc107;" onclick="selectColor(this, 4)">
+              <i class="fas fa-check text-white"></i>
+            </div>
+            <div class="color-option" data-color="5" style="background-color: #6f42c1;" onclick="selectColor(this, 5)">
+              <i class="fas fa-check text-white"></i>
+            </div>
+            <div class="color-option" data-color="6" style="background-color: #fd7e14;" onclick="selectColor(this, 6)">
+              <i class="fas fa-check text-white"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="preview-card-container">
+          <div class="preview-card" id="previewCard">
+            <div class="card-image-container" id="previewCardHeader">
+              <i class="fas fa-cube fa-4x text-white opacity-75"></i>
+              <div class="position-absolute top-0 start-0 p-3 w-100">
+                <span class="badge bg-light text-dark border tag-badge">New</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <i class="fas fa-tasks text-muted me-1"></i> 0
+                </div>
+                <div>
+                  <i class="fas fa-sticky-note text-muted me-1"></i> 0
+                </div>
+                <div>
+                  <i class="fas fa-users text-muted me-1"></i> 0
+                </div>
+              </div>
+              <h5 class="card-title" id="previewTitle">Your Lesson Title</h5>
+              <p class="card-text text-muted" id="previewDescription">Your lesson description will appear here...</p>
+              <hr>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center author-info">
+                  <span id="previewAuthor">Unknown Author</span>
+                </div>
+                <span class="badge bg-primary rounded-pill" id="previewStatus">Not Started</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Tips -->
+        <div class="tips-section mt-auto">
+          <h6 class="fw-semibold mb-3">
+            <i class="fas fa-lightbulb me-2"></i>Quick Tips
+          </h6>
+          <ul class="tips-list">
+            <li>Use descriptive titles for better organization</li>
+            <li>Add relevant tags to make lessons easier to find</li>
+            <li>Choose a color that represents your lesson theme</li>
+            <li>Include detailed descriptions for better context</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="mb-3">
-    <label for="description" class="form-label visually-hidden">Description</label>
-    <div class="input-group shadow-sm">
-      <span class="input-group-text"><i class="fas fa-align-left"></i></span>
-      <textarea id="description" name="description" class="form-control" rows="3" placeholder="Lesson Description (Optional)"></textarea>
-    </div>
-  </div>
-  <div class="mb-3">
-    <label for="status" class="form-label visually-hidden">Status</label>
-    <div class="input-group shadow-sm">
-      <span class="input-group-text"><i class="fas fa-info-circle"></i></span>
-      <select id="status" name="status" class="form-select">
-        <option value="Not Started">Not Started</option>
-        <option value="In Progress">In Progress</option>
-        <option value="Completed">Completed</option>
-      </select>
-    </div>
-  </div>
-  <div class="mb-3">
-    <label for="tags" class="form-label visually-hidden">Tags</label>
-    <div class="input-group shadow-sm">
-      <span class="input-group-text"><i class="fas fa-tags"></i></span>
-      <input type="text" id="tags" name="tags" class="form-control" placeholder="Tags (e.g., Math, Science, History)">
-    </div>
-    <div id="tagsHelp" class="form-text">Separate tags with commas.</div>
-  </div>
-  <div class="mb-4">
-    <label for="author_name" class="form-label visually-hidden">Author</label>
-    <div class="input-group shadow-sm">
-      <span class="input-group-text"><i class="fas fa-user-edit"></i></span>
-      <input type="text" id="author_name" name="author_name" class="form-control" placeholder="Author Name (Optional)">
-    </div>
-  </div>
-  <div class="d-grid gap-2">
-    <button type="submit" class="btn btn-primary btn-lg shadow-sm"><i class="fas fa-save me-2"></i>Add Lesson</button>
-    <button type="reset" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('add-lesson-form').reset();"><i class="fas fa-eraser me-2"></i>Clear Form</button>
-  </div>
-</form>
+</div>
+
+<style>
+.add-lesson-fullscreen {
+  height: 100%;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.form-container {
+  padding: 1.5rem;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-container {
+  background: white;
+  padding: 1.5rem;
+  height: 100%;
+  border-left: 1px solid #e9ecef;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.customization-section {
+  background: #f8f9fa;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e9ecef;
+  margin-bottom: 1rem;
+}
+
+.color-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.color-option {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+  border-color: #007bff;
+}
+
+.color-option.active {
+  border-color: #007bff;
+  transform: scale(1.1);
+}
+
+.color-option i {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.color-option.active i {
+  opacity: 1;
+}
+
+.preview-card-container {
+  margin-bottom: 1rem;
+}
+
+.preview-card {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.preview-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.2);
+}
+
+.card-image-container {
+  height: 80px;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.tips-section {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e9ecef;
+}
+
+.tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tips-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.tips-list li:last-child {
+  border-bottom: none;
+}
+
+.tips-list li::before {
+  content: "✓";
+  color: #28a745;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+/* Form sections styling */
+.form-section {
+  background: white;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+  margin-bottom: 1rem;
+}
+
+.section-header {
+  position: relative;
+}
+
+.section-divider {
+  height: 2px;
+  background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+  border-radius: 1px;
+  margin-top: 0.5rem;
+}
+
+.form-label {
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-control, .form-select {
+  border: 2px solid #e9ecef;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.form-control-lg {
+  font-size: 1.1rem;
+  padding: 0.75rem 1rem;
+}
+
+.form-text {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 0.5rem;
+}
+
+.form-actions {
+  background: white;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.btn {
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 123, 255, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 123, 255, 0.4);
+}
+
+.btn-outline-secondary {
+  border: 2px solid #6c757d;
+  color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+  background: #6c757d;
+  border-color: #6c757d;
+  transform: translateY(-1px);
+}
+
+.add-lesson-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0.5rem 1rem rgba(0, 123, 255, 0.3);
+}
+
+.add-lesson-icon i {
+  color: white !important;
+  font-size: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .preview-container {
+    border-left: none;
+    border-top: 1px solid #e9ecef;
+  }
+  
+  .form-container, .preview-container {
+    padding: 1rem;
+  }
+}
+
+/* Animation for form sections */
+.form-section {
+  animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Success state */
+.form-control.is-valid {
+  border-color: #28a745;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+</style>
