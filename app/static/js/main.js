@@ -15,6 +15,7 @@ function loadPage(page) {
           setupNoteForms(); // เรียก setupNoteForms หลัง loadPage
           setupLessonAddModal(); // เรียก setupLessonAddModal หลัง loadPage
           setupSectionFilter(); // เรียก setupSectionFilter() หลัง loadPage
+          setupLessonSearchAndFilter(); // เรียก setupLessonSearchAndFilter หลัง loadPage
           // Auto show Lesson Content tab and scroll if on lesson detail
           if (page.startsWith('class/')) {
             // Activate Content tab
@@ -508,4 +509,101 @@ function setupLessonAddModal() {
       });
     };
   }
+}
+
+function setupLessonSearchAndFilter() {
+  const searchInput = document.getElementById('lessonSearch');
+  const filterSelect = document.getElementById('lessonFilter');
+  
+  if (!searchInput && !filterSelect) {
+    return; // Not on lessons page
+  }
+  
+  console.log('Setting up lesson search and filter...');
+  
+  // Debounce function
+  let debounceTimer;
+  function debounceFilter(func, delay) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(func, delay);
+  }
+  
+  function filterLessons() {
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+    const filterValue = filterSelect ? filterSelect.value : '';
+    const lessonCards = document.querySelectorAll('.course-card');
+    
+    console.log('Filtering lessons:', { searchTerm, filterValue, cardCount: lessonCards.length });
+    
+    lessonCards.forEach(card => {
+      const titleElement = card.querySelector('.card-title');
+      const descriptionElement = card.querySelector('.card-text');
+      const statusElement = card.querySelector('.badge');
+      
+      if (!titleElement || !descriptionElement || !statusElement) {
+        console.log('Missing elements in card:', card);
+        return;
+      }
+      
+      const title = titleElement.textContent.toLowerCase();
+      const description = descriptionElement.textContent.toLowerCase();
+      const status = statusElement.textContent;
+      
+      const matchesSearch = !searchTerm || title.includes(searchTerm) || description.includes(searchTerm);
+      const matchesFilter = !filterValue || status === filterValue;
+      
+      const cardContainer = card.closest('.col-xl-3, .col-lg-4, .col-md-6, .col-sm-12');
+      if (cardContainer) {
+        if (matchesSearch && matchesFilter) {
+          cardContainer.style.display = 'block';
+          cardContainer.style.opacity = '1';
+        } else {
+          cardContainer.style.display = 'none';
+          cardContainer.style.opacity = '0';
+        }
+      }
+    });
+    
+    // Show/hide "no results" message
+    const visibleCards = document.querySelectorAll('.col-xl-3, .col-lg-4, .col-md-6, .col-sm-12');
+    const hasVisibleCards = Array.from(visibleCards).some(card => card.style.display !== 'none');
+    
+    let noResultsDiv = document.getElementById('no-results-message');
+    if (!hasVisibleCards) {
+      if (!noResultsDiv) {
+        noResultsDiv = document.createElement('div');
+        noResultsDiv.id = 'no-results-message';
+        noResultsDiv.className = 'col-12 text-center py-5';
+        noResultsDiv.innerHTML = `
+          <div class="text-muted">
+            <i class="fas fa-search fa-3x mb-3"></i>
+            <h5>No lessons found</h5>
+            <p>Try adjusting your search or filter criteria.</p>
+          </div>
+        `;
+        const rowContainer = document.querySelector('.row.g-4');
+        if (rowContainer) {
+          rowContainer.appendChild(noResultsDiv);
+        }
+      }
+    } else if (noResultsDiv) {
+      noResultsDiv.remove();
+    }
+  }
+  
+  // Add event listeners
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      debounceFilter(filterLessons, 300);
+    });
+    console.log('Search input listener added');
+  }
+  
+  if (filterSelect) {
+    filterSelect.addEventListener('change', filterLessons);
+    console.log('Filter select listener added');
+  }
+  
+  // Initial filter
+  filterLessons();
 }
