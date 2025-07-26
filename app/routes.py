@@ -218,10 +218,11 @@ def partial_class_add():
         status = request.form.get('status')
         tags = request.form.get('tags')
         author_name = request.form.get('author_name') # Get author_name from form
+        selected_color = request.form.get('selectedColor', 1) # Get selected color from form
         if not title:
             message = 'Title is required.'
         else:
-            lesson = lesson_manager.add_lesson(g.user.id, title, description, status, tags, author_name=author_name) # Pass author_name
+            lesson = lesson_manager.add_lesson(g.user.id, title, description, status, tags, author_name=author_name, selected_color=int(selected_color)) # Pass selected_color
             if lesson:
                 return jsonify(success=True, redirect='class')
             else:

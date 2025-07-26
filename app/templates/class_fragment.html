@@ -23,7 +23,7 @@
       </div>
     </div>
     <div class="col-md-3 text-end">
-      <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addLessonModal" title="Add New Lesson">
+      <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addLessonModal" title="Add New Lesson" onclick="setTimeout(() => { if(typeof setupAddLessonModal === 'function') setupAddLessonModal(); }, 100);">
         <i class="fas fa-plus me-2"></i> Add New Lesson
       </button>
     </div>
@@ -33,7 +33,7 @@
     {% for lesson in lessons %}
     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
       <div class="card course-card" style="cursor:pointer;" onclick="loadPage('class/{{ lesson.id }}')">
-        <div class="card-image-container" style="background-color: var(--card-header-color-{{ (loop.index0 % 5) + 1 }});">
+        <div class="card-image-container" style="background: linear-gradient(135deg, {{ lesson.selected_color | lesson_color_primary }} 0%, {{ lesson.selected_color | lesson_color_secondary }} 100%);">
           <i class="fas fa-cube fa-4x text-white opacity-75"></i>
           <div class="position-absolute top-0 start-0 p-3 w-100">
             {% if lesson.tags %}
@@ -204,15 +204,80 @@
 
 <!-- Add Lesson Modal -->
 <div class="modal fade" id="addLessonModal" tabindex="-1" aria-labelledby="addLessonModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addLessonModalLabel">Add New Lesson</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width:95vw; height:90vh;">
+    <div class="modal-content h-100">
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title" id="addLessonModalLabel">
+          <i class="fas fa-plus-circle me-2"></i>Create New Lesson
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body p-0 flex-grow-1">
         {% include 'lessons/_add.html' %}
       </div>
     </div>
   </div>
-</div> 
+</div>
+
+<script>
+// Multiple event listeners to ensure setupAddLessonModal is called
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('addLessonModal');
+  if (modal) {
+    // Bootstrap 5 modal events
+    modal.addEventListener('shown.bs.modal', function() {
+      console.log('Modal shown event triggered');
+      if (typeof setupAddLessonModal === 'function') {
+        setupAddLessonModal();
+      }
+    });
+    
+    modal.addEventListener('show.bs.modal', function() {
+      console.log('Modal show event triggered');
+      setTimeout(() => {
+        if (typeof setupAddLessonModal === 'function') {
+          setupAddLessonModal();
+        }
+      }, 200);
+    });
+  }
+});
+
+// Global click handler
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.getAttribute('data-bs-target') === '#addLessonModal') {
+    console.log('Modal button clicked');
+    setTimeout(() => {
+      if (typeof setupAddLessonModal === 'function') {
+        setupAddLessonModal();
+      }
+    }, 300);
+  }
+});
+
+// MutationObserver as backup
+const observer = new MutationObserver(function(mutations) {
+  mutations.forEach(function(mutation) {
+    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+      const modal = document.getElementById('addLessonModal');
+      if (modal && modal.classList.contains('show')) {
+        console.log('Modal class changed to show');
+        setTimeout(() => {
+          if (typeof setupAddLessonModal === 'function') {
+            setupAddLessonModal();
+          }
+        }, 100);
+      }
+    }
+  });
+});
+
+// Start observing modal
+const modal = document.getElementById('addLessonModal');
+if (modal) {
+  observer.observe(modal, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
+}
+</script> 

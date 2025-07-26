@@ -5,8 +5,8 @@ import datetime
 import json
 
 class LessonManager:
-    def add_lesson(self, user_id, title, description=None, status='Not Started', tags=None, source_platform='manual', google_classroom_id=None, author_name=None):
-        lesson = Lesson(user_id=user_id, title=title, description=description, status=status, tags=tags, source_platform=source_platform, google_classroom_id=google_classroom_id, author_name=author_name)
+    def add_lesson(self, user_id, title, description=None, status='Not Started', tags=None, source_platform='manual', google_classroom_id=None, author_name=None, selected_color=1):
+        lesson = Lesson(user_id=user_id, title=title, description=description, status=status, tags=tags, source_platform=source_platform, google_classroom_id=google_classroom_id, author_name=author_name, selected_color=selected_color)
         db.session.add(lesson)
         db.session.commit()
         return lesson
@@ -55,7 +55,7 @@ class LessonManager:
     def get_lessons_by_user(self, user_id):
         return Lesson.query.filter_by(user_id=user_id).options(db.joinedload(Lesson.sections)).all()
 
-    def update_lesson(self, lesson_id, title=None, description=None, status=None, tags=None, announcements_data=None, topics_data=None, roster_data=None, attachments_data=None):
+    def update_lesson(self, lesson_id, title=None, description=None, status=None, tags=None, announcements_data=None, topics_data=None, roster_data=None, attachments_data=None, selected_color=None):
         lesson = self.get_lesson_by_id(lesson_id)
         if not lesson:
             return False
@@ -68,6 +68,8 @@ class LessonManager:
             lesson.status = status
         if tags is not None:
             lesson.tags = tags
+        if selected_color is not None:
+            lesson.selected_color = selected_color
         if announcements_data is not None:
             lesson.announcements_data = json.dumps(announcements_data)
         if topics_data is not None:
