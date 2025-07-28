@@ -90,6 +90,14 @@ class LessonManager:
             return True
         return False
 
+    def toggle_favorite(self, lesson_id):
+        lesson = self.get_lesson_by_id(lesson_id)
+        if not lesson:
+            return None
+        lesson.is_favorite = not lesson.is_favorite
+        db.session.commit()
+        return lesson.is_favorite
+
     def add_section(self, lesson_id, title, content=None, type='text', file_url=None, assignment_due=None, order=0, file_urls=None, body=None, image_path=None, external_link=None, tags=None, status=None):
         # Ensure assignment_due is None if not a datetime
         import datetime

@@ -752,3 +752,26 @@ window.selectColor = function(element, colorId) {
   }
   if (colorInput) colorInput.value = colorId;
 }
+
+// Global favorite toggle function
+window.toggleFavorite = function(lessonId, btn) {
+  fetch(`/partial/class/${lessonId}/favorite`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      const icon = btn.querySelector('i');
+      if (data.is_favorite) {
+        icon.classList.add('text-warning', 'favorite-active');
+        icon.classList.remove('text-secondary');
+      } else {
+        icon.classList.remove('text-warning', 'favorite-active');
+        icon.classList.add('text-secondary');
+      }
+      // Reload lessons to re-sort
+      loadPage('class');
+    }
+  });
+}
