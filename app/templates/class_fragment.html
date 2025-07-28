@@ -29,49 +29,77 @@
     </div>
   </div>
 
-  <div class="row g-4">
-    {% for lesson in lessons %}
-    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
-      <div class="card course-card" style="cursor:pointer;" onclick="loadPage('class/{{ lesson.id }}')">
-        <div class="card-image-container" style="background: linear-gradient(135deg, {{ lesson.selected_color | lesson_color_primary }} 0%, {{ lesson.selected_color | lesson_color_secondary }} 100%);">
-          <i class="fas fa-cube fa-4x text-white opacity-75"></i>
-          <div class="position-absolute top-0 start-0 p-3 w-100">
-            {% if lesson.tags %}
-              {% for tag in lesson.tags.split(',') %}
-                {% if tag.strip() == 'Featured' %}
-                  <span class="badge bg-success tag-badge">{{ tag.strip() }}</span>
-                {% else %}
-                  <span class="badge bg-light text-dark border tag-badge">{{ tag.strip() }}</span>
+  <div class="row g-4" id="lessons-container">
+    {% if lessons %}
+      {% for lesson in lessons %}
+      <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 lesson-card-wrapper">
+        <div class="card lesson-card" style="cursor:pointer; position:relative;" onclick="loadPage('class/{{ lesson.id }}')">
+          <button class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite('{{ lesson.id }}', this);" aria-label="Toggle favorite">
+            <i class="fas fa-star{% if lesson.is_favorite %} text-warning{% else %} text-secondary{% endif %}{% if lesson.is_favorite %} favorite-active{% endif %}"></i>
+          </button>
+          <div class="card-header-image" style="background: linear-gradient(135deg, {{ lesson.selected_color | lesson_color_primary }} 0%, {{ lesson.selected_color | lesson_color_secondary }} 100%);">
+            <div class="header-content">
+              <i class="fas fa-graduation-cap fa-3x text-white opacity-75"></i>
+              <div class="tags-container">
+                {% if lesson.tags %}
+                  {% for tag in lesson.tags.split(',')[:2] %}
+                    {% if tag.strip() == 'Featured' %}
+                      <span class="badge bg-success tag-badge">{{ tag.strip() }}</span>
+                    {% else %}
+                      <span class="badge bg-light text-dark border tag-badge">{{ tag.strip() }}</span>
+                    {% endif %}
+                  {% endfor %}
+                  {% if lesson.tags.split(',')|length > 2 %}
+                    <span class="badge bg-secondary tag-badge">+{{ lesson.tags.split(',')|length - 2 }}</span>
+                  {% endif %}
                 {% endif %}
-              {% endfor %}
-            {% endif %}
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <i class="fas fa-tasks text-muted me-1"></i> {{ (lesson.classroom_assignments_count | default(0)) + (lesson.manual_assignment_count | default(0)) }}
-            </div>
-            <div>
-              <i class="fas fa-sticky-note text-muted me-1"></i> {{ lesson.note_count | default(0) }}
-            </div>
-            <div>
-              <i class="fas fa-users text-muted me-1"></i> {{ lesson.participants_count | default(0) }}
+              </div>
             </div>
           </div>
-          <h5 class="card-title">{{ lesson.title }}</h5>
-          <p class="card-text text-muted">{{ lesson.description | default('No description provided.') }}</p>
-          <hr>
-          <div class="d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center author-info">
-              <span>{{ lesson.author_name | default('Unknown Author') }}</span>
+          <div class="card-body">
+            <div class="stats-row">
+              <div class="stat-item">
+                <i class="fas fa-tasks text-muted"></i>
+                <span class="stat-value">{{ (lesson.classroom_assignments_count | default(0)) + (lesson.manual_assignment_count | default(0)) }}</span>
+              </div>
+              <div class="stat-item">
+                <i class="fas fa-sticky-note text-muted"></i>
+                <span class="stat-value">{{ lesson.note_count | default(0) }}</span>
+              </div>
+              <div class="stat-item">
+                <i class="fas fa-users text-muted"></i>
+                <span class="stat-value">{{ lesson.participants_count | default(0) }}</span>
+              </div>
             </div>
-            <span class="badge bg-primary rounded-pill">{{ lesson.status | default('No Status') }}</span>
+            
+            <div class="lesson-content">
+              <h5 class="lesson-title">{{ lesson.title or 'Untitled Lesson' }}</h5>
+              <p class="lesson-description">{{ lesson.description or 'No description provided.' }}</p>
+            </div>
+            
+            <div class="lesson-footer">
+              <div class="author-info">
+                <i class="fas fa-user-edit text-muted me-1"></i>
+                <span class="author-name">{{ lesson.author_name or 'Unknown Author' }}</span>
+              </div>
+              <span class="status-badge status-{{ lesson.status|lower|replace(' ', '-') }}">{{ lesson.status or 'No Status' }}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    {% endfor %}
+      {% endfor %}
+    {% else %}
+      <div class="col-12">
+        <div class="empty-state">
+          <i class="fas fa-graduation-cap"></i>
+          <h4>No Lessons Yet</h4>
+          <p>Start by creating your first lesson to organize your learning materials.</p>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+            <i class="fas fa-plus me-2"></i>Create Your First Lesson
+          </button>
+        </div>
+      </div>
+    {% endif %}
   </div>
 </div>
 
@@ -111,11 +139,295 @@
     .input-group {
       margin-bottom: 0.5rem;
     }
+    
+    .lesson-card {
+      margin-bottom: 1rem;
+    }
+    
+    .card-header-image {
+      height: 120px;
+    }
+    
+    .card-body {
+      padding: 1rem;
+    }
+    
+    .lesson-title {
+      font-size: 1rem;
+      min-height: 2.4rem;
+    }
+    
+    .lesson-description {
+      font-size: 0.85rem;
+      min-height: 3.6rem;
+    }
+    
+    .stats-row {
+      padding: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .stat-item i {
+      font-size: 0.9rem;
+    }
+    
+    .stat-value {
+      font-size: 0.8rem;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .lesson-card-wrapper {
+      margin-bottom: 1rem;
+    }
+    
+    .card-header-image {
+      height: 100px;
+    }
+    
+    .header-content i {
+      font-size: 2rem !important;
+    }
+    
+    .tags-container {
+      top: 0.5rem;
+      left: 0.5rem;
+      right: 0.5rem;
+    }
+    
+    .tag-badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.4rem;
+    }
+  }
+  
+  /* Lesson Card Styles */
+  .lesson-card-wrapper {
+    display: flex;
+    margin-bottom: 1.5rem;
+  }
+  
+  .lesson-card {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    background: white;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .lesson-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  }
+  
+  .card-header-image {
+    height: 140px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  
+  .header-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .tags-container {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .tag-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+  }
+  
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+  }
+  
+  .stat-item i {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    color: #6c757d;
+  }
+  
+  .stat-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+  }
+  
+  .lesson-content {
+    flex: 1;
+    margin-bottom: 1rem;
+  }
+  
+  .lesson-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.8rem;
+  }
+  
+  .lesson-description {
+    font-size: 0.9rem;
+    color: #6c757d;
+    line-height: 1.5;
+    margin-bottom: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 4.05rem;
+  }
+  
+  .lesson-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+    margin-top: auto;
+  }
+  
+  .author-info {
+    display: flex;
+    align-items: center;
+    flex: 1;
+  }
+  
+  .author-name {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .status-not-started {
+    background: #e9ecef;
+    color: #6c757d;
+  }
+  
+  .status-in-progress {
+    background: #fff3cd;
+    color: #856404;
+  }
+  
+  .status-completed {
+    background: #d1edff;
+    color: #0c5460;
+  }
+  
+  .status-no-status {
+    background: #f8f9fa;
+    color: #6c757d;
+  }
+  
+  /* Grid System */
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -0.75rem;
+  }
+  
+  .col-xl-3, .col-lg-4, .col-md-6, .col-sm-12 {
+    padding: 0 0.75rem;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  }
+  
+  /* Equal height cards */
+  .lesson-card-wrapper {
+    height: 100%;
+  }
+  
+  .lesson-card {
+    height: 100%;
+    min-height: 400px;
   }
   
   /* Smooth transitions for filtering */
   .col-xl-3, .col-lg-4, .col-md-6, .col-sm-12 {
     transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  }
+  
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+  }
+  
+  .empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+  
+  .empty-state h4 {
+    margin-bottom: 0.5rem;
+    color: #495057;
+  }
+  
+  .empty-state p {
+    margin-bottom: 2rem;
   }
   
   /* Loading state for search */
@@ -181,6 +493,41 @@
   }
   .lesson-card .dropdown-item {
     font-size: 0.9rem;
+  }
+  .favorite-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 2;
+    background: rgba(255,255,255,0.85);
+    border: none;
+    border-radius: 50%;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+  .favorite-btn:hover, .favorite-btn:focus {
+    background: #fffbe6;
+    box-shadow: 0 4px 16px rgba(255, 193, 7, 0.15);
+  }
+  .favorite-btn .fa-star {
+    font-size: 1.25rem;
+    transition: color 0.2s;
+  }
+  .favorite-btn .fa-star.text-warning {
+    color: #ffc107 !important;
+    text-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);
+  }
+  .favorite-btn .fa-star.text-secondary {
+    color: #ced4da !important;
+  }
+  .favorite-btn .fa-star.favorite-active {
+    filter: drop-shadow(0 0 4px #ffc107);
   }
 </style>
 

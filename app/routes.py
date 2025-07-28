@@ -153,6 +153,8 @@ def partial_dev():
 @login_required
 def partial_class():
     lessons = lesson_manager.get_lessons_by_user(g.user.id)
+    # Sort: favorite first, then by created order (id)
+    lessons = sorted(lessons, key=lambda l: (not l.is_favorite, l.id))
     
     # Fetch imported Google Classroom data for the current user
     google_classroom_imported_data = ImportedData.query.filter_by(
@@ -990,6 +992,15 @@ def delete_lesson(lesson_id):
     if not is_htmx:
         return redirect(url_for('list_lessons'))
     return make_response('') # Fallback for HTMX if no specific error, though HX-Trigger should handle it
+
+@app.route('/partial/class/<lesson_id>/favorite', methods=['POST'])
+@login_required
+def partial_class_toggle_favorite(lesson_id):
+    lesson = lesson_manager.get_lesson_by_id(lesson_id)
+    if not lesson or lesson.user_id != g.user.id:
+        return jsonify(success=False, message='Lesson not found or no permission.'), 404
+    new_state = lesson_manager.toggle_favorite(lesson_id)
+    return jsonify(success=True, is_favorite=new_state)
 
 # API Endpoint for Chrome Extension
 @app.route('/api/import_data', methods=['POST'])

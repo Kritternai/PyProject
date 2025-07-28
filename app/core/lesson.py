@@ -9,6 +9,7 @@ class Lesson(db.Model):
     tags = db.Column(db.String(200), nullable=True) # Comma-separated tags
     author_name = db.Column(db.String(100), nullable=True) # New field for lesson author
     selected_color = db.Column(db.Integer, default=1) # Color theme for lesson card (1-6)
+    is_favorite = db.Column(db.Boolean, default=False) # Favorite/starred lesson
     user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
     google_classroom_id = db.Column(db.String(100), nullable=True) # New field for Google Classroom Course ID
     source_platform = db.Column(db.String(50), default='manual') # e.g., 'manual', 'google_classroom'
