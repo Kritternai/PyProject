@@ -124,7 +124,7 @@ def partial_note_add_standalone():
             tags=tags,
             status=status,
             image_path=image_path,
-            file_url=file_path,
+            file_urls=json.dumps([file_path]) if file_path else None,
             external_link=external_link
         )
         # After adding, redirect to the main note list to see the new note
@@ -323,7 +323,6 @@ def partial_section_add(lesson_id):
                     assignment_due = datetime.datetime.strptime(assignment_due, '%Y-%m-%dT%H:%M')
                 except Exception:
                     assignment_due = None
-        file_url = None
         file_urls = [] # Initialize file_urls list
         # handle multiple file upload
         if type_ == 'file' and 'files' in request.files:
@@ -338,12 +337,10 @@ def partial_section_add(lesson_id):
                     print('DEBUG: file saved?', os.path.exists(save_path))
                     url = '/static/uploads/' + filename
                     file_urls.append(url)
-            if file_urls:
-                file_url = file_urls[0] # legacy, for UI เดิม
         import json
         if not title:
             return jsonify(success=False, message='Title is required.')
-        section = lesson_manager.add_section(lesson_id, title, content, type_, file_url, assignment_due, file_urls=json.dumps(file_urls) if file_urls else None)
+        section = lesson_manager.add_section(lesson_id, title, content, type_, assignment_due, file_urls=json.dumps(file_urls) if file_urls else None)
         # Return updated section list as HTML fragment
         sections = lesson_manager.get_sections(lesson_id)
         html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
@@ -362,7 +359,6 @@ def partial_section_edit(lesson_id, section_id):
         content = request.form.get('content')
         type_ = request.form.get('type')
         assignment_due = request.form.get('assignment_due')
-        file_url = section.file_url
         file_urls = [] # Initialize file_urls list
         # handle multiple file upload
         if type_ == 'file' and 'files' in request.files:
@@ -377,8 +373,6 @@ def partial_section_edit(lesson_id, section_id):
                     print('DEBUG: file saved?', os.path.exists(save_path))
                     url = '/static/uploads/' + filename
                     file_urls.append(url)
-            if file_urls:
-                file_url = file_urls[0] # legacy, for UI เดิม
         # Convert assignment_due to datetime or None
         if assignment_due:
             assignment_due = assignment_due.strip()
@@ -390,7 +384,7 @@ def partial_section_edit(lesson_id, section_id):
                 except Exception:
                     assignment_due = None
         import json
-        lesson_manager.update_section(section_id, title, content, type_, file_url, assignment_due, file_urls=json.dumps(file_urls) if file_urls else None)
+        lesson_manager.update_section(section_id, title, content, type_, assignment_due, file_urls=json.dumps(file_urls) if file_urls else None)
         # Return updated section list as HTML fragment
         sections = lesson_manager.get_sections(lesson_id)
         html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
@@ -495,7 +489,7 @@ def partial_note_add(lesson_id):
             tags=tags,
             status=status,
             image_path=image_path,
-            file_url=file_path,
+            file_urls=json.dumps([file_path]) if file_path else None,
             external_link=external_link
         )
         sections = lesson_manager.get_sections(lesson_id)
@@ -538,22 +532,32 @@ def partial_note_edit(lesson_id, section_id):
                 image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
                 image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
 
-        file_path = section.file_url
+        file_path = None
         if request.form.get('remove_file'):
-            if section.file_url:
-                old_file_filename = os.path.basename(section.file_url)
-                old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
-                if os.path.exists(old_file_path):
-                    os.remove(old_file_path)
+            if section.file_urls:
+                try:
+                    old_file_urls = json.loads(section.file_urls)
+                    for old_file_url in old_file_urls:
+                        old_file_filename = os.path.basename(old_file_url)
+                        old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
+                        if os.path.exists(old_file_path):
+                            os.remove(old_file_path)
+                except:
+                    pass
                 file_path = None
         elif 'file' in request.files and request.files['file'].filename != '':
             file_file = request.files['file']
             if allowed_file(file_file.filename, 'document'):
-                if section.file_url:
-                    old_file_filename = os.path.basename(section.file_url)
-                    old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
-                    if os.path.exists(old_file_path):
-                        os.remove(old_file_path)
+                if section.file_urls:
+                    try:
+                        old_file_urls = json.loads(section.file_urls)
+                        for old_file_url in old_file_urls:
+                            old_file_filename = os.path.basename(old_file_url)
+                            old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
+                            if os.path.exists(old_file_path):
+                                os.remove(old_file_path)
+                    except:
+                        pass
                 filename = secure_filename(file_file.filename)
                 file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
                 file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
@@ -565,7 +569,7 @@ def partial_note_edit(lesson_id, section_id):
             tags=tags,
             status=status,
             image_path=image_path,
-            file_url=file_path,
+            file_urls=json.dumps([file_path]) if file_path else None,
             external_link=external_link
         )
         sections = lesson_manager.get_sections(lesson_id)

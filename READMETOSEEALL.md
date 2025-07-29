@@ -97,7 +97,7 @@
 - Relationship: `sections` (LessonSection)
 
 ### LessonSection (app/core/lesson.py)
-- `id`, `lesson_id`, `title`, `content`, `type`, `file_url`, `file_urls` (JSON), `assignment_due`, ...
+- `id`, `lesson_id`, `title`, `content`, `type`, `file_urls` (JSON), `assignment_due`, ...
 - รองรับหลายประเภท: text, file, assignment, note
 
 ### LessonManager (app/core/lesson_manager.py)
@@ -268,7 +268,7 @@ MIT License
 - Relationship: `sections` (LessonSection)
 
 ### LessonSection (app/core/lesson.py)
-- `id`, `lesson_id`, `title`, `content`, `type`, `file_url`, `file_urls` (JSON), `assignment_due`, ...
+- `id`, `lesson_id`, `title`, `content`, `type`, `file_urls` (JSON), `assignment_due`, ...
 - Supports: text, file, assignment, note
 
 ### LessonManager (app/core/lesson_manager.py)
