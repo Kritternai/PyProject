@@ -41,7 +41,6 @@ class LessonSection(db.Model):
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=True)
     type = db.Column(db.String(20), default='text') # text, file, assignment, note
-    file_url = db.Column(db.String(255), nullable=True) # legacy, for single file
     file_urls = db.Column(db.Text, nullable=True) # JSON array of file urls (for multiple files)
     assignment_due = db.Column(db.DateTime, nullable=True)
     order = db.Column(db.Integer, default=0)
