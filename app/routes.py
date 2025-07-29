@@ -102,14 +102,14 @@ def partial_note_add_standalone():
         image_path = None
         if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
             filename = secure_filename(image_file.filename)
-            image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+            image_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
             image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
 
         file_file = request.files.get('file')
         file_path = None
         if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
             filename = secure_filename(file_file.filename)
-            file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+            file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
             file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
 
         # Find or create the "General Notes" lesson
@@ -472,14 +472,14 @@ def partial_note_add(lesson_id):
         image_path = None
         if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
             filename = secure_filename(image_file.filename)
-            image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+            image_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
             image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
 
         file_file = request.files.get('file')
         file_path = None
         if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
             filename = secure_filename(file_file.filename)
-            file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+            file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
             file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
 
         if not title or not body:
@@ -533,7 +533,7 @@ def partial_note_edit(lesson_id, section_id):
                     if os.path.exists(old_image_path):
                         os.remove(old_image_path)
                 filename = secure_filename(image_file.filename)
-                image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+                image_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
                 image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
 
         file_path = section.file_url
@@ -553,7 +553,7 @@ def partial_note_edit(lesson_id, section_id):
                     if os.path.exists(old_file_path):
                         os.remove(old_file_path)
                 filename = secure_filename(file_file.filename)
-                file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+                file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
                 file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
 
         lesson_manager.update_section(
