@@ -1,23 +1,36 @@
-<div class="container-fluid px-4" id="note-list-container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+<div class="px-4 container-fluid" id="note-list-container">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
         <h1 class="mt-4 mb-0">All Notes</h1>
-        <button type="button" class="btn btn-primary mt-4" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+        <button type="button" class="mt-4 btn btn-primary" data-bs-toggle="modal" data-bs-target="#addNoteModal">
             + Add New Note
         </button>
     </div>
     <div class="row">
         {% if notes %}
             {% for note in notes %}
-                <div class="col-md-6 col-lg-4 mb-4">
+                <div class="mb-4 col-md-6 col-lg-4">
                     <div class="card h-100">
                         <div class="card-body">
                             <h5 class="card-title">{{ note.title }}</h5>
                             <p class="card-text">{{ (note.body or '') | truncate(100) }}</p>
                             <p class="card-text"><small class="text-muted">In Lesson: {{ note.lesson.title }}</small></p>
                         </div>
+                        {% if note.image_path %}
+                            <img src="{{ url_for('static', filename=note.image_path) }}" alt="Note Image" class="mb-2 img-fluid" style="max-height:180px;object-fit:contain;width:100%;">
+                        {% endif %}
                         <div class="card-footer">
                             <a href="#" onclick="loadLessonDetail({{ note.lesson_id }})" class="btn btn-sm btn-outline-primary">View Lesson</a>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editNoteModal" data-note-id="{{ note.id }}" data-note-title="{{ note.title }}" data-note-body="{{ note.body or '' }}" data-note-tags="{{ note.tags or '' }}" data-note-status="{{ note.status or 'pending' }}" data-note-external-link="{{ note.external_link or '' }}">Edit</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editNoteModal"
+                                data-note-id="{{ note.id }}"
+                                data-note-title="{{ note.title }}"
+                                data-note-body="{{ note.body or '' }}"
+                                data-note-tags="{{ note.tags or '' }}"
+                                data-note-status="{{ note.status or 'pending' }}"
+                                data-note-external-link="{{ note.external_link or '' }}"
+                                data-note-image="{{ note.image_path or '' }}"
+                                data-note-file="{{ note.file_url or '' }}">
+                                Edit
+                            </button>
                             <button onclick="deleteNote('{{ note.id }}')" class="btn btn-sm btn-outline-danger">Delete</button>
                         </div>
                     </div>
@@ -50,11 +63,11 @@
                     <textarea class="form-control" id="body" name="body" rows="5" required></textarea>
                 </div>
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="mb-3 col-md-6">
                         <label for="tags" class="form-label">Tags (comma-separated)</label>
                         <input type="text" class="form-control" id="tags" name="tags">
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="mb-3 col-md-6">
                         <label for="status" class="form-label">Status</label>
                         <select class="form-select" id="status" name="status">
                             <option value="pending">Pending</option>
@@ -70,10 +83,22 @@
                 <div class="mb-3">
                     <label for="image" class="form-label">Image</label>
                     <input class="form-control" type="file" id="image" name="image" accept="image/*">
+                    {% if note and note.image_path %}
+                    <div id="image-preview" class="mt-2">
+                        <img src="{{ url_for('static', filename=note.image_path) }}" alt="Note Image" class="img-fluid" style="max-height:200px;">
+                    </div>
+                    {% endif %}
+                    <div id="add-image-preview" class="mt-2"></div>
                 </div>
                 <div class="mb-3">
                     <label for="file" class="form-label">File Attachment</label>
                     <input class="form-control" type="file" id="file" name="file">
+                    {% if note and note.file_url and note.file_url.endswith('.pdf') %}
+                    <div id="file-preview" class="mt-2">
+                        <embed src="{{ url_for('static', filename=note.file_url) }}" type="application/pdf" width="100%" height="300px" />
+                    </div>
+                    {% endif %}
+                    <div id="add-file-preview" class="mt-2"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -105,11 +130,11 @@
                     <textarea class="form-control" id="edit-body" name="body" rows="5" required></textarea>
                 </div>
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="mb-3 col-md-6">
                         <label for="edit-tags" class="form-label">Tags (comma-separated)</label>
                         <input type="text" class="form-control" id="edit-tags" name="tags">
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="mb-3 col-md-6">
                         <label for="edit-status" class="form-label">Status</label>
                         <select class="form-select" id="edit-status" name="status">
                             <option value="pending">Pending</option>
@@ -125,10 +150,12 @@
                 <div class="mb-3">
                     <label for="edit-image" class="form-label">Image</label>
                     <input class="form-control" type="file" id="edit-image" name="image" accept="image/*">
+                    <div id="edit-image-preview" class="mt-2"></div>
                 </div>
                 <div class="mb-3">
                     <label for="edit-file" class="form-label">File Attachment</label>
                     <input class="form-control" type="file" id="edit-file" name="file">
+                    <div id="edit-file-preview" class="mt-2"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
