@@ -29,15 +29,6 @@ function loadPage(page) {
               if (lessonContent) lessonContent.scrollIntoView({behavior: 'smooth', block: 'start'});
             }, 300);
           }
-          // Auto test search elements for debugging
-          if (page === 'class') {
-            setTimeout(() => {
-              console.log('Auto-testing search elements...');
-              if (typeof testSearchElements === 'function') {
-                testSearchElements();
-              }
-            }, 2000);
-          }
         });
       }
     });
@@ -634,41 +625,6 @@ window.setupAddLessonModal = function() {
   }
 }
 
-// Global function to test search elements
-window.testSearchElements = function() {
-  console.log('=== Testing Search Elements ===');
-  
-  const searchInput = document.getElementById('lessonSearch');
-  const filterSelect = document.getElementById('lessonFilter');
-  const clearSearchBtn = document.getElementById('clearSearch');
-  const lessonCards = document.querySelectorAll('.lesson-card');
-  const lessonCardWrappers = document.querySelectorAll('.lesson-card-wrapper');
-  
-  console.log('searchInput:', searchInput);
-  console.log('filterSelect:', filterSelect);
-  console.log('clearSearchBtn:', clearSearchBtn);
-  console.log('lessonCards count:', lessonCards.length);
-  console.log('lessonCardWrappers count:', lessonCardWrappers.length);
-  
-  lessonCards.forEach((card, index) => {
-    const titleElement = card.querySelector('.lesson-title');
-    const descriptionElement = card.querySelector('.lesson-description');
-    const statusElement = card.querySelector('.status-badge');
-    const authorElement = card.querySelector('.author-name');
-    const tagsContainer = card.querySelector('.tags-container');
-    
-    console.log(`Card ${index}:`, {
-      title: titleElement?.textContent,
-      description: descriptionElement?.textContent,
-      status: statusElement?.textContent,
-      author: authorElement?.textContent,
-      hasTags: !!tagsContainer
-    });
-  });
-  
-  console.log('=== End Test ===');
-}
-
 // Global function to toggle advanced search panel
 window.toggleAdvancedSearch = function() {
   const panel = document.getElementById('advancedSearchPanel');
@@ -697,12 +653,6 @@ function setupLessonSearchAndFilter() {
     const filterSelect = document.getElementById('lessonFilter');
     const clearSearchBtn = document.getElementById('clearSearch');
     const searchContainer = document.querySelector('.search-container');
-    
-    console.log('setupLessonSearchAndFilter - elements found:');
-    console.log('searchInput:', searchInput);
-    console.log('filterSelect:', filterSelect);
-    console.log('clearSearchBtn:', clearSearchBtn);
-    console.log('searchContainer:', searchContainer);
     
     if (!searchInput && !filterSelect) {
       console.log('Not on lessons page - returning early');
@@ -754,15 +704,6 @@ function setupLessonSearchAndFilter() {
       const searchOptions = getSearchOptions();
       const lessonCards = document.querySelectorAll('.lesson-card');
       
-      console.log('Filtering lessons:', { 
-        searchTerm, 
-        filterValue, 
-        searchOptions, 
-        cardCount: lessonCards.length,
-        searchInputValue: searchInput?.value,
-        filterSelectValue: filterSelect?.value
-      });
-      
       showLoading();
       
       // Use setTimeout to show loading briefly
@@ -774,16 +715,7 @@ function setupLessonSearchAndFilter() {
           const authorElement = card.querySelector('.author-name');
           const tagsContainer = card.querySelector('.tags-container');
           
-          console.log(`Card ${index}:`, {
-            titleElement: !!titleElement,
-            descriptionElement: !!descriptionElement,
-            statusElement: !!statusElement,
-            authorElement: !!authorElement,
-            tagsContainer: !!tagsContainer
-          });
-          
           if (!titleElement || !descriptionElement || !statusElement) {
-            console.log('Missing elements in card:', card);
             return;
           }
           
@@ -792,8 +724,6 @@ function setupLessonSearchAndFilter() {
           const status = statusElement.textContent;
           const author = authorElement ? authorElement.textContent.toLowerCase() : '';
           const tags = tagsContainer ? Array.from(tagsContainer.querySelectorAll('.tag-badge')).map(tag => tag.textContent.toLowerCase()) : [];
-          
-          console.log(`Card ${index} content:`, { title, description, status, author, tags });
           
           // Advanced search logic
           let matchesSearch = !searchTerm;
@@ -806,8 +736,6 @@ function setupLessonSearchAndFilter() {
           }
           
           const matchesFilter = !filterValue || status === filterValue;
-          
-          console.log(`Card ${index} matches:`, { matchesSearch, matchesFilter });
           
           const cardContainer = card.closest('.lesson-card-wrapper');
           if (cardContainer) {
@@ -829,8 +757,6 @@ function setupLessonSearchAndFilter() {
         // Show/hide "no results" message
         const visibleCards = document.querySelectorAll('.lesson-card-wrapper.visible');
         const hasVisibleCards = visibleCards.length > 0;
-        
-        console.log('Visible cards count:', visibleCards.length);
         
         let noResultsDiv = document.getElementById('no-results-message');
         if (!hasVisibleCards) {
@@ -902,18 +828,14 @@ function setupLessonSearchAndFilter() {
     
     // Add event listeners
     if (searchInput) {
-      console.log('Adding search input listener');
       searchInput.addEventListener('input', () => {
-        console.log('Search input changed:', searchInput.value);
         debounceFilter(filterLessons, 300);
       });
       searchInput.addEventListener('keyup', updateClearButton);
     }
     
     if (filterSelect) {
-      console.log('Adding filter select listener');
       filterSelect.addEventListener('change', () => {
-        console.log('Filter select changed:', filterSelect.value);
         filterLessons();
         updateClearButton();
       });
@@ -924,13 +846,11 @@ function setupLessonSearchAndFilter() {
     advancedOptions.forEach(optionId => {
       const element = document.getElementById(optionId);
       if (element) {
-        console.log(`Adding listener for ${optionId}`);
         element.addEventListener('change', filterLessons);
       }
     });
     
     // Initial filter
-    console.log('Running initial filter');
     filterLessons();
     updateClearButton();
   }, 100); // Small delay to ensure DOM is ready
