@@ -8,11 +8,14 @@
     </div>
     <div class="col-md-5">
       <div class="d-flex gap-2">
-        <div class="input-group">
+        <div class="input-group search-container">
           <span class="input-group-text bg-light border-end-0">
             <i class="fas fa-search text-muted"></i>
           </span>
           <input type="text" class="form-control border-start-0" id="lessonSearch" placeholder="Search lessons..." style="border-left: none;">
+          <button class="btn btn-outline-secondary border-start-0" type="button" id="clearSearch" onclick="clearSearchAndFilter()" style="display: none;">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
         <select class="form-select" id="lessonFilter" style="max-width: 150px;">
           <option value="">All Status</option>
@@ -20,11 +23,61 @@
           <option value="In Progress">In Progress</option>
           <option value="Completed">Completed</option>
         </select>
+        <button class="btn btn-outline-secondary" type="button" id="advancedSearchToggle" onclick="toggleAdvancedSearch()" title="Advanced Search">
+          <i class="fas fa-sliders-h"></i>
+        </button>
+      </div>
+      <!-- Advanced Search Panel -->
+      <div id="advancedSearchPanel" class="mt-3" style="display: none;">
+        <div class="card border-0 bg-light">
+          <div class="card-body p-3">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="form-label small text-muted">Search in:</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="searchTitle" checked>
+                  <label class="form-check-label small" for="searchTitle">Title</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="searchDescription" checked>
+                  <label class="form-check-label small" for="searchDescription">Description</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="searchTags">
+                  <label class="form-check-label small" for="searchTags">Tags</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="searchAuthor">
+                  <label class="form-check-label small" for="searchAuthor">Author</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small text-muted">Sort by:</label>
+                <select class="form-select form-select-sm" id="sortBy">
+                  <option value="title">Title</option>
+                  <option value="status">Status</option>
+                  <option value="created">Created Date</option>
+                  <option value="updated">Updated Date</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small text-muted">Order:</label>
+                <select class="form-select form-select-sm" id="sortOrder">
+                  <option value="asc">Ascending</option>
+                  <option value="desc">Descending</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="col-md-3 text-end">
       <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addLessonModal" title="Add New Lesson" onclick="setTimeout(() => { if(typeof setupAddLessonModal === 'function') setupAddLessonModal(); }, 100);">
         <i class="fas fa-plus me-2"></i> Add New Lesson
+      </button>
+      <button class="btn btn-outline-secondary btn-sm ms-2" onclick="testSearchElements()" title="Debug Search">
+        <i class="fas fa-bug"></i>
       </button>
     </div>
   </div>
@@ -119,6 +172,36 @@
     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
   }
   
+  /* Search Container Styles */
+  .search-container {
+    position: relative;
+  }
+  
+  .search-container.searching::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 10;
+  }
+  
+  #clearSearch {
+    transition: all 0.2s ease;
+  }
+  
+  #clearSearch:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+  }
+  
   /* Responsive adjustments */
   @media (max-width: 768px) {
     .row.align-items-center {
@@ -137,6 +220,21 @@
     }
     
     .input-group {
+      margin-bottom: 0.5rem;
+    }
+    
+    /* Advanced search responsive */
+    #advancedSearchPanel .row {
+      flex-direction: column;
+    }
+    
+    #advancedSearchPanel .col-md-4 {
+      margin-bottom: 1rem;
+    }
+    
+    #advancedSearchPanel .form-check {
+      display: inline-block;
+      margin-right: 1rem;
       margin-bottom: 0.5rem;
     }
     
@@ -528,6 +626,87 @@
   }
   .favorite-btn .fa-star.favorite-active {
     filter: drop-shadow(0 0 4px #ffc107);
+  }
+
+  /* Enhanced Card Transitions */
+  .lesson-card-wrapper {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .lesson-card-wrapper.hidden {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+    pointer-events: none;
+  }
+  
+  .lesson-card-wrapper.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+  }
+  
+  /* No Results Animation */
+  #no-results-message {
+    animation: fadeInUp 0.5s ease-out;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Advanced Search Panel Styles */
+  #advancedSearchPanel {
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  #advancedSearchPanel .card {
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  #advancedSearchPanel .form-check {
+    margin-bottom: 0.25rem;
+  }
+  
+  #advancedSearchPanel .form-check-label {
+    font-size: 0.875rem;
+    color: #495057;
+  }
+  
+  #advancedSearchPanel .form-select-sm {
+    font-size: 0.875rem;
+  }
+  
+  /* Advanced Search Toggle Button */
+  #advancedSearchToggle {
+    transition: all 0.2s ease;
+  }
+  
+  #advancedSearchToggle:hover {
+    transform: scale(1.05);
+  }
+  
+  #advancedSearchToggle.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
   }
 </style>
 

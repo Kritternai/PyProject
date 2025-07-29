@@ -29,6 +29,15 @@ function loadPage(page) {
               if (lessonContent) lessonContent.scrollIntoView({behavior: 'smooth', block: 'start'});
             }, 300);
           }
+          // Auto test search elements for debugging
+          if (page === 'class') {
+            setTimeout(() => {
+              console.log('Auto-testing search elements...');
+              if (typeof testSearchElements === 'function') {
+                testSearchElements();
+              }
+            }, 2000);
+          }
         });
       }
     });
@@ -625,101 +634,358 @@ window.setupAddLessonModal = function() {
   }
 }
 
-function setupLessonSearchAndFilter() {
+// Global function to test search elements
+window.testSearchElements = function() {
+  console.log('=== Testing Search Elements ===');
+  
   const searchInput = document.getElementById('lessonSearch');
   const filterSelect = document.getElementById('lessonFilter');
+  const clearSearchBtn = document.getElementById('clearSearch');
+  const lessonCards = document.querySelectorAll('.lesson-card');
+  const lessonCardWrappers = document.querySelectorAll('.lesson-card-wrapper');
   
-  if (!searchInput && !filterSelect) {
-    return; // Not on lessons page
-  }
+  console.log('searchInput:', searchInput);
+  console.log('filterSelect:', filterSelect);
+  console.log('clearSearchBtn:', clearSearchBtn);
+  console.log('lessonCards count:', lessonCards.length);
+  console.log('lessonCardWrappers count:', lessonCardWrappers.length);
   
-  console.log('Setting up lesson search and filter...');
-  
-  // Debounce function
-  let debounceTimer;
-  function debounceFilter(func, delay) {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(func, delay);
-  }
-  
-  function filterLessons() {
-    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-    const filterValue = filterSelect ? filterSelect.value : '';
-    const lessonCards = document.querySelectorAll('.course-card');
+  lessonCards.forEach((card, index) => {
+    const titleElement = card.querySelector('.lesson-title');
+    const descriptionElement = card.querySelector('.lesson-description');
+    const statusElement = card.querySelector('.status-badge');
+    const authorElement = card.querySelector('.author-name');
+    const tagsContainer = card.querySelector('.tags-container');
     
-    console.log('Filtering lessons:', { searchTerm, filterValue, cardCount: lessonCards.length });
-    
-    lessonCards.forEach(card => {
-      const titleElement = card.querySelector('.card-title');
-      const descriptionElement = card.querySelector('.card-text');
-      const statusElement = card.querySelector('.badge');
-      
-      if (!titleElement || !descriptionElement || !statusElement) {
-        console.log('Missing elements in card:', card);
-        return;
-      }
-      
-      const title = titleElement.textContent.toLowerCase();
-      const description = descriptionElement.textContent.toLowerCase();
-      const status = statusElement.textContent;
-      
-      const matchesSearch = !searchTerm || title.includes(searchTerm) || description.includes(searchTerm);
-      const matchesFilter = !filterValue || status === filterValue;
-      
-      const cardContainer = card.closest('.col-xl-3, .col-lg-4, .col-md-6, .col-sm-12');
-      if (cardContainer) {
-        if (matchesSearch && matchesFilter) {
-          cardContainer.style.display = 'block';
-          cardContainer.style.opacity = '1';
-        } else {
-          cardContainer.style.display = 'none';
-          cardContainer.style.opacity = '0';
-        }
-      }
+    console.log(`Card ${index}:`, {
+      title: titleElement?.textContent,
+      description: descriptionElement?.textContent,
+      status: statusElement?.textContent,
+      author: authorElement?.textContent,
+      hasTags: !!tagsContainer
     });
+  });
+  
+  console.log('=== End Test ===');
+}
+
+// Global function to toggle advanced search panel
+window.toggleAdvancedSearch = function() {
+  const panel = document.getElementById('advancedSearchPanel');
+  const toggleBtn = document.getElementById('advancedSearchToggle');
+  
+  if (panel && toggleBtn) {
+    const isVisible = panel.style.display !== 'none';
+    panel.style.display = isVisible ? 'none' : 'block';
     
-    // Show/hide "no results" message
-    const visibleCards = document.querySelectorAll('.col-xl-3, .col-lg-4, .col-md-6, .col-sm-12');
-    const hasVisibleCards = Array.from(visibleCards).some(card => card.style.display !== 'none');
-    
-    let noResultsDiv = document.getElementById('no-results-message');
-    if (!hasVisibleCards) {
-      if (!noResultsDiv) {
-        noResultsDiv = document.createElement('div');
-        noResultsDiv.id = 'no-results-message';
-        noResultsDiv.className = 'col-12 text-center py-5';
-        noResultsDiv.innerHTML = `
-          <div class="text-muted">
-            <i class="fas fa-search fa-3x mb-3"></i>
-            <h5>No lessons found</h5>
-            <p>Try adjusting your search or filter criteria.</p>
-          </div>
-        `;
-        const rowContainer = document.querySelector('.row.g-4');
-        if (rowContainer) {
-          rowContainer.appendChild(noResultsDiv);
-        }
-      }
-    } else if (noResultsDiv) {
-      noResultsDiv.remove();
+    if (isVisible) {
+      toggleBtn.classList.remove('btn-primary');
+      toggleBtn.classList.add('btn-outline-secondary');
+    } else {
+      toggleBtn.classList.remove('btn-outline-secondary');
+      toggleBtn.classList.add('btn-primary');
     }
   }
+}
+
+function setupLessonSearchAndFilter() {
+  console.log('setupLessonSearchAndFilter called');
   
-  // Add event listeners
-  if (searchInput) {
-    searchInput.addEventListener('input', () => {
-      debounceFilter(filterLessons, 300);
+  // Add a small delay to ensure DOM is ready
+  setTimeout(() => {
+    const searchInput = document.getElementById('lessonSearch');
+    const filterSelect = document.getElementById('lessonFilter');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    const searchContainer = document.querySelector('.search-container');
+    
+    console.log('setupLessonSearchAndFilter - elements found:');
+    console.log('searchInput:', searchInput);
+    console.log('filterSelect:', filterSelect);
+    console.log('clearSearchBtn:', clearSearchBtn);
+    console.log('searchContainer:', searchContainer);
+    
+    if (!searchInput && !filterSelect) {
+      console.log('Not on lessons page - returning early');
+      return; // Not on lessons page
+    }
+    
+    console.log('Setting up lesson search and filter...');
+    
+    // Debounce function
+    let debounceTimer;
+    function debounceFilter(func, delay) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(func, delay);
+    }
+    
+    function showLoading() {
+      if (searchContainer) {
+        searchContainer.classList.add('searching');
+      }
+    }
+    
+    function hideLoading() {
+      if (searchContainer) {
+        searchContainer.classList.remove('searching');
+      }
+    }
+    
+    function updateClearButton() {
+      if (clearSearchBtn) {
+        const hasValue = searchInput.value.trim() !== '' || filterSelect.value !== '';
+        clearSearchBtn.style.display = hasValue ? 'block' : 'none';
+      }
+    }
+    
+    function getSearchOptions() {
+      return {
+        searchTitle: document.getElementById('searchTitle')?.checked ?? true,
+        searchDescription: document.getElementById('searchDescription')?.checked ?? true,
+        searchTags: document.getElementById('searchTags')?.checked ?? false,
+        searchAuthor: document.getElementById('searchAuthor')?.checked ?? false,
+        sortBy: document.getElementById('sortBy')?.value ?? 'title',
+        sortOrder: document.getElementById('sortOrder')?.value ?? 'asc'
+      };
+    }
+    
+    function filterLessons() {
+      const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+      const filterValue = filterSelect ? filterSelect.value : '';
+      const searchOptions = getSearchOptions();
+      const lessonCards = document.querySelectorAll('.lesson-card');
+      
+      console.log('Filtering lessons:', { 
+        searchTerm, 
+        filterValue, 
+        searchOptions, 
+        cardCount: lessonCards.length,
+        searchInputValue: searchInput?.value,
+        filterSelectValue: filterSelect?.value
+      });
+      
+      showLoading();
+      
+      // Use setTimeout to show loading briefly
+      setTimeout(() => {
+        lessonCards.forEach((card, index) => {
+          const titleElement = card.querySelector('.lesson-title');
+          const descriptionElement = card.querySelector('.lesson-description');
+          const statusElement = card.querySelector('.status-badge');
+          const authorElement = card.querySelector('.author-name');
+          const tagsContainer = card.querySelector('.tags-container');
+          
+          console.log(`Card ${index}:`, {
+            titleElement: !!titleElement,
+            descriptionElement: !!descriptionElement,
+            statusElement: !!statusElement,
+            authorElement: !!authorElement,
+            tagsContainer: !!tagsContainer
+          });
+          
+          if (!titleElement || !descriptionElement || !statusElement) {
+            console.log('Missing elements in card:', card);
+            return;
+          }
+          
+          const title = titleElement.textContent.toLowerCase();
+          const description = descriptionElement.textContent.toLowerCase();
+          const status = statusElement.textContent;
+          const author = authorElement ? authorElement.textContent.toLowerCase() : '';
+          const tags = tagsContainer ? Array.from(tagsContainer.querySelectorAll('.tag-badge')).map(tag => tag.textContent.toLowerCase()) : [];
+          
+          console.log(`Card ${index} content:`, { title, description, status, author, tags });
+          
+          // Advanced search logic
+          let matchesSearch = !searchTerm;
+          if (searchTerm) {
+            matchesSearch = false;
+            if (searchOptions.searchTitle && title.includes(searchTerm)) matchesSearch = true;
+            if (searchOptions.searchDescription && description.includes(searchTerm)) matchesSearch = true;
+            if (searchOptions.searchAuthor && author.includes(searchTerm)) matchesSearch = true;
+            if (searchOptions.searchTags && tags.some(tag => tag.includes(searchTerm))) matchesSearch = true;
+          }
+          
+          const matchesFilter = !filterValue || status === filterValue;
+          
+          console.log(`Card ${index} matches:`, { matchesSearch, matchesFilter });
+          
+          const cardContainer = card.closest('.lesson-card-wrapper');
+          if (cardContainer) {
+            if (matchesSearch && matchesFilter) {
+              cardContainer.classList.remove('hidden');
+              cardContainer.classList.add('visible');
+            } else {
+              cardContainer.classList.add('hidden');
+              cardContainer.classList.remove('visible');
+            }
+          }
+        });
+        
+        // Sort cards if needed
+        if (searchOptions.sortBy !== 'title' || searchOptions.sortOrder !== 'asc') {
+          sortLessonCards(searchOptions.sortBy, searchOptions.sortOrder);
+        }
+        
+        // Show/hide "no results" message
+        const visibleCards = document.querySelectorAll('.lesson-card-wrapper.visible');
+        const hasVisibleCards = visibleCards.length > 0;
+        
+        console.log('Visible cards count:', visibleCards.length);
+        
+        let noResultsDiv = document.getElementById('no-results-message');
+        if (!hasVisibleCards) {
+          if (!noResultsDiv) {
+            noResultsDiv = document.createElement('div');
+            noResultsDiv.id = 'no-results-message';
+            noResultsDiv.className = 'col-12 text-center py-5';
+            noResultsDiv.innerHTML = `
+              <div class="text-muted">
+                <i class="fas fa-search fa-3x mb-3"></i>
+                <h5>No lessons found</h5>
+                <p>Try adjusting your search or filter criteria.</p>
+                <button class="btn btn-outline-primary" onclick="clearSearchAndFilter()">
+                  <i class="fas fa-times me-2"></i>Clear Filters
+                </button>
+              </div>
+            `;
+            const container = document.getElementById('lessons-container');
+            if (container) {
+              container.appendChild(noResultsDiv);
+            }
+          }
+        } else if (noResultsDiv) {
+          noResultsDiv.remove();
+        }
+        
+        hideLoading();
+        updateClearButton();
+      }, 150); // Brief delay to show loading
+    }
+    
+    function sortLessonCards(sortBy, sortOrder) {
+      const container = document.getElementById('lessons-container');
+      const cards = Array.from(container.querySelectorAll('.lesson-card-wrapper.visible'));
+      
+      cards.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch (sortBy) {
+          case 'title':
+            aValue = a.querySelector('.lesson-title')?.textContent || '';
+            bValue = b.querySelector('.lesson-title')?.textContent || '';
+            break;
+          case 'status':
+            aValue = a.querySelector('.status-badge')?.textContent || '';
+            bValue = b.querySelector('.status-badge')?.textContent || '';
+            break;
+          case 'created':
+          case 'updated':
+            // For now, use title as fallback since we don't have date elements
+            aValue = a.querySelector('.lesson-title')?.textContent || '';
+            bValue = b.querySelector('.lesson-title')?.textContent || '';
+            break;
+          default:
+            aValue = a.querySelector('.lesson-title')?.textContent || '';
+            bValue = b.querySelector('.lesson-title')?.textContent || '';
+        }
+        
+        if (sortOrder === 'desc') {
+          return bValue.localeCompare(aValue);
+        } else {
+          return aValue.localeCompare(bValue);
+        }
+      });
+      
+      // Re-append cards in sorted order
+      cards.forEach(card => container.appendChild(card));
+    }
+    
+    // Add event listeners
+    if (searchInput) {
+      console.log('Adding search input listener');
+      searchInput.addEventListener('input', () => {
+        console.log('Search input changed:', searchInput.value);
+        debounceFilter(filterLessons, 300);
+      });
+      searchInput.addEventListener('keyup', updateClearButton);
+    }
+    
+    if (filterSelect) {
+      console.log('Adding filter select listener');
+      filterSelect.addEventListener('change', () => {
+        console.log('Filter select changed:', filterSelect.value);
+        filterLessons();
+        updateClearButton();
+      });
+    }
+    
+    // Advanced search option listeners
+    const advancedOptions = ['searchTitle', 'searchDescription', 'searchTags', 'searchAuthor', 'sortBy', 'sortOrder'];
+    advancedOptions.forEach(optionId => {
+      const element = document.getElementById(optionId);
+      if (element) {
+        console.log(`Adding listener for ${optionId}`);
+        element.addEventListener('change', filterLessons);
+      }
     });
-    console.log('Search input listener added');
-  }
+    
+    // Initial filter
+    console.log('Running initial filter');
+    filterLessons();
+    updateClearButton();
+  }, 100); // Small delay to ensure DOM is ready
+}
+
+// Global function to clear search and filter
+window.clearSearchAndFilter = function() {
+  const searchInput = document.getElementById('lessonSearch');
+  const filterSelect = document.getElementById('lessonFilter');
+  const clearSearchBtn = document.getElementById('clearSearch');
   
+  if (searchInput) {
+    searchInput.value = '';
+  }
   if (filterSelect) {
-    filterSelect.addEventListener('change', filterLessons);
-    console.log('Filter select listener added');
+    filterSelect.value = '';
   }
   
-  // Initial filter
-  filterLessons();
+  // Reset advanced search options
+  const searchTitle = document.getElementById('searchTitle');
+  const searchDescription = document.getElementById('searchDescription');
+  const searchTags = document.getElementById('searchTags');
+  const searchAuthor = document.getElementById('searchAuthor');
+  const sortBy = document.getElementById('sortBy');
+  const sortOrder = document.getElementById('sortOrder');
+  
+  if (searchTitle) searchTitle.checked = true;
+  if (searchDescription) searchDescription.checked = true;
+  if (searchTags) searchTags.checked = false;
+  if (searchAuthor) searchAuthor.checked = false;
+  if (sortBy) sortBy.value = 'title';
+  if (sortOrder) sortOrder.value = 'asc';
+  
+  // Re-show all cards
+  const lessonCards = document.querySelectorAll('.lesson-card-wrapper');
+  lessonCards.forEach(card => {
+    card.classList.remove('hidden');
+    card.classList.add('visible');
+  });
+  
+  // Remove no results message
+  const noResultsDiv = document.getElementById('no-results-message');
+  if (noResultsDiv) {
+    noResultsDiv.remove();
+  }
+  
+  // Hide clear button
+  if (clearSearchBtn) {
+    clearSearchBtn.style.display = 'none';
+  }
+  
+  // Focus back to search input
+  if (searchInput) {
+    searchInput.focus();
+  }
 }
 
 // Global color selection function
