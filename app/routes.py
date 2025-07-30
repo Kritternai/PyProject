@@ -82,6 +82,7 @@ def partial_note_list():
         Lesson.user_id == g.user.id,
         LessonSection.type == 'note'
     ).order_by(LessonSection.created_at.desc()).all()
+    
     return render_template('note_fragment.html', notes=notes)
 
 @app.route('/partial/note/add', methods=['GET', 'POST'])
@@ -101,14 +102,14 @@ def partial_note_add_standalone():
         image_path = None
         if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
             filename = secure_filename(image_file.filename)
-            image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+            image_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
             image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
 
         file_file = request.files.get('file')
         file_path = None
         if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
             filename = secure_filename(file_file.filename)
-            file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+            file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
             file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
 
         # Find or create the "General Notes" lesson
@@ -468,14 +469,14 @@ def partial_note_add(lesson_id):
         image_path = None
         if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
             filename = secure_filename(image_file.filename)
-            image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+            image_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
             image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
 
         file_file = request.files.get('file')
         file_path = None
         if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
             filename = secure_filename(file_file.filename)
-            file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+            file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
             file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
 
         if not title or not body:
@@ -529,7 +530,7 @@ def partial_note_edit(lesson_id, section_id):
                     if os.path.exists(old_image_path):
                         os.remove(old_image_path)
                 filename = secure_filename(image_file.filename)
-                image_path = os.path.join('static', 'uploads', 'image', filename).replace('\\', '/')
+                image_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
                 image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
 
         file_path = None
@@ -559,7 +560,7 @@ def partial_note_edit(lesson_id, section_id):
                     except:
                         pass
                 filename = secure_filename(file_file.filename)
-                file_path = os.path.join('static', 'uploads', 'files', filename).replace('\\', '/')
+                file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
                 file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
 
         lesson_manager.update_section(
@@ -577,26 +578,7 @@ def partial_note_edit(lesson_id, section_id):
         return jsonify(success=True, html=html)
     return render_template('notes/edit.html', lesson=lesson, note=section)
 
-@app.route('/partial/note/<section_id>/edit', methods=['GET', 'POST'])
-@login_required
-def partial_note_edit_standalone(section_id):
-    section = lesson_manager.get_section_by_id(section_id)
-    if not section or section.lesson.user_id != g.user.id or section.type != 'note':
-        return '<div class="alert alert-danger">Note not found or no permission.</div>', 404
 
-    if request.method == 'POST':
-        title = request.form.get('title')
-        body = request.form.get('body')
-        lesson_manager.update_section(section_id, title=title, content=body)
-        
-        # After update, return the updated list of all notes
-        notes = db.session.query(LessonSection).join(Lesson).filter(
-            Lesson.user_id == g.user.id,
-            LessonSection.type == 'note'
-        ).order_by(LessonSection.created_at.desc()).all()
-        return render_template('note_fragment.html', notes=notes)
-
-    return render_template('notes/edit.html', section=section)
 
 @app.route('/partial/note/<section_id>/delete', methods=['POST'])
 @login_required
@@ -614,6 +596,45 @@ def partial_note_delete_standalone(section_id):
     ).order_by(LessonSection.created_at.desc()).all()
     return render_template('note_fragment.html', notes=notes)
 
+@app.route('/partial/note/<section_id>/edit', methods=['GET', 'POST'])
+@login_required
+def partial_note_edit_standalone(section_id):
+    section = lesson_manager.get_section_by_id(section_id)
+    
+    if not section:
+        return jsonify(success=False, message='Note not found.')
+    
+    if section.lesson.user_id != g.user.id:
+        return jsonify(success=False, message='No permission.')
+    
+    if section.type != 'note':
+        return jsonify(success=False, message='Not a note.')
+    
+    if request.method == 'POST':
+        title = request.form.get('title')
+        body = request.form.get('body')
+        tags = request.form.get('tags')
+        status = request.form.get('status')
+        external_link = request.form.get('external_link')
+        
+        if not title:
+            return jsonify(success=False, message='Title is required.')
+        
+        try:
+            lesson_manager.update_section(
+                section_id,
+                title=title,
+                body=body,
+                tags=tags,
+                status=status,
+                external_link=external_link
+            )
+            return jsonify(success=True, redirect='note')
+        except Exception as e:
+            return jsonify(success=False, message=f'Error updating note: {str(e)}')
+    
+    # For GET requests, return the edit form template
+    return render_template('notes/_edit.html', section=section)
 
 
 # === End of note management routes ===
