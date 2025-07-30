@@ -1,6 +1,7 @@
 from app import app, db
 from flask import render_template, request, flash, redirect, url_for, session, jsonify, make_response, g
 import json
+import uuid
 from app.core.lesson_manager import LessonManager
 from app.core.lesson import Lesson, LessonSection # Import Lesson model for query
 from app.core.imported_data import ImportedData # Import ImportedData model
@@ -308,6 +309,17 @@ def partial_class_detail(lesson_id):
     # Get integrated data
     lesson_summary = IntegrationService.get_lesson_summary(lesson_id, g.user.id)
     
+    # Get notes for this lesson
+    from app.core.note import Note
+    notes = db.session.query(Note).filter(
+        Note.lesson_id == lesson_id,
+        Note.user_id == g.user.id
+    ).order_by(Note.created_at.desc()).all()
+    
+    # Add notes to lesson_summary
+    if lesson_summary:
+        lesson_summary['notes'] = notes
+    
     # แปลงข้อมูล Google Classroom
     if lesson.source_platform == 'google_classroom':
         import json
@@ -414,11 +426,75 @@ def partial_section_add(lesson_id):
         import json
         if not title:
             return jsonify(success=False, message='Title is required.')
-        section = lesson_manager.add_section(lesson_id, title, content, type_, assignment_due, file_urls=json.dumps(file_urls) if file_urls else None)
-        # Return updated section list as HTML fragment
-        sections = lesson_manager.get_sections(lesson_id)
-        html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
-        return jsonify(success=True, html=html)
+        
+        # If type is 'note', create only note (not section)
+        if type_ == 'note':
+            # Create note in Note table only
+            from app.core.note import Note
+            from app.core.files import Files
+            
+            new_note = Note(
+                id=str(uuid.uuid4()),
+                user_id=g.user.id,
+                lesson_id=lesson_id,
+                title=title,
+                content=content,
+                status='active',
+                external_link=None
+            )
+            
+            db.session.add(new_note)
+            db.session.flush()  # Get the note ID
+            
+            # Handle file uploads for note
+            if file_urls:
+                try:
+                    file_urls_list = json.loads(file_urls) if isinstance(file_urls, str) else file_urls
+                    for file_url in file_urls_list:
+                        filename = os.path.basename(file_url)
+                        file_record = Files(
+                            id=str(uuid.uuid4()),
+                            user_id=g.user.id,
+                            note_id=new_note.id,
+                            lesson_id=lesson_id,
+                            file_name=filename,
+                            file_path=file_url.replace('/static/', ''),
+                            file_type='document',
+                            mime_type='application/octet-stream'
+                        )
+                        db.session.add(file_record)
+                except Exception as e:
+                    print(f"Error creating file records: {e}")
+            
+            db.session.commit()
+            
+            # Return updated sections list for class (without the new note)
+            sections = lesson_manager.get_sections(lesson_id)
+            class_html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
+            
+            # Also return updated notes list for notes page
+            from app.core.integration_service import IntegrationService
+            user_data = IntegrationService.get_user_integrated_data(g.user.id)
+            notes = db.session.query(Note).filter(
+                Note.user_id == g.user.id
+            ).order_by(Note.created_at.desc()).all()
+            notes_html = render_template('note_fragment.html', notes=notes, user_data=user_data)
+            
+
+            
+            return jsonify(
+                success=True, 
+                html=class_html,
+                notes_html=notes_html,
+                message='Note added successfully! Redirecting to notes page...'
+            )
+        else:
+            # For other types, just create section
+            section = lesson_manager.add_section(lesson_id, title, content, type_, assignment_due, file_urls=json.dumps(file_urls) if file_urls else None)
+            # Return updated section list as HTML fragment
+            sections = lesson_manager.get_sections(lesson_id)
+            html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
+            return jsonify(success=True, html=html)
     return render_template('lessons/section_add.html', lesson=lesson)
 
 @app.route('/partial/class/<lesson_id>/sections/<section_id>/edit', methods=['GET', 'POST'])
@@ -606,10 +682,24 @@ def partial_note_add(lesson_id):
             
             db.session.commit()
             
-            # Return updated sections list
+            # Return updated sections list for class
             sections = lesson_manager.get_sections(lesson_id)
-            html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
-            return jsonify(success=True, html=html)
+            class_html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
+            
+            # Also return updated notes list for notes page
+            from app.core.integration_service import IntegrationService
+            user_data = IntegrationService.get_user_integrated_data(g.user.id)
+            notes = db.session.query(Note).filter(
+                Note.user_id == g.user.id
+            ).order_by(Note.created_at.desc()).all()
+            notes_html = render_template('note_fragment.html', notes=notes, user_data=user_data)
+            
+            return jsonify(
+                success=True, 
+                html=class_html,
+                notes_html=notes_html,
+                message='Note added successfully and synced to notes page!'
+            )
             
         except Exception as e:
             db.session.rollback()

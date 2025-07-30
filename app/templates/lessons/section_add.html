@@ -76,7 +76,20 @@ if (addSectionForm) {
       if (data.success) {
         var modal = bootstrap.Modal.getInstance(document.getElementById('addSectionModal'));
         if (modal) modal.hide();
-        loadLessonSections();
+        
+        // If this is a note, redirect to notes page
+        if (data.notes_html) {
+          // Load notes page via SPA
+          loadPage('note');
+          
+          // Show success message
+          if (data.message) {
+            showNotification(data.message, 'success');
+          }
+        } else {
+          // For other types, just update lesson sections
+          loadLessonSections();
+        }
       } else {
         alert(data.message || 'Error adding content.');
       }
