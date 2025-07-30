@@ -1,13 +1,13 @@
 {% if 'user_id' in session %}
   <div class="dropdown mb-2 text-center">
     <button class="btn btn-light dropdown-toggle w-100" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-      <span class="text-primary">Welcome, {{ g.user.username if g.user else 'User' }}!</span>
+      <span class="text-primary">Hello, {{ g.user.username if g.user else 'User' }}!</span>
     </button>
-    <ul class="dropdown-menu w-100" aria-labelledby="profileDropdown">
-      <li><a class="dropdown-item" href="#" onclick="loadPage('profile');return false;">Profile</a></li>
-      <li><a class="dropdown-item" href="#" onclick="loadPage('change_password');return false;">Change Password</a></li>
+    <ul class="dropdown-menu" aria-labelledby="profileDropdown">
+      <li><a class="dropdown-item" href="#" onclick="loadPage('profile');return false;"><i class="bi bi-person-circle me-2"></i>Profile</a></li>
+      <li><a class="dropdown-item" href="#" onclick="loadPage('change_password');return false;"><i class="bi bi-key-fill me-2"></i>Change Password</a></li>
       <li><hr class="dropdown-divider"></li>
-      <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Logout</a></li>
+      <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
     </ul>
   </div>
 {% else %}

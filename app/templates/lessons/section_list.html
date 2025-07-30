@@ -27,9 +27,7 @@
             {% elif section.type == 'file' %}
               {% set file_urls = [] %}
               {% if section.file_urls %}
-                {% set file_urls = file_urls + (section.file_urls | safe | loads) %}
-              {% elif section.file_url %}
-                {% set file_urls = [section.file_url] %}
+                {% set file_urls = (section.file_urls | safe | loads) %}
               {% endif %}
               {% for url in file_urls %}
                 {% set ext = url.split('.')[-1]|lower %}

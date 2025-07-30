@@ -23,8 +23,11 @@
     </div>
     <div class="col-12 d-none" id="file-group">
       <label for="file" class="form-label">File</label>
-      {% if section.file_url %}
-        <div class="mb-2"><a href="{{ section.file_url }}" target="_blank">Current File</a></div>
+      {% if section.file_urls %}
+        {% set file_urls = (section.file_urls | safe | loads) %}
+        {% for url in file_urls %}
+          <div class="mb-2"><a href="{{ url }}" target="_blank">Current File</a></div>
+        {% endfor %}
       {% endif %}
       <input type="file" id="file" name="file" class="form-control">
       <div class="form-text">Upload a file (PDF, DOCX, etc.)</div>
