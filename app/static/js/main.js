@@ -127,6 +127,64 @@ function showAuthError(form, message) {
   alert.textContent = message;
 }
 
+function showNotification(message, type = 'info') {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+  notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+  
+  // Add to body
+  document.body.appendChild(notification);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 5000);
+}
+
+function updateLessonNotesSection() {
+  // Get current lesson ID from URL
+  const pathParts = window.location.pathname.split('/');
+  const lessonId = pathParts[pathParts.indexOf('class') + 1];
+  
+  if (lessonId) {
+    // Fetch updated lesson detail
+    fetch(`/partial/class/${lessonId}`)
+      .then(response => response.text())
+      .then(html => {
+        // Create a temporary div to parse the HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        
+        // Find the notes section in the new HTML
+        const newNotesSection = tempDiv.querySelector('#content .mt-4');
+        if (newNotesSection) {
+          // Find existing notes section
+          const existingNotesSection = document.querySelector('#content .mt-4');
+          if (existingNotesSection) {
+            // Replace the existing notes section
+            existingNotesSection.innerHTML = newNotesSection.innerHTML;
+          } else {
+            // Add new notes section
+            const contentTab = document.querySelector('#content');
+            if (contentTab) {
+              contentTab.appendChild(newNotesSection);
+            }
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error updating lesson notes section:', error);
+      });
+  }
+}
+
 function loadLessonDetail(lessonId) {
   fetch('/partial/class/' + lessonId)
     .then(response => response.text())
