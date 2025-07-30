@@ -127,6 +127,36 @@
                 <input type="date" id="section-due-filter" class="form-control form-control-sm ms-2 w-auto" style="max-width:170px;" placeholder="Due date">
               </div>
               <div id="lesson-sections-list">{% include 'lessons/section_list.html' %}</div>
+              
+              <!-- Notes Section -->
+              {% if lesson_summary and lesson_summary.notes %}
+              <div class="mt-4">
+                <h5 class="mb-3"><i class="bi bi-sticky-note text-success"></i> Notes</h5>
+                <div class="row">
+                  {% for note in lesson_summary.notes %}
+                  <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100">
+                      <div class="card-body">
+                        <h6 class="card-title">{{ note.title }}</h6>
+                        <p class="card-text">{{ note.content[:100] }}{% if note.content|length > 100 %}...{% endif %}</p>
+                        {% if note.tags %}
+                        <div class="mb-2">
+                          {% for tag in note.tags.split(',') %}
+                            <span class="badge bg-secondary me-1">{{ tag.strip() }}</span>
+                          {% endfor %}
+                        </div>
+                        {% endif %}
+                        <div class="d-flex justify-content-between align-items-center">
+                          <small class="text-muted">{{ note.created_at.strftime('%Y-%m-%d') if note.created_at else 'N/A' }}</small>
+                          <span class="badge bg-{{ 'success' if note.status == 'active' else 'warning' }}">{{ note.status }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
             </div>
           </div>
         </div>
