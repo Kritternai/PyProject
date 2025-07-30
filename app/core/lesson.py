@@ -13,19 +13,29 @@ class Lesson(db.Model):
     user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
     google_classroom_id = db.Column(db.String(100), nullable=True) # New field for Google Classroom Course ID
     source_platform = db.Column(db.String(50), default='manual') # e.g., 'manual', 'google_classroom'
+    classroom_assignments_count = db.Column(db.Integer, default=0) # Count of Google Classroom assignments
     announcements_data = db.Column(db.Text, nullable=True)
     topics_data = db.Column(db.Text, nullable=True)
     roster_data = db.Column(db.Text, nullable=True)
     attachments_data = db.Column(db.Text, nullable=True)
     sections = db.relationship('LessonSection', backref='lesson', lazy=True, order_by='LessonSection.order')
+    
+    # Relationships with Notes and Files
+    notes = db.relationship('Note', backref='lesson', lazy=True, cascade='all, delete-orphan')
+    files = db.relationship('Files', backref='lesson', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<Lesson {self.title}>'
 
     @property
     def note_count(self):
-        # Count sections of type 'note'
-        return len([s for s in self.sections if s.type == 'note'])
+        # Count notes associated with this lesson
+        return len(self.notes)
+
+    @property
+    def file_count(self):
+        # Count files associated with this lesson
+        return len(self.files)
 
     @property
     def manual_assignment_count(self):
@@ -52,6 +62,9 @@ class LessonSection(db.Model):
     external_link = db.Column(db.String(255), nullable=True)
     tags = db.Column(db.String(200), nullable=True)
     status = db.Column(db.String(50), default='pending')
+    
+    # Relationships with Files
+    files = db.relationship('Files', backref='section', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<LessonSection {self.title} ({self.type})>'

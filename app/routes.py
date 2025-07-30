@@ -80,63 +80,105 @@ def partial_dashboard():
 @app.route('/partial/note')
 @login_required
 def partial_note_list():
-    notes = db.session.query(LessonSection).join(Lesson).filter(
-        Lesson.user_id == g.user.id,
-        LessonSection.type == 'note'
-    ).order_by(LessonSection.created_at.desc()).all()
+    from app.core.note import Note
+    from app.core.integration_service import IntegrationService
     
-    return render_template('note_fragment.html', notes=notes)
+    # Get all notes with lesson information
+    notes = db.session.query(Note).filter(
+        Note.user_id == g.user.id
+    ).order_by(Note.created_at.desc()).all()
+    
+    # Get integrated data for summary
+    user_data = IntegrationService.get_user_integrated_data(g.user.id)
+    
+    return render_template('note_fragment.html', 
+                         notes=notes, 
+                         user_data=user_data)
 
 @app.route('/partial/note/add', methods=['GET', 'POST'])
 @login_required
 def partial_note_add_standalone():
     if request.method == 'POST':
+        from app.core.note import Note
+        import uuid
+        
         title = request.form.get('title')
-        body = request.form.get('body')
+        content = request.form.get('content')  # Changed from 'body' to 'content'
         tags = request.form.get('tags')
-        status = request.form.get('status')
+        status = request.form.get('status', 'active')
         external_link = request.form.get('external_link')
 
-        if not title or not body:
-            return jsonify(success=False, message='Title and body are required.')
+        if not title or not content:
+            return jsonify(success=False, message='Title and content are required.')
 
-        image_file = request.files.get('image')
-        image_path = None
-        if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
-            filename = secure_filename(image_file.filename)
-            image_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
-            image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
-
-        file_file = request.files.get('file')
-        file_path = None
-        if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
-            filename = secure_filename(file_file.filename)
-            file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
-            file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
-
-        # Find or create the "General Notes" lesson
-        general_notes_lesson = Lesson.query.filter_by(user_id=g.user.id, title="General Notes").first()
-        if not general_notes_lesson:
-            general_notes_lesson = lesson_manager.add_lesson(g.user.id, "General Notes", "A place for your general notes.")
-
-        lesson_manager.add_section(
-            lesson_id=general_notes_lesson.id,
-            title=title,
-            body=body,
-            type='note',
-            tags=tags,
-            status=status,
-            image_path=image_path,
-            file_urls=json.dumps([file_path]) if file_path else None,
-            external_link=external_link
-        )
-        # After adding, redirect to the main note list to see the new note
-        notes = db.session.query(LessonSection).join(Lesson).filter(
-            Lesson.user_id == g.user.id,
-            LessonSection.type == 'note'
-        ).order_by(LessonSection.created_at.desc()).all()
-        html = render_template('note_fragment.html', notes=notes)
-        return jsonify(success=True, html=html)
+        try:
+            # Create new note using Note table
+            new_note = Note(
+                id=str(uuid.uuid4()),
+                user_id=g.user.id,
+                title=title,
+                content=content,
+                tags=tags,
+                status=status,
+                external_link=external_link
+            )
+            
+            db.session.add(new_note)
+            db.session.flush()  # Get the note ID
+            
+            # Handle file uploads
+            from app.core.files import Files
+            
+            # Handle image upload
+            image_file = request.files.get('image')
+            if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
+                filename = secure_filename(image_file.filename)
+                file_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
+                image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
+                
+                # Create file record
+                image_file_record = Files(
+                    id=str(uuid.uuid4()),
+                    user_id=g.user.id,
+                    note_id=new_note.id,
+                    file_name=filename,
+                    file_path=file_path,
+                    file_type='image',
+                    mime_type=image_file.content_type
+                )
+                db.session.add(image_file_record)
+            
+            # Handle file upload
+            file_file = request.files.get('file')
+            if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
+                filename = secure_filename(file_file.filename)
+                file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
+                file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
+                
+                # Create file record
+                file_record = Files(
+                    id=str(uuid.uuid4()),
+                    user_id=g.user.id,
+                    note_id=new_note.id,
+                    file_name=filename,
+                    file_path=file_path,
+                    file_type='document',
+                    mime_type=file_file.content_type
+                )
+                db.session.add(file_record)
+            
+            db.session.commit()
+            
+            # After adding, redirect to the main note list to see the new note
+            notes = db.session.query(Note).filter(
+                Note.user_id == g.user.id
+            ).order_by(Note.created_at.desc()).all()
+            html = render_template('note_fragment.html', notes=notes)
+            return jsonify(success=True, html=html)
+            
+        except Exception as e:
+            db.session.rollback()
+            return jsonify(success=False, message=f'Error creating note: {str(e)}')
 
     return render_template('notes/create.html', lesson=None)
 
@@ -257,9 +299,15 @@ def partial_class_add():
 @app.route('/partial/class/<lesson_id>')
 @login_required
 def partial_class_detail(lesson_id):
+    from app.core.integration_service import IntegrationService
+    
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
     if not lesson or lesson.user_id != g.user.id:
         return '<div class="alert alert-danger">Lesson not found or no permission.</div>'
+    
+    # Get integrated data
+    lesson_summary = IntegrationService.get_lesson_summary(lesson_id, g.user.id)
+    
     # แปลงข้อมูล Google Classroom
     if lesson.source_platform == 'google_classroom':
         import json
@@ -279,9 +327,13 @@ def partial_class_detail(lesson_id):
             lesson.all_attachments = json.loads(lesson.attachments_data) if lesson.attachments_data else []
         except Exception:
             lesson.all_attachments = []
+    
     # โหลด sections จาก db
     sections = lesson_manager.get_sections(lesson.id)
-    return render_template('lessons/_detail.html', lesson=lesson, sections=sections)
+    return render_template('lessons/_detail.html', 
+                         lesson=lesson, 
+                         sections=sections, 
+                         lesson_summary=lesson_summary)
 
 @app.route('/partial/class/<lesson_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -476,47 +528,93 @@ def allowed_file(filename, file_type='all'):
 @app.route('/partial/class/<lesson_id>/notes/add', methods=['GET', 'POST'])
 @login_required
 def partial_note_add(lesson_id):
+    from app.core.integration_service import IntegrationService
+    
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
     if not lesson or lesson.user_id != g.user.id:
         return '<div class="alert alert-danger">Lesson not found or no permission.</div>'
+    
     if request.method == 'POST':
         title = request.form.get('title')
-        body = request.form.get('body')
+        content = request.form.get('content')
         tags = request.form.get('tags')
-        status = request.form.get('status')
+        status = request.form.get('status', 'active')
         external_link = request.form.get('external_link')
-        
-        image_file = request.files.get('image')
-        image_path = None
-        if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
-            filename = secure_filename(image_file.filename)
-            image_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
-            image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
 
-        file_file = request.files.get('file')
-        file_path = None
-        if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
-            filename = secure_filename(file_file.filename)
-            file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
-            file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
+        if not title or not content:
+            return jsonify(success=False, message='Title and content are required.')
 
-        if not title or not body:
-            return jsonify(success=False, message='Title and body are required.')
+        try:
+            # Create note using Note table
+            from app.core.note import Note
+            new_note = Note(
+                id=str(uuid.uuid4()),
+                user_id=g.user.id,
+                lesson_id=lesson_id,
+                title=title,
+                content=content,
+                tags=tags,
+                status=status,
+                external_link=external_link
+            )
+            
+            db.session.add(new_note)
+            db.session.flush()  # Get the note ID
+            
+            # Handle file uploads
+            from app.core.files import Files
+            
+            # Handle image upload
+            image_file = request.files.get('image')
+            if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
+                filename = secure_filename(image_file.filename)
+                file_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
+                image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
+                
+                # Create file record
+                image_file_record = Files(
+                    id=str(uuid.uuid4()),
+                    user_id=g.user.id,
+                    note_id=new_note.id,
+                    lesson_id=lesson_id,
+                    file_name=filename,
+                    file_path=file_path,
+                    file_type='image',
+                    mime_type=image_file.content_type
+                )
+                db.session.add(image_file_record)
+            
+            # Handle file upload
+            file_file = request.files.get('file')
+            if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
+                filename = secure_filename(file_file.filename)
+                file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
+                file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
+                
+                # Create file record
+                file_record = Files(
+                    id=str(uuid.uuid4()),
+                    user_id=g.user.id,
+                    note_id=new_note.id,
+                    lesson_id=lesson_id,
+                    file_name=filename,
+                    file_path=file_path,
+                    file_type='document',
+                    mime_type=file_file.content_type
+                )
+                db.session.add(file_record)
+            
+            db.session.commit()
+            
+            # Return updated sections list
+            sections = lesson_manager.get_sections(lesson_id)
+            html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
+            return jsonify(success=True, html=html)
+            
+        except Exception as e:
+            db.session.rollback()
+            return jsonify(success=False, message=f'Error creating note: {str(e)}')
 
-        section = lesson_manager.add_section(
-            lesson_id=lesson_id,
-            title=title,
-            body=body,
-            type='note',
-            tags=tags,
-            status=status,
-            image_path=image_path,
-            file_urls=json.dumps([file_path]) if file_path else None,
-            external_link=external_link
-        )
-        sections = lesson_manager.get_sections(lesson_id)
-        html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
-        return jsonify(success=True, html=html)
     return render_template('notes/create.html', lesson=lesson)
 
 @app.route('/partial/class/<lesson_id>/notes/<section_id>/edit', methods=['GET', 'POST'])
@@ -605,115 +703,180 @@ def partial_note_edit(lesson_id, section_id):
 
 
 
-@app.route('/partial/note/<section_id>/delete', methods=['POST'])
+@app.route('/partial/note/<note_id>/delete', methods=['POST'])
 @login_required
-def partial_note_delete_standalone(section_id):
-    section = lesson_manager.get_section_by_id(section_id)
-    if not section or section.lesson.user_id != g.user.id or section.type != 'note':
+def partial_note_delete_standalone(note_id):
+    from app.core.note import Note
+    
+    note = db.session.query(Note).filter(
+        Note.id == note_id,
+        Note.user_id == g.user.id
+    ).first()
+    
+    if not note:
         return jsonify(success=False, message='Note not found or permission denied'), 404
 
-    lesson_manager.delete_section(section_id)
-    
-    # Return the updated list of all notes
-    notes = db.session.query(LessonSection).join(Lesson).filter(
-        Lesson.user_id == g.user.id,
-        LessonSection.type == 'note'
-    ).order_by(LessonSection.created_at.desc()).all()
-    return render_template('note_fragment.html', notes=notes)
+    try:
+        db.session.delete(note)
+        db.session.commit()
+        
+        # Return the updated list of all notes
+        notes = db.session.query(Note).filter(
+            Note.user_id == g.user.id
+        ).order_by(Note.created_at.desc()).all()
+        return render_template('note_fragment.html', notes=notes)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, message=f'Error deleting note: {str(e)}')
 
-@app.route('/partial/note/<section_id>/edit', methods=['GET', 'POST'])
+@app.route('/partial/note/<note_id>/edit', methods=['GET', 'POST'])
 @login_required
-def partial_note_edit_standalone(section_id):
-    section = lesson_manager.get_section_by_id(section_id)
+def partial_note_edit_standalone(note_id):
+    from app.core.note import Note
     
-    if not section:
+    note = db.session.query(Note).filter(
+        Note.id == note_id,
+        Note.user_id == g.user.id
+    ).first()
+    
+    if not note:
         return jsonify(success=False, message='Note not found.')
-    
-    if section.lesson.user_id != g.user.id:
-        return jsonify(success=False, message='No permission.')
-    
-    if section.type != 'note':
-        return jsonify(success=False, message='Not a note.')
     
     if request.method == 'POST':
         title = request.form.get('title')
-        body = request.form.get('body')
+        content = request.form.get('content')  # Changed from 'body' to 'content'
         tags = request.form.get('tags')
-        status = request.form.get('status')
+        status = request.form.get('status', 'active')
         external_link = request.form.get('external_link')
         
         if not title:
             return jsonify(success=False, message='Title is required.')
         
-        # Handle image upload
-        image_path = section.image_path
-        if request.form.get('remove_image'):
-            if section.image_path:
-                old_image_filename = os.path.basename(section.image_path)
-                old_image_path = os.path.join(app.config['IMAGE_FOLDER'], old_image_filename)
-                if os.path.exists(old_image_path):
-                    os.remove(old_image_path)
-                image_path = None
-        elif 'image' in request.files and request.files['image'].filename != '':
-            image_file = request.files['image']
-            if allowed_file(image_file.filename, 'image'):
-                if section.image_path:
-                    old_image_filename = os.path.basename(section.image_path)
-                    old_image_path = os.path.join(app.config['IMAGE_FOLDER'], old_image_filename)
-                    if os.path.exists(old_image_path):
-                        os.remove(old_image_path)
+        try:
+            note.title = title
+            note.content = content
+            note.tags = tags
+            note.status = status
+            note.external_link = external_link
+            note.updated_at = datetime.utcnow()
+            
+            # Handle file uploads
+            from app.core.files import Files
+            
+            # Handle image upload
+            image_file = request.files.get('image')
+            if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
                 filename = secure_filename(image_file.filename)
-                image_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
+                file_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
                 image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
-
-        # Handle file upload
-        file_path = None
-        if request.form.get('remove_file'):
-            if section.file_urls:
-                try:
-                    old_file_urls = json.loads(section.file_urls)
-                    for old_file_url in old_file_urls:
-                        old_file_filename = os.path.basename(old_file_url)
-                        old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
-                        if os.path.exists(old_file_path):
-                            os.remove(old_file_path)
-                except:
-                    pass
-                file_path = None
-        elif 'file' in request.files and request.files['file'].filename != '':
-            file_file = request.files['file']
-            if allowed_file(file_file.filename, 'document'):
-                if section.file_urls:
-                    try:
-                        old_file_urls = json.loads(section.file_urls)
-                        for old_file_url in old_file_urls:
-                            old_file_filename = os.path.basename(old_file_url)
-                            old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
-                            if os.path.exists(old_file_path):
-                                os.remove(old_file_path)
-                    except:
-                        pass
+                
+                # Create file record
+                image_file_record = Files(
+                    id=str(uuid.uuid4()),
+                    user_id=g.user.id,
+                    note_id=note.id,
+                    file_name=filename,
+                    file_path=file_path,
+                    file_type='image',
+                    mime_type=image_file.content_type
+                )
+                db.session.add(image_file_record)
+            
+            # Handle file upload
+            file_file = request.files.get('file')
+            if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
                 filename = secure_filename(file_file.filename)
                 file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
                 file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
-        
-        try:
-            lesson_manager.update_section(
-                section_id,
-                title=title,
-                body=body,
-                tags=tags,
-                status=status,
-                image_path=image_path,
-                file_urls=json.dumps([file_path]) if file_path else None,
-                external_link=external_link
-            )
+                
+                # Create file record
+                file_record = Files(
+                    id=str(uuid.uuid4()),
+                    user_id=g.user.id,
+                    note_id=note.id,
+                    file_name=filename,
+                    file_path=file_path,
+                    file_type='document',
+                    mime_type=file_file.content_type
+                )
+                db.session.add(file_record)
+            
+            # Handle file removal
+            if request.form.get('remove_image'):
+                # Delete image files
+                for file_record in note.files:
+                    if file_record.file_type == 'image':
+                        # Remove physical file
+                        file_path = os.path.join(app.config['IMAGE_FOLDER'], file_record.file_name)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                        # Remove from database
+                        db.session.delete(file_record)
+            
+            if request.form.get('remove_file'):
+                # Delete document files
+                for file_record in note.files:
+                    if file_record.file_type == 'document':
+                        # Remove physical file
+                        file_path = os.path.join(app.config['FILE_FOLDER'], file_record.file_name)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                        # Remove from database
+                        db.session.delete(file_record)
+            
+            db.session.commit()
             return jsonify(success=True, redirect='note')
         except Exception as e:
+            db.session.rollback()
             return jsonify(success=False, message=f'Error updating note: {str(e)}')
     
-    # For GET requests, return the edit form template
-    return render_template('notes/_edit.html', section=section)
+        # For GET requests, return the edit form template
+    return render_template('notes/_edit.html', note=note)
+
+# Integration Routes
+@app.route('/api/integration/sync-note-to-lesson/<note_id>/<lesson_id>', methods=['POST'])
+@login_required
+def sync_note_to_lesson(note_id, lesson_id):
+    """Sync a note to a lesson"""
+    from app.core.integration_service import IntegrationService
+    
+    try:
+        section = IntegrationService.create_lesson_section_from_note(note_id, lesson_id, g.user.id)
+        if section:
+            return jsonify(success=True, message='Note synced to lesson successfully!')
+        else:
+            return jsonify(success=False, message='Failed to sync note to lesson.')
+    except Exception as e:
+        return jsonify(success=False, message=f'Error syncing note: {str(e)}')
+
+@app.route('/api/integration/sync-lesson-to-note/<lesson_id>/<section_id>', methods=['POST'])
+@login_required
+def sync_lesson_to_note(lesson_id, section_id):
+    """Sync a lesson section to a note"""
+    from app.core.integration_service import IntegrationService
+    
+    try:
+        note = IntegrationService.create_note_from_lesson_section(lesson_id, section_id, g.user.id)
+        if note:
+            return jsonify(success=True, message='Lesson section synced to note successfully!')
+        else:
+            return jsonify(success=False, message='Failed to sync lesson section to note.')
+    except Exception as e:
+        return jsonify(success=False, message=f'Error syncing lesson: {str(e)}')
+
+@app.route('/api/integration/sync-files/<source_type>/<source_id>/<target_type>/<target_id>', methods=['POST'])
+@login_required
+def sync_files_between_entities(source_type, source_id, target_type, target_id):
+    """Sync files between different entities"""
+    from app.core.integration_service import IntegrationService
+    
+    try:
+        file_count = IntegrationService.sync_files_between_entities(
+            source_type, source_id, target_type, target_id, g.user.id
+        )
+        return jsonify(success=True, message=f'{file_count} files synced successfully!')
+    except Exception as e:
+        return jsonify(success=False, message=f'Error syncing files: {str(e)}')
 
 
 # === End of note management routes ===
@@ -1262,54 +1425,26 @@ def oauth2callback():
         fetch_google_classroom_data()
         print(f"DEBUG: Google Classroom data fetched successfully for user {user_id}")
         
-        # Auto-import courses as lessons
+        # Use DataSyncService to sync Google Classroom data
+        from app.core.data_sync import DataSyncService
+        
         imported_data = ImportedData.query.filter_by(
             user_id=user_id, 
             platform='google_classroom_api'
         ).first()
         
         if imported_data and 'courses' in imported_data.data:
-            courses = imported_data.data['courses']
-            print(f"DEBUG: Auto-importing {len(courses)} courses as lessons")
-            
-            for course in courses:
-                # Check if lesson already exists for this course
-                existing_lesson = Lesson.query.filter_by(
-                    user_id=user_id,
-                    google_classroom_id=str(course.get('id'))
-                ).first()
-                
-                if not existing_lesson:
-                    # Create new lesson from course
-                    new_lesson = Lesson(
-                        title=course.get('name', 'Untitled Course'),
-                        description=course.get('description', ''),
-                        author_name='Google Classroom Teacher',
-                        user_id=user_id,
-                        source_platform='google_classroom',
-                        google_classroom_id=str(course.get('id')),
-                        tags='Google Classroom',
-                        status='Not Started'
-                    )
-                    
-                    # Add teacher name if available
-                    if 'teachers' in course and course['teachers']:
-                        first_teacher = course['teachers'][0]
-                        if 'profile' in first_teacher and 'name' in first_teacher['profile']:
-                            new_lesson.author_name = first_teacher['profile']['name'].get('fullName', 'Google Classroom Teacher')
-                    
-                    # Add course section to tags if available
-                    if course.get('section'):
-                        new_lesson.tags = f'Google Classroom, {course["section"]}'
-                    
-                    db.session.add(new_lesson)
-                    print(f"DEBUG: Created lesson '{new_lesson.title}' from course '{course.get('name')}'")
-            
-            db.session.commit()
-            print(f"DEBUG: Successfully auto-imported courses as lessons")
-            flash(f'Successfully imported {len(courses)} Google Classroom courses as lessons!', 'success')
+            # Sync data using DataSyncService
+            success = DataSyncService.sync_google_classroom_data(user_id, imported_data.data)
+            if success:
+                courses_count = len(imported_data.data['courses'])
+                print(f"DEBUG: Successfully synced {courses_count} Google Classroom courses")
+                flash(f'Successfully synced {courses_count} Google Classroom courses!', 'success')
+            else:
+                print(f"DEBUG: Failed to sync Google Classroom data")
+                flash('Failed to sync Google Classroom data', 'warning')
         else:
-            print(f"DEBUG: No courses found to import")
+            print(f"DEBUG: No courses found to sync")
             
     except Exception as e:
         print(f"ERROR: Failed to fetch or import Google Classroom data: {e}")
