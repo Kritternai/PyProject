@@ -427,9 +427,9 @@ def partial_section_add(lesson_id):
         if not title:
             return jsonify(success=False, message='Title is required.')
         
-        # If type is 'note', create only note (not section)
+        # If type is 'note', create both note and section
         if type_ == 'note':
-            # Create note in Note table only
+            # Create note in Note table
             from app.core.note import Note
             from app.core.files import Files
             
@@ -466,9 +466,12 @@ def partial_section_add(lesson_id):
                 except Exception as e:
                     print(f"Error creating file records: {e}")
             
+            # Also create a section for the note (so it shows in lesson)
+            section = lesson_manager.add_section(lesson_id, title, content, 'note', None, file_urls=json.dumps(file_urls) if file_urls else None)
+            
             db.session.commit()
             
-            # Return updated sections list for class (without the new note)
+            # Return updated sections list for class (with the new note section)
             sections = lesson_manager.get_sections(lesson_id)
             class_html = render_template('lessons/section_list.html', lesson=lesson, sections=sections)
             
@@ -486,7 +489,8 @@ def partial_section_add(lesson_id):
                 success=True, 
                 html=class_html,
                 notes_html=notes_html,
-                message='Note added successfully! Redirecting to notes page...'
+                message='Note added successfully!',
+                redirect_to='note'
             )
         else:
             # For other types, just create section
