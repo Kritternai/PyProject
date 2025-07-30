@@ -76,7 +76,26 @@ if (addSectionForm) {
       if (data.success) {
         var modal = bootstrap.Modal.getInstance(document.getElementById('addSectionModal'));
         if (modal) modal.hide();
-        loadLessonSections();
+        
+        // Update lesson sections if html is provided (works for all types)
+        if (data.html) {
+          const sectionsContainer = document.querySelector('#lesson-sections-list');
+          if (sectionsContainer) {
+            sectionsContainer.innerHTML = data.html;
+            console.log('Updated lesson sections');
+          }
+        }
+        
+        // If this is a note, also redirect to notes page
+        if (data.redirect_to === 'note') {
+          console.log('Note added successfully, redirecting to notes page...');
+          loadPage('note');
+        }
+        
+        // Show success message
+        if (data.message) {
+          showNotification(data.message, 'success');
+        }
       } else {
         alert(data.message || 'Error adding content.');
       }

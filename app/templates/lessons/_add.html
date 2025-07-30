@@ -207,17 +207,30 @@
           </div>
         </div>
 
-        <!-- Quick Tips -->
+        <!-- Connect Google Classroom API -->
         <div class="tips-section mt-auto">
           <h6 class="fw-semibold mb-3">
-            <i class="fas fa-lightbulb me-2"></i>Quick Tips
+            <i class="fab fa-google me-2"></i>Connect Google Classroom API
           </h6>
-          <ul class="tips-list">
-            <li>Use descriptive titles for better organization</li>
-            <li>Add relevant tags to make lessons easier to find</li>
-            <li>Choose a color that represents your lesson theme</li>
-            <li>Include detailed descriptions for better context</li>
-          </ul>
+          
+          <p class="text-muted small mb-3">
+            Connect your Google Classroom account to import courses as lessons.
+          </p>
+
+          <!-- Connect Button -->
+          <div class="mb-3">
+            <a href="/google_classroom/authorize" 
+               class="btn btn-outline-primary btn-sm w-100">
+              <i class="fab fa-google me-2"></i>Connect Google Classroom
+            </a>
+          </div>
+
+          <!-- Success Message (shown after connection) -->
+          {% if request.args.get('google_classroom_connected') %}
+          <div class="alert alert-success alert-sm">
+            <i class="fas fa-check-circle me-2"></i>Successfully connected to Google Classroom!
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -365,6 +378,13 @@
   content: "💡";
   margin-right: 0.75rem;
   font-size: 1rem;
+}
+
+/* Google Classroom Integration Styles */
+.alert-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  border-radius: 0.5rem;
 }
 
 /* Form sections styling */
@@ -538,3 +558,69 @@
   background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
 }
 </style>
+
+<script>
+// Update preview function
+function updatePreview() {
+  const title = document.getElementById('title').value || 'Your Lesson Title';
+  const description = document.getElementById('description').value || 'Your lesson description will appear here...';
+  const author = document.getElementById('author_name').value || 'Unknown Author';
+  const status = document.getElementById('status').value || 'Not Started';
+  
+  document.getElementById('previewTitle').textContent = title;
+  document.getElementById('previewDescription').textContent = description;
+  document.getElementById('previewAuthor').textContent = author;
+  document.getElementById('previewStatus').textContent = status;
+}
+
+// Add event listeners for form fields
+document.addEventListener('DOMContentLoaded', function() {
+  const titleInput = document.getElementById('title');
+  const descriptionInput = document.getElementById('description');
+  const authorInput = document.getElementById('author_name');
+  const statusSelect = document.getElementById('status');
+  
+  if (titleInput) titleInput.addEventListener('input', updatePreview);
+  if (descriptionInput) descriptionInput.addEventListener('input', updatePreview);
+  if (authorInput) authorInput.addEventListener('input', updatePreview);
+  if (statusSelect) statusSelect.addEventListener('change', updatePreview);
+});
+
+// Form submission
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('add-lesson-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Validate form
+      if (!form.checkValidity()) {
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+      }
+      
+      // Submit form via AJAX
+      const formData = new FormData(form);
+      
+      fetch('/partial/class/add', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Redirect to lessons page
+          loadPage('class');
+        } else {
+          alert(data.message || 'Error creating lesson');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating lesson');
+      });
+    });
+  }
+});
+</script>

@@ -64,6 +64,7 @@ def to_json(value):
 from app.core.user import User
 from app.core.lesson import Lesson
 from app.core.note import Note
+from app.core.files import Files
 from app.core.imported_data import ImportedData
 from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
 from app.core.course_linkage import CourseLinkage # Import CourseLinkage model
