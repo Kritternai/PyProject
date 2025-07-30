@@ -5,6 +5,39 @@
             + Add New Note
         </button>
     </div>
+    
+    <!-- Integration Summary -->
+    {% if user_data %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">System Integration Summary</h6>
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="border-end">
+                                <h4 class="text-primary">{{ user_data.total_lessons }}</h4>
+                                <p class="text-muted mb-0">Total Lessons</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-end">
+                                <h4 class="text-success">{{ user_data.total_notes }}</h4>
+                                <p class="text-muted mb-0">Total Notes</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div>
+                                <h4 class="text-info">{{ user_data.total_files }}</h4>
+                                <p class="text-muted mb-0">Total Files</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     <div class="row">
         {% if notes %}
             {% for note in notes %}
@@ -12,33 +45,47 @@
                     <div class="card h-100">
                         <div class="card-body">
                             <h5 class="card-title">{{ note.title }}</h5>
-                            <p class="card-text">{{ (note.body or '') | truncate(100) }}</p>
-                            <p class="card-text"><small class="text-muted">In Lesson: {{ note.lesson.title }}</small></p>
-                            {% if note.image_path %}
-                                <img src="{{ url_for('static', filename=note.image_path) }}" alt="Note Image" class="mb-2 img-fluid" style="max-height:180px;object-fit:contain;width:100%;">
+                            <p class="card-text">{{ (note.content or '') | truncate(100) }}</p>
+                            {% if note.lesson_id %}
+                                <p class="card-text"><small class="text-muted">In Lesson: {{ note.lesson.title if note.lesson else 'Unknown' }}</small></p>
                             {% endif %}
-                            {% if note.file_urls %}
-                                {% set file_urls = note.file_urls|from_json %}
-                                {% for file_url in file_urls %}
-                                    <div class="mb-2">
-                                        <a href="{{ url_for('static', filename=file_url) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-file me-1"></i>{{ file_url.split('/')[-1] }}
-                                        </a>
-                                    </div>
+                            {% if note.tags %}
+                                <div class="mb-2">
+                                    {% for tag in note.tags.split(',') %}
+                                        <span class="badge bg-secondary me-1">{{ tag.strip() }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if note.files %}
+                                {% for file in note.files %}
+                                    {% if file.file_type == 'image' %}
+                                        <img src="{{ url_for('static', filename=file.file_path) }}" alt="Note Image" class="mb-2 img-fluid" style="max-height:180px;object-fit:contain;width:100%;">
+                                    {% endif %}
+                                {% endfor %}
+                                {% for file in note.files %}
+                                    {% if file.file_type == 'document' %}
+                                        <div class="mb-2">
+                                            <a href="{{ url_for('static', filename=file.file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-file me-1"></i>{{ file.file_name }}
+                                            </a>
+                                        </div>
+                                    {% endif %}
                                 {% endfor %}
                             {% endif %}
                         </div>
                         <div class="card-footer">
-                            <a href="#" onclick="loadLessonDetail({{ note.lesson_id }})" class="btn btn-sm btn-outline-primary">View Lesson</a>
+                            {% if note.lesson_id %}
+                                <a href="#" onclick="loadLessonDetail('{{ note.lesson_id }}')" class="btn btn-sm btn-outline-primary">View Lesson</a>
+                            {% endif %}
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editNoteModal"
                                 data-note-id="{{ note.id }}"
                                 data-note-title="{{ note.title }}"
-                                data-note-body="{{ note.body or '' }}"
+                                data-note-content="{{ note.content or '' }}"
                                 data-note-tags="{{ note.tags or '' }}"
-                                data-note-status="{{ note.status or 'pending' }}"
+                                data-note-status="{{ note.status or 'active' }}"
                                 data-note-external-link="{{ note.external_link or '' }}"
-                                data-note-image="{{ note.image_path or '' }}"
-                                data-note-file-urls='{{ note.file_urls|to_json|safe }}'>
+                                data-note-images='[]'
+                                data-note-files='[]'>
                                 Edit
                             </button>
                             <button onclick="deleteNote('{{ note.id }}')" class="btn btn-sm btn-outline-danger">Delete</button>
@@ -69,8 +116,8 @@
                     <input type="text" class="form-control" id="title" name="title" required>
                 </div>
                 <div class="mb-3">
-                    <label for="body" class="form-label">Body</label>
-                    <textarea class="form-control" id="body" name="body" rows="5" required></textarea>
+                    <label for="content" class="form-label">Content</label>
+                    <textarea class="form-control" id="content" name="content" rows="5" required></textarea>
                 </div>
                 <div class="row">
                     <div class="mb-3 col-md-6">
@@ -93,23 +140,14 @@
                 <div class="mb-3">
                     <label for="image" class="form-label">Image</label>
                     <input class="form-control" type="file" id="image" name="image" accept="image/*">
-                    {% if note and note.image_path %}
-                    <div id="image-preview" class="mt-2">
-                        <img src="{{ url_for('static', filename=note.image_path) }}" alt="Note Image" class="img-fluid" style="max-height:200px;">
-                    </div>
-                    {% endif %}
                     <div id="add-image-preview" class="mt-2"></div>
                 </div>
                 <div class="mb-3">
                     <label for="file" class="form-label">File Attachment</label>
                     <input class="form-control" type="file" id="file" name="file">
-                    {% if note and note.file_url and note.file_url.endswith('.pdf') %}
-                    <div id="file-preview" class="mt-2">
-                        <embed src="{{ url_for('static', filename=note.file_url) }}" type="application/pdf" width="100%" height="300px" />
-                    </div>
-                    {% endif %}
                     <div id="add-file-preview" class="mt-2"></div>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="submit" class="btn btn-primary">Save Note</button>
@@ -136,8 +174,8 @@
                     <input type="text" class="form-control" id="edit-title" name="title" required>
                 </div>
                 <div class="mb-3">
-                    <label for="edit-body" class="form-label">Body</label>
-                    <textarea class="form-control" id="edit-body" name="body" rows="5" required></textarea>
+                    <label for="edit-content" class="form-label">Content</label>
+                    <textarea class="form-control" id="edit-content" name="content" rows="5" required></textarea>
                 </div>
                 <div class="row">
                     <div class="mb-3 col-md-6">
@@ -167,6 +205,7 @@
                     <input class="form-control" type="file" id="edit-file" name="file">
                     <div id="edit-file-preview" class="mt-2"></div>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="submit" class="btn btn-primary">Update Note</button>
@@ -182,12 +221,10 @@
 function populateEditNoteModal(button) {
   const noteId = button.getAttribute('data-note-id');
   const noteTitle = button.getAttribute('data-note-title');
-  const noteBody = button.getAttribute('data-note-body');
+  const noteContent = button.getAttribute('data-note-content');
   const noteTags = button.getAttribute('data-note-tags');
   const noteStatus = button.getAttribute('data-note-status');
   const noteExternalLink = button.getAttribute('data-note-external-link');
-  const noteImage = button.getAttribute('data-note-image');
-  const noteFileUrls = button.getAttribute('data-note-file-urls');
   
   // Set form action
   const editForm = document.getElementById('edit-note-form');
@@ -197,50 +234,68 @@ function populateEditNoteModal(button) {
   // Populate form fields
   document.getElementById('edit-note-id').value = noteId;
   document.getElementById('edit-title').value = noteTitle;
-  document.getElementById('edit-body').value = noteBody;
+  document.getElementById('edit-content').value = noteContent;
   document.getElementById('edit-tags').value = noteTags;
   document.getElementById('edit-status').value = noteStatus;
   document.getElementById('edit-external-link').value = noteExternalLink;
 
-  // Show preview for existing image/file
+  // Show preview for existing files
   const imagePreview = document.getElementById('edit-image-preview');
   const filePreview = document.getElementById('edit-file-preview');
   imagePreview.innerHTML = '';
   filePreview.innerHTML = '';
   
-  // Show current image
-  if (noteImage && noteImage !== '') {
-    const img = document.createElement('img');
-    img.src = '/static/' + noteImage;
-    img.className = 'img-fluid';
-    img.style.maxHeight = '200px';
-    img.alt = 'Current image';
-    imagePreview.appendChild(img);
+  // Show current images
+  const noteImages = button.getAttribute('data-note-images');
+  if (noteImages && noteImages !== '[]' && noteImages !== 'null' && noteImages !== 'undefined') {
+    try {
+      const images = JSON.parse(noteImages);
+      if (Array.isArray(images) && images.length > 0) {
+        images.forEach((image, index) => {
+          if (image && image !== 'null' && image !== 'undefined') {
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'mb-2 d-flex align-items-center';
+            
+            const img = document.createElement('img');
+            img.src = '/static/' + image.file_path;
+            img.className = 'img-fluid me-2';
+            img.style.maxHeight = '100px';
+            img.alt = 'Current image';
+            
+            const removeCheckbox = document.createElement('div');
+            removeCheckbox.className = 'form-check';
+            removeCheckbox.innerHTML = `
+              <input class="form-check-input" type="checkbox" id="remove_image_${index}" name="remove_image">
+              <label class="form-check-label" for="remove_image_${index}">Remove image</label>
+            `;
+            
+            imgDiv.appendChild(img);
+            imgDiv.appendChild(removeCheckbox);
+            imagePreview.appendChild(imgDiv);
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Error parsing image data:', e);
+    }
   }
   
   // Show current files
-  if (noteFileUrls && noteFileUrls !== '[]' && noteFileUrls !== 'null' && noteFileUrls !== 'undefined') {
+  const noteFiles = button.getAttribute('data-note-files');
+  if (noteFiles && noteFiles !== '[]' && noteFiles !== 'null' && noteFiles !== 'undefined') {
     try {
-      // Handle escaped JSON string
-      let files;
-      if (typeof noteFileUrls === 'string') {
-        // Remove extra quotes if present
-        const cleanUrls = noteFileUrls.replace(/^"|"$/g, '');
-        files = JSON.parse(cleanUrls);
-      } else {
-        files = JSON.parse(noteFileUrls);
-      }
+      const files = JSON.parse(noteFiles);
       if (Array.isArray(files) && files.length > 0) {
-        files.forEach((fileUrl, index) => {
-          if (fileUrl && fileUrl !== 'null' && fileUrl !== 'undefined') {
+        files.forEach((file, index) => {
+          if (file && file !== 'null' && file !== 'undefined') {
             const fileDiv = document.createElement('div');
             fileDiv.className = 'mb-2 d-flex align-items-center';
             
             const fileLink = document.createElement('a');
-            fileLink.href = '/static/' + fileUrl;
+            fileLink.href = '/static/' + file.file_path;
             fileLink.target = '_blank';
             fileLink.className = 'btn btn-sm btn-outline-primary me-2';
-            fileLink.innerHTML = `<i class="fas fa-file me-1"></i>${fileUrl.split('/').pop()}`;
+            fileLink.innerHTML = `<i class="fas fa-file me-1"></i>${file.file_name}`;
             
             const removeCheckbox = document.createElement('div');
             removeCheckbox.className = 'form-check';
@@ -256,7 +311,7 @@ function populateEditNoteModal(button) {
         });
       }
     } catch (e) {
-      console.error('Error parsing file URLs:', e);
+      console.error('Error parsing file data:', e);
     }
   }
 }
@@ -277,6 +332,54 @@ document.addEventListener('DOMContentLoaded', function() {
       const editForm = document.getElementById('edit-note-form');
       if (editForm) {
         editForm.reset();
+      }
+    });
+  }
+  
+
+  
+  // Setup file preview for add modal
+  const addImageInput = document.getElementById('image');
+  const addImagePreview = document.getElementById('add-image-preview');
+  if (addImageInput && addImagePreview) {
+    addImageInput.addEventListener('change', function() {
+      const file = this.files && this.files[0];
+      if (file && file.type.startsWith('image/')) {
+        // Clear existing preview
+        addImagePreview.innerHTML = '';
+        
+        // Create new preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.className = 'img-fluid';
+          img.style.maxHeight = '200px';
+          img.alt = 'Image preview';
+          addImagePreview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+  
+  // Setup file preview for add modal
+  const addFileInput = document.getElementById('file');
+  const addFilePreview = document.getElementById('add-file-preview');
+  if (addFileInput && addFilePreview) {
+    addFileInput.addEventListener('change', function() {
+      const file = this.files && this.files[0];
+      if (file) {
+        // Clear existing preview
+        addFilePreview.innerHTML = '';
+        
+        // Create new preview
+        const fileLink = document.createElement('a');
+        fileLink.href = URL.createObjectURL(file);
+        fileLink.target = '_blank';
+        fileLink.className = 'btn btn-sm btn-outline-success';
+        fileLink.innerHTML = `<i class="fas fa-file me-1"></i>${file.name} (New file)`;
+        addFilePreview.appendChild(fileLink);
       }
     });
   }
