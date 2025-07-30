@@ -562,6 +562,10 @@ def partial_note_edit(lesson_id, section_id):
                 filename = secure_filename(file_file.filename)
                 file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
                 file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
+        
+        # Keep existing files if no new file uploaded and no removal requested
+        if not file_path and not request.form.get('remove_file') and section.file_urls:
+            file_path = section.file_urls
 
         lesson_manager.update_section(
             section_id=section_id,
@@ -620,6 +624,58 @@ def partial_note_edit_standalone(section_id):
         if not title:
             return jsonify(success=False, message='Title is required.')
         
+        # Handle image upload
+        image_path = section.image_path
+        if request.form.get('remove_image'):
+            if section.image_path:
+                old_image_filename = os.path.basename(section.image_path)
+                old_image_path = os.path.join(app.config['IMAGE_FOLDER'], old_image_filename)
+                if os.path.exists(old_image_path):
+                    os.remove(old_image_path)
+                image_path = None
+        elif 'image' in request.files and request.files['image'].filename != '':
+            image_file = request.files['image']
+            if allowed_file(image_file.filename, 'image'):
+                if section.image_path:
+                    old_image_filename = os.path.basename(section.image_path)
+                    old_image_path = os.path.join(app.config['IMAGE_FOLDER'], old_image_filename)
+                    if os.path.exists(old_image_path):
+                        os.remove(old_image_path)
+                filename = secure_filename(image_file.filename)
+                image_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
+                image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
+
+        # Handle file upload
+        file_path = None
+        if request.form.get('remove_file'):
+            if section.file_urls:
+                try:
+                    old_file_urls = json.loads(section.file_urls)
+                    for old_file_url in old_file_urls:
+                        old_file_filename = os.path.basename(old_file_url)
+                        old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
+                        if os.path.exists(old_file_path):
+                            os.remove(old_file_path)
+                except:
+                    pass
+                file_path = None
+        elif 'file' in request.files and request.files['file'].filename != '':
+            file_file = request.files['file']
+            if allowed_file(file_file.filename, 'document'):
+                if section.file_urls:
+                    try:
+                        old_file_urls = json.loads(section.file_urls)
+                        for old_file_url in old_file_urls:
+                            old_file_filename = os.path.basename(old_file_url)
+                            old_file_path = os.path.join(app.config['FILE_FOLDER'], old_file_filename)
+                            if os.path.exists(old_file_path):
+                                os.remove(old_file_path)
+                    except:
+                        pass
+                filename = secure_filename(file_file.filename)
+                file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
+                file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
+        
         try:
             lesson_manager.update_section(
                 section_id,
@@ -627,6 +683,8 @@ def partial_note_edit_standalone(section_id):
                 body=body,
                 tags=tags,
                 status=status,
+                image_path=image_path,
+                file_urls=json.dumps([file_path]) if file_path else None,
                 external_link=external_link
             )
             return jsonify(success=True, redirect='note')
