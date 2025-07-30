@@ -121,7 +121,7 @@ function showAuthError(form, message) {
   let alert = form.parentNode.querySelector('.alert');
   if (!alert) {
     alert = document.createElement('div');
-    alert.className = 'alert alert-danger mt-2';
+    alert.className = 'mt-2 alert alert-danger';
     form.parentNode.insertBefore(alert, form);
   }
   alert.textContent = message;
@@ -435,7 +435,237 @@ window.deleteSection = function(lessonId, sectionId) {
   });
 }; 
 
+// Global functions for note operations
+window.loadNoteEdit = function(noteId) {
+  console.log('DEBUG: Loading note edit for ID:', noteId);
+  
+  const mainContent = document.getElementById('main-content');
+  console.log('DEBUG: Target element:', mainContent);
+  
+  if (!mainContent) {
+    console.error('DEBUG: main-content element not found!');
+    alert('Error: main-content element not found');
+    return;
+  }
+  
+  const url = `/partial/note/${noteId}/edit`;
+  console.log('DEBUG: Fetching URL:', url);
+  
+  fetch(url)
+    .then(response => {
+      console.log('DEBUG: Response status:', response.status);
+      console.log('DEBUG: Response headers:', response.headers);
+      return response.text();
+    })
+    .then(html => {
+      console.log('DEBUG: Received HTML response length:', html.length);
+      console.log('DEBUG: HTML preview:', html.substring(0, 200));
+      mainContent.innerHTML = html;
+      setupNoteEditForm();
+    })
+    .catch(error => {
+      console.error('Error loading note edit page:', error);
+      alert('Error loading note edit page');
+    });
+};
+
+window.deleteNote = function(noteId) {
+  console.log('DEBUG: Deleting note with ID:', noteId);
+  if (confirm('Are you sure you want to delete this note?')) {
+    fetch(`/partial/note/${noteId}/delete`, {
+      method: 'POST'
+    })
+    .then(response => response.text())
+    .then(html => {
+      console.log('DEBUG: Delete successful, updating HTML');
+      document.getElementById('note-list-container').outerHTML = html;
+    })
+    .catch(error => {
+      console.error('Error deleting note:', error);
+      alert('Error deleting note');
+    });
+  }
+};
+
+// Function to populate edit note modal with data
+window.populateEditNoteModal = function(button) {
+  const noteId = button.getAttribute('data-note-id');
+  const noteTitle = button.getAttribute('data-note-title');
+  const noteBody = button.getAttribute('data-note-body');
+  const noteTags = button.getAttribute('data-note-tags');
+  const noteStatus = button.getAttribute('data-note-status');
+  const noteExternalLink = button.getAttribute('data-note-external-link');
+  
+  // Set form action
+  const editForm = document.getElementById('edit-note-form');
+  editForm.action = `/partial/note/${noteId}/edit`;
+  editForm.method = 'post';
+  
+  // Populate form fields
+  document.getElementById('edit-note-id').value = noteId;
+  document.getElementById('edit-title').value = noteTitle;
+  document.getElementById('edit-body').value = noteBody;
+  document.getElementById('edit-tags').value = noteTags;
+  document.getElementById('edit-status').value = noteStatus;
+  document.getElementById('edit-external-link').value = noteExternalLink;
+
+  // Show preview for existing image/file
+  const imagePath = button.getAttribute('data-note-image');
+  const filePath = button.getAttribute('data-note-file');
+  const imagePreview = document.getElementById('edit-image-preview');
+  const filePreview = document.getElementById('edit-file-preview');
+  imagePreview.innerHTML = '';
+  filePreview.innerHTML = '';
+  if (imagePath) {
+    const img = document.createElement('img');
+    img.src = '/static/' + imagePath;
+    img.className = 'img-fluid';
+    img.style.maxHeight = '200px';
+    imagePreview.appendChild(img);
+  }
+  if (filePath && filePath.endsWith('.pdf')) {
+    const embed = document.createElement('embed');
+    embed.src = '/static/' + filePath;
+    embed.type = 'application/pdf';
+    embed.width = '100%';
+    embed.height = '300px';
+    filePreview.appendChild(embed);
+  }
+};
+
+function setupEditNotePreview() {
+  // Image preview
+  const imageInput = document.getElementById('edit-image');
+  const imagePreview = document.getElementById('edit-image-preview');
+  if (imageInput && imagePreview) {
+    imageInput.addEventListener('change', function() {
+      imagePreview.innerHTML = '';
+      const file = imageInput.files && imageInput.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.style.maxWidth = '100%';
+          img.style.maxHeight = '200px';
+          imagePreview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+  // PDF preview
+  const fileInput = document.getElementById('edit-file');
+  const filePreview = document.getElementById('edit-file-preview');
+  if (fileInput && filePreview) {
+    fileInput.addEventListener('change', function() {
+      filePreview.innerHTML = '';
+      const file = fileInput.files && fileInput.files[0];
+      if (file && file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const embed = document.createElement('embed');
+          embed.src = e.target.result;
+          embed.type = 'application/pdf';
+          embed.width = '100%';
+          embed.height = '300px';
+          filePreview.appendChild(embed);
+        };
+        reader.readAsDataURL(file);
+      } else if (file) {
+        filePreview.textContent = 'Only PDF preview is supported.';
+      }
+    });
+  }
+}
+
+function setupAddNotePreview() {
+  // Image preview for add note
+  const imageInput = document.getElementById('image');
+  const imagePreview = document.getElementById('add-image-preview');
+  if (imageInput && imagePreview) {
+    imageInput.addEventListener('change', function() {
+      imagePreview.innerHTML = '';
+      const file = imageInput.files && imageInput.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.style.maxWidth = '100%';
+          img.style.maxHeight = '200px';
+          imagePreview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+  // PDF preview for add note
+  const fileInput = document.getElementById('file');
+  const filePreview = document.getElementById('add-file-preview');
+  if (fileInput && filePreview) {
+    fileInput.addEventListener('change', function() {
+      filePreview.innerHTML = '';
+      const file = fileInput.files && fileInput.files[0];
+      if (file && file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const embed = document.createElement('embed');
+          embed.src = e.target.result;
+          embed.type = 'application/pdf';
+          embed.width = '100%';
+          embed.height = '300px';
+          filePreview.appendChild(embed);
+        };
+        reader.readAsDataURL(file);
+      } else if (file) {
+        filePreview.textContent = 'Only PDF preview is supported.';
+      }
+    });
+  }
+}
+
+function setupNoteEditForm() {
+  const editNoteForm = document.getElementById('edit-note-form');
+  if (editNoteForm) {
+    setupEditNotePreview();
+    editNoteForm.onsubmit = function(e) {
+      e.preventDefault();
+      const formData = new FormData(editNoteForm);
+      const noteId = document.getElementById('edit-note-id').value;
+      
+      console.log('DEBUG: Submitting edit form for note ID:', noteId);
+      
+      fetch(`/partial/note/${noteId}/edit`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          // Close modal
+          const modal = bootstrap.Modal.getInstance(document.getElementById('editNoteModal'));
+          modal.hide();
+          // Reload note list
+          loadPage('note');
+        } else {
+          alert(data.message || 'Error updating note.');
+        }
+      })
+      .catch(error => {
+        console.error('Error updating note:', error);
+        alert('Error updating note');
+      });
+    };
+  }
+}
+
 function setupNoteForms() {
+  // Add Note Modal
   const addNoteModal = document.getElementById('addNoteModal');
   const addNoteForm = document.getElementById('add-note-form');
   if (addNoteModal && addNoteForm) {
@@ -465,12 +695,36 @@ function setupNoteForms() {
           const modal = bootstrap.Modal.getInstance(addNoteModal);
           modal.hide();
           addNoteForm.reset();
+          setupNoteForms(); // re-bind modal events for new Edit buttons
         } else {
           alert(data.message || 'Error adding note.');
         }
       });
     };
   }
+  
+  // Edit Note Modal
+  const editNoteModal = document.getElementById('editNoteModal');
+  if (editNoteModal) {
+    editNoteModal.addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
+      if (button) {
+        populateEditNoteModal(button);
+      }
+    });
+    
+    editNoteModal.addEventListener('hidden.bs.modal', function () {
+      // Reset form when modal is closed
+      const editForm = document.getElementById('edit-note-form');
+      if (editForm) {
+        editForm.reset();
+      }
+    });
+  }
+  
+  // Setup edit note form
+  setupNoteEditForm();
+  setupAddNotePreview();
 }
 
 function setupLessonAddModal() {
