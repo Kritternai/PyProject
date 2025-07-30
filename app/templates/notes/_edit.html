@@ -1,28 +1,122 @@
-<h2 class="h4 mb-3">Edit Note</h2>
-<form id="edit-note-form" data-section-id="{{ section.id }}">
-  <div class="mb-3">
-    <label for="title" class="form-label">Title</label>
-    <input type="text" id="title" name="title" value="{{ section.title }}" required class="form-control">
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">
+            <i class="fas fa-edit me-2"></i>Edit Note
+          </h4>
+        </div>
+        <div class="card-body">
+          <form id="edit-note-form" data-note-id="{{ section.id }}" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="title" class="form-label">Title</label>
+              <input type="text" class="form-control" id="title" name="title" value="{{ section.title }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="body" class="form-label">Content</label>
+              <textarea class="form-control" id="body" name="body" rows="8" required>{{ section.body }}</textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="tags" class="form-label">Tags (comma-separated)</label>
+                <input type="text" class="form-control" id="tags" name="tags" value="{{ section.tags or '' }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                  <option value="pending" {% if section.status == 'pending' %}selected{% endif %}>Pending</option>
+                  <option value="in-progress" {% if section.status == 'in-progress' %}selected{% endif %}>In Progress</option>
+                  <option value="completed" {% if section.status == 'completed' %}selected{% endif %}>Completed</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="external_link" class="form-label">External Link</label>
+              <input type="url" class="form-control" id="external_link" name="external_link" value="{{ section.external_link or '' }}">
+            </div>
+            <div class="mb-3">
+              <label for="image" class="form-label">Image</label>
+              <input class="form-control" type="file" id="image" name="image" accept="image/*">
+              {% if section.image_path %}
+              <div class="mt-2">
+                <img src="{{ url_for('static', filename=section.image_path) }}" alt="Current Image" class="img-fluid" style="max-height: 200px;">
+                <div class="form-check mt-2">
+                  <input class="form-check-input" type="checkbox" id="remove_image" name="remove_image">
+                  <label class="form-check-label" for="remove_image">
+                    Remove current image
+                  </label>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+            <div class="mb-3">
+              <label for="file" class="form-label">File Attachment</label>
+              <input class="form-control" type="file" id="file" name="file">
+              {% if section.file_urls %}
+              <div class="mt-2">
+                {% set file_urls = section.file_urls|from_json %}
+                {% for file_url in file_urls %}
+                <div class="mb-2 d-flex align-items-center">
+                  <a href="{{ url_for('static', filename=file_url) }}" target="_blank" class="btn btn-sm btn-outline-primary me-2">
+                    <i class="fas fa-file me-1"></i>{{ file_url.split('/')[-1] }}
+                  </a>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="remove_file_{{ loop.index }}" name="remove_file">
+                    <label class="form-check-label" for="remove_file_{{ loop.index }}">
+                      Remove file
+                    </label>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Update Note
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="loadPage('note')">
+                <i class="fas fa-times me-2"></i>Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="mb-3">
-    <label for="body" class="form-label">Body</label>
-    <textarea id="body" name="body" class="form-control" rows="5">{{ section.body or '' }}</textarea>
-  </div>
-  <div class="mb-3">
-    <label for="tags" class="form-label">Tags (comma-separated)</label>
-    <input type="text" id="tags" name="tags" value="{{ section.tags or '' }}" class="form-control">
-  </div>
-  <div class="mb-3">
-    <label for="status" class="form-label">Status</label>
-    <select id="status" name="status" class="form-select">
-      <option value="pending" {% if section.status == 'pending' %}selected{% endif %}>Pending</option>
-      <option value="in-progress" {% if section.status == 'in-progress' %}selected{% endif %}>In Progress</option>
-      <option value="completed" {% if section.status == 'completed' %}selected{% endif %}>Completed</option>
-    </select>
-  </div>
-  <div class="mb-3">
-    <label for="external_link" class="form-label">External Link</label>
-    <input type="url" id="external_link" name="external_link" value="{{ section.external_link or '' }}" class="form-control">
-  </div>
-  <button type="submit" class="btn btn-primary w-100">Update Note</button>
-</form> 
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('edit-note-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const noteId = form.dataset.noteId;
+      
+      fetch(`/partial/note/${noteId}/edit`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          loadPage('note');
+        } else {
+          alert(data.message || 'Error updating note.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating note.');
+      });
+    });
+  }
+});
+</script> 

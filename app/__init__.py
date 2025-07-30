@@ -38,6 +38,28 @@ def lesson_color_secondary(color_id):
     }
     return colors.get(int(color_id), '#0056b3')
 
+@app.template_filter('from_json')
+def from_json(value):
+    import json
+    if value:
+        try:
+            return json.loads(value)
+        except:
+            return []
+    return []
+
+@app.template_filter('to_json')
+def to_json(value):
+    import json
+    if value is None:
+        return '[]'
+    if value:
+        try:
+            return json.dumps(value)
+        except:
+            return '[]'
+    return '[]'
+
 # Import models so SQLAlchemy knows about them
 from app.core.user import User
 from app.core.lesson import Lesson

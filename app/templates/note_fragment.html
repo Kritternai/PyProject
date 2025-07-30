@@ -14,10 +14,20 @@
                             <h5 class="card-title">{{ note.title }}</h5>
                             <p class="card-text">{{ (note.body or '') | truncate(100) }}</p>
                             <p class="card-text"><small class="text-muted">In Lesson: {{ note.lesson.title }}</small></p>
+                            {% if note.image_path %}
+                                <img src="{{ url_for('static', filename=note.image_path) }}" alt="Note Image" class="mb-2 img-fluid" style="max-height:180px;object-fit:contain;width:100%;">
+                            {% endif %}
+                            {% if note.file_urls %}
+                                {% set file_urls = note.file_urls|from_json %}
+                                {% for file_url in file_urls %}
+                                    <div class="mb-2">
+                                        <a href="{{ url_for('static', filename=file_url) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-file me-1"></i>{{ file_url.split('/')[-1] }}
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
                         </div>
-                        {% if note.image_path %}
-                            <img src="{{ url_for('static', filename=note.image_path) }}" alt="Note Image" class="mb-2 img-fluid" style="max-height:180px;object-fit:contain;width:100%;">
-                        {% endif %}
                         <div class="card-footer">
                             <a href="#" onclick="loadLessonDetail({{ note.lesson_id }})" class="btn btn-sm btn-outline-primary">View Lesson</a>
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editNoteModal"
@@ -28,7 +38,7 @@
                                 data-note-status="{{ note.status or 'pending' }}"
                                 data-note-external-link="{{ note.external_link or '' }}"
                                 data-note-image="{{ note.image_path or '' }}"
-                                data-note-file="{{ note.file_url or '' }}">
+                                data-note-file-urls='{{ note.file_urls|to_json|safe }}'>
                                 Edit
                             </button>
                             <button onclick="deleteNote('{{ note.id }}')" class="btn btn-sm btn-outline-danger">Delete</button>
@@ -166,3 +176,226 @@
     </div>
   </div>
 </div>
+
+<script>
+// Function to populate edit note modal with data
+function populateEditNoteModal(button) {
+  const noteId = button.getAttribute('data-note-id');
+  const noteTitle = button.getAttribute('data-note-title');
+  const noteBody = button.getAttribute('data-note-body');
+  const noteTags = button.getAttribute('data-note-tags');
+  const noteStatus = button.getAttribute('data-note-status');
+  const noteExternalLink = button.getAttribute('data-note-external-link');
+  const noteImage = button.getAttribute('data-note-image');
+  const noteFileUrls = button.getAttribute('data-note-file-urls');
+  
+  // Set form action
+  const editForm = document.getElementById('edit-note-form');
+  editForm.action = `/partial/note/${noteId}/edit`;
+  editForm.method = 'post';
+  
+  // Populate form fields
+  document.getElementById('edit-note-id').value = noteId;
+  document.getElementById('edit-title').value = noteTitle;
+  document.getElementById('edit-body').value = noteBody;
+  document.getElementById('edit-tags').value = noteTags;
+  document.getElementById('edit-status').value = noteStatus;
+  document.getElementById('edit-external-link').value = noteExternalLink;
+
+  // Show preview for existing image/file
+  const imagePreview = document.getElementById('edit-image-preview');
+  const filePreview = document.getElementById('edit-file-preview');
+  imagePreview.innerHTML = '';
+  filePreview.innerHTML = '';
+  
+  // Show current image
+  if (noteImage && noteImage !== '') {
+    const img = document.createElement('img');
+    img.src = '/static/' + noteImage;
+    img.className = 'img-fluid';
+    img.style.maxHeight = '200px';
+    img.alt = 'Current image';
+    imagePreview.appendChild(img);
+  }
+  
+  // Show current files
+  if (noteFileUrls && noteFileUrls !== '[]' && noteFileUrls !== 'null' && noteFileUrls !== 'undefined') {
+    try {
+      // Handle escaped JSON string
+      let files;
+      if (typeof noteFileUrls === 'string') {
+        // Remove extra quotes if present
+        const cleanUrls = noteFileUrls.replace(/^"|"$/g, '');
+        files = JSON.parse(cleanUrls);
+      } else {
+        files = JSON.parse(noteFileUrls);
+      }
+      if (Array.isArray(files) && files.length > 0) {
+        files.forEach((fileUrl, index) => {
+          if (fileUrl && fileUrl !== 'null' && fileUrl !== 'undefined') {
+            const fileDiv = document.createElement('div');
+            fileDiv.className = 'mb-2 d-flex align-items-center';
+            
+            const fileLink = document.createElement('a');
+            fileLink.href = '/static/' + fileUrl;
+            fileLink.target = '_blank';
+            fileLink.className = 'btn btn-sm btn-outline-primary me-2';
+            fileLink.innerHTML = `<i class="fas fa-file me-1"></i>${fileUrl.split('/').pop()}`;
+            
+            const removeCheckbox = document.createElement('div');
+            removeCheckbox.className = 'form-check';
+            removeCheckbox.innerHTML = `
+              <input class="form-check-input" type="checkbox" id="remove_file_${index}" name="remove_file">
+              <label class="form-check-label" for="remove_file_${index}">Remove file</label>
+            `;
+            
+            fileDiv.appendChild(fileLink);
+            fileDiv.appendChild(removeCheckbox);
+            filePreview.appendChild(fileDiv);
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Error parsing file URLs:', e);
+    }
+  }
+}
+
+// Setup edit note modal
+document.addEventListener('DOMContentLoaded', function() {
+  const editNoteModal = document.getElementById('editNoteModal');
+  if (editNoteModal) {
+    editNoteModal.addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
+      if (button) {
+        populateEditNoteModal(button);
+      }
+    });
+    
+    editNoteModal.addEventListener('hidden.bs.modal', function () {
+      // Reset form when modal is closed
+      const editForm = document.getElementById('edit-note-form');
+      if (editForm) {
+        editForm.reset();
+      }
+    });
+  }
+  
+  // Setup file preview for edit modal
+  const editFileInput = document.getElementById('edit-file');
+  const editFilePreview = document.getElementById('edit-file-preview');
+  if (editFileInput && editFilePreview) {
+    editFileInput.addEventListener('change', function() {
+      const file = this.files && this.files[0];
+      if (file) {
+        // Clear existing preview
+        const existingPreview = editFilePreview.querySelector('.new-file-preview');
+        if (existingPreview) {
+          existingPreview.remove();
+        }
+        
+        // Create new preview
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'new-file-preview mt-2';
+        
+        const fileLink = document.createElement('a');
+        fileLink.href = URL.createObjectURL(file);
+        fileLink.target = '_blank';
+        fileLink.className = 'btn btn-sm btn-outline-success';
+        fileLink.innerHTML = `<i class="fas fa-file me-1"></i>${file.name} (New file)`;
+        
+        previewDiv.appendChild(fileLink);
+        editFilePreview.appendChild(previewDiv);
+      }
+    });
+  }
+  
+  // Setup image preview for edit modal
+  const editImageInput = document.getElementById('edit-image');
+  const editImagePreview = document.getElementById('edit-image-preview');
+  if (editImageInput && editImagePreview) {
+    editImageInput.addEventListener('change', function() {
+      const file = this.files && this.files[0];
+      if (file && file.type.startsWith('image/')) {
+        // Clear existing new image preview
+        const existingPreview = editImagePreview.querySelector('.new-image-preview');
+        if (existingPreview) {
+          existingPreview.remove();
+        }
+        
+        // Create new preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const previewDiv = document.createElement('div');
+          previewDiv.className = 'new-image-preview mt-2';
+          
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.className = 'img-fluid';
+          img.style.maxHeight = '200px';
+          img.alt = 'New image preview';
+          
+          previewDiv.appendChild(img);
+          editImagePreview.appendChild(previewDiv);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+  
+  // Setup edit note form submission
+  const editNoteForm = document.getElementById('edit-note-form');
+  if (editNoteForm) {
+    editNoteForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(editNoteForm);
+      const noteId = document.getElementById('edit-note-id').value;
+      
+      fetch(`/partial/note/${noteId}/edit`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Close modal and reload notes
+          const modal = bootstrap.Modal.getInstance(document.getElementById('editNoteModal'));
+          if (modal) {
+            modal.hide();
+          }
+          loadPage('note');
+        } else {
+          alert(data.message || 'Error updating note.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating note.');
+      });
+    });
+  }
+});
+
+function deleteNote(noteId) {
+  if (confirm('Are you sure you want to delete this note?')) {
+    fetch(`/partial/note/${noteId}/delete`, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.text())
+    .then(html => {
+      document.getElementById('note-list-container').outerHTML = html;
+    })
+    .catch(error => {
+      console.error('Error deleting note:', error);
+      alert('Error deleting note');
+    });
+  }
+}
+</script>
