@@ -69,9 +69,17 @@ function setActiveNav(el) {
   el.classList.add('active');
 }
 window.addEventListener('DOMContentLoaded', function() {
-  const nav = document.querySelector('.sidebar .nav-link[data-page=\"dashboard\"]');
-  if (nav) nav.classList.add('active');
-  loadPage('dashboard');
+  {% if google_connected %}
+    // If user just connected Google Classroom, load class page
+    const nav = document.querySelector('.sidebar .nav-link[data-page=\"class\"]');
+    if (nav) nav.classList.add('active');
+    loadPage('class');
+  {% else %}
+    // Default: load dashboard
+    const nav = document.querySelector('.sidebar .nav-link[data-page=\"dashboard\"]');
+    if (nav) nav.classList.add('active');
+    loadPage('dashboard');
+  {% endif %}
 });
 </script>
 </body>

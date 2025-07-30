@@ -1,103 +1,91 @@
 <div class="container-fluid">
-  <!-- Enhanced Header Section -->
-  <div class="row align-items-center mb-4">
-    <div class="col-md-4">
-      <div class="d-flex align-items-center">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
         <div>
-          <h1 class="h3 mb-0 text-dark fw-bold">My Lessons</h1>
-          <p class="text-muted mb-0 small">Organize your learning materials</p>
+          <h2 class="h3 mb-1">My Lessons</h2>
+          <p class="text-muted mb-0">Organize your learning materials</p>
         </div>
-      </div>
-    </div>
-    <div class="col-md-5">
-      <div class="d-flex gap-2">
-        <div class="input-group search-container">
-          <span class="input-group-text bg-light border-end-0">
-            <i class="fas fa-search text-muted"></i>
-          </span>
-          <input type="text" class="form-control border-start-0" id="lessonSearch" placeholder="Search lessons..." style="border-left: none;">
-          <button class="btn btn-outline-secondary border-start-0" type="button" id="clearSearch" onclick="clearSearchAndFilter()" style="display: none;">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <select class="form-select" id="lessonFilter" style="max-width: 150px;">
-          <option value="">All Status</option>
-          <option value="Not Started">Not Started</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Completed">Completed</option>
-        </select>
-        <button class="btn btn-outline-secondary" type="button" id="advancedSearchToggle" onclick="toggleAdvancedSearch()" title="Advanced Search">
-          <i class="fas fa-sliders-h"></i>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+          <i class="fas fa-plus me-2"></i>Add New Lesson
         </button>
       </div>
-    </div>
-    <div class="col-md-3 text-end">
-      <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addLessonModal" title="Add New Lesson" onclick="setTimeout(() => { if(typeof setupAddLessonModal === 'function') setupAddLessonModal(); }, 100);">
-        <i class="fas fa-plus me-2"></i>Add New Lesson
-      </button>
+      
+      
     </div>
   </div>
 
-  <!-- Advanced Search Panel -->
-  <div id="advancedSearchPanel" class="mb-4" style="display: none;">
-    <div class="card border-0 bg-light">
-      <div class="card-body p-3">
+  <!-- Search and Filter Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex gap-3 align-items-center">
+        <!-- Search Input -->
+        <div class="flex-grow-1">
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="fas fa-search text-muted"></i>
+            </span>
+            <input type="text" class="form-control border-start-0" id="lessonSearch" placeholder="Search lessons..." style="border-left: none;">
+            <button class="btn btn-outline-secondary border-start-0" type="button" id="clearSearch" onclick="clearSearchAndFilter()" style="display: none;">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Filter Dropdown -->
+        <div class="flex-shrink-0">
+          <select class="form-select" id="lessonFilter" style="min-width: 150px;">
+            <option value="">All Status</option>
+            <option value="Not Started">Not Started</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+        
+        <!-- Advanced Search Toggle -->
+        <div class="flex-shrink-0">
+          <button class="btn btn-outline-secondary" type="button" id="advancedSearchToggle" onclick="toggleAdvancedSearch()" title="Advanced Search">
+            <i class="fas fa-sliders-h"></i>
+          </button>
+        </div>
+        
+        <!-- View Mode Toggle -->
+        <div class="flex-shrink-0">
+          <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="viewMode" id="cardView" value="card" checked>
+            <label class="btn btn-outline-secondary" for="cardView" title="Card View">
+              <i class="fas fa-th-large"></i>
+            </label>
+            
+            <input type="radio" class="btn-check" name="viewMode" id="listView" value="list">
+            <label class="btn btn-outline-secondary" for="listView" title="List View">
+              <i class="fas fa-list"></i>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Advanced Search Panel -->
+      <div id="advancedSearchPanel" class="mt-3 p-3 bg-light rounded" style="display: none;">
         <div class="row g-3">
           <div class="col-md-4">
-            <label class="form-label small text-muted mb-2">Search in:</label>
-            <div class="row g-2">
-              <div class="col-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="searchTitle" checked>
-                  <label class="form-check-label small" for="searchTitle">Title</label>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="searchDescription" checked>
-                  <label class="form-check-label small" for="searchDescription">Description</label>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="searchTags">
-                  <label class="form-check-label small" for="searchTags">Tags</label>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="searchAuthor">
-                  <label class="form-check-label small" for="searchAuthor">Author</label>
-                </div>
-              </div>
-            </div>
+            <label for="tagFilter" class="form-label small">Tags</label>
+            <input type="text" class="form-control form-control-sm" id="tagFilter" placeholder="Filter by tags...">
           </div>
           <div class="col-md-4">
-            <label class="form-label small text-muted mb-2">Sort by:</label>
-            <div class="row g-2">
-              <div class="col-6">
-                <select class="form-select form-select-sm" id="sortBy">
-                  <option value="title">Title</option>
-                  <option value="status">Status</option>
-                  <option value="created">Created Date</option>
-                  <option value="updated">Updated Date</option>
-                </select>
-              </div>
-              <div class="col-6">
-                <select class="form-select form-select-sm" id="sortOrder">
-                  <option value="asc">Ascending</option>
-                  <option value="desc">Descending</option>
-                </select>
-              </div>
-            </div>
+            <label for="authorFilter" class="form-label small">Author</label>
+            <input type="text" class="form-control form-control-sm" id="authorFilter" placeholder="Filter by author...">
           </div>
           <div class="col-md-4">
-            <label class="form-label small text-muted mb-2">Actions:</label>
-            <div class="d-grid gap-2">
-              <button class="btn btn-outline-primary btn-sm" onclick="clearSearchAndFilter()">
-                <i class="fas fa-times me-1"></i>Clear Filters
-              </button>
-            </div>
+            <label for="dateFilter" class="form-label small">Date Range</label>
+            <select class="form-select form-select-sm" id="dateFilter">
+              <option value="">All Time</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+            </select>
           </div>
         </div>
       </div>
@@ -710,6 +698,96 @@
   .favorite-btn .fa-star.favorite-active {
     filter: drop-shadow(0 0 4px #ffc107);
   }
+
+/* View Mode Styles */
+.list-view .lesson-card {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.list-view .lesson-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.list-view .lesson-card .lesson-info {
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.list-view .lesson-card .lesson-title {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.list-view .lesson-card .lesson-description {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.list-view .lesson-card .lesson-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.list-view .lesson-card .lesson-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.list-view .lesson-card .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* Search and Filter Styles */
+.search-container {
+  position: relative;
+}
+
+.search-container .form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+#advancedSearchPanel {
+  border: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .d-flex.gap-3 {
+    flex-direction: column;
+    gap: 1rem !important;
+  }
+  
+  .flex-grow-1 {
+    width: 100%;
+  }
+  
+  .flex-shrink-0 {
+    width: 100%;
+  }
+  
+  .btn-group {
+    width: 100%;
+  }
+  
+  .btn-group .btn {
+    flex: 1;
+  }
+}
 </style>
 
 <script>
@@ -825,4 +903,182 @@ if (modal) {
     attributeFilter: ['class']
   });
 }
+
+// Search and Filter Functions
+let searchTimeout;
+
+function performSearch() {
+  const searchTerm = document.getElementById('lessonSearch').value.toLowerCase();
+  const statusFilter = document.getElementById('lessonFilter').value;
+  const tagFilter = document.getElementById('tagFilter').value.toLowerCase();
+  const authorFilter = document.getElementById('authorFilter').value.toLowerCase();
+  const dateFilter = document.getElementById('dateFilter').value;
+  
+  const lessonCards = document.querySelectorAll('.lesson-card');
+  let visibleCount = 0;
+  
+  lessonCards.forEach(card => {
+    const title = card.querySelector('.lesson-title').textContent.toLowerCase();
+    const description = card.querySelector('.lesson-description')?.textContent.toLowerCase() || '';
+    const status = card.querySelector('.lesson-status')?.textContent || '';
+    const tags = card.querySelector('.lesson-tags')?.textContent.toLowerCase() || '';
+    const author = card.querySelector('.lesson-author')?.textContent.toLowerCase() || '';
+    const createdDate = card.querySelector('.lesson-date')?.textContent || '';
+    
+    let matches = true;
+    
+    // Search term filter
+    if (searchTerm && !title.includes(searchTerm) && !description.includes(searchTerm)) {
+      matches = false;
+    }
+    
+    // Status filter
+    if (statusFilter && status !== statusFilter) {
+      matches = false;
+    }
+    
+    // Tag filter
+    if (tagFilter && !tags.includes(tagFilter)) {
+      matches = false;
+    }
+    
+    // Author filter
+    if (authorFilter && !author.includes(authorFilter)) {
+      matches = false;
+    }
+    
+    // Date filter
+    if (dateFilter && createdDate) {
+      const created = new Date(createdDate);
+      const now = new Date();
+      let shouldShow = true;
+      
+      switch (dateFilter) {
+        case 'today':
+          shouldShow = created.toDateString() === now.toDateString();
+          break;
+        case 'week':
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          shouldShow = created >= weekAgo;
+          break;
+        case 'month':
+          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          shouldShow = created >= monthAgo;
+          break;
+        case 'year':
+          const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+          shouldShow = created >= yearAgo;
+          break;
+      }
+      
+      if (!shouldShow) {
+        matches = false;
+      }
+    }
+    
+    if (matches) {
+      card.style.display = '';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+  
+  // Show/hide clear search button
+  const clearSearchBtn = document.getElementById('clearSearch');
+  if (searchTerm || statusFilter || tagFilter || authorFilter || dateFilter) {
+    clearSearchBtn.style.display = '';
+  } else {
+    clearSearchBtn.style.display = 'none';
+  }
+  
+  // Show no results message
+  const noResultsMsg = document.getElementById('noResultsMessage');
+  if (visibleCount === 0) {
+    if (!noResultsMsg) {
+      const msg = document.createElement('div');
+      msg.id = 'noResultsMessage';
+      msg.className = 'text-center text-muted py-4';
+      msg.innerHTML = '<i class="fas fa-search fa-2x mb-2"></i><p>No lessons found matching your criteria.</p>';
+      document.getElementById('lessons-container').appendChild(msg);
+    }
+  } else {
+    if (noResultsMsg) {
+      noResultsMsg.remove();
+    }
+  }
+}
+
+function clearSearchAndFilter() {
+  document.getElementById('lessonSearch').value = '';
+  document.getElementById('lessonFilter').value = '';
+  document.getElementById('tagFilter').value = '';
+  document.getElementById('authorFilter').value = '';
+  document.getElementById('dateFilter').value = '';
+  performSearch();
+}
+
+function toggleAdvancedSearch() {
+  const panel = document.getElementById('advancedSearchPanel');
+  const toggleBtn = document.getElementById('advancedSearchToggle');
+  
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    toggleBtn.classList.add('active');
+  } else {
+    panel.style.display = 'none';
+    toggleBtn.classList.remove('active');
+  }
+}
+
+function toggleViewMode() {
+  const container = document.getElementById('lessons-container');
+  const cardView = document.getElementById('cardView');
+  const listView = document.getElementById('listView');
+  
+  if (listView.checked) {
+    container.classList.add('list-view');
+  } else {
+    container.classList.remove('list-view');
+  }
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+  // Search input with debouncing
+  const searchInput = document.getElementById('lessonSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(performSearch, 300);
+    });
+  }
+  
+  // Filter dropdowns
+  const filterSelects = ['lessonFilter', 'dateFilter'];
+  filterSelects.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener('change', performSearch);
+    }
+  });
+  
+  // Advanced search inputs
+  const advancedInputs = ['tagFilter', 'authorFilter'];
+  advancedInputs.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(performSearch, 300);
+      });
+    }
+  });
+  
+  // View mode toggle
+  const viewModeInputs = document.querySelectorAll('input[name="viewMode"]');
+  viewModeInputs.forEach(input => {
+    input.addEventListener('change', toggleViewMode);
+  });
+});
 </script> 

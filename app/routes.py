@@ -64,7 +64,9 @@ def load_logged_in_user():
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('base.html')
+    # Check if user just connected Google Classroom
+    google_connected = request.args.get('google_classroom_connected') == 'true'
+    return render_template('base.html', google_connected=google_connected)
 
 @app.route('/dashboard')
 @login_required
@@ -153,6 +155,7 @@ def partial_dev():
 @app.route('/partial/class')
 @login_required
 def partial_class():
+    print(f"DEBUG: partial_class called for user {g.user.id}")
     lessons = lesson_manager.get_lessons_by_user(g.user.id)
     # Sort: favorite first, then by created order (id)
     lessons = sorted(lessons, key=lambda l: (not l.is_favorite, l.id))
@@ -162,10 +165,14 @@ def partial_class():
         user_id=g.user.id, 
         platform='google_classroom_api'
     ).first()
+    print(f"DEBUG: Found existing imported data: {google_classroom_imported_data is not None}")
 
+    # Map Google Classroom courses to lessons
     classroom_courses_map = {}
     if google_classroom_imported_data and 'courses' in google_classroom_imported_data.data:
-        for course_data in google_classroom_imported_data.data['courses']:
+        courses = google_classroom_imported_data.data['courses']
+        print(f"DEBUG: Found {len(courses)} Google Classroom courses")
+        for course_data in courses:
             classroom_courses_map[str(course_data.get('id'))] = course_data
 
     for lesson in lessons:
@@ -208,6 +215,7 @@ def partial_class():
             if not hasattr(lesson, 'author_name') or not lesson.author_name:
                 lesson.author_name = 'Your Lesson' # Default author for non-GC lessons
 
+    print(f"DEBUG: Rendering template with {len(lessons)} lessons")
     return render_template('class_fragment.html', lessons=lessons)
 
 @app.route('/partial/class/add', methods=['GET', 'POST'])
@@ -222,10 +230,23 @@ def partial_class_add():
         tags = request.form.get('tags')
         author_name = request.form.get('author_name') # Get author_name from form
         selected_color = request.form.get('selectedColor', 1) # Get selected color from form
+        google_classroom_id = request.form.get('google_classroom_id') # Get Google Classroom ID
+        source_platform = request.form.get('source_platform', 'manual') # Get source platform
+        
         if not title:
             message = 'Title is required.'
         else:
-            lesson = lesson_manager.add_lesson(g.user.id, title, description, status, tags, author_name=author_name, selected_color=int(selected_color)) # Pass selected_color
+            lesson = lesson_manager.add_lesson(
+                g.user.id, 
+                title, 
+                description, 
+                status, 
+                tags, 
+                source_platform=source_platform,
+                google_classroom_id=google_classroom_id,
+                author_name=author_name, 
+                selected_color=int(selected_color)
+            )
             if lesson:
                 return jsonify(success=True, redirect='class')
             else:
@@ -1160,7 +1181,7 @@ def authorize_google_classroom():
                 "client_secret": app.config['GOOGLE_CLIENT_SECRET'],
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                 "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [url_for('oauth2callback', _external=True)] # Dynamic URL
+                "redirect_uris": [url_for('oauth2callback', _external=True)]
             }
         },
         scopes=SCOPES
@@ -1169,8 +1190,8 @@ def authorize_google_classroom():
     flow.redirect_uri = url_for('oauth2callback', _external=True)
 
     authorization_url, state = flow.authorization_url(
-        access_type='offline',  # Request a refresh token
-        prompt='consent' # Force consent screen to ensure new scopes are requested
+        access_type='offline',
+        prompt='consent'
     )
 
     session['oauth_state'] = state
@@ -1191,7 +1212,7 @@ def oauth2callback():
                 "client_secret": app.config['GOOGLE_CLIENT_SECRET'],
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                 "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [url_for('oauth2callback', _external=True)] # Dynamic URL
+                "redirect_uris": [url_for('oauth2callback', _external=True)]
             }
         },
         scopes=SCOPES,
@@ -1214,7 +1235,7 @@ def oauth2callback():
         google_creds = GoogleCredentials(user_id=user_id)
         db.session.add(google_creds)
         print(f"DEBUG: Created new GoogleCredentials entry for user {user_id}")
-    
+
     google_creds.token = credentials.token
     # Only update refresh_token if a new one is provided
     google_creds.refresh_token = credentials.refresh_token if credentials.refresh_token else google_creds.refresh_token
@@ -1222,7 +1243,7 @@ def oauth2callback():
     google_creds.client_id = credentials.client_id
     google_creds.client_secret = credentials.client_secret
     google_creds.scopes = ",".join(credentials.scopes)
-    
+
     try:
         db.session.commit()
         print(f"DEBUG: GoogleCredentials saved/updated successfully for user {user_id}")
@@ -1233,7 +1254,69 @@ def oauth2callback():
         return redirect(url_for('index'))
 
     flash('Successfully connected to Google Classroom!', 'success')
-    return redirect(url_for('fetch_google_classroom_data'))
+    print(f"DEBUG: OAuth2 callback completed for user {user_id}, redirecting to lessons page")
+    
+    # Fetch Google Classroom data immediately after successful connection
+    try:
+        print(f"DEBUG: Fetching Google Classroom data for user {user_id}")
+        fetch_google_classroom_data()
+        print(f"DEBUG: Google Classroom data fetched successfully for user {user_id}")
+        
+        # Auto-import courses as lessons
+        imported_data = ImportedData.query.filter_by(
+            user_id=user_id, 
+            platform='google_classroom_api'
+        ).first()
+        
+        if imported_data and 'courses' in imported_data.data:
+            courses = imported_data.data['courses']
+            print(f"DEBUG: Auto-importing {len(courses)} courses as lessons")
+            
+            for course in courses:
+                # Check if lesson already exists for this course
+                existing_lesson = Lesson.query.filter_by(
+                    user_id=user_id,
+                    google_classroom_id=str(course.get('id'))
+                ).first()
+                
+                if not existing_lesson:
+                    # Create new lesson from course
+                    new_lesson = Lesson(
+                        title=course.get('name', 'Untitled Course'),
+                        description=course.get('description', ''),
+                        author_name='Google Classroom Teacher',
+                        user_id=user_id,
+                        source_platform='google_classroom',
+                        google_classroom_id=str(course.get('id')),
+                        tags='Google Classroom',
+                        status='Not Started'
+                    )
+                    
+                    # Add teacher name if available
+                    if 'teachers' in course and course['teachers']:
+                        first_teacher = course['teachers'][0]
+                        if 'profile' in first_teacher and 'name' in first_teacher['profile']:
+                            new_lesson.author_name = first_teacher['profile']['name'].get('fullName', 'Google Classroom Teacher')
+                    
+                    # Add course section to tags if available
+                    if course.get('section'):
+                        new_lesson.tags = f'Google Classroom, {course["section"]}'
+                    
+                    db.session.add(new_lesson)
+                    print(f"DEBUG: Created lesson '{new_lesson.title}' from course '{course.get('name')}'")
+            
+            db.session.commit()
+            print(f"DEBUG: Successfully auto-imported courses as lessons")
+            flash(f'Successfully imported {len(courses)} Google Classroom courses as lessons!', 'success')
+        else:
+            print(f"DEBUG: No courses found to import")
+            
+    except Exception as e:
+        print(f"ERROR: Failed to fetch or import Google Classroom data: {e}")
+        flash(f'Connected successfully but failed to import data: {e}', 'warning')
+    
+    # Redirect back to main page with parameter to trigger class page load
+    return redirect(url_for('index', google_classroom_connected='true'))
 
 @app.route('/google_classroom/fetch_data')
 def fetch_google_classroom_data():
@@ -1472,15 +1555,220 @@ def fetch_google_classroom_data():
 
         # Update the ImportedData entry with the new list of courses
         existing_imported_data.data['courses'] = updated_courses_list
-        existing_imported_data.imported_at = datetime.datetime.utcnow() # Update timestamp
+        existing_imported_data.imported_at = datetime.utcnow() # Update timestamp
         db.session.commit()
         print(f"DEBUG: Google Classroom data fetched and saved/updated successfully for user {user_id}.")
 
         flash('Google Classroom data fetched and saved successfully!', 'success')
-        return redirect(url_for('view_external_data'))
+        return redirect(url_for('partial_class') + '?google_classroom_connected=true')
 
     except Exception as e:
         db.session.rollback()
         flash(f'Error fetching Google Classroom data: {e}', 'danger')
         print(f"ERROR: Error fetching Google Classroom data for user {user_id}: {e}")
         return redirect(url_for('index'))
+
+@app.route('/google_classroom/check_status')
+@login_required
+def check_google_classroom_status():
+    """Check if user has valid Google Classroom credentials"""
+    user_id = session['user_id']
+    google_creds = GoogleCredentials.query.filter_by(user_id=user_id).first()
+    
+    # Check if we're in demo mode
+    if request.args.get('demo') == 'true':
+        return jsonify({'connected': True, 'message': 'Demo Mode', 'demo': True})
+    
+    if not google_creds:
+        return jsonify({'connected': False, 'message': 'Not connected'})
+    
+    # Check if credentials are valid
+    creds_data = {
+        'token': google_creds.token,
+        'refresh_token': google_creds.refresh_token,
+        'token_uri': google_creds.token_uri,
+        'client_id': google_creds.client_id,
+        'client_secret': google_creds.client_secret,
+        'scopes': google_creds.scopes.split(',')
+    }
+    credentials = Credentials.from_authorized_user_info(creds_data)
+    
+    if not credentials.valid:
+        if credentials.refresh_token:
+            try:
+                credentials.refresh(Request())
+                # Update stored credentials
+                google_creds.token = credentials.token
+                db.session.commit()
+                return jsonify({'connected': True, 'message': 'Connected'})
+            except Exception as e:
+                print(f"ERROR: Failed to refresh token: {e}")
+                return jsonify({'connected': False, 'message': 'Token expired'})
+        else:
+            return jsonify({'connected': False, 'message': 'Token expired'})
+    
+    return jsonify({'connected': True, 'message': 'Connected'})
+
+@app.route('/google_classroom/fetch_courses')
+@login_required
+def fetch_google_classroom_courses():
+    """Fetch courses from Google Classroom for the add lesson modal"""
+    user_id = session['user_id']
+    google_creds = GoogleCredentials.query.filter_by(user_id=user_id).first()
+    
+    # Check if we're in demo mode
+    if request.args.get('demo') == 'true':
+        # Return demo courses
+        demo_courses = [
+            {
+                'id': 'demo_course_1',
+                'name': 'Introduction to Computer Science',
+                'description': 'Learn the fundamentals of computer science and programming',
+                'section': 'CS101',
+                'ownerId': 'demo@example.com',
+                'creationTime': '2024-01-01T00:00:00Z',
+                'updateTime': '2024-01-01T00:00:00Z'
+            },
+            {
+                'id': 'demo_course_2',
+                'name': 'Advanced Mathematics',
+                'description': 'Advanced mathematical concepts and problem solving',
+                'section': 'MATH201',
+                'ownerId': 'demo@example.com',
+                'creationTime': '2024-01-01T00:00:00Z',
+                'updateTime': '2024-01-01T00:00:00Z'
+            },
+            {
+                'id': 'demo_course_3',
+                'name': 'Web Development Fundamentals',
+                'description': 'Learn HTML, CSS, and JavaScript for web development',
+                'section': 'WEB101',
+                'ownerId': 'demo@example.com',
+                'creationTime': '2024-01-01T00:00:00Z',
+                'updateTime': '2024-01-01T00:00:00Z'
+            }
+        ]
+        return jsonify({
+            'success': True,
+            'courses': demo_courses,
+            'count': len(demo_courses),
+            'demo': True
+        })
+    
+    if not google_creds:
+        return jsonify({'success': False, 'message': 'Not connected to Google Classroom'})
+    
+    # Check if credentials are valid
+    creds_data = {
+        'token': google_creds.token,
+        'refresh_token': google_creds.refresh_token,
+        'token_uri': google_creds.token_uri,
+        'client_id': google_creds.client_id,
+        'client_secret': google_creds.client_secret,
+        'scopes': google_creds.scopes.split(',')
+    }
+    credentials = Credentials.from_authorized_user_info(creds_data)
+    
+    if not credentials.valid:
+        if credentials.refresh_token:
+            try:
+                credentials.refresh(Request())
+                google_creds.token = credentials.token
+                db.session.commit()
+            except Exception as e:
+                print(f"ERROR: Failed to refresh token: {e}")
+                return jsonify({'success': False, 'message': 'Token expired'})
+        else:
+            return jsonify({'success': False, 'message': 'Token expired'})
+    
+    try:
+        service = build('classroom', 'v1', credentials=credentials)
+        courses_results = service.courses().list(courseStates='ACTIVE').execute()
+        courses = courses_results.get('courses', [])
+        
+        # Format courses for the UI
+        formatted_courses = []
+        for course in courses:
+            formatted_courses.append({
+                'id': course.get('id'),
+                'name': course.get('name', 'Untitled Course'),
+                'description': course.get('description', ''),
+                'section': course.get('section', ''),
+                'ownerId': course.get('ownerId', ''),
+                'creationTime': course.get('creationTime', ''),
+                'updateTime': course.get('updateTime', '')
+            })
+        
+        return jsonify({
+            'success': True,
+            'courses': formatted_courses,
+            'count': len(formatted_courses)
+        })
+        
+    except Exception as e:
+        print(f"ERROR: Failed to fetch courses: {e}")
+        return jsonify({'success': False, 'message': f'Failed to fetch courses: {str(e)}'})
+
+@app.route('/google_classroom/import_course/<course_id>', methods=['POST'])
+@login_required
+def import_google_classroom_course(course_id):
+    """Import a specific Google Classroom course as a lesson"""
+    user_id = session['user_id']
+    google_creds = GoogleCredentials.query.filter_by(user_id=user_id).first()
+    
+    if not google_creds:
+        return jsonify({'success': False, 'message': 'Not connected to Google Classroom'})
+    
+    try:
+        # Get course details from Google Classroom
+        creds_data = {
+            'token': google_creds.token,
+            'refresh_token': google_creds.refresh_token,
+            'token_uri': google_creds.token_uri,
+            'client_id': google_creds.client_id,
+            'client_secret': google_creds.client_secret,
+            'scopes': google_creds.scopes.split(',')
+        }
+        credentials = Credentials.from_authorized_user_info(creds_data)
+        
+        if not credentials.valid:
+            if credentials.refresh_token:
+                credentials.refresh(Request())
+                google_creds.token = credentials.token
+                db.session.commit()
+            else:
+                return jsonify({'success': False, 'message': 'Token expired'})
+        
+        service = build('classroom', 'v1', credentials=credentials)
+        course = service.courses().get(id=course_id).execute()
+        
+        # Create lesson from course data
+        lesson_manager = LessonManager()
+        lesson = lesson_manager.import_google_classroom_course_as_lesson(
+            user_id=user_id,
+            gc_course_data=course
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'Course imported successfully',
+            'lesson_id': lesson.id,
+            'lesson_title': lesson.title
+        })
+        
+    except Exception as e:
+        print(f"ERROR: Failed to import course: {e}")
+        return jsonify({'success': False, 'message': f'Failed to import course: {str(e)}'})
+
+@app.route('/google_classroom/check_callback')
+def check_google_classroom_callback():
+    """Check if OAuth callback was successful"""
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': 'User not logged in'})
+    
+    google_creds = GoogleCredentials.query.filter_by(user_id=user_id).first()
+    if google_creds:
+        return jsonify({'success': True, 'message': 'Connected'})
+    else:
+        return jsonify({'success': False, 'message': 'Not connected'})
