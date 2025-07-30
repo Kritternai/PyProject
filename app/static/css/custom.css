@@ -1,43 +1,172 @@
-/* ปรับแต่งสีหลัก */
-.bg-primary, .btn-primary {
-    background-color: #003B8E !important;
-    border-color: #003B8E !important;
+/* Universal box-sizing for consistent layout */
+* {
+  box-sizing: border-box;
 }
+
+:root {
+  --primary-blue: #4285F4; /* Google Blue */
+  --primary-blue-dark: #3367D6;
+  --accent-success: #28A745; /* Bootstrap Green */
+  --accent-info: #17A2B8; /* Bootstrap Cyan */
+  --text-dark: #212529; /* Near black for readability */
+  --text-muted: #6C757D;
+  --secondary-background: #F8F9FA; /* Light gray for backgrounds */
+  --border-color: #DEE2E6; /* Light gray for borders */
+
+  /* Card Header Colors */
+  --card-header-color-1: #4285F4; /* Blue */
+  --card-header-color-2: #34A853; /* Green */
+  --card-header-color-3: #FBBC05; /* Yellow/Orange */
+  --card-header-color-4: #7B1FA2; /* Purple */
+  --card-header-color-5: #00ACC1; /* Teal */
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--secondary-background);
+  color: var(--text-dark);
+}
+
+/* General UI adjustments */
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+  color: var(--text-dark);
+}
+
 .text-primary {
-    color: #003B8E !important;
+  color: var(--primary-blue) !important;
 }
-.sidebar {
-    background-color: #003B8E !important;
+
+.btn-primary {
+  background-color: var(--primary-blue);
+  border-color: var(--primary-blue);
 }
-.sidebar .nav-link.active, .sidebar .nav-link:focus {
-    background: #e3eefd;
-    color: #003B8E !important;
-    font-weight: bold;
-    border-radius: 0.5rem;
+.btn-primary:hover {
+  background-color: var(--primary-blue-dark);
+  border-color: var(--primary-blue-dark);
 }
-.sidebar .nav-link {
-    transition: background 0.2s, color 0.2s;
+
+.card {
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
 }
-.sidebar .nav-link:hover {
-    background: #e3eefd;
-    color: #003B8E !important;
+
+/* Specific styles for lesson cards */
+.lesson-card .card-header {
+  background-color: var(--primary-blue);
+  color: white;
+  border-bottom: none;
 }
-.card.add-class-card {
-    border: 2px dashed #003B8E;
-    background: #f5faff;
-    color: #003B8E;
-    cursor: pointer;
-    transition: box-shadow 0.2s;
+
+.lesson-card .card-title {
+  color: white;
 }
-.card.add-class-card:hover {
-    box-shadow: 0 0 0 2px #003B8E33;
-    background: #e3eefd;
+
+.lesson-card .dropdown-menu {
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
-.card.lesson-card {
-    border: 1px solid #003B8E22;
-    transition: box-shadow 0.2s;
+
+.lesson-card .dropdown-item:hover {
+  background-color: var(--secondary-background);
+  color: var(--primary-blue);
 }
-.card.lesson-card:hover {
-    box-shadow: 0 2px 12px #003B8E22;
-    border-color: #003B8E;
-} 
+
+/* FAB Button */
+.add-lesson-fab {
+  background-color: var(--primary-blue);
+  border-color: var(--primary-blue);
+}
+.add-lesson-fab:hover {
+  background-color: var(--primary-blue-dark);
+  border-color: var(--primary-blue-dark);
+}
+
+/* Bootstrap overrides for consistent theming */
+.bg-info {
+  background-color: var(--accent-info) !important;
+}
+
+.bg-success {
+  background-color: var(--accent-success) !important;
+}
+
+/* Custom styles for sidebar buttons */
+.sidebar-auth .btn {
+  text-align: left; /* Align text to the left */
+  padding-left: 1.5rem; /* Add some padding for icons */
+}
+
+/* Add any other custom styles here */
+.course-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    max-width: 400px; /* Adjust as needed */
+    margin: 20px auto;
+    background-color: #fff;
+}
+.card-image-container {
+    position: relative;
+    background-color: #f0f0f0; /* Light background for the image area */
+    height: 200px; /* Fixed height for the image section */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    overflow: hidden; /* Ensure image doesn't overflow rounded corners */
+}
+
+.tag-badge {
+    font-size: 0.75rem;
+    padding: 0.3em 0.6em;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+.author-info img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  body {
+    padding-left: 0; /* Remove padding when sidebar is not fixed */
+  }
+  .sidebar {
+    position: static; /* Revert to static on small screens */
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    flex-direction: row; /* Arrange items horizontally */
+    justify-content: space-around; /* Distribute items evenly */
+    padding: 0.5rem 0;
+  }
+  .sidebar-logo {
+    display: none; /* Hide logo on small screens */
+  }
+  .sidebar-menu {
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100%;
+  }
+  .sidebar .nav-link {
+    font-size: 0.9rem;
+    margin: 0 0.1rem;
+    padding: 0.5rem 0.5rem;
+    text-align: center; /* Center text for small buttons */
+  }
+  .sidebar .nav-link i {
+    margin-right: 0; /* Remove margin for icons on small screens */
+  }
+  .sidebar-auth {
+    display: none; /* Hide auth section on small screens, or make it a modal/offcanvas */
+  }
+  main.flex-grow-1 {
+    margin-left: 0; /* Remove margin on small screens */
+  }
+}

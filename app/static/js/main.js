@@ -13,7 +13,9 @@ function loadPage(page) {
           setupLessonEditForm(); // <-- เพิ่มตรงนี้
           setupSectionForms(); // เรียก setupSectionForms หลัง loadPage
           setupNoteForms(); // เรียก setupNoteForms หลัง loadPage
+          setupLessonAddModal(); // เรียก setupLessonAddModal หลัง loadPage
           setupSectionFilter(); // เรียก setupSectionFilter() หลัง loadPage
+          setupLessonSearchAndFilter(); // เรียก setupLessonSearchAndFilter หลัง loadPage
           // Auto show Lesson Content tab and scroll if on lesson detail
           if (page.startsWith('class/')) {
             // Activate Content tab
@@ -469,4 +471,493 @@ function setupNoteForms() {
       });
     };
   }
+}
+
+function setupLessonAddModal() {
+  const addLessonModal = document.getElementById('addLessonModal');
+  const addLessonForm = document.getElementById('add-lesson-form');
+  if (addLessonModal && addLessonForm) {
+    addLessonModal.addEventListener('show.bs.modal', function () {
+      addLessonForm.reset();
+      setTimeout(() => {
+        const titleInput = addLessonForm.querySelector('#title');
+        if (titleInput) titleInput.focus();
+      }, 300);
+    });
+
+    addLessonForm.onsubmit = function(e) {
+      e.preventDefault();
+      const formData = new FormData(addLessonForm);
+      fetch('/partial/class/add', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          loadPage(data.redirect || 'class');
+          const modal = bootstrap.Modal.getInstance(addLessonModal);
+          modal.hide();
+          addLessonForm.reset();
+        } else {
+          alert(data.message || 'Error adding lesson.');
+        }
+      });
+    };
+  }
+}
+
+// Make setupAddLessonModal globally available
+window.setupAddLessonModal = function() {
+  console.log('setupAddLessonModal called'); // Debug log
+  
+  // Color selection functionality
+  const colorOptions = document.querySelectorAll('.color-option');
+  const previewCardHeader = document.getElementById('previewCardHeader');
+  const colorInput = document.getElementById('selectedColor');
+
+  // Color definitions
+  const colors = {
+    1: { primary: '#007bff', secondary: '#0056b3' },
+    2: { primary: '#28a745', secondary: '#1e7e34' },
+    3: { primary: '#dc3545', secondary: '#c82333' },
+    4: { primary: '#ffc107', secondary: '#e0a800' },
+    5: { primary: '#6f42c1', secondary: '#5a2d91' },
+    6: { primary: '#fd7e14', secondary: '#e8690b' }
+  };
+
+  // Reset color selection and preview
+  colorOptions.forEach(opt => opt.classList.remove('active'));
+  if (colorOptions[0]) colorOptions[0].classList.add('active');
+  if (previewCardHeader) {
+    previewCardHeader.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+  }
+  if (colorInput) colorInput.value = '1';
+
+  // Remove old event listeners and add new ones
+  colorOptions.forEach(option => {
+    option.onclick = function() {
+      colorOptions.forEach(opt => opt.classList.remove('active'));
+      this.classList.add('active');
+      const colorId = this.getAttribute('data-color');
+      const color = colors[colorId];
+      if (previewCardHeader && color) {
+        previewCardHeader.style.background = `linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%)`;
+      }
+      if (colorInput) colorInput.value = colorId;
+    };
+  });
+
+  // Live preview updates
+  const titleInput = document.getElementById('title');
+  const descriptionInput = document.getElementById('description');
+  const authorInput = document.getElementById('author_name');
+  const statusSelect = document.getElementById('status');
+
+  const previewTitle = document.getElementById('previewTitle');
+  const previewDescription = document.getElementById('previewDescription');
+  const previewAuthor = document.getElementById('previewAuthor');
+  const previewStatus = document.getElementById('previewStatus');
+
+  if (titleInput && previewTitle) {
+    titleInput.oninput = function() {
+      previewTitle.textContent = this.value || 'Your Lesson Title';
+    };
+  }
+  if (descriptionInput && previewDescription) {
+    descriptionInput.oninput = function() {
+      previewDescription.textContent = this.value || 'Your lesson description will appear here...';
+    };
+  }
+  if (authorInput && previewAuthor) {
+    authorInput.oninput = function() {
+      previewAuthor.textContent = this.value || 'Unknown Author';
+    };
+  }
+  if (statusSelect && previewStatus) {
+    statusSelect.onchange = function() {
+      previewStatus.textContent = this.value;
+    };
+  }
+
+  // Reset preview on form reset
+  const form = document.getElementById('add-lesson-form');
+  if (form) {
+    form.onreset = function() {
+      setTimeout(() => {
+        if (previewTitle) previewTitle.textContent = 'Your Lesson Title';
+        if (previewDescription) previewDescription.textContent = 'Your lesson description will appear here...';
+        if (previewAuthor) previewAuthor.textContent = 'Unknown Author';
+        if (previewStatus) previewStatus.textContent = 'Not Started';
+        colorOptions.forEach(opt => opt.classList.remove('active'));
+        if (colorOptions[0]) colorOptions[0].classList.add('active');
+        if (previewCardHeader) previewCardHeader.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+        if (colorInput) colorInput.value = '1';
+      }, 10);
+    };
+  }
+
+  // Form validation (unchanged)
+  if (form) {
+    form.addEventListener('submit', function(event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    });
+    // Real-time validation
+    if (titleInput) {
+      titleInput.addEventListener('input', function() {
+        if (this.value.trim() === '') {
+          this.classList.remove('is-valid');
+          this.classList.add('is-invalid');
+        } else {
+          this.classList.remove('is-invalid');
+          this.classList.add('is-valid');
+        }
+      });
+    }
+  }
+}
+
+// Global function to toggle advanced search panel
+window.toggleAdvancedSearch = function() {
+  const panel = document.getElementById('advancedSearchPanel');
+  const toggleBtn = document.getElementById('advancedSearchToggle');
+  
+  if (panel && toggleBtn) {
+    const isVisible = panel.style.display !== 'none';
+    panel.style.display = isVisible ? 'none' : 'block';
+    
+    if (isVisible) {
+      toggleBtn.classList.remove('btn-primary');
+      toggleBtn.classList.add('btn-outline-secondary');
+    } else {
+      toggleBtn.classList.remove('btn-outline-secondary');
+      toggleBtn.classList.add('btn-primary');
+    }
+  }
+}
+
+function setupLessonSearchAndFilter() {
+  console.log('setupLessonSearchAndFilter called');
+  
+  // Add a small delay to ensure DOM is ready
+  setTimeout(() => {
+    const searchInput = document.getElementById('lessonSearch');
+    const filterSelect = document.getElementById('lessonFilter');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    const searchContainer = document.querySelector('.search-container');
+    
+    if (!searchInput && !filterSelect) {
+      console.log('Not on lessons page - returning early');
+      return; // Not on lessons page
+    }
+    
+    console.log('Setting up lesson search and filter...');
+    
+    // Debounce function
+    let debounceTimer;
+    function debounceFilter(func, delay) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(func, delay);
+    }
+    
+    function showLoading() {
+      if (searchContainer) {
+        searchContainer.classList.add('searching');
+      }
+    }
+    
+    function hideLoading() {
+      if (searchContainer) {
+        searchContainer.classList.remove('searching');
+      }
+    }
+    
+    function updateClearButton() {
+      if (clearSearchBtn) {
+        const hasValue = searchInput.value.trim() !== '' || filterSelect.value !== '';
+        clearSearchBtn.style.display = hasValue ? 'block' : 'none';
+      }
+    }
+    
+    function getSearchOptions() {
+      return {
+        searchTitle: document.getElementById('searchTitle')?.checked ?? true,
+        searchDescription: document.getElementById('searchDescription')?.checked ?? true,
+        searchTags: document.getElementById('searchTags')?.checked ?? false,
+        searchAuthor: document.getElementById('searchAuthor')?.checked ?? false,
+        sortBy: document.getElementById('sortBy')?.value ?? 'title',
+        sortOrder: document.getElementById('sortOrder')?.value ?? 'asc'
+      };
+    }
+    
+    function filterLessons() {
+      const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+      const filterValue = filterSelect ? filterSelect.value : '';
+      const searchOptions = getSearchOptions();
+      const lessonCards = document.querySelectorAll('.lesson-card');
+      
+      showLoading();
+      
+      // Use setTimeout to show loading briefly
+      setTimeout(() => {
+        lessonCards.forEach((card, index) => {
+          const titleElement = card.querySelector('.lesson-title');
+          const descriptionElement = card.querySelector('.lesson-description');
+          const statusElement = card.querySelector('.status-badge');
+          const authorElement = card.querySelector('.author-name');
+          const tagsContainer = card.querySelector('.tags-container');
+          
+          if (!titleElement || !descriptionElement || !statusElement) {
+            return;
+          }
+          
+          const title = titleElement.textContent.toLowerCase();
+          const description = descriptionElement.textContent.toLowerCase();
+          const status = statusElement.textContent;
+          const author = authorElement ? authorElement.textContent.toLowerCase() : '';
+          const tags = tagsContainer ? Array.from(tagsContainer.querySelectorAll('.tag-badge')).map(tag => tag.textContent.toLowerCase()) : [];
+          
+          // Advanced search logic
+          let matchesSearch = !searchTerm;
+          if (searchTerm) {
+            matchesSearch = false;
+            if (searchOptions.searchTitle && title.includes(searchTerm)) matchesSearch = true;
+            if (searchOptions.searchDescription && description.includes(searchTerm)) matchesSearch = true;
+            if (searchOptions.searchAuthor && author.includes(searchTerm)) matchesSearch = true;
+            if (searchOptions.searchTags && tags.some(tag => tag.includes(searchTerm))) matchesSearch = true;
+          }
+          
+          const matchesFilter = !filterValue || status === filterValue;
+          
+          const cardContainer = card.closest('.lesson-card-wrapper');
+          if (cardContainer) {
+            if (matchesSearch && matchesFilter) {
+              cardContainer.classList.remove('hidden');
+              cardContainer.classList.add('visible');
+            } else {
+              cardContainer.classList.add('hidden');
+              cardContainer.classList.remove('visible');
+            }
+          }
+        });
+        
+        // Sort cards if needed
+        if (searchOptions.sortBy !== 'title' || searchOptions.sortOrder !== 'asc') {
+          sortLessonCards(searchOptions.sortBy, searchOptions.sortOrder);
+        }
+        
+        // Show/hide "no results" message
+        const visibleCards = document.querySelectorAll('.lesson-card-wrapper.visible');
+        const hasVisibleCards = visibleCards.length > 0;
+        
+        let noResultsDiv = document.getElementById('no-results-message');
+        if (!hasVisibleCards) {
+          if (!noResultsDiv) {
+            noResultsDiv = document.createElement('div');
+            noResultsDiv.id = 'no-results-message';
+            noResultsDiv.className = 'col-12 text-center py-5';
+            noResultsDiv.innerHTML = `
+              <div class="text-muted">
+                <i class="fas fa-search fa-3x mb-3"></i>
+                <h5>No lessons found</h5>
+                <p>Try adjusting your search or filter criteria.</p>
+                <button class="btn btn-outline-primary" onclick="clearSearchAndFilter()">
+                  <i class="fas fa-times me-2"></i>Clear Filters
+                </button>
+              </div>
+            `;
+            const container = document.getElementById('lessons-container');
+            if (container) {
+              container.appendChild(noResultsDiv);
+            }
+          }
+        } else if (noResultsDiv) {
+          noResultsDiv.remove();
+        }
+        
+        hideLoading();
+        updateClearButton();
+      }, 150); // Brief delay to show loading
+    }
+    
+    function sortLessonCards(sortBy, sortOrder) {
+      const container = document.getElementById('lessons-container');
+      const cards = Array.from(container.querySelectorAll('.lesson-card-wrapper.visible'));
+      
+      cards.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch (sortBy) {
+          case 'title':
+            aValue = a.querySelector('.lesson-title')?.textContent || '';
+            bValue = b.querySelector('.lesson-title')?.textContent || '';
+            break;
+          case 'status':
+            aValue = a.querySelector('.status-badge')?.textContent || '';
+            bValue = b.querySelector('.status-badge')?.textContent || '';
+            break;
+          case 'created':
+          case 'updated':
+            // For now, use title as fallback since we don't have date elements
+            aValue = a.querySelector('.lesson-title')?.textContent || '';
+            bValue = b.querySelector('.lesson-title')?.textContent || '';
+            break;
+          default:
+            aValue = a.querySelector('.lesson-title')?.textContent || '';
+            bValue = b.querySelector('.lesson-title')?.textContent || '';
+        }
+        
+        if (sortOrder === 'desc') {
+          return bValue.localeCompare(aValue);
+        } else {
+          return aValue.localeCompare(bValue);
+        }
+      });
+      
+      // Re-append cards in sorted order
+      cards.forEach(card => container.appendChild(card));
+    }
+    
+    // Add event listeners
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        debounceFilter(filterLessons, 300);
+      });
+      searchInput.addEventListener('keyup', updateClearButton);
+    }
+    
+    if (filterSelect) {
+      filterSelect.addEventListener('change', () => {
+        filterLessons();
+        updateClearButton();
+      });
+    }
+    
+    // Advanced search option listeners
+    const advancedOptions = ['searchTitle', 'searchDescription', 'searchTags', 'searchAuthor', 'sortBy', 'sortOrder'];
+    advancedOptions.forEach(optionId => {
+      const element = document.getElementById(optionId);
+      if (element) {
+        element.addEventListener('change', filterLessons);
+      }
+    });
+    
+    // Initial filter
+    filterLessons();
+    updateClearButton();
+  }, 100); // Small delay to ensure DOM is ready
+}
+
+// Global function to clear search and filter
+window.clearSearchAndFilter = function() {
+  const searchInput = document.getElementById('lessonSearch');
+  const filterSelect = document.getElementById('lessonFilter');
+  const clearSearchBtn = document.getElementById('clearSearch');
+  
+  if (searchInput) {
+    searchInput.value = '';
+  }
+  if (filterSelect) {
+    filterSelect.value = '';
+  }
+  
+  // Reset advanced search options
+  const searchTitle = document.getElementById('searchTitle');
+  const searchDescription = document.getElementById('searchDescription');
+  const searchTags = document.getElementById('searchTags');
+  const searchAuthor = document.getElementById('searchAuthor');
+  const sortBy = document.getElementById('sortBy');
+  const sortOrder = document.getElementById('sortOrder');
+  
+  if (searchTitle) searchTitle.checked = true;
+  if (searchDescription) searchDescription.checked = true;
+  if (searchTags) searchTags.checked = false;
+  if (searchAuthor) searchAuthor.checked = false;
+  if (sortBy) sortBy.value = 'title';
+  if (sortOrder) sortOrder.value = 'asc';
+  
+  // Re-show all cards
+  const lessonCards = document.querySelectorAll('.lesson-card-wrapper');
+  lessonCards.forEach(card => {
+    card.classList.remove('hidden');
+    card.classList.add('visible');
+  });
+  
+  // Remove no results message
+  const noResultsDiv = document.getElementById('no-results-message');
+  if (noResultsDiv) {
+    noResultsDiv.remove();
+  }
+  
+  // Hide clear button
+  if (clearSearchBtn) {
+    clearSearchBtn.style.display = 'none';
+  }
+  
+  // Focus back to search input
+  if (searchInput) {
+    searchInput.focus();
+  }
+}
+
+// Global color selection function
+window.selectColor = function(element, colorId) {
+  console.log('selectColor called with colorId:', colorId);
+  
+  // Remove active class from all color options
+  const colorOptions = document.querySelectorAll('.color-option');
+  colorOptions.forEach(opt => opt.classList.remove('active'));
+  
+  // Add active class to clicked element
+  element.classList.add('active');
+  
+  // Update preview card header
+  const previewCardHeader = document.getElementById('previewCardHeader');
+  const colorInput = document.getElementById('selectedColor');
+  
+  const colors = {
+    1: { primary: '#007bff', secondary: '#0056b3' },
+    2: { primary: '#28a745', secondary: '#1e7e34' },
+    3: { primary: '#dc3545', secondary: '#c82333' },
+    4: { primary: '#ffc107', secondary: '#e0a800' },
+    5: { primary: '#6f42c1', secondary: '#5a2d91' },
+    6: { primary: '#fd7e14', secondary: '#e8690b' }
+  };
+  
+  const color = colors[colorId];
+  if (previewCardHeader && color) {
+    previewCardHeader.style.background = `linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%)`;
+  }
+  if (colorInput) colorInput.value = colorId;
+}
+
+// Global favorite toggle function
+window.toggleFavorite = function(lessonId, btn) {
+  fetch(`/partial/class/${lessonId}/favorite`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      const icon = btn.querySelector('i');
+      if (data.is_favorite) {
+        icon.classList.add('text-warning', 'favorite-active');
+        icon.classList.remove('text-secondary');
+      } else {
+        icon.classList.remove('text-warning', 'favorite-active');
+        icon.classList.add('text-secondary');
+      }
+      // Reload lessons to re-sort
+      loadPage('class');
+    }
+  });
 }

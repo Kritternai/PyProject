@@ -5,8 +5,8 @@ import datetime
 import json
 
 class LessonManager:
-    def add_lesson(self, user_id, title, description=None, status='Not Started', tags=None, source_platform='manual', google_classroom_id=None):
-        lesson = Lesson(user_id=user_id, title=title, description=description, status=status, tags=tags, source_platform=source_platform, google_classroom_id=google_classroom_id)
+    def add_lesson(self, user_id, title, description=None, status='Not Started', tags=None, source_platform='manual', google_classroom_id=None, author_name=None, selected_color=1):
+        lesson = Lesson(user_id=user_id, title=title, description=description, status=status, tags=tags, source_platform=source_platform, google_classroom_id=google_classroom_id, author_name=author_name, selected_color=selected_color)
         db.session.add(lesson)
         db.session.commit()
         return lesson
@@ -33,7 +33,7 @@ class LessonManager:
                 user_id=user_id,
                 title=gc_course_data.get('name', 'Untitled Google Classroom Course'),
                 description=gc_course_data.get('description', ''),
-                status='Imported',
+                status='Active',
                 tags='google-classroom',
                 source_platform='google_classroom',
                 google_classroom_id=gc_course_data.get('id'),
@@ -53,9 +53,9 @@ class LessonManager:
         return Lesson.query.get(lesson_id)
 
     def get_lessons_by_user(self, user_id):
-        return Lesson.query.filter_by(user_id=user_id).all()
+        return Lesson.query.filter_by(user_id=user_id).options(db.joinedload(Lesson.sections)).all()
 
-    def update_lesson(self, lesson_id, title=None, description=None, status=None, tags=None, announcements_data=None, topics_data=None, roster_data=None, attachments_data=None):
+    def update_lesson(self, lesson_id, title=None, description=None, status=None, tags=None, announcements_data=None, topics_data=None, roster_data=None, attachments_data=None, selected_color=None):
         lesson = self.get_lesson_by_id(lesson_id)
         if not lesson:
             return False
@@ -68,6 +68,8 @@ class LessonManager:
             lesson.status = status
         if tags is not None:
             lesson.tags = tags
+        if selected_color is not None:
+            lesson.selected_color = selected_color
         if announcements_data is not None:
             lesson.announcements_data = json.dumps(announcements_data)
         if topics_data is not None:
@@ -88,7 +90,15 @@ class LessonManager:
             return True
         return False
 
-    def add_section(self, lesson_id, title, content=None, type='text', file_url=None, assignment_due=None, order=0, file_urls=None, body=None, image_path=None, external_link=None, tags=None, status=None):
+    def toggle_favorite(self, lesson_id):
+        lesson = self.get_lesson_by_id(lesson_id)
+        if not lesson:
+            return None
+        lesson.is_favorite = not lesson.is_favorite
+        db.session.commit()
+        return lesson.is_favorite
+
+    def add_section(self, lesson_id, title, content=None, type='text', assignment_due=None, order=0, file_urls=None, body=None, image_path=None, external_link=None, tags=None, status=None):
         # Ensure assignment_due is None if not a datetime
         import datetime
         if not assignment_due or (isinstance(assignment_due, str) and assignment_due.strip() == ''):
@@ -103,7 +113,6 @@ class LessonManager:
             title=title,
             content=content,
             type=type,
-            file_url=file_url,
             assignment_due=assignment_due,
             order=order,
             file_urls=file_urls,
@@ -123,7 +132,7 @@ class LessonManager:
     def get_section_by_id(self, section_id):
         return LessonSection.query.get(section_id)
 
-    def update_section(self, section_id, title=None, content=None, type=None, file_url=None, assignment_due=None, order=None, file_urls=None, body=None, image_path=None, external_link=None, tags=None, status=None):
+    def update_section(self, section_id, title=None, content=None, type=None, assignment_due=None, order=None, file_urls=None, body=None, image_path=None, external_link=None, tags=None, status=None):
         section = self.get_section_by_id(section_id)
         if not section:
             return False
@@ -133,8 +142,6 @@ class LessonManager:
             section.content = content
         if type:
             section.type = type
-        if file_url is not None:
-            section.file_url = file_url
         if file_urls is not None:
             section.file_urls = file_urls
         if body is not None:
