@@ -49,7 +49,7 @@ SCOPES = [
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or g.user is None: # Added g.user is None check
+        if 'user_id' not in session or g.user is None:
             if request.accept_mimetypes['application/json']:
                 return jsonify(success=False, message='Login required', redirect='login'), 401
             flash('Please log in to access this page.', 'warning')
@@ -1035,7 +1035,19 @@ def partial_register():
                 return jsonify(success=False, message='Please fill out all fields.')
             else:
                 return render_template('register_fragment.html', success=False, message='Please fill out all fields.')
-        user = authenticator.register(username, email, password)
+        # Get additional profile information from form
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        role = request.form.get('role', 'student')
+        
+        user = authenticator.register(
+            username=username, 
+            email=email, 
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            role=role
+        )
         if user:
             if is_ajax:
                 return jsonify(success=True, message='Registration successful! Please log in.', redirect='login')

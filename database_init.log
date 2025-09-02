@@ -1,0 +1,63 @@
+2025-09-02 13:57:13,100 - __main__ - INFO - Starting database initialization...
+2025-09-02 13:57:13,920 - __main__ - ERROR - Unexpected error during database initialization: '(' was never closed (lesson.py, line 26)
+2025-09-02 13:57:30,028 - __main__ - INFO - Starting database initialization...
+2025-09-02 13:57:30,272 - __main__ - ERROR - Unexpected error during database initialization: name 'datetime' is not defined
+2025-09-02 13:58:06,805 - __main__ - INFO - Starting database initialization...
+2025-09-02 13:58:07,059 - __main__ - ERROR - Import error: cannot import name 'Base' from 'database.models' (/Users/kbbk/PyProject-5/database/models/__init__.py)
+2025-09-02 13:58:07,059 - __main__ - ERROR - Make sure all required packages are installed
+2025-09-02 13:58:42,002 - __main__ - INFO - Starting database initialization...
+2025-09-02 13:58:42,256 - __main__ - INFO - Creating database tables...
+2025-09-02 13:58:42,326 - database.manager - INFO - Database engine setup completed successfully
+2025-09-02 13:58:42,342 - database.manager - INFO - All database tables created successfully
+2025-09-02 13:58:42,342 - __main__ - INFO - Database initialization completed successfully!
+2025-09-02 13:58:42,342 - database.manager - ERROR - Database session error: Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')
+2025-09-02 13:58:42,343 - database.manager - ERROR - Database health check failed: Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')
+2025-09-02 13:58:42,343 - __main__ - INFO - Database Information:
+2025-09-02 13:58:42,343 - __main__ - INFO -   Path: /Users/kbbk/PyProject-5/instance/site.db
+2025-09-02 13:58:42,343 - __main__ - INFO -   Size: 0.08 MB
+2025-09-02 13:58:42,343 - __main__ - INFO -   Tables: 16
+2025-09-02 13:58:42,343 - __main__ - INFO -   Health: unhealthy
+2025-09-02 13:58:42,343 - __main__ - INFO -   Table List:
+2025-09-02 13:58:42,344 - __main__ - INFO -     - user
+2025-09-02 13:58:42,344 - __main__ - INFO -     - activitylog
+2025-09-02 13:58:42,344 - __main__ - INFO -     - externalintegration
+2025-09-02 13:58:42,344 - __main__ - INFO -     - lesson
+2025-09-02 13:58:42,344 - __main__ - INFO -     - report
+2025-09-02 13:58:42,344 - __main__ - INFO -     - tag
+2025-09-02 13:58:42,344 - __main__ - INFO -     - externaldata
+2025-09-02 13:58:42,345 - __main__ - INFO -     - lessonsection
+2025-09-02 13:58:42,345 - __main__ - INFO -     - lessontag
+2025-09-02 13:58:42,345 - __main__ - INFO -     - tagrelationship
+2025-09-02 13:58:42,345 - __main__ - INFO -     - note
+2025-09-02 13:58:42,345 - __main__ - INFO -     - progresstracking
+2025-09-02 13:58:42,345 - __main__ - INFO -     - task
+2025-09-02 13:58:42,345 - __main__ - INFO -     - files
+2025-09-02 13:58:42,345 - __main__ - INFO -     - pomodorosession
+2025-09-02 13:58:42,345 - __main__ - INFO -     - reminder
+2025-09-02 14:09:51,226 - __main__ - INFO - Starting database initialization...
+2025-09-02 14:09:51,475 - __main__ - INFO - Creating database tables...
+2025-09-02 14:09:51,495 - database.manager - INFO - Database engine setup completed successfully
+2025-09-02 14:09:51,517 - database.manager - INFO - All database tables created successfully
+2025-09-02 14:09:51,517 - __main__ - INFO - Database initialization completed successfully!
+2025-09-02 14:09:51,518 - __main__ - INFO - Database Information:
+2025-09-02 14:09:51,518 - __main__ - INFO -   Path: /Users/kbbk/PyProject-5/instance/site.db
+2025-09-02 14:09:51,518 - __main__ - INFO -   Size: 0.0 MB
+2025-09-02 14:09:51,518 - __main__ - INFO -   Tables: 16
+2025-09-02 14:09:51,518 - __main__ - INFO -   Health: healthy
+2025-09-02 14:09:51,518 - __main__ - INFO -   Table List:
+2025-09-02 14:09:51,518 - __main__ - INFO -     - user
+2025-09-02 14:09:51,518 - __main__ - INFO -     - activitylog
+2025-09-02 14:09:51,518 - __main__ - INFO -     - externalintegration
+2025-09-02 14:09:51,518 - __main__ - INFO -     - lesson
+2025-09-02 14:09:51,518 - __main__ - INFO -     - report
+2025-09-02 14:09:51,518 - __main__ - INFO -     - tag
+2025-09-02 14:09:51,518 - __main__ - INFO -     - externaldata
+2025-09-02 14:09:51,518 - __main__ - INFO -     - lessonsection
+2025-09-02 14:09:51,518 - __main__ - INFO -     - lessontag
+2025-09-02 14:09:51,518 - __main__ - INFO -     - tagrelationship
+2025-09-02 14:09:51,518 - __main__ - INFO -     - note
+2025-09-02 14:09:51,518 - __main__ - INFO -     - progresstracking
+2025-09-02 14:09:51,518 - __main__ - INFO -     - task
+2025-09-02 14:09:51,518 - __main__ - INFO -     - files
+2025-09-02 14:09:51,518 - __main__ - INFO -     - pomodorosession
+2025-09-02 14:09:51,518 - __main__ - INFO -     - reminder
