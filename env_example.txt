@@ -1,0 +1,61 @@
+# =============================================================================
+# GOOGLE CLASSROOM API CONFIGURATION
+# =============================================================================
+
+# Google OAuth 2.0 Credentials
+# Get these from Google Cloud Console: https://console.cloud.google.com/
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+
+# =============================================================================
+# FLASK CONFIGURATION
+# =============================================================================
+
+# Flask Secret Key (generate a secure random key)
+FLASK_SECRET_KEY=your_secure_secret_key_here
+
+# Flask Environment
+FLASK_ENV=development
+FLASK_DEBUG=true
+
+# =============================================================================
+# DATABASE CONFIGURATION
+# =============================================================================
+
+# Database URI (SQLite for development)
+DATABASE_URI=sqlite:///site.db
+
+# =============================================================================
+# SERVER CONFIGURATION
+# =============================================================================
+
+# Host and Port
+HOST=0.0.0.0
+PORT=8000
+
+# =============================================================================
+# GOOGLE CLASSROOM API SCOPES
+# =============================================================================
+
+# Required scopes for Google Classroom API
+# These are automatically configured in the application
+# No need to change unless you need additional permissions
+
+# =============================================================================
+# SETUP INSTRUCTIONS
+# =============================================================================
+
+# 1. Copy this file to .env
+#    cp env_example.txt .env
+
+# 2. Edit .env with your actual values
+#    nano .env
+
+# 3. Set environment variables
+#    export $(cat .env | xargs)
+
+# 4. Or source the file
+#    source .env
+
+# 5. Test configuration
+#    python google_classroom_config.py

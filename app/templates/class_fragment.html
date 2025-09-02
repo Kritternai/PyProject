@@ -100,7 +100,7 @@
           <button class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite('{{ lesson.id }}', this);" aria-label="Toggle favorite">
             <i class="fas fa-star{% if lesson.is_favorite %} text-warning{% else %} text-secondary{% endif %}{% if lesson.is_favorite %} favorite-active{% endif %}"></i>
           </button>
-          <div class="card-header-image" style="background: linear-gradient(135deg, {{ lesson.selected_color | lesson_color_primary }} 0%, {{ lesson.selected_color | lesson_color_secondary }} 100%);">
+          <div class="card-header-image" style="background: linear-gradient(135deg, {{ lesson | get_lesson_color | lesson_color_primary }} 0%, {{ lesson | get_lesson_color | lesson_color_secondary }} 100%);">
             <div class="header-content">
               <i class="fas fa-graduation-cap fa-3x text-white opacity-75"></i>
               <div class="tags-container">

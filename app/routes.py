@@ -279,21 +279,25 @@ def partial_class_add():
         if not title:
             message = 'Title is required.'
         else:
-            lesson = lesson_manager.add_lesson(
-                g.user.id, 
-                title, 
-                description, 
-                status, 
-                tags, 
-                source_platform=source_platform,
-                google_classroom_id=google_classroom_id,
-                author_name=author_name, 
-                selected_color=int(selected_color)
-            )
-            if lesson:
-                return jsonify(success=True, redirect='class')
-            else:
-                message = 'Error adding lesson.'
+            try:
+                lesson = lesson_manager.add_lesson(
+                    g.user.id, 
+                    title, 
+                    description, 
+                    status, 
+                    tags, 
+                    source_platform=source_platform,
+                    google_classroom_id=google_classroom_id,
+                    author_name=author_name, 
+                    selected_color=int(selected_color)
+                )
+                if lesson:
+                    return jsonify(success=True, redirect='class')
+                else:
+                    message = 'Error adding lesson.'
+            except Exception as e:
+                print(f"Error adding lesson: {e}")
+                message = f'Error adding lesson: {str(e)}'
         return jsonify(success=False, message=message)
     return render_template('lessons/_add.html')
 
