@@ -92,6 +92,116 @@
     </div>
   </div>
 
+  <!-- Google Classroom Courses Section -->
+  {% if show_google_courses and unimported_google_courses and unimported_google_courses|length > 0 %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-primary">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-0">
+                <i class="fas fa-chalkboard-teacher me-2"></i>
+                Google Classroom Courses
+              </h5>
+              <small class="text-light">Available courses to import as lessons</small>
+            </div>
+            <div>
+              <button class="btn btn-light btn-sm" onclick="bulkImportGoogleClassroom()">
+                <i class="fas fa-download me-1"></i>Import All
+              </button>
+              <button class="btn btn-light btn-sm" onclick="refreshGoogleClassroomData()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            {% for course in unimported_google_courses %}
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+              <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="card-title mb-0 text-truncate" title="{{ course.name }}">
+                      {{ course.name }}
+                    </h6>
+                    <span class="badge bg-success">Google Classroom</span>
+                  </div>
+                  
+                  {% if course.section %}
+                  <p class="card-text small text-muted mb-2">{{ course.section }}</p>
+                  {% endif %}
+                  
+                  <div class="row text-center mb-3">
+                    <div class="col-4">
+                      <small class="text-muted d-block">Announcements</small>
+                      <span class="badge bg-info">{{ course.announcements|length }}</span>
+                    </div>
+                    <div class="col-4">
+                      <small class="text-muted d-block">Assignments</small>
+                      <span class="badge bg-warning">{{ course.courseWork|length }}</span>
+                    </div>
+                    <div class="col-4">
+                      <small class="text-muted d-block">Materials</small>
+                      <span class="badge bg-secondary">{{ course.materials|length }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="d-grid gap-2">
+                    <button class="btn btn-primary btn-sm" onclick="importGoogleClassroomCourse('{{ course.id }}', '{{ course.name }}')">
+                      <i class="fas fa-plus me-1"></i>Import as Lesson
+                    </button>
+                    <a href="{{ course.alternateLink }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                      <i class="fas fa-external-link-alt me-1"></i>Open in Classroom
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% elif show_google_courses and google_classroom_connected %}
+  <!-- No Google Classroom Courses to Import -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-success">
+        <div class="card-body text-center">
+          <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+          <h5 class="text-success">Google Classroom Connected!</h5>
+          <p class="text-muted">All your Google Classroom courses have been imported as lessons.</p>
+          <button class="btn btn-outline-success btn-sm" onclick="refreshGoogleClassroomData()">
+            <i class="fas fa-sync-alt me-1"></i>Refresh Data
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Google Classroom Connection Status -->
+  {% if not google_classroom_connected %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-info">
+        <div class="card-body text-center">
+          <i class="fas fa-info-circle text-info fa-3x mb-3"></i>
+          <h5 class="text-info">Connect to Google Classroom</h5>
+          <p class="text-muted">Import your Google Classroom courses as lessons to get started.</p>
+          <a href="{{ url_for('authorize_google_classroom') }}" class="btn btn-primary">
+            <i class="fas fa-chalkboard-teacher me-1"></i>Connect Google Classroom
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Existing Lessons Section -->
   <div class="row g-4" id="lessons-container">
     {% if lessons %}
       {% for lesson in lessons %}
@@ -263,6 +373,15 @@
   #advancedSearchToggle.btn-primary {
     background-color: #007bff;
     border-color: #007bff;
+  }
+  
+  /* Toast styles */
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
   }
   
   /* Enhanced Card Transitions */
@@ -843,6 +962,147 @@
 </div>
 
 <script>
+// Google Classroom Functions - Global scope
+function importGoogleClassroomCourse(courseId, courseName) {
+  if (!confirm(`Import "${courseName}" as a lesson?`)) {
+    return;
+  }
+  
+  // Show loading state
+  const button = event.target;
+  const originalText = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing...';
+  button.disabled = true;
+  
+  fetch('/api/google_classroom/import_course', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      course_id: courseId
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showToast('success', data.message);
+      // Refresh the page to show the new lesson
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } else {
+      showToast('error', data.message || 'Failed to import course');
+      // Reset button state
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }
+  })
+  .catch(error => {
+    console.error('Error importing course:', error);
+    showToast('error', 'Error importing course');
+    // Reset button state
+    button.disabled = false;
+    button.innerHTML = originalText;
+  });
+}
+
+function bulkImportGoogleClassroom() {
+  if (!confirm('Import all Google Classroom courses as lessons?')) {
+    return;
+  }
+  
+  // Show loading state
+  const button = event.target;
+  const originalText = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing All...';
+  button.disabled = true;
+  
+  fetch('/api/google_classroom/bulk_import', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showToast('success', data.message);
+      // Refresh the page to show the new lessons
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } else {
+      showToast('error', data.message || 'Failed to bulk import courses');
+      // Reset button state
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }
+  })
+  .catch(error => {
+    console.error('Error bulk importing courses:', error);
+    showToast('error', 'Error bulk importing courses');
+    // Reset button state
+    button.disabled = false;
+    button.innerHTML = originalText;
+  });
+}
+
+function refreshGoogleClassroomData() {
+  fetch('/api/google_classroom/sync', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.lessons) {
+      showToast('success', 'Google Classroom data refreshed successfully');
+      // Refresh the page to show updated data
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } else {
+      showToast('error', data.error || 'Failed to refresh data');
+    }
+  })
+  .catch(error => {
+    console.error('Error refreshing data:', error);
+    showToast('error', 'Error refreshing Google Classroom data');
+  });
+}
+
+function showToast(type, message) {
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+  toast.setAttribute('role', 'alert');
+  toast.setAttribute('aria-live', 'assertive');
+  toast.setAttribute('aria-atomic', 'true');
+  
+  toast.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">
+        ${message}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `;
+  
+  // Add to page
+  document.body.appendChild(toast);
+  
+  // Show toast
+  const bsToast = new bootstrap.Toast(toast);
+  bsToast.show();
+  
+  // Remove after hidden
+  toast.addEventListener('hidden.bs.toast', () => {
+    document.body.removeChild(toast);
+  });
+}
+
 // Multiple event listeners to ensure setupAddLessonModal is called
 document.addEventListener('DOMContentLoaded', function() {
   const modal = document.getElementById('addLessonModal');
@@ -1016,6 +1276,147 @@ function clearSearchAndFilter() {
   document.getElementById('authorFilter').value = '';
   document.getElementById('dateFilter').value = '';
   performSearch();
+}
+
+// Google Classroom Functions
+function importGoogleClassroomCourse(courseId, courseName) {
+  if (!confirm(`Import "${courseName}" as a lesson?`)) {
+    return;
+  }
+  
+  // Show loading state
+  const button = event.target;
+  const originalText = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing...';
+  button.disabled = true;
+  
+  fetch('/api/google_classroom/import_course', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      course_id: courseId
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showToast('success', data.message);
+      // Refresh the page to show the new lesson
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } else {
+      showToast('error', data.message || 'Failed to import course');
+      // Reset button state
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }
+  })
+  .catch(error => {
+    console.error('Error importing course:', error);
+    showToast('error', 'Error importing course');
+    // Reset button state
+    button.disabled = false;
+    button.innerHTML = originalText;
+  });
+}
+
+function bulkImportGoogleClassroom() {
+  if (!confirm('Import all Google Classroom courses as lessons?')) {
+    return;
+  }
+  
+  // Show loading state
+  const button = event.target;
+  const originalText = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing All...';
+  button.disabled = true;
+  
+  fetch('/api/google_classroom/bulk_import', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showToast('success', data.message);
+      // Refresh the page to show the new lessons
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } else {
+      showToast('error', data.message || 'Failed to bulk import courses');
+      // Reset button state
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }
+  })
+  .catch(error => {
+    console.error('Error bulk importing courses:', error);
+    showToast('error', 'Error bulk importing courses');
+    // Reset button state
+    button.disabled = false;
+    button.innerHTML = originalText;
+  });
+}
+
+function refreshGoogleClassroomData() {
+  fetch('/api/google_classroom/sync', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.lessons) {
+      showToast('success', 'Google Classroom data refreshed successfully');
+      // Refresh the page to show updated data
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } else {
+      showToast('error', data.error || 'Failed to refresh data');
+    }
+  })
+  .catch(error => {
+    console.error('Error refreshing data:', error);
+    showToast('error', 'Error refreshing Google Classroom data');
+  });
+}
+
+function showToast(type, message) {
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+  toast.setAttribute('role', 'alert');
+  toast.setAttribute('aria-live', 'assertive');
+  toast.setAttribute('aria-atomic', 'true');
+  
+  toast.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">
+        ${message}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `;
+  
+  // Add to page
+  document.body.appendChild(toast);
+  
+  // Show toast
+  const bsToast = new bootstrap.Toast(toast);
+  bsToast.show();
+  
+  // Remove after hidden
+  toast.addEventListener('hidden.bs.toast', () => {
+    document.body.removeChild(toast);
+  });
 }
 
 function toggleAdvancedSearch() {

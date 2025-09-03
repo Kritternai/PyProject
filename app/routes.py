@@ -199,6 +199,11 @@ def partial_dev():
 @login_required
 def partial_class():
     print(f"DEBUG: partial_class called for user {g.user.id}")
+    
+    # Check if we should show Google Classroom courses
+    show_google_courses = request.args.get('show_google_courses', 'false').lower() == 'true'
+    google_classroom_connected = request.args.get('google_classroom_connected', 'false').lower() == 'true'
+    
     lessons = lesson_manager.get_lessons_by_user(g.user.id)
     # Sort: favorite first, then by created order (id)
     lessons = sorted(lessons, key=lambda l: (not l.is_favorite, l.id))
@@ -212,12 +217,27 @@ def partial_class():
 
     # Map Google Classroom courses to lessons
     classroom_courses_map = {}
+    unimported_courses = []  # Courses that haven't been imported as lessons yet
+    
     if google_classroom_imported_data and 'courses' in google_classroom_imported_data.data:
         courses = google_classroom_imported_data.data['courses']
         print(f"DEBUG: Found {len(courses)} Google Classroom courses")
+        
+        # Get existing Google Classroom lesson IDs
+        existing_gc_lesson_ids = set()
+        for lesson in lessons:
+            if lesson.source_platform == 'google_classroom' and lesson.google_classroom_id:
+                existing_gc_lesson_ids.add(str(lesson.google_classroom_id))
+        
         for course_data in courses:
-            classroom_courses_map[str(course_data.get('id'))] = course_data
+            course_id = str(course_data.get('id'))
+            classroom_courses_map[course_id] = course_data
+            
+            # Check if this course hasn't been imported as a lesson yet
+            if course_id not in existing_gc_lesson_ids:
+                unimported_courses.append(course_data)
 
+    # Process existing lessons
     for lesson in lessons:
         if lesson.source_platform == 'google_classroom' and lesson.google_classroom_id:
             course_id_str = str(lesson.google_classroom_id)
@@ -258,8 +278,12 @@ def partial_class():
             if not hasattr(lesson, 'author_name') or not lesson.author_name:
                 lesson.author_name = 'Your Lesson' # Default author for non-GC lessons
 
-    print(f"DEBUG: Rendering template with {len(lessons)} lessons")
-    return render_template('class_fragment.html', lessons=lessons)
+    print(f"DEBUG: Rendering template with {len(lessons)} lessons and {len(unimported_courses)} unimported Google Classroom courses")
+    return render_template('class_fragment.html', 
+                         lessons=lessons, 
+                         unimported_google_courses=unimported_courses,
+                         google_classroom_connected=google_classroom_imported_data is not None,
+                         show_google_courses=show_google_courses or len(unimported_courses) > 0)
 
 @app.route('/partial/class/add', methods=['GET', 'POST'])
 @login_required
@@ -1454,13 +1478,19 @@ def authorize_google_classroom():
                 "client_secret": app.config['GOOGLE_CLIENT_SECRET'],
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                 "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [url_for('oauth2callback', _external=True)]
+                "redirect_uris": [
+                    "http://localhost:8000/google_classroom/oauth2callback",
+                    "http://localhost:8001/google_classroom/oauth2callback",
+                    "http://127.0.0.1:8000/google_classroom/oauth2callback",
+                    "http://127.0.0.1:8001/google_classroom/oauth2callback"
+                ]
             }
         },
         scopes=SCOPES
     )
 
-    flow.redirect_uri = url_for('oauth2callback', _external=True)
+    # Use specific redirect URI instead of dynamic one
+    flow.redirect_uri = "http://localhost:8000/google_classroom/oauth2callback"
 
     authorization_url, state = flow.authorization_url(
         access_type='offline',
@@ -1485,14 +1515,20 @@ def oauth2callback():
                 "client_secret": app.config['GOOGLE_CLIENT_SECRET'],
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                 "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [url_for('oauth2callback', _external=True)]
+                "redirect_uris": [
+                    "http://localhost:8000/google_classroom/oauth2callback",
+                    "http://localhost:8001/google_classroom/oauth2callback",
+                    "http://127.0.0.1:8000/google_classroom/oauth2callback",
+                    "http://127.0.0.1:8001/google_classroom/oauth2callback"
+                ]
             }
         },
         scopes=SCOPES,
         state=state
     )
 
-    flow.redirect_uri = url_for('oauth2callback', _external=True)
+    # Use specific redirect URI instead of dynamic one
+    flow.redirect_uri = "http://localhost:8000/google_classroom/oauth2callback"
 
     authorization_response = request.url
     flow.fetch_token(authorization_response=authorization_response)
@@ -1560,8 +1596,8 @@ def oauth2callback():
         print(f"ERROR: Failed to fetch or import Google Classroom data: {e}")
         flash(f'Connected successfully but failed to import data: {e}', 'warning')
     
-    # Redirect back to main page with parameter to trigger class page load
-    return redirect(url_for('index', google_classroom_connected='true'))
+    # Redirect to SPA main page with class tab active and Google Classroom connected
+    return redirect(url_for('index') + '#class?google_classroom_connected=true&show_google_courses=true')
 
 @app.route('/google_classroom/fetch_data')
 def fetch_google_classroom_data():
@@ -1956,7 +1992,7 @@ def fetch_google_classroom_courses():
 
 @app.route('/google_classroom/import_course/<course_id>', methods=['POST'])
 @login_required
-def import_google_classroom_course(course_id):
+def import_google_classroom_course_by_id(course_id):
     """Import a specific Google Classroom course as a lesson"""
     user_id = session['user_id']
     google_creds = GoogleCredentials.query.filter_by(user_id=user_id).first()
@@ -2017,3 +2053,304 @@ def check_google_classroom_callback():
         return jsonify({'success': True, 'message': 'Connected'})
     else:
         return jsonify({'success': False, 'message': 'Not connected'})
+
+@app.route('/api/google_classroom/lessons')
+@login_required
+def get_google_classroom_lessons():
+    """Get Google Classroom courses as lessons for My Lessons page"""
+    user_id = session['user_id']
+    
+    try:
+        # Get imported Google Classroom data
+        imported_data = ImportedData.query.filter_by(
+            user_id=user_id, 
+            platform='google_classroom_api'
+        ).first()
+        
+        if not imported_data or 'courses' not in imported_data.data:
+            return jsonify({'lessons': [], 'message': 'No Google Classroom data found'})
+        
+        courses = imported_data.data['courses']
+        lessons = []
+        
+        for course in courses:
+            # Create lesson object from Google Classroom course
+            lesson = {
+                'id': f"gc_{course['id']}",  # Prefix to avoid conflicts
+                'title': course['name'],
+                'description': course.get('section', ''),
+                'external_id': course['id'],
+                'external_url': course.get('alternateLink', ''),
+                'source': 'google_classroom',
+                'status': 'active',
+                'color_theme': 1,  # Default color
+                'created_at': datetime.utcnow().isoformat(),
+                'updated_at': datetime.utcnow().isoformat(),
+                
+                # Google Classroom specific data
+                'google_classroom_data': {
+                    'course_id': course['id'],
+                    'section': course.get('section', ''),
+                    'alternate_link': course.get('alternateLink', ''),
+                    'announcements_count': len(course.get('announcements', [])),
+                    'coursework_count': len(course.get('courseWork', [])),
+                    'materials_count': len(course.get('materials', [])),
+                    'topics_count': len(course.get('topics', [])),
+                    'students_count': len(course.get('students', [])),
+                    'teachers_count': len(course.get('teachers', [])),
+                    'attachments_count': len(course.get('all_attachments', [])),
+                    'drive_files_count': len(course.get('drive_files', [])),
+                    
+                    # Grouped data by topics
+                    'grouped_by_topic': course.get('grouped_by_topic', []),
+                    
+                    # Recent activity
+                    'recent_announcements': course.get('announcements', [])[:5],  # Last 5
+                    'recent_coursework': course.get('courseWork', [])[:5],  # Last 5
+                    'recent_materials': course.get('materials', [])[:5],  # Last 5
+                }
+            }
+            
+            lessons.append(lesson)
+        
+        return jsonify({
+            'lessons': lessons,
+            'total_count': len(lessons),
+            'message': f'Found {len(lessons)} Google Classroom courses'
+        })
+        
+    except Exception as e:
+        print(f"ERROR: Failed to get Google Classroom lessons for user {user_id}: {e}")
+        return jsonify({'lessons': [], 'error': str(e)}), 500
+
+@app.route('/api/google_classroom/lesson/<course_id>')
+@login_required
+def get_google_classroom_lesson_detail(course_id):
+    """Get detailed information for a specific Google Classroom course"""
+    user_id = session['user_id']
+    
+    try:
+        # Remove prefix if present
+        if course_id.startswith('gc_'):
+            course_id = course_id[3:]
+        
+        # Get imported Google Classroom data
+        imported_data = ImportedData.query.filter_by(
+            user_id=user_id, 
+            platform='google_classroom_api'
+        ).first()
+        
+        if not imported_data or 'courses' not in imported_data.data:
+            return jsonify({'error': 'No Google Classroom data found'}), 404
+        
+        # Find the specific course
+        course = None
+        for c in imported_data.data['courses']:
+            if c['id'] == course_id:
+                course = c
+                break
+        
+        if not course:
+            return jsonify({'error': 'Course not found'}), 404
+        
+        # Return detailed course information
+        return jsonify({
+            'course': course,
+            'message': 'Course details retrieved successfully'
+        })
+        
+    except Exception as e:
+        print(f"ERROR: Failed to get Google Classroom lesson detail for user {user_id}, course {course_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/google_classroom/sync')
+@login_required
+def sync_google_classroom_data():
+    """Sync Google Classroom data and return updated lessons"""
+    user_id = session['user_id']
+    
+    try:
+        # Fetch fresh data from Google Classroom
+        fetch_google_classroom_data()
+        
+        # Return updated lessons
+        return get_google_classroom_lessons()
+        
+    except Exception as e:
+        print(f"ERROR: Failed to sync Google Classroom data for user {user_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/google_classroom/import_course', methods=['POST'])
+@login_required
+def import_google_classroom_course_from_data():
+    """Import a Google Classroom course as a lesson"""
+    user_id = session['user_id']
+    
+    try:
+        data = request.get_json()
+        course_id = data.get('course_id')
+        
+        if not course_id:
+            return jsonify({'success': False, 'message': 'Course ID is required'}), 400
+        
+        # Get imported Google Classroom data
+        imported_data = ImportedData.query.filter_by(
+            user_id=user_id, 
+            platform='google_classroom_api'
+        ).first()
+        
+        if not imported_data or 'courses' not in imported_data.data:
+            return jsonify({'success': False, 'message': 'No Google Classroom data found'}), 404
+        
+        # Find the specific course
+        course = None
+        for c in imported_data.data['courses']:
+            if str(c['id']) == str(course_id):
+                course = c
+                break
+        
+        if not course:
+            return jsonify({'success': False, 'message': 'Course not found'}), 404
+        
+        # Check if course already imported
+        existing_lesson = Lesson.query.filter_by(
+            user_id=user_id,
+            google_classroom_id=course_id
+        ).first()
+        
+        if existing_lesson:
+            return jsonify({'success': False, 'message': 'Course already imported as lesson'}), 400
+        
+        # Create new lesson from Google Classroom course
+        lesson = lesson_manager.add_lesson(
+            user_id=user_id,
+            title=course['name'],
+            description=course.get('section', ''),
+            status='active',
+            tags='Google Classroom',
+            source_platform='google_classroom',
+            google_classroom_id=course_id,
+            author_name='Classroom Teacher',
+            selected_color=1  # Default color
+        )
+        
+        if lesson:
+            # Update lesson with additional Google Classroom data
+            lesson.external_url = course.get('alternateLink', '')
+            lesson.external_id = course_id
+            
+            # Add Google Classroom specific metadata
+            lesson.metadata = {
+                'google_classroom_course_id': course_id,
+                'section': course.get('section', ''),
+                'announcements_count': len(course.get('announcements', [])),
+                'coursework_count': len(course.get('courseWork', [])),
+                'materials_count': len(course.get('materials', [])),
+                'topics_count': len(course.get('topics', [])),
+                'students_count': len(course.get('students', [])),
+                'teachers_count': len(course.get('teachers', [])),
+                'imported_at': datetime.utcnow().isoformat()
+            }
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f'Successfully imported "{course["name"]}" as lesson',
+                'lesson_id': lesson.id
+            })
+        else:
+            return jsonify({'success': False, 'message': 'Failed to create lesson'}), 500
+            
+    except Exception as e:
+        db.session.rollback()
+        print(f"ERROR: Failed to import Google Classroom course for user {user_id}: {e}")
+        return jsonify({'success': False, 'message': f'Error importing course: {str(e)}'}), 500
+
+@app.route('/api/google_classroom/bulk_import', methods=['POST'])
+@login_required
+def bulk_import_google_classroom_courses_from_data():
+    """Import all Google Classroom courses as lessons"""
+    user_id = session['user_id']
+    
+    try:
+        # Get imported Google Classroom data
+        imported_data = ImportedData.query.filter_by(
+            user_id=user_id, 
+            platform='google_classroom_api'
+        ).first()
+        
+        if not imported_data or 'courses' not in imported_data.data:
+            return jsonify({'success': False, 'message': 'No Google Classroom data found'}), 404
+        
+        courses = imported_data.data['courses']
+        imported_count = 0
+        errors = []
+        
+        # Get existing Google Classroom lesson IDs
+        existing_gc_lesson_ids = set()
+        existing_lessons = Lesson.query.filter_by(user_id=user_id).all()
+        for lesson in existing_lessons:
+            if lesson.google_classroom_id:
+                existing_gc_lesson_ids.add(str(lesson.google_classroom_id))
+        
+        for course in courses:
+            course_id = str(course['id'])
+            
+            # Skip if already imported
+            if course_id in existing_gc_lesson_ids:
+                continue
+            
+            try:
+                # Create new lesson
+                lesson = lesson_manager.add_lesson(
+                    user_id=user_id,
+                    title=course['name'],
+                    description=course.get('section', ''),
+                    status='active',
+                    tags='Google Classroom',
+                    source_platform='google_classroom',
+                    google_classroom_id=course_id,
+                    author_name='Classroom Teacher',
+                    selected_color=1
+                )
+                
+                if lesson:
+                    # Update lesson with additional data
+                    lesson.external_url = course.get('alternateLink', '')
+                    lesson.external_id = course_id
+                    
+                    # Add metadata
+                    lesson.metadata = {
+                        'google_classroom_course_id': course_id,
+                        'section': course.get('section', ''),
+                        'announcements_count': len(course.get('announcements', [])),
+                        'coursework_count': len(course.get('courseWork', [])),
+                        'materials_count': len(course.get('materials', [])),
+                        'topics_count': len(course.get('topics', [])),
+                        'students_count': len(course.get('students', [])),
+                        'teachers_count': len(course.get('teachers', [])),
+                        'imported_at': datetime.utcnow().isoformat()
+                    }
+                    
+                    imported_count += 1
+                else:
+                    errors.append(f"Failed to create lesson for {course['name']}")
+                    
+            except Exception as e:
+                errors.append(f"Error importing {course['name']}: {str(e)}")
+                continue
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully imported {imported_count} courses as lessons',
+            'imported_count': imported_count,
+            'errors': errors
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"ERROR: Failed to bulk import Google Classroom courses for user {user_id}: {e}")
+        return jsonify({'success': False, 'message': f'Error bulk importing: {str(e)}'}), 500
