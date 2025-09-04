@@ -94,15 +94,27 @@ def partial_note():
 @main_bp.route('/partial/track')
 @login_required_web
 def partial_track():
-    """Track/Tasks partial"""
+    """Track/Progress Tracking partial"""
     if not g.user:
         return jsonify({'error': 'Not authenticated'}), 401
     try:
-        task_service = get_service(TaskService)
-        tasks = task_service.get_user_tasks(g.user.id)
-        return render_template('track_fragment.html', tasks=tasks, user=g.user)
+        # For now, just return the tracking fragment
+        # Later we can add task service integration
+        return render_template('track_fragment.html', user=g.user)
     except Exception as e:
-        return render_template('track_fragment.html', tasks=[], user=g.user)
+        return render_template('track_fragment.html', user=g.user)
+
+@main_bp.route('/partial/pomodoro')
+@login_required_web
+def partial_pomodoro():
+    """Pomodoro timer partial"""
+    if not g.user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    try:
+        # Return the pomodoro fragment
+        return render_template('pomodoro_fragment.html', user=g.user)
+    except Exception as e:
+        return render_template('pomodoro_fragment.html', user=g.user)
 
 @main_bp.route('/partial/dev')
 @login_required_web

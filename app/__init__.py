@@ -64,11 +64,15 @@ def register_blueprints(app):
     from .presentation.routes.task_routes import task_bp
     from .presentation.routes.web_routes import web_bp
     from .presentation.routes.register_routes import register_bp
+    from .presentation.routes.pomodoro_routes import pomodoro_bp
+    from .presentation.routes.tracking_routes import tracking_bp
     from .routes_new import main_bp
     
     # Register main routes (for HTML pages)
     app.register_blueprint(main_bp)
     app.register_blueprint(register_bp)
+    app.register_blueprint(pomodoro_bp)
+    app.register_blueprint(tracking_bp)
     
     # Register API blueprints
     app.register_blueprint(auth_bp)
