@@ -114,4 +114,4 @@ class LoginController:
         """
         session.clear()
         flash('You have been logged out successfully.', 'success')
-        return redirect(url_for('auth_web.login'))
+        return redirect(url_for('register.login'))

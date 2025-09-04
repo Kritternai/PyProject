@@ -52,7 +52,11 @@ def login():
 @login_required_web
 def dashboard():
     """Dashboard page"""
-    return dashboard_controller.get_dashboard()
+    if not g.user:
+        flash('Please log in to access this page.', 'warning')
+        return redirect(url_for('register.login'))
+    
+    return render_template('base.html', user=g.user)
 
 @register_bp.route('/logout')
 def logout():

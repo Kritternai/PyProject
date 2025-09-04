@@ -41,6 +41,10 @@ def load_logged_in_user():
 @main_bp.route('/index')
 def index():
     """Main index page."""
+    # Check if user is logged in
+    if 'user_id' in session:
+        return redirect(url_for('register.dashboard'))
+    
     # Check if user just connected Google Classroom
     google_connected = request.args.get('google_classroom_connected') == 'true'
     return render_template('base.html', google_connected=google_connected)
@@ -51,7 +55,7 @@ def dashboard():
     """Dashboard page."""
     if not g.user:
         return redirect(url_for('register.login'))
-    return render_template('dashboard.html', user=g.user)
+    return render_template('base.html', user=g.user)
 
 @main_bp.route('/partial/dashboard')
 @login_required_web
