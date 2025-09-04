@@ -7,10 +7,10 @@
       <li><a class="dropdown-item" href="#" onclick="loadPage('profile');return false;"><i class="bi bi-person-circle me-2"></i>Profile</a></li>
       <li><a class="dropdown-item" href="#" onclick="loadPage('change_password');return false;"><i class="bi bi-key-fill me-2"></i>Change Password</a></li>
       <li><hr class="dropdown-divider"></li>
-      <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+      <li><a class="dropdown-item text-danger" href="{{ url_for('register.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
     </ul>
   </div>
 {% else %}
-  <a href="#" onclick="loadPage('login');return false;" class="btn btn-primary w-100 mb-2">Login</a>
-  <a href="#" onclick="loadPage('register');return false;" class="btn btn-outline-primary w-100">Register</a>
+  <a href="{{ url_for('register.login') }}" class="btn btn-primary w-100 mb-2">Login</a>
+  <a href="{{ url_for('register.register') }}" class="btn btn-outline-primary w-100">Register</a>
 {% endif %} 

@@ -8,7 +8,7 @@
             <div class="alert {% if success %}alert-success{% else %}alert-danger{% endif %}">{{ message }}</div>
           {% endif %}
           {% if not success %}
-          <form method="POST" action="/partial/register" id="register-form">
+          <form method="POST" action="{{ url_for('register.partial_register') }}" id="register-form">
             <div class="mb-3">
               <label for="username" class="form-label">Username</label>
               <input type="text" id="username" name="username" required class="form-control">

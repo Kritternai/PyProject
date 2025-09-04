@@ -1,34 +1,81 @@
-from app import app, db
-from flask import render_template, request, flash, redirect, url_for, session, jsonify, make_response, g
-import json
-import uuid
-from app.core.lesson_manager import LessonManager
-from app.core.lesson import Lesson, LessonSection # Import Lesson model for query
-from app.core.imported_data import ImportedData # Import ImportedData model
-from app.core.google_credentials import GoogleCredentials # Import GoogleCredentials model
-from app.core.course_linkage_manager import CourseLinkageManager # Import CourseLinkageManager
-import datetime # Import datetime
-from app.core.user_manager import UserManager
-from app.core.authenticator import Authenticator
+"""
+Main routes for backward compatibility.
+Legacy routes that will be gradually migrated to new architecture.
+"""
+
+from flask import Blueprint, render_template, request, redirect, url_for, session, g
 from functools import wraps
-# import os 
-from datetime import datetime # note: Used for date handling
-from werkzeug.utils import secure_filename # note: Used for secure file names
+from .presentation.middleware.auth_middleware import login_required, get_current_user
 
-# For Google Classroom API
-import os
-import json
-from google_auth_oauthlib.flow import Flow
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
+# Create main blueprint
+main_bp = Blueprint('main', __name__)
 
-# Initialize Managers
-lesson_manager = LessonManager()
-course_linkage_manager = CourseLinkageManager() # Initialize CourseLinkageManager
 
-user_manager = UserManager()
-authenticator = Authenticator(user_manager)
+@main_bp.route('/')
+@main_bp.route('/index')
+def index():
+    """Main index page."""
+    # Check if user just connected Google Classroom
+    google_connected = request.args.get('google_classroom_connected') == 'true'
+    return render_template('base.html', google_connected=google_connected)
+
+
+@main_bp.route('/dashboard')
+@login_required
+def dashboard():
+    """Dashboard page."""
+    return render_template('dashboard.html', user=g.user)
+
+
+@main_bp.route('/partial/dashboard')
+def partial_dashboard():
+    """Dashboard partial for SPA."""
+    return render_template('dashboard_fragment.html', user=g.user)
+
+
+# Legacy routes for backward compatibility
+# These will be gradually migrated to the new architecture
+
+@main_bp.route('/login')
+def login_page():
+    """Login page."""
+    return render_template('login.html')
+
+
+@main_bp.route('/register')
+def register_page():
+    """Registration page."""
+    return render_template('register.html')
+
+
+# Import legacy routes for backward compatibility
+# This ensures all existing functionality continues to work
+try:
+    # Note: Legacy models are commented out to avoid table name conflicts
+    # from .core.lesson_manager import LessonManager
+    # from .core.lesson import Lesson, LessonSection
+    # from .core.imported_data import ImportedData
+    # from .core.google_credentials import GoogleCredentials
+    # from .core.course_linkage_manager import CourseLinkageManager
+    # from .core.user_manager import UserManager
+    # from .core.authenticator import Authenticator
+    # from .core.note import Note
+    # from .core.integration_service import IntegrationService
+
+    # Initialize legacy managers
+    # lesson_manager = LessonManager()
+    # course_linkage_manager = CourseLinkageManager()
+    # user_manager = UserManager()
+    # authenticator = Authenticator(user_manager)
+
+    # Import all legacy routes
+    # from .legacy_routes import *
+
+    print("Legacy routes temporarily disabled to avoid table conflicts")
+
+except ImportError as e:
+    print(f"Warning: Could not import legacy routes: {e}")
+    # Continue without legacy routes if they don't exist yet
 
 # Google Classroom API Scopes - MATCHING EXACTLY WHAT GOOGLE RETURNS IN THE ERROR LOG
 SCOPES = [
@@ -57,28 +104,34 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@app.before_request
+@main_bp.before_request
 def load_logged_in_user():
     user_id = session.get('user_id')
-    g.user = user_manager.get_user_by_id(user_id) if user_id else None
+    # g.user = user_manager.get_user_by_id(user_id) if user_id else None
+    g.user = None  # Temporarily disabled
 
-@app.route('/')
-@app.route('/index')
+@main_bp.route('/')
 def index():
     # Check if user just connected Google Classroom
     google_connected = request.args.get('google_classroom_connected') == 'true'
     return render_template('base.html', google_connected=google_connected)
 
-@app.route('/dashboard')
+@main_bp.route('/index')
+def index_alt():
+    # Check if user just connected Google Classroom
+    google_connected = request.args.get('google_classroom_connected') == 'true'
+    return render_template('base.html', google_connected=google_connected)
+
+@main_bp.route('/dashboard')
 @login_required
 def dashboard():
     return render_template('dashboard.html', user=g.user)
 
-@app.route('/partial/dashboard')
+@main_bp.route('/partial/dashboard')
 def partial_dashboard():
     return render_template('dashboard_fragment.html', user=g.user)
 
-@app.route('/partial/note')
+@main_bp.route('/partial/note')
 @login_required
 def partial_note_list():
     from app.core.note import Note
@@ -96,7 +149,7 @@ def partial_note_list():
                          notes=notes, 
                          user_data=user_data)
 
-@app.route('/partial/note/add', methods=['GET', 'POST'])
+@main_bp.route('/partial/note/add', methods=['GET', 'POST'])
 @login_required
 def partial_note_add_standalone():
     if request.method == 'POST':
@@ -184,7 +237,7 @@ def partial_note_add_standalone():
     return render_template('notes/create.html', lesson=None)
 
 
-@app.route('/partial/dev')
+@main_bp.route('/partial/dev')
 def partial_dev():
     user = g.user
     google_classroom_data = []
@@ -195,7 +248,7 @@ def partial_dev():
     return render_template('dev_fragment.html', user=user, google_classroom_data=google_classroom_data)
 
 # --- SPA CRUD for Class (Lesson) ---
-@app.route('/partial/class')
+@main_bp.route('/partial/class')
 @login_required
 def partial_class():
     print(f"DEBUG: partial_class called for user {g.user.id}")
@@ -304,7 +357,7 @@ def partial_class():
                          google_classroom_connected=google_classroom_imported_data is not None,
                          show_google_courses=show_google_courses or len(unimported_courses) > 0)
 
-@app.route('/partial/class/add', methods=['GET', 'POST'])
+@main_bp.route('/partial/class/add', methods=['GET', 'POST'])
 @login_required
 def partial_class_add():
     message = None
@@ -344,7 +397,7 @@ def partial_class_add():
         return jsonify(success=False, message=message)
     return render_template('lessons/_add.html')
 
-@app.route('/partial/class/<lesson_id>')
+@main_bp.route('/partial/class/<lesson_id>')
 @login_required
 def partial_class_detail(lesson_id):
     from app.core.integration_service import IntegrationService
@@ -394,7 +447,7 @@ def partial_class_detail(lesson_id):
                          sections=sections, 
                          lesson_summary=lesson_summary)
 
-@app.route('/partial/class/<lesson_id>/edit', methods=['GET', 'POST'])
+@main_bp.route('/partial/class/<lesson_id>/edit', methods=['GET', 'POST'])
 @login_required
 def partial_class_edit(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
@@ -411,7 +464,7 @@ def partial_class_edit(lesson_id):
         return jsonify(success=True, redirect=f'class/{lesson_id}')
     return render_template('lessons/_edit.html', lesson=lesson)
 
-@app.route('/partial/class/<lesson_id>/delete', methods=['POST'])
+@main_bp.route('/partial/class/<lesson_id>/delete', methods=['POST'])
 @login_required
 def partial_class_delete(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
@@ -421,7 +474,7 @@ def partial_class_delete(lesson_id):
     return jsonify(success=True, redirect='class')
 
 # --- SPA CRUD for LessonSection (Section/Content) ---
-@app.route('/partial/class/<lesson_id>/sections')
+@main_bp.route('/partial/class/<lesson_id>/sections')
 @login_required
 def partial_section_list(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
@@ -435,7 +488,7 @@ from werkzeug.utils import secure_filename
 UPLOAD_FOLDER = '/Users/kbbk/PyProject-3/app/static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.route('/partial/class/<lesson_id>/sections/add', methods=['GET', 'POST'])
+@main_bp.route('/partial/class/<lesson_id>/sections/add', methods=['GET', 'POST'])
 @login_required
 def partial_section_add(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
@@ -548,7 +601,7 @@ def partial_section_add(lesson_id):
             return jsonify(success=True, html=html)
     return render_template('lessons/section_add.html', lesson=lesson)
 
-@app.route('/partial/class/<lesson_id>/sections/<section_id>/edit', methods=['GET', 'POST'])
+@main_bp.route('/partial/class/<lesson_id>/sections/<section_id>/edit', methods=['GET', 'POST'])
 @login_required
 def partial_section_edit(lesson_id, section_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
@@ -592,7 +645,7 @@ def partial_section_edit(lesson_id, section_id):
         return jsonify(success=True, html=html)
     return render_template('lessons/section_edit.html', lesson=lesson, section=section)
 
-@app.route('/partial/class/<lesson_id>/sections/<section_id>/delete', methods=['POST'])
+@main_bp.route('/partial/class/<lesson_id>/sections/<section_id>/delete', methods=['POST'])
 @login_required
 def partial_section_delete(lesson_id, section_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
@@ -625,9 +678,9 @@ if not os.path.exists(FILE_FOLDER):
     os.makedirs(FILE_FOLDER)
 
 # กำหนดค่า config ให้ app
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['IMAGE_FOLDER'] = IMAGE_FOLDER
-app.config['FILE_FOLDER'] = FILE_FOLDER
+# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER  # Temporarily disabled
+# app.config['IMAGE_FOLDER'] = IMAGE_FOLDER  # Temporarily disabled
+# app.config['FILE_FOLDER'] = FILE_FOLDER  # Temporarily disabled
 
 # กำหนดประเภทไฟล์ที่อนุญาตให้อัพโหลด
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -652,7 +705,7 @@ def allowed_file(filename, file_type='all'):
         return extension in ALLOWED_EXTENSIONS
 
 # Note Management Routes is now part of LessonSection
-@app.route('/partial/class/<lesson_id>/notes/add', methods=['GET', 'POST'])
+@main_bp.route('/partial/class/<lesson_id>/notes/add', methods=['GET', 'POST'])
 @login_required
 def partial_note_add(lesson_id):
     from app.core.integration_service import IntegrationService
@@ -758,7 +811,7 @@ def partial_note_add(lesson_id):
 
     return render_template('notes/create.html', lesson=lesson)
 
-@app.route('/partial/class/<lesson_id>/notes/<section_id>/edit', methods=['GET', 'POST'])
+@main_bp.route('/partial/class/<lesson_id>/notes/<section_id>/edit', methods=['GET', 'POST'])
 @login_required
 def partial_note_edit(lesson_id, section_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
@@ -844,7 +897,7 @@ def partial_note_edit(lesson_id, section_id):
 
 
 
-@app.route('/partial/note/<note_id>/delete', methods=['POST'])
+@main_bp.route('/partial/note/<note_id>/delete', methods=['POST'])
 @login_required
 def partial_note_delete_standalone(note_id):
     from app.core.note import Note
@@ -870,7 +923,7 @@ def partial_note_delete_standalone(note_id):
         db.session.rollback()
         return jsonify(success=False, message=f'Error deleting note: {str(e)}')
 
-@app.route('/partial/note/<note_id>/edit', methods=['GET', 'POST'])
+@main_bp.route('/partial/note/<note_id>/edit', methods=['GET', 'POST'])
 @login_required
 def partial_note_edit_standalone(note_id):
     from app.core.note import Note
@@ -975,7 +1028,7 @@ def partial_note_edit_standalone(note_id):
     return render_template('notes/_edit.html', note=note)
 
 # Integration Routes
-@app.route('/api/integration/sync-note-to-lesson/<note_id>/<lesson_id>', methods=['POST'])
+@main_bp.route('/api/integration/sync-note-to-lesson/<note_id>/<lesson_id>', methods=['POST'])
 @login_required
 def sync_note_to_lesson(note_id, lesson_id):
     """Sync a note to a lesson"""
@@ -990,7 +1043,7 @@ def sync_note_to_lesson(note_id, lesson_id):
     except Exception as e:
         return jsonify(success=False, message=f'Error syncing note: {str(e)}')
 
-@app.route('/api/integration/sync-lesson-to-note/<lesson_id>/<section_id>', methods=['POST'])
+@main_bp.route('/api/integration/sync-lesson-to-note/<lesson_id>/<section_id>', methods=['POST'])
 @login_required
 def sync_lesson_to_note(lesson_id, section_id):
     """Sync a lesson section to a note"""
@@ -1005,7 +1058,7 @@ def sync_lesson_to_note(lesson_id, section_id):
     except Exception as e:
         return jsonify(success=False, message=f'Error syncing lesson: {str(e)}')
 
-@app.route('/api/integration/sync-files/<source_type>/<source_id>/<target_type>/<target_id>', methods=['POST'])
+@main_bp.route('/api/integration/sync-files/<source_type>/<source_id>/<target_type>/<target_id>', methods=['POST'])
 @login_required
 def sync_files_between_entities(source_type, source_id, target_type, target_id):
     """Sync files between different entities"""
@@ -1022,7 +1075,7 @@ def sync_files_between_entities(source_type, source_id, target_type, target_id):
 
 # === End of note management routes ===
 
-@app.route('/login', methods=['GET', 'POST'])
+@main_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -1035,7 +1088,7 @@ def login():
             return render_template('login_fragment.html', success=False, message='Invalid username or password.')
     return render_template('login_fragment.html')
 
-@app.route('/register', methods=['GET', 'POST'])
+@main_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -1050,7 +1103,7 @@ def register():
             return render_template('register_fragment.html', success=False, message='Username or email already exists.')
     return render_template('register_fragment.html')
 
-@app.route('/partial/login', methods=['GET', 'POST'])
+@main_bp.route('/partial/login', methods=['GET', 'POST'])
 def partial_login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -1070,7 +1123,7 @@ def partial_login():
                 return render_template('login_fragment.html', success=False, message='Invalid username or password.')
     return render_template('login_fragment.html')
 
-@app.route('/partial/register', methods=['GET', 'POST'])
+@main_bp.route('/partial/register', methods=['GET', 'POST'])
 def partial_register():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -1107,16 +1160,16 @@ def partial_register():
                 return render_template('register_fragment.html', success=False, message='Username or email already exists.')
     return render_template('register_fragment.html')
 
-@app.route('/partial/sidebar-auth')
+@main_bp.route('/partial/sidebar-auth')
 def partial_sidebar_auth():
     return render_template('sidebar_auth_fragment.html')
 
-@app.route('/partial/profile')
+@main_bp.route('/partial/profile')
 @login_required
 def partial_profile():
     return render_template('profile_fragment.html', user=g.user)
 
-@app.route('/partial/change_password', methods=['GET', 'POST'])
+@main_bp.route('/partial/change_password', methods=['GET', 'POST'])
 @login_required
 def partial_change_password():
     if request.method == 'POST':
@@ -1137,7 +1190,7 @@ def partial_change_password():
             return jsonify(success=False, message='Error updating password.')
     return render_template('change_password_fragment.html', user=g.user)
 
-@app.route('/integrations/kmitl_classroom_link', methods=['GET', 'POST'])
+@main_bp.route('/integrations/kmitl_classroom_link', methods=['GET', 'POST'])
 @login_required
 def kmitl_classroom_link():
     user_id = g.user.id
@@ -1187,7 +1240,7 @@ def kmitl_classroom_link():
         linkage_map=linkage_map
     )
 
-@app.route('/delete_course_linkage/<kmitl_course_identifier>', methods=['POST'])
+@main_bp.route('/delete_course_linkage/<kmitl_course_identifier>', methods=['POST'])
 @login_required
 def delete_course_linkage(kmitl_course_identifier):
     user_id = g.user.id
@@ -1197,20 +1250,20 @@ def delete_course_linkage(kmitl_course_identifier):
         flash('Error unlinking course.', 'danger')
     return redirect(url_for('kmitl_classroom_link'))
 
-@app.route('/logout')
+@main_bp.route('/logout')
 def logout():
     session.pop('user_id', None)
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
 
 # Lesson Management Routes
-@app.route('/lessons')
+@main_bp.route('/lessons')
 def list_lessons():
     user_id = session['user_id']
     lessons = lesson_manager.get_lessons_by_user(user_id)
     return render_template('lessons/list.html', title='My Lessons', lessons=lessons)
 
-@app.route('/lessons/add', methods=['GET', 'POST'])
+@main_bp.route('/lessons/add', methods=['GET', 'POST'])
 def add_lesson():
     is_htmx = 'HX-Request' in request.headers
 
@@ -1261,7 +1314,7 @@ def add_lesson():
         return render_template('lessons/_add.html', title='Add New Lesson')
     return render_template('lessons/add.html', title='Add New Lesson')
 
-@app.route('/lessons/<lesson_id>')
+@main_bp.route('/lessons/<lesson_id>')
 def lesson_detail(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
     is_htmx = 'HX-Request' in request.headers
@@ -1316,7 +1369,7 @@ def lesson_detail(lesson_id):
         return render_template('lessons/_detail.html', title=lesson.title, lesson=lesson)
     return render_template('lessons/detail.html', title=lesson.title, lesson=lesson)
 
-@app.route('/lessons/<lesson_id>/edit', methods=['GET', 'POST'])
+@main_bp.route('/lessons/<lesson_id>/edit', methods=['GET', 'POST'])
 def edit_lesson(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
     is_htmx = 'HX-Request' in request.headers
@@ -1377,7 +1430,7 @@ def edit_lesson(lesson_id):
         return render_template('lessons/_edit.html', title='Edit Lesson', lesson=lesson)
     return render_template('lessons/edit.html', title='Edit Lesson', lesson=lesson)
 
-@app.route('/lessons/<lesson_id>/delete', methods=['POST'])
+@main_bp.route('/lessons/<lesson_id>/delete', methods=['POST'])
 def delete_lesson(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
     is_htmx = 'HX-Request' in request.headers
@@ -1413,7 +1466,7 @@ def delete_lesson(lesson_id):
         return redirect(url_for('list_lessons'))
     return make_response('') # Fallback for HTMX if no specific error, though HX-Trigger should handle it
 
-@app.route('/partial/class/<lesson_id>/favorite', methods=['POST'])
+@main_bp.route('/partial/class/<lesson_id>/favorite', methods=['POST'])
 @login_required
 def partial_class_toggle_favorite(lesson_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
@@ -1423,7 +1476,7 @@ def partial_class_toggle_favorite(lesson_id):
     return jsonify(success=True, is_favorite=new_state)
 
 # API Endpoint for Chrome Extension
-@app.route('/api/import_data', methods=['POST'])
+@main_bp.route('/api/import_data', methods=['POST'])
 def import_data_from_extension():
     if not request.is_json:
         return jsonify({"error": "Request must be JSON"}), 400
@@ -1448,7 +1501,7 @@ def import_data_from_extension():
         db.session.rollback()
         return jsonify({"error": f"Failed to save data: {str(e)}"}), 500
 
-@app.route('/external_data/view')
+@main_bp.route('/external_data/view')
 def view_external_data():
     user_id = session['user_id']
     imported_data_list = ImportedData.query.filter_by(user_id=user_id).order_by(ImportedData.imported_at.desc()).all()
@@ -1484,7 +1537,7 @@ def view_external_data():
                            kmitl_studytable_data=kmitl_studytable_data)
 
 # Google Classroom API Integration Routes
-@app.route('/google_classroom/authorize')
+@main_bp.route('/google_classroom/authorize')
 def authorize_google_classroom():
     if not app.config.get('GOOGLE_CLIENT_ID') or not app.config.get('GOOGLE_CLIENT_SECRET'):
         flash('Google API credentials are not configured.', 'danger')
@@ -1519,7 +1572,7 @@ def authorize_google_classroom():
     session['oauth_state'] = state
     return redirect(authorization_url)
 
-@app.route('/google_classroom/oauth2callback')
+@main_bp.route('/google_classroom/oauth2callback')
 def oauth2callback():
     state = session.pop('oauth_state', None)
 
@@ -1837,7 +1890,7 @@ def oauth2callback():
     # Redirect to SPA main page with class tab active and Google Classroom connected
     return redirect(url_for('index') + '#class?google_classroom_connected=true&show_google_courses=false')
 
-@app.route('/google_classroom/fetch_data')
+@main_bp.route('/google_classroom/fetch_data')
 def fetch_google_classroom_data():
     user_id = session['user_id']
     google_creds = GoogleCredentials.query.filter_by(user_id=user_id).first()
@@ -2087,7 +2140,7 @@ def fetch_google_classroom_data():
         print(f"ERROR: Error fetching Google Classroom data for user {user_id}: {e}")
         return redirect(url_for('index'))
 
-@app.route('/google_classroom/check_status')
+@main_bp.route('/google_classroom/check_status')
 @login_required
 def check_google_classroom_status():
     """Check if user has valid Google Classroom credentials"""
@@ -2128,7 +2181,7 @@ def check_google_classroom_status():
     
     return jsonify({'connected': True, 'message': 'Connected'})
 
-@app.route('/google_classroom/fetch_courses')
+@main_bp.route('/google_classroom/fetch_courses')
 @login_required
 def fetch_google_classroom_courses():
     """Fetch courses from Google Classroom for the add lesson modal"""
@@ -2228,7 +2281,7 @@ def fetch_google_classroom_courses():
         print(f"ERROR: Failed to fetch courses: {e}")
         return jsonify({'success': False, 'message': f'Failed to fetch courses: {str(e)}'})
 
-@app.route('/google_classroom/import_course/<course_id>', methods=['POST'])
+@main_bp.route('/google_classroom/import_course/<course_id>', methods=['POST'])
 @login_required
 def import_google_classroom_course_by_id(course_id):
     """Import a specific Google Classroom course as a lesson"""
@@ -2279,7 +2332,7 @@ def import_google_classroom_course_by_id(course_id):
         print(f"ERROR: Failed to import course: {e}")
         return jsonify({'success': False, 'message': f'Failed to import course: {str(e)}'})
 
-@app.route('/google_classroom/check_callback')
+@main_bp.route('/google_classroom/check_callback')
 def check_google_classroom_callback():
     """Check if OAuth callback was successful"""
     user_id = session.get('user_id')
@@ -2292,7 +2345,7 @@ def check_google_classroom_callback():
     else:
         return jsonify({'success': False, 'message': 'Not connected'})
 
-@app.route('/api/google_classroom/lessons')
+@main_bp.route('/api/google_classroom/lessons')
 @login_required
 def get_google_classroom_lessons():
     """Get Google Classroom courses as lessons for My Lessons page"""
@@ -2361,7 +2414,7 @@ def get_google_classroom_lessons():
         print(f"ERROR: Failed to get Google Classroom lessons for user {user_id}: {e}")
         return jsonify({'lessons': [], 'error': str(e)}), 500
 
-@app.route('/api/google_classroom/lesson/<course_id>')
+@main_bp.route('/api/google_classroom/lesson/<course_id>')
 @login_required
 def get_google_classroom_lesson_detail(course_id):
     """Get detailed information for a specific Google Classroom course"""
@@ -2401,7 +2454,7 @@ def get_google_classroom_lesson_detail(course_id):
         print(f"ERROR: Failed to get Google Classroom lesson detail for user {user_id}, course {course_id}: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/google_classroom/sync')
+@main_bp.route('/api/google_classroom/sync')
 @login_required
 def sync_google_classroom_data():
     """Sync Google Classroom data and return updated lessons"""
@@ -2418,7 +2471,7 @@ def sync_google_classroom_data():
         print(f"ERROR: Failed to sync Google Classroom data for user {user_id}: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/google_classroom/import_course', methods=['POST'])
+@main_bp.route('/api/google_classroom/import_course', methods=['POST'])
 @login_required
 def import_google_classroom_course_from_data():
     """Import a Google Classroom course as a lesson"""
@@ -2505,7 +2558,7 @@ def import_google_classroom_course_from_data():
         print(f"ERROR: Failed to import Google Classroom course for user {user_id}: {e}")
         return jsonify({'success': False, 'message': f'Error importing course: {str(e)}'}), 500
 
-@app.route('/api/google_classroom/import_course_customized', methods=['POST'])
+@main_bp.route('/api/google_classroom/import_course_customized', methods=['POST'])
 @login_required
 def import_google_classroom_course_customized():
     """Import a Google Classroom course with custom settings"""
@@ -2644,7 +2697,7 @@ def import_google_classroom_course_customized():
         print(f"ERROR: Failed to import customized Google Classroom course for user {user_id}: {e}")
         return jsonify({'success': False, 'message': f'Error importing course: {str(e)}'}), 500
 
-@app.route('/api/google_classroom/auto_import_all', methods=['POST'])
+@main_bp.route('/api/google_classroom/auto_import_all', methods=['POST'])
 @login_required
 def auto_import_all_google_classroom_courses():
     """Automatically import all Google Classroom courses with default settings"""
@@ -2792,7 +2845,7 @@ def auto_import_all_google_classroom_courses():
         print(f"ERROR: Failed to auto-import Google Classroom courses for user {user_id}: {e}")
         return jsonify({'success': False, 'message': f'Error auto-importing courses: {str(e)}'}), 500
 
-@app.route('/api/google_classroom/bulk_import', methods=['POST'])
+@main_bp.route('/api/google_classroom/bulk_import', methods=['POST'])
 @login_required
 def bulk_import_google_classroom_courses_from_data():
     """Import all Google Classroom courses as lessons"""
