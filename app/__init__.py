@@ -16,6 +16,10 @@ db = SQLAlchemy(app)
 # Custom template filters
 @app.template_filter('lesson_color_primary')
 def lesson_color_primary(color_id):
+    """Get primary color for lesson - supports both selected_color and color_theme"""
+    if color_id is None:
+        return '#007bff'
+    
     colors = {
         1: '#007bff',
         2: '#28a745', 
@@ -28,6 +32,10 @@ def lesson_color_primary(color_id):
 
 @app.template_filter('lesson_color_secondary')
 def lesson_color_secondary(color_id):
+    """Get secondary color for lesson - supports both selected_color and color_theme"""
+    if color_id is None:
+        return '#0056b3'
+    
     colors = {
         1: '#0056b3',
         2: '#1e7e34',
@@ -37,6 +45,16 @@ def lesson_color_secondary(color_id):
         6: '#e8690b'
     }
     return colors.get(int(color_id), '#0056b3')
+
+@app.template_filter('get_lesson_color')
+def get_lesson_color(lesson):
+    """Get color from lesson object - supports both selected_color and color_theme"""
+    if hasattr(lesson, 'color_theme') and lesson.color_theme:
+        return lesson.color_theme
+    elif hasattr(lesson, 'selected_color') and lesson.selected_color:
+        return lesson.selected_color
+    else:
+        return 1  # Default color
 
 @app.template_filter('from_json')
 def from_json(value):

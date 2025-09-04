@@ -5,26 +5,61 @@ import datetime
 import json
 
 class LessonManager:
-    def add_lesson(self, user_id, title, description=None, status='Not Started', tags=None, source_platform='manual', google_classroom_id=None, author_name=None, selected_color=1):
-        lesson = Lesson(user_id=user_id, title=title, description=description, status=status, tags=tags, source_platform=source_platform, google_classroom_id=google_classroom_id, author_name=author_name, selected_color=selected_color)
+    def add_lesson(self, user_id, title, description=None, status='not_started', tags=None, source_platform='manual', google_classroom_id=None, author_name=None, selected_color=1):
+        """Add a new lesson with updated schema"""
+        # Map old status values to new ones
+        status_mapping = {
+            'Not Started': 'not_started',
+            'In Progress': 'in_progress',
+            'Completed': 'completed',
+            'Active': 'active'
+        }
+        
+        # Convert status to new format
+        if status in status_mapping:
+            status = status_mapping[status]
+        
+        # Create lesson with new schema
+        lesson = Lesson(
+            user_id=user_id,
+            title=title,
+            description=description,
+            status=status,
+            source_platform=source_platform,
+            author_name=author_name,
+            color_theme=int(selected_color) if selected_color else 1
+        )
+        
+        # Set external platform fields if applicable
+        if source_platform == 'google_classroom' and google_classroom_id:
+            lesson.external_id = google_classroom_id
+            lesson.external_url = f"https://classroom.google.com/c/{google_classroom_id}"
+        
+        # Set default values for new fields
+        lesson.progress_percentage = 0
+        lesson.difficulty_level = 'beginner'
+        lesson.is_favorite = False
+        lesson.total_sections = 0
+        lesson.completed_sections = 0
+        lesson.total_time_spent = 0
+        
         db.session.add(lesson)
         db.session.commit()
         return lesson
 
     def import_google_classroom_course_as_lesson(self, user_id, gc_course_data):
+        """Import Google Classroom course as lesson with new schema"""
         # Check if this Google Classroom course has already been imported as a lesson
-        existing_lesson = Lesson.query.filter_by(user_id=user_id, google_classroom_id=gc_course_data.get('id')).first()
+        existing_lesson = Lesson.query.filter_by(
+            user_id=user_id, 
+            external_id=gc_course_data.get('id')
+        ).first()
+        
         if existing_lesson:
             # If it exists, update it instead of creating a new one
             existing_lesson.title = gc_course_data.get('name', existing_lesson.title)
             existing_lesson.description = gc_course_data.get('description', existing_lesson.description)
-            existing_lesson.announcements_data = json.dumps(gc_course_data.get('announcements', []))
-            existing_lesson.topics_data = json.dumps(gc_course_data.get('grouped_by_topic', [])) # Use grouped_by_topic
-            existing_lesson.roster_data = json.dumps({
-                "teachers": gc_course_data.get('teachers', []),
-                "students": gc_course_data.get('students', [])
-            })
-            existing_lesson.attachments_data = json.dumps(gc_course_data.get('all_attachments', []))
+            existing_lesson.external_url = f"https://classroom.google.com/c/{gc_course_data.get('id')}"
             db.session.commit()
             return existing_lesson
         else:
@@ -33,17 +68,17 @@ class LessonManager:
                 user_id=user_id,
                 title=gc_course_data.get('name', 'Untitled Google Classroom Course'),
                 description=gc_course_data.get('description', ''),
-                status='Active',
-                tags='google-classroom',
+                status='active',
                 source_platform='google_classroom',
-                google_classroom_id=gc_course_data.get('id'),
-                announcements_data=json.dumps(gc_course_data.get('announcements', [])),
-                topics_data=json.dumps(gc_course_data.get('grouped_by_topic', [])),
-                roster_data=json.dumps({
-                    "teachers": gc_course_data.get('teachers', []),
-                    "students": gc_course_data.get('students', [])
-                }),
-                attachments_data=json.dumps(gc_course_data.get('all_attachments', []))
+                external_id=gc_course_data.get('id'),
+                external_url=f"https://classroom.google.com/c/{gc_course_data.get('id')}",
+                author_name='Google Classroom',
+                progress_percentage=0,
+                difficulty_level='beginner',
+                is_favorite=False,
+                total_sections=0,
+                completed_sections=0,
+                total_time_spent=0
             )
             db.session.add(lesson)
             db.session.commit()
@@ -56,28 +91,31 @@ class LessonManager:
         return Lesson.query.filter_by(user_id=user_id).options(db.joinedload(Lesson.sections)).all()
 
     def update_lesson(self, lesson_id, title=None, description=None, status=None, tags=None, announcements_data=None, topics_data=None, roster_data=None, attachments_data=None, selected_color=None):
+        """Update lesson with new schema"""
         lesson = self.get_lesson_by_id(lesson_id)
         if not lesson:
             return False
+
+        # Map old status values to new ones
+        status_mapping = {
+            'Not Started': 'not_started',
+            'In Progress': 'in_progress',
+            'Completed': 'completed',
+            'Active': 'active'
+        }
 
         if title:
             lesson.title = title
         if description is not None:
             lesson.description = description
         if status:
-            lesson.status = status
-        if tags is not None:
-            lesson.tags = tags
+            # Convert status to new format
+            if status in status_mapping:
+                lesson.status = status_mapping[status]
+            else:
+                lesson.status = status
         if selected_color is not None:
-            lesson.selected_color = selected_color
-        if announcements_data is not None:
-            lesson.announcements_data = json.dumps(announcements_data)
-        if topics_data is not None:
-            lesson.topics_data = json.dumps(topics_data)
-        if roster_data is not None:
-            lesson.roster_data = json.dumps(roster_data)
-        if attachments_data is not None:
-            lesson.attachments_data = json.dumps(attachments_data)
+            lesson.color_theme = int(selected_color)
         
         db.session.commit()
         return True
@@ -112,13 +150,12 @@ class LessonManager:
             lesson_id=lesson_id,
             title=title,
             content=content,
-            type=type,
+            section_type=type,  # Use section_type instead of type
             assignment_due=assignment_due,
-            order=order,
+            order_index=order,  # Use order_index instead of order
             file_urls=file_urls,
             body=body,
             image_path=image_path,
-            external_link=external_link,
             tags=tags,
             status=status
         )
@@ -127,7 +164,7 @@ class LessonManager:
         return section
 
     def get_sections(self, lesson_id):
-        return LessonSection.query.filter_by(lesson_id=lesson_id).order_by(LessonSection.order).all()
+        return LessonSection.query.filter_by(lesson_id=lesson_id).order_by(LessonSection.order_index).all()
 
     def get_section_by_id(self, section_id):
         return LessonSection.query.get(section_id)
@@ -141,7 +178,7 @@ class LessonManager:
         if content is not None:
             section.content = content
         if type:
-            section.type = type
+            section.section_type = type  # Use section_type instead of type
         if file_urls is not None:
             section.file_urls = file_urls
         if body is not None:
@@ -167,7 +204,7 @@ class LessonManager:
             else:
                 section.assignment_due = assignment_due
         if order is not None:
-            section.order = order
+            section.order_index = order  # Use order_index instead of order
         db.session.commit()
         return True
 
