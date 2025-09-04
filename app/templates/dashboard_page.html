@@ -10,10 +10,10 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('register.dashboard') }}">Smart Learning Hub</a>
+            <a class="navbar-brand" href="{{ url_for('auth_web.dashboard') }}">Smart Learning Hub</a>
             <div class="navbar-nav ms-auto">
                 <span class="navbar-text me-3">Welcome, {{ user.username }}!</span>
-                <a class="nav-link" href="{{ url_for('register.logout') }}">Logout</a>
+                <a class="nav-link" href="{{ url_for('auth_web.logout') }}">Logout</a>
             </div>
         </div>
     </nav>
@@ -53,8 +53,8 @@
                             <div class="card-body">
                                 <h5 class="card-title">Quick Actions</h5>
                                 <div class="d-grid gap-2">
-                                    <a href="{{ url_for('register.register') }}" class="btn btn-outline-primary">Add New User</a>
-                                    <a href="{{ url_for('register.login') }}" class="btn btn-outline-secondary">Switch User</a>
+                                    <a href="{{ url_for('auth_web.register') }}" class="btn btn-outline-primary">Add New User</a>
+                                    <a href="{{ url_for('auth_web.login') }}" class="btn btn-outline-secondary">Switch User</a>
                                 </div>
                             </div>
                         </div>
