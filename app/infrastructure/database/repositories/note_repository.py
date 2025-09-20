@@ -4,6 +4,7 @@ Infrastructure layer implementation of NoteRepository interface.
 """
 
 from typing import List, Optional, Dict, Any
+import json
 from datetime import datetime
 from app.domain.entities.note import Note, NoteType
 from app.domain.interfaces.repositories.note_repository import NoteRepository
@@ -93,7 +94,7 @@ class NoteRepositoryImpl(NoteRepository):
         try:
             note_model = NoteModel.query.filter_by(id=note.id).first()
             if not note_model:
-                from ...shared.exceptions import NotFoundException
+                from app.shared.exceptions import NotFoundException
                 raise NotFoundException("Note", note.id)
             
             # Update fields
@@ -108,6 +109,16 @@ class NoteRepositoryImpl(NoteRepository):
             note_model.view_count = note.view_count
             note_model.word_count = note.word_count
             note_model.updated_at = note.updated_at
+            # Keep legacy fields in sync when available on domain (best-effort)
+            try:
+                legacy_status = getattr(note, 'status', None)
+                legacy_link = getattr(note, 'external_link', None)
+                if legacy_status is not None:
+                    note_model.status = legacy_status
+                if legacy_link is not None:
+                    note_model.external_link = legacy_link
+            except Exception:
+                pass
             
             db.session.commit()
             return note_model.to_domain_entity()

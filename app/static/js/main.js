@@ -531,7 +531,10 @@ window.deleteNote = function(noteId) {
   console.log('DEBUG: Deleting note with ID:', noteId);
   if (confirm('Are you sure you want to delete this note?')) {
     fetch(`/partial/note/${noteId}/delete`, {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
     })
     .then(response => response.text())
     .then(html => {
@@ -548,48 +551,53 @@ window.deleteNote = function(noteId) {
 // Function to populate edit note modal with data
 window.populateEditNoteModal = function(button) {
   const noteId = button.getAttribute('data-note-id');
-  const noteTitle = button.getAttribute('data-note-title');
-  const noteBody = button.getAttribute('data-note-body');
-  const noteTags = button.getAttribute('data-note-tags');
-  const noteStatus = button.getAttribute('data-note-status');
-  const noteExternalLink = button.getAttribute('data-note-external-link');
-  
-  // Set form action
+  const noteTitle = button.getAttribute('data-note-title') || '';
+  const noteContent = button.getAttribute('data-note-content') || '';
+  const noteTags = button.getAttribute('data-note-tags') || '';
+  const noteStatus = button.getAttribute('data-note-status') || 'pending';
+  const noteType = button.getAttribute('data-note-type') || 'text';
+  const noteIsPublic = (button.getAttribute('data-note-is-public') || '0') === '1';
+  const noteExternalLink = button.getAttribute('data-note-external-link') || '';
+
   const editForm = document.getElementById('edit-note-form');
   editForm.action = `/partial/note/${noteId}/edit`;
   editForm.method = 'post';
-  
-  // Populate form fields
-  document.getElementById('edit-note-id').value = noteId;
-  document.getElementById('edit-title').value = noteTitle;
-  document.getElementById('edit-body').value = noteBody;
-  document.getElementById('edit-tags').value = noteTags;
-  document.getElementById('edit-status').value = noteStatus;
-  document.getElementById('edit-external-link').value = noteExternalLink;
 
-  // Show preview for existing image/file
-  const imagePath = button.getAttribute('data-note-image');
-  const filePath = button.getAttribute('data-note-file');
-  const imagePreview = document.getElementById('edit-image-preview');
-  const filePreview = document.getElementById('edit-file-preview');
-  imagePreview.innerHTML = '';
-  filePreview.innerHTML = '';
-  if (imagePath) {
-    const img = document.createElement('img');
-    img.src = '/static/' + imagePath;
-    img.className = 'img-fluid';
-    img.style.maxHeight = '200px';
-    imagePreview.appendChild(img);
-  }
-  if (filePath && filePath.endsWith('.pdf')) {
-    const embed = document.createElement('embed');
-    embed.src = '/static/' + filePath;
-    embed.type = 'application/pdf';
-    embed.width = '100%';
-    embed.height = '300px';
-    filePreview.appendChild(embed);
-  }
+  document.getElementById('edit-note-id').value = noteId;
+  const titleEl = document.getElementById('edit-title'); if (titleEl) titleEl.value = noteTitle;
+  const contentEl = document.getElementById('edit-content'); if (contentEl) contentEl.value = noteContent;
+  const tagsEl = document.getElementById('edit-tags'); if (tagsEl) tagsEl.value = noteTags;
+  const statusEl = document.getElementById('edit-status'); if (statusEl) statusEl.value = noteStatus;
+  const typeEl = document.getElementById('edit-note-type'); if (typeEl) typeEl.value = noteType;
+  const publicEl = document.getElementById('edit-is-public'); if (publicEl) publicEl.checked = noteIsPublic;
+  const linkEl = document.getElementById('edit-external-link'); if (linkEl) linkEl.value = noteExternalLink;
+
+  // Clear previews (files/images will be previewed only after user selects new ones)
+  const imagePreview = document.getElementById('edit-image-preview'); if (imagePreview) imagePreview.innerHTML = '';
+  const filePreview = document.getElementById('edit-file-preview'); if (filePreview) filePreview.innerHTML = '';
 };
+
+function fetchAndPopulateEditModal(button) {
+  const noteId = button.getAttribute('data-note-id');
+  fetch(`/partial/note/${noteId}/data`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(r => r.json())
+    .then(json => {
+      if (json && json.success && json.data) {
+        button.setAttribute('data-note-title', json.data.title || '');
+        button.setAttribute('data-note-content', json.data.content || '');
+        const tags = Array.isArray(json.data.tags) ? json.data.tags.join(', ') : (json.data.tags || '');
+        button.setAttribute('data-note-tags', tags);
+        button.setAttribute('data-note-type', (json.data.note_type || 'text'));
+        button.setAttribute('data-note-is-public', json.data.is_public ? '1' : '0');
+        if (json.data.status !== undefined) button.setAttribute('data-note-status', json.data.status || 'pending');
+        if (json.data.external_link !== undefined) button.setAttribute('data-note-external-link', json.data.external_link || '');
+      }
+      window.populateEditNoteModal(button);
+    })
+    .catch(() => {
+      window.populateEditNoteModal(button);
+    });
+}
 
 function setupEditNotePreview() {
   // Image preview
@@ -767,7 +775,7 @@ function setupNoteForms() {
     editNoteModal.addEventListener('show.bs.modal', function (event) {
       const button = event.relatedTarget;
       if (button) {
-        populateEditNoteModal(button);
+        fetchAndPopulateEditModal(button);
       }
     });
     

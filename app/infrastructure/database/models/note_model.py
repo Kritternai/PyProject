@@ -30,6 +30,9 @@ class NoteModel(db.Model):
     # Metadata
     tags = db.Column(db.Text)  # JSON string of tags
     is_public = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    # Legacy/extended fields for UI features
+    status = db.Column(db.String(50))  # pending, in-progress, completed
+    external_link = db.Column(db.String(500))
     
     # Statistics
     view_count = db.Column(db.Integer, default=0)

@@ -72,15 +72,20 @@ function setActiveNav(el) {
   el.classList.add('active');
 }
 window.addEventListener('DOMContentLoaded', function() {
-  {% if google_connected %}
+  {% if initial_page %}
+    const initial = '{{ initial_page }}';
+    const navInit = document.querySelector(`.sidebar .nav-link[data-page=\"${initial}\"]`);
+    if (navInit) navInit.classList.add('active');
+    loadPage(initial);
+  {% elif google_connected %}
     // If user just connected Google Classroom, load class page
-    const nav = document.querySelector('.sidebar .nav-link[data-page=\"class\"]');
-    if (nav) nav.classList.add('active');
+    const navClass = document.querySelector('.sidebar .nav-link[data-page=\"class\"]');
+    if (navClass) navClass.classList.add('active');
     loadPage('class');
   {% else %}
     // Default: load dashboard
-    const nav = document.querySelector('.sidebar .nav-link[data-page=\"dashboard\"]');
-    if (nav) nav.classList.add('active');
+    const navDash = document.querySelector('.sidebar .nav-link[data-page=\"dashboard\"]');
+    if (navDash) navDash.classList.add('active');
     loadPage('dashboard');
   {% endif %}
 });

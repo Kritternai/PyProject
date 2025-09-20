@@ -3,54 +3,151 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - Smart Learning Hub</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
-</head>
-<body class="min-h-screen p-6 bg-gray-100">
-    <div class="max-w-4xl p-6 mx-auto bg-white rounded shadow">
-        <h1 class="mb-6 text-3xl font-bold">Your Notes</h1>
-        <a href="{{ url_for('add_note') }}"
-            class="inline-block px-4 py-2 mb-4 text-white transition bg-blue-600 rounded hover:bg-blue-700">
-            + Create New Note
-        </a>
-        {% if notes %}
-        <ul class="p-12 divide-y divide-gray-200">
-            {% for note in notes %}
-            <li class="py-4 border border-gray-200 bg-white rounded-2xl hover:shadow-xl transition duration-300 ease-in-out w-[200px] h-[200px] hover:scale-105">
-                <a href="{{ url_for('view_note', note_id=note.id) }}"
-                    class="text-xl font-semibold text-blue-700 hover:underline">
-                    {{ note.title }}
-                </a>
-                <p class="mt-2 text-gray-800 line-clamp-3">{{ note.body|safe }}</p>
-                <p class="mt-2 text-gray-800 line-clamp-3">
-                    <span class="font-semibold">Status:</span>
-                    {{ note.status or '-' }}
-                </p>
-                {% if note.tags %}
-                    <ul class="flex flex-wrap gap-2 mt-2 text-sm">
-                        {% for tag in note.tags.split(',') %}
-                            <li class="px-2 py-1 text-gray-800 bg-gray-200 rounded-full">{{ tag.strip() }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-                <p class="mt-1 text-sm text-gray-600">
-                Date: {{ note.created_at.strftime('%Y-%m-%d') if note.created_at else 'No Date' }}
-                </p>
-                <p class="mt-1 text-sm text-gray-600">
-                Due: {{ note.deadline.strftime('%Y-%m-%d') if note.deadline else 'No Due Date' }}
-                </p>
-                <div class="mt-2">
-                    <a href="{{ url_for('edit_note', note_id=note.id) }}" class="text-blue-500 hover:underline">Edit</a>
-                    <form action="{{ url_for('delete_note', note_id=note.id) }}" method="POST" class="inline ml-2">
-                        <button type="submit" class="text-red-500 hover:underline" onclick="return confirm('Are you sure you want to delete this note?');">Delete</button>
-                    </form>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="text-gray-500">You have no notes yet.</p>
-        {% endif %}
+    <title>{{ title or 'Your Notes' }} - Smart Learning Hub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/fontawesome-free-6.5.2-web/css/all.min.css') }}">
+    <style>
+      .root, :root { --slh-primary:#003B8E; --slh-primary-2:#2B6BCF; --slh-primary-3:#002862; }
+      .text-truncate-3 {
+        display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      /* Glassmorphism and Neumorphism for modals */
+      .neo-card { border: 1px solid rgba(255,255,255,0.5); border-radius: 16px; background: linear-gradient(145deg, #ffffff, #eef1f6); box-shadow: 8px 8px 20px rgba(0,0,0,0.08), -6px -6px 16px rgba(255,255,255,0.9); transition: transform .2s ease, box-shadow .2s ease; }
+      .neo-card:hover { transform: translateY(-2px); box-shadow: 12px 12px 26px rgba(0,0,0,0.10), -8px -8px 18px rgba(255,255,255,0.95); }
+      .status-pill { border-radius: 999px; }
+      .modal-glass .modal-content {
+        background: rgba(255,255,255,0.55);
+        border: 1px solid rgba(255,255,255,0.35);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15), inset 1px 1px 0 rgba(255,255,255,0.4);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 16px;
+      }
+      .modal-glass .modal-header { border-top-left-radius: 16px; border-top-right-radius: 16px; }
+      .modal-glass .modal-header.bg-success { background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3)) !important; }
+      .modal-glass .modal-header.bg-warning { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)) !important; }
+      .modal-glass .modal-title i { filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+      .modal-glass .modal-body { background: radial-gradient(1200px circle at 10% 10%, rgba(255,255,255,.6), rgba(255,255,255,.4) 40%, rgba(255,255,255,.25) 70%); }
+      .modal-glass .form-control,
+      .modal-glass .form-select,
+      .modal-glass .input-group-text {
+        border-radius: 12px;
+        background: linear-gradient(145deg, #ffffff, #e6e9ef);
+        box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9);
+        border: 1px solid rgba(0,0,0,0.04);
+      }
+      .modal-glass .form-control:focus,
+      .modal-glass .form-select:focus {
+        box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15), inset 4px 4px 8px rgba(0,0,0,0.06), inset -4px -4px 8px rgba(255,255,255,0.8);
+        border-color: rgba(var(--bs-primary-rgb), .35);
+      }
+      .modal-glass .badge { border-radius: 999px; }
+      .modal-glass .btn-primary { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); border-color: var(--slh-primary); }
+      .modal-glass .btn-primary:hover, .modal-glass .btn-primary:focus { background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3)); border-color: var(--slh-primary-3); }
+      .btn-soft { border-radius: 12px; box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.04); }
+      .btn-soft:active { box-shadow: inset 4px 4px 8px rgba(0,0,0,0.08), inset -4px -4px 8px rgba(255,255,255,0.8); }
+      .modal-backdrop.show { backdrop-filter: blur(4px); }
+    </style>
+    </head>
+<body class="bg-light">
+  <div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="h3 mb-0">Your Notes</h1>
+      <a href="{{ url_for('add_note') }}" class="btn btn-primary btn-soft">
+        <i class="fas fa-plus me-2"></i>Create New Note
+      </a>
     </div>
+
+    {% if notes %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+      {% for note in notes %}
+      <div class="col">
+        <div class="card h-100 neo-card">
+          {% if note.image_path %}
+          <img src="{{ url_for('static', filename=note.image_path) }}" class="card-img-top" alt="Cover" style="object-fit:cover;height:140px;">
+          {% endif %}
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex align-items-start justify-content-between mb-2">
+              <a href="{{ url_for('view_note', note_id=note.id) }}" class="stretched-link text-decoration-none">
+                <h5 class="card-title mb-0">{{ note.title }}</h5>
+              </a>
+              {% set st = (note.status or 'pending') %}
+              {% set badge = 'secondary' %}
+              {% if st == 'in-progress' %}{% set badge = 'warning' %}{% elif st == 'completed' %}{% set badge = 'success' %}{% endif %}
+              <span class="badge bg-{{ badge }} ms-2 text-uppercase status-pill" style="letter-spacing:.3px;">{{ st.replace('-', ' ') }}</span>
+            </div>
+            <p class="card-text text-truncate-3">{{ (note.body or '')|striptags|truncate(180) }}</p>
+            {% if note.tags %}
+            <div class="mb-2">
+              {% for tag in note.tags.split(',') %}
+                <span class="badge text-bg-light border me-1">{{ tag.strip() }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+            <div class="mt-auto small text-muted">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-calendar2-week me-1"></i>
+                <span>Created: {{ note.created_at.strftime('%Y-%m-%d') if note.created_at else '—' }}</span>
+              </div>
+              <div class="d-flex align-items-center">
+                <i class="bi bi-flag me-1"></i>
+                <span>Due: {{ note.deadline.strftime('%Y-%m-%d') if note.deadline else '—' }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer bg-white border-0 pt-0 pb-3">
+            <div class="d-flex gap-2">
+              <a href="{{ url_for('edit_note', note_id=note.id) }}" class="btn btn-sm btn-outline-primary btn-soft">
+                <i class="fas fa-pen me-1"></i>Edit
+              </a>
+              <form action="{{ url_for('delete_note', note_id=note.id) }}" method="POST" onsubmit="return confirm('Delete this note?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger btn-soft">
+                  <i class="fas fa-trash me-1"></i>Delete
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <p class="mb-3">You have no notes yet.</p>
+      <a href="{{ url_for('add_note') }}" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Create your first note</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Add/Edit Note Modals with colored headers -->
+  <div class="modal fade modal-glass" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white border-0">
+          <h5 class="modal-title" id="addNoteModalLabel"><i class="bi bi-journal-plus me-2"></i>Add New Note</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Your add note form content goes here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade modal-glass" id="editNoteModal" tabindex="-1" aria-labelledby="editNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-white border-0">
+          <h5 class="modal-title" id="editNoteModalLabel"><i class="bi bi-pencil-square me-2"></i>Edit Note</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Your edit note form content goes here -->
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

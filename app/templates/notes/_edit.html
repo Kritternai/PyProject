@@ -8,40 +8,77 @@
           </h4>
         </div>
         <div class="card-body">
-          <form id="edit-note-form" data-note-id="{{ section.id }}" enctype="multipart/form-data">
-            <div class="mb-3">
-              <label for="title" class="form-label">Title</label>
-              <input type="text" class="form-control" id="title" name="title" value="{{ section.title }}" required>
+          <form id="edit-note-form" data-note-id="{{ section.id }}" enctype="multipart/form-data" class="needs-validation" novalidate>
+            <div class="mb-3 row align-items-start g-3">
+              <div class="col">
+                <label for="title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="title" name="title" value="{{ section.title }}" placeholder="Enter a concise title" aria-describedby="titleHelp titleCounter" maxlength="80" required>
+                <div class="d-flex justify-content-between">
+                  <div id="titleHelp" class="form-text">Keep it short and clear.</div>
+                  <div class="form-text" id="titleCounter">0/80</div>
+                </div>
+                <div class="invalid-feedback">Please provide a title.</div>
+              </div>
+              <div class="col-auto text-center">
+                <div id="imagePlaceholderEdit" class="rounded-circle bg-light d-flex align-items-center justify-content-center border {{ 'd-none' if section.image_path }}" style="width:72px;height:72px;">
+                  <i class="bi bi-camera-fill text-secondary" data-bs-toggle="tooltip" title="Add a cover photo"></i>
+                </div>
+                <img id="imagePreviewEdit" class="rounded-circle border {{ '' if section.image_path else 'd-none' }}" style="width:72px;height:72px;object-fit:cover;" alt="Preview" src="{% if section.image_path %}{{ url_for('static', filename=section.image_path) }}{% endif %}">
+                <div class="mt-2 small text-muted">Add Photo</div>
+                <button type="button" class="mt-1 btn btn-sm btn-warning" onclick="document.getElementById('image').click()">
+                  <i class="bi bi-camera-fill me-1"></i>Choose
+                </button>
+              </div>
             </div>
-            <div class="mb-3">
+            <div class="p-3 mb-3 border bg-light rounded-3">
               <label for="body" class="form-label">Content</label>
-              <textarea class="form-control" id="body" name="body" rows="8" required>{{ section.body }}</textarea>
+              <textarea class="form-control" id="body" name="body" rows="8" placeholder="Update your note content..." aria-describedby="bodyHelp bodyCounter" maxlength="2000" required>{{ section.body }}</textarea>
+              <div class="d-flex justify-content-between">
+                <div id="bodyHelp" class="form-text">Describe the details. Links and files can be attached below.</div>
+                <div class="form-text" id="bodyCounter">0/2000</div>
+              </div>
+              <div class="invalid-feedback">Please add some content.</div>
             </div>
             <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="tags" class="form-label">Tags (comma-separated)</label>
-                <input type="text" class="form-control" id="tags" name="tags" value="{{ section.tags or '' }}">
+              <div class="mb-3 col-md-6">
+                <label for="tags" class="form-label">Tags</label>
+                <div class="input-group">
+                  <span class="input-group-text" data-bs-toggle="tooltip" title="Comma-separated tags"><i class="bi bi-hash"></i></span>
+                  <input type="text" class="form-control" id="tags" name="tags" value="{{ section.tags or '' }}" placeholder="e.g. math, homework" aria-describedby="tagsHelp" autocomplete="off">
+                </div>
+                <div id="tagsHelp" class="form-text">Separate multiple tags with commas.</div>
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="mb-3 col-md-6">
                 <label for="status" class="form-label">Status</label>
-                <select class="form-select" id="status" name="status">
+                <div class="input-group">
+                  <span class="input-group-text" data-bs-toggle="tooltip" title="Current status"><i class="bi bi-ui-checks-grid"></i></span>
+                  <select class="form-select" id="status" name="status" aria-describedby="statusHelp statusBadge">
                   <option value="pending" {% if section.status == 'pending' %}selected{% endif %}>Pending</option>
                   <option value="in-progress" {% if section.status == 'in-progress' %}selected{% endif %}>In Progress</option>
                   <option value="completed" {% if section.status == 'completed' %}selected{% endif %}>Completed</option>
-                </select>
+                  </select>
+                  <span class="bg-transparent border-0 input-group-text"><span id="statusBadge" class="badge bg-secondary">{{ section.status|default('pending')|replace('-', ' ')|title }}</span></span>
+                </div>
+                <div id="statusHelp" class="form-text">Track your current progress.</div>
               </div>
             </div>
             <div class="mb-3">
               <label for="external_link" class="form-label">External Link</label>
-              <input type="url" class="form-control" id="external_link" name="external_link" value="{{ section.external_link or '' }}">
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                <input type="url" class="form-control" id="external_link" name="external_link" value="{{ section.external_link or '' }}" placeholder="https://example.com" aria-describedby="linkHelp">
+              </div>
+              <div id="linkHelp" class="form-text">Optional reference link (must be a valid URL).</div>
+              <div class="invalid-feedback">Please enter a valid URL.</div>
             </div>
             <div class="mb-3">
               <label for="image" class="form-label">Image</label>
-              <input class="form-control" type="file" id="image" name="image" accept="image/*">
+              <input class="form-control d-none" type="file" id="image" name="image" accept="image/*" aria-describedby="imageHelp">
+              <div id="imageHelp" class="form-text">PNG, JPG or GIF.</div>
               {% if section.image_path %}
               <div class="mt-2">
                 <img src="{{ url_for('static', filename=section.image_path) }}" alt="Current Image" class="img-fluid" style="max-height: 200px;">
-                <div class="form-check mt-2">
+                <div class="mt-2 form-check">
                   <input class="form-check-input" type="checkbox" id="remove_image" name="remove_image">
                   <label class="form-check-label" for="remove_image">
                     Remove current image
@@ -52,7 +89,8 @@
             </div>
             <div class="mb-3">
               <label for="file" class="form-label">File Attachment</label>
-              <input class="form-control" type="file" id="file" name="file">
+              <input class="form-control" type="file" id="file" name="file" aria-describedby="fileHelp">
+              <div id="fileHelp" class="form-text">Attach any supporting files (optional).</div>
               {% if section.file_urls %}
               <div class="mt-2">
                 {% set file_urls = section.file_urls|from_json %}
@@ -72,8 +110,12 @@
               </div>
               {% endif %}
             </div>
-            <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-primary">
+            <div class="gap-2 d-flex align-items-center">
+              <div id="editNoteSavingIndicator" class="me-1 d-none">
+                <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
+                <span class="visually-hidden">Saving...</span>
+              </div>
+              <button id="editNoteSubmit" type="submit" class="btn btn-primary">
                 <i class="fas fa-save me-2"></i>Update Note
               </button>
               <button type="button" class="btn btn-secondary" onclick="loadPage('note')">
@@ -90,13 +132,53 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('edit-note-form');
+  const submitBtn = document.getElementById('editNoteSubmit');
+  const spinner = document.getElementById('editNoteSavingIndicator');
+  const imageInput = document.getElementById('image');
+  const imagePreview = document.getElementById('imagePreviewEdit');
+  const imagePlaceholder = document.getElementById('imagePlaceholderEdit');
+  // counters
+  const title = document.getElementById('title');
+  const titleCounter = document.getElementById('titleCounter');
+  const body = document.getElementById('body');
+  const bodyCounter = document.getElementById('bodyCounter');
+  function updateCounter(input, counter){ if(!input||!counter) return; counter.textContent = `${input.value.length}/${input.maxLength}`; }
+  ['input','change'].forEach(evt=>{
+    title?.addEventListener(evt, ()=>updateCounter(title,titleCounter));
+    body?.addEventListener(evt, ()=>updateCounter(body,bodyCounter));
+  });
+  updateCounter(title,titleCounter); updateCounter(body,bodyCounter);
+  // status badge color
+  const statusSelect = document.getElementById('status');
+  const statusBadge = document.getElementById('statusBadge');
+  function setBadge(){ if(!statusSelect||!statusBadge) return; const v=statusSelect.value; statusBadge.textContent=v.replace('-', ' ');
+    statusBadge.className='badge';
+    if(v==='completed') statusBadge.classList.add('bg-success');
+    else if(v==='in-progress') statusBadge.classList.add('bg-warning');
+    else statusBadge.classList.add('bg-secondary');
+  }
+  statusSelect?.addEventListener('change', setBadge); setBadge();
+  // tooltips
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el=> new bootstrap.Tooltip(el));
   if (form) {
     form.addEventListener('submit', function(e) {
       e.preventDefault();
-      
+
+      // Bootstrap validation
+      if (!form.checkValidity()) {
+        e.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+      }
+      form.classList.add('was-validated');
+
       const formData = new FormData(form);
       const noteId = form.dataset.noteId;
-      
+
+      // UI: disable & show spinner
+      if (submitBtn) submitBtn.disabled = true;
+      if (spinner) spinner.classList.remove('d-none');
+
       fetch(`/partial/note/${noteId}/edit`, {
         method: 'POST',
         body: formData,
@@ -115,7 +197,26 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(error => {
         console.error('Error:', error);
         alert('Error updating note.');
+      })
+      .finally(() => {
+        if (submitBtn) submitBtn.disabled = false;
+        if (spinner) spinner.classList.add('d-none');
       });
+    });
+  }
+  if (imageInput) {
+    imageInput.addEventListener('change', function(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        if (imagePreview && evt.target && evt.target.result) {
+          imagePreview.src = evt.target.result;
+          imagePreview.classList.remove('d-none');
+        }
+        if (imagePlaceholder) imagePlaceholder.classList.add('d-none');
+      };
+      reader.readAsDataURL(file);
     });
   }
 });
