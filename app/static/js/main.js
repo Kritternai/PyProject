@@ -13,6 +13,7 @@ function loadPage(page) {
           setupLessonEditForm(); // <-- เพิ่มตรงนี้
           setupSectionForms(); // เรียก setupSectionForms หลัง loadPage
           setupNoteForms(); // เรียก setupNoteForms หลัง loadPage
+          setupNoteListFilters(); // ตั้งค่า search + status chips สำหรับหน้าโน้ต
           setupLessonAddModal(); // เรียก setupLessonAddModal หลัง loadPage
           setupSectionFilter(); // เรียก setupSectionFilter() หลัง loadPage
           setupLessonSearchAndFilter(); // เรียก setupLessonSearchAndFilter หลัง loadPage
@@ -713,11 +714,9 @@ function setupNoteEditForm() {
       .then(r => r.json())
       .then(data => {
         if (data.success) {
-          // Close modal
           const modal = bootstrap.Modal.getInstance(document.getElementById('editNoteModal'));
-          modal.hide();
-          // Reload note list
-          loadPage('note');
+          if (modal) modal.hide();
+          refreshNoteListPreserveFilters();
         } else {
           alert(data.message || 'Error updating note.');
         }
@@ -757,11 +756,22 @@ function setupNoteForms() {
       .then(r => r.json())
       .then(data => {
         if (data.success && data.html) {
-          document.getElementById('main-content').innerHTML = data.html;
           const modal = bootstrap.Modal.getInstance(addNoteModal);
-          modal.hide();
+          if (modal) modal.hide();
           addNoteForm.reset();
-          setupNoteForms(); // re-bind modal events for new Edit buttons
+          // Replace only the list container to preserve toolbar
+          const temp = document.createElement('div');
+          temp.innerHTML = data.html;
+          const newList = temp.querySelector('#note-list-container');
+          if (newList) {
+            const oldList = document.getElementById('note-list-container');
+            if (oldList) oldList.outerHTML = newList.outerHTML;
+            setupNoteListFilters();
+            refreshNoteListPreserveFilters();
+          } else {
+            // fallback: full replacement
+            document.getElementById('main-content').innerHTML = data.html;
+          }
         } else {
           alert(data.message || 'Error adding note.');
         }
@@ -791,6 +801,78 @@ function setupNoteForms() {
   // Setup edit note form
   setupNoteEditForm();
   setupAddNotePreview();
+}
+
+// Initialize search + status chip filters on Note list page
+function setupNoteListFilters() {
+  const container = document.getElementById('note-list-container');
+  if (!container) return;
+  const searchInput = container.querySelector('#noteSearch');
+  const cards = () => container.querySelectorAll('.neo-card');
+  function applyFilter(status) {
+    const term = (searchInput?.value || '').toLowerCase();
+    cards().forEach(card => {
+      const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+      const body = card.querySelector('.card-text')?.textContent.toLowerCase() || '';
+      const st = card.getAttribute('data-status') || '';
+      const show = (!term || title.includes(term) || body.includes(term)) && (!status || status === st);
+      card.parentElement.style.display = show ? '' : 'none';
+    });
+  }
+  if (searchInput) {
+    searchInput.addEventListener('input', () => applyFilter(document.querySelector('.chip-group .chip.active')?.getAttribute('data-status') || ''));
+  }
+  container.querySelectorAll('.chip-group .chip').forEach(btn => {
+    btn.addEventListener('click', function() {
+      container.querySelectorAll('.chip-group .chip').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      applyFilter(this.getAttribute('data-status') || '');
+    });
+  });
+}
+
+// Refresh only note list fragment and re-apply current search/filter without full page reload
+function refreshNoteListPreserveFilters() {
+  const container = document.getElementById('note-list-container');
+  if (!container) return;
+  const term = (container.querySelector('#noteSearch')?.value || '').toLowerCase();
+  const activeChip = container.querySelector('.chip-group .chip.active');
+  const status = activeChip ? (activeChip.getAttribute('data-status') || '') : '';
+  fetch('/partial/note')
+    .then(r => r.text())
+    .then(html => {
+      // Replace list container only
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      const newList = temp.querySelector('#note-list-container');
+      if (newList) {
+        container.outerHTML = newList.outerHTML;
+        // re-bind and re-apply filters
+        setupNoteListFilters();
+        const newContainer = document.getElementById('note-list-container');
+        const searchInput = newContainer.querySelector('#noteSearch');
+        if (searchInput) searchInput.value = term;
+        // set active chip
+        if (status !== '') {
+          const chip = newContainer.querySelector(`.chip-group .chip[data-status="${status}"]`);
+          if (chip) {
+            newContainer.querySelectorAll('.chip-group .chip').forEach(b=>b.classList.remove('active'));
+            chip.classList.add('active');
+          }
+        }
+        // apply display
+        const active = newContainer.querySelector('.chip-group .chip.active');
+        const st = active ? active.getAttribute('data-status') || '' : '';
+        const cards = newContainer.querySelectorAll('.neo-card');
+        cards.forEach(card => {
+          const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+          const body = card.querySelector('.card-text')?.textContent.toLowerCase() || '';
+          const cst = card.getAttribute('data-status') || '';
+          const show = (!term || title.includes(term) || body.includes(term)) && (!st || st===cst);
+          card.parentElement.style.display = show ? '' : 'none';
+        });
+      }
+    });
 }
 
 function setupLessonAddModal() {

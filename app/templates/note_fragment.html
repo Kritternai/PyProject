@@ -1,4 +1,7 @@
 <div class="px-4 container-fluid" id="note-list-container">
+    <div class="">
+      <h1 class="">All note</h1>
+    </div>
     <div class="mb-3 d-flex justify-content-between align-items-center page-toolbar">
         <div class="flex-grow-1 me-3" style="max-width: 640px;">
             <div class="input-group search-bar">
@@ -18,6 +21,59 @@
             <button type="button" class="btn btn-light chip" data-status="completed">Completed</button>
         </div>
         <div></div>
+    </div>
+    {% set stats = namespace(images=0, docs=0, completed=0, inprogress=0, pending=0) %}
+    {% if notes %}
+      {% for n in notes %}
+        {% set st = (n.status or 'pending') %}
+        {% if st == 'completed' %}{% set stats.completed = stats.completed + 1 %}
+        {% elif st == 'in-progress' %}{% set stats.inprogress = stats.inprogress + 1 %}
+        {% else %}{% set stats.pending = stats.pending + 1 %}{% endif %}
+        {% if n.files %}
+          {% for f in n.files %}
+            {% if f and f.file_type == 'image' %}{% set stats.images = stats.images + 1 %}{% endif %}
+            {% if f and f.file_type == 'document' %}{% set stats.docs = stats.docs + 1 %}{% endif %}
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    <div class="mb-3 row g-3 stats-row">
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="text-white stat-icon bg-brand me-2"><i class="bi bi-journal-text"></i></div>
+            <div class="small text-muted">Total Notes</div>
+          </div>
+          <div class="m-0 display-6 fw-semibold">{{ notes|length }}</div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon bg-success-subtle text-success me-2"><i class="bi bi-check2-circle"></i></div>
+            <div class="small text-muted">Completed</div>
+          </div>
+          <div class="m-0 display-6 fw-semibold">{{ stats.completed }}</div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon bg-primary-subtle text-primary me-2"><i class="bi bi-image"></i></div>
+            <div class="small text-muted">Images</div>
+          </div>
+          <div class="m-0 display-6 fw-semibold">{{ stats.images }}</div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon bg-info-subtle text-info me-2"><i class="bi bi-paperclip"></i></div>
+            <div class="small text-muted">Files</div>
+          </div>
+          <div class="m-0 display-6 fw-semibold">{{ stats.docs }}</div>
+        </div>
+      </div>
     </div>
     
     <!-- Integration Summary -->
@@ -57,11 +113,14 @@
             {% for note in notes %}
                 <div class="mb-4 col-md-6 col-lg-4">
                     <div class="card h-100 neo-card" data-status="{{ (note.status or 'pending') }}">
+                        {% set first_image = None %}
                         {% if note.files %}
                             {% set first_image = (note.files | selectattr('file_type', 'equalto', 'image') | list | first) %}
-                            {% if first_image %}
+                        {% endif %}
+                        {% if first_image %}
                             <img src="{{ url_for('static', filename=first_image.file_path) }}" class="card-img-top" alt="cover" style="object-fit:cover;height:140px;">
-                            {% endif %}
+                        {% else %}
+                            <div class="note-cover bg-brand"></div>
                         {% endif %}
                         <div class="card-body d-flex flex-column">
                             <div class="mb-2 d-flex justify-content-between align-items-start">
@@ -97,7 +156,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="gap-2 pt-0 pb-3 bg-white border-0 card-footer d-flex">
+                        <div class="gap-2 pt-0 pb-3 bg-white border-0 card-footer d-flex justify-content-end">
                             <button type="button" class="btn btn-sm btn-outline-primary btn-soft" data-bs-toggle="modal" data-bs-target="#editNoteModal"
                                 data-note-id="{{ note.id }}"
                                 data-note-title="{{ note.title }}"
@@ -135,7 +194,7 @@
             <div class="d-flex align-items-center">
                 <div class="hero-icon me-2"><i class="bi bi-journal-text"></i></div>
                 <div>
-                    <h5 class="mb-0 modal-title" id="addNoteModalLabel">Add New Note</h5>
+                    <h5 class="mb-0 text-white modal-title" id="addNoteModalLabel">Add New Note</h5>
                     <div class="opacity-75 small">Essentials</div>
                 </div>
             </div>
@@ -247,7 +306,7 @@
             <div class="d-flex align-items-center">
                 <div class="hero-icon me-2"><i class="bi bi-pencil"></i></div>
                 <div>
-                    <h5 class="mb-0 modal-title" id="editNoteModalLabel">Edit Note</h5>
+                    <h5 class="mb-0 text-white modal-title" id="editNoteModalLabel">Edit Note</h5>
                     <div class="opacity-75 small">Essentials</div>
                 </div>
             </div>
@@ -473,6 +532,19 @@
 .add-link:hover { color: var(--slh-primary); }
 .chip-group .chip { border-radius: 999px; padding: 6px 14px; border: 1px solid rgba(0,0,0,.06); box-shadow: 2px 2px 6px rgba(0,0,0,0.06), -2px -2px 6px rgba(255,255,255,.8); }
 .chip-group .chip.active { background: #eae8ff; color: #4b3fb8; border-color: #d7d3ff; }
+.stats-row .stat-card { background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%); border:1px solid rgba(0,0,0,.05); border-radius:14px; padding:14px 16px; min-height:72px; box-shadow: 0 6px 18px rgba(0,0,0,.06), 0 1px 0 rgba(255,255,255,.9) inset; transition: transform .15s ease, box-shadow .15s ease; }
+.stats-row .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.08), 0 1px 0 rgba(255,255,255,.95) inset; }
+.stat-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+.bg-brand { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); }
+.bg-success-subtle { background: rgba(25, 135, 84, .12) !important; }
+.bg-primary-subtle { background: rgba(13, 110, 253, .12) !important; }
+.bg-info-subtle { background: rgba(13, 202, 240, .12) !important; }
+.chip-group .chip { background:#fff; }
+.chip-group .chip:hover { background:#f3f5fb; }
+.chip-group .chip.active { background: #eae8ff; color: #4b3fb8; border-color: #d7d3ff; box-shadow: 0 8px 16px rgba(75,63,184,.12); }
+.neo-card { background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%); }
+.neo-card .card-footer { border-top: 1px solid rgba(0,0,0,.05); }
+.note-cover { height:140px; background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3)); border-top-left-radius: .375rem; border-top-right-radius: .375rem; }
 </style>
 
 <script>
@@ -522,10 +594,12 @@ function populateEditNoteModal(button) {
   // Show current images (with removal support)
   const noteImages = button.getAttribute('data-note-images');
   console.log('Raw noteImages attribute:', noteImages);
+  console.log('noteImages type:', typeof noteImages);
   
-  if (noteImages && noteImages !== '[]' && noteImages !== 'null' && noteImages !== 'undefined') {
+  if (noteImages && noteImages !== '[]' && noteImages !== 'null' && noteImages !== 'undefined' && noteImages.trim() !== '') {
     try {
       const images = JSON.parse(noteImages);
+      console.log('Parsed images:', images);
       if (Array.isArray(images) && images.length > 0) {
         imagePreview.innerHTML = '';
         images.forEach((image, index) => {
@@ -537,7 +611,7 @@ function populateEditNoteModal(button) {
             imgContainer.className = 'd-flex align-items-center';
             
             const img = document.createElement('img');
-            img.src = '/static/' + image.file_path;
+            img.src = "{{ url_for('static', filename='') }}" + image.file_path;
             img.className = 'rounded me-3';
             img.style.maxHeight = '60px';
             img.style.maxWidth = '60px';
@@ -576,10 +650,12 @@ function populateEditNoteModal(button) {
   // Show current files (with removal support)
   const noteFiles = button.getAttribute('data-note-files');
   console.log('Raw noteFiles attribute:', noteFiles);
+  console.log('noteFiles type:', typeof noteFiles);
   
-  if (noteFiles && noteFiles !== '[]' && noteFiles !== 'null' && noteFiles !== 'undefined') {
+  if (noteFiles && noteFiles !== '[]' && noteFiles !== 'null' && noteFiles !== 'undefined' && noteFiles.trim() !== '') {
     try {
       const files = JSON.parse(noteFiles);
+      console.log('Parsed files:', files);
       if (Array.isArray(files) && files.length > 0) {
         filePreview.innerHTML = '';
         files.forEach((file, index) => {
@@ -598,7 +674,7 @@ function populateEditNoteModal(button) {
             fileInfo.innerHTML = `
               <div class="fw-semibold">${file.file_name}</div>
               <div class="text-muted small">Document</div>
-              <a href="/static/${file.file_path}" target="_blank" class="mt-1 btn btn-sm btn-outline-primary">
+              <a href="{{ url_for('static', filename='') }}${file.file_path}" target="_blank" class="mt-1 btn btn-sm btn-outline-primary">
                 <i class="fas fa-download me-1"></i>Download
               </a>
             `;

@@ -1,4 +1,4 @@
-## UI/UX Notes (Bootstrap 5 + Glass/Neo) — 2025-09-20
+## UI/UX Notes (Bootstrap 5 + Glass/Neo) — 2025-09-21 (Updated)
 
 ### เพิ่ม (Added)
 - โมดอล Note แบบ Glassmorphism/Neumorphism (`modal-glass`, `btn-soft`, `glass-section`) พร้อมไอคอน Bootstrap Icons และสีแบรนด์ (`--slh-primary`, `--slh-primary-2`, `--slh-primary-3`).
@@ -9,21 +9,37 @@
   - Autofocus ช่อง Title เมื่อเปิดโมดอล (Add/Edit).
   - คีย์ลัด `Ctrl/Cmd + Enter` เพื่อ Submit แบบรวดเร็ว.
   - ค้นหา/กรองสถานะแบบ client-side (อ่านค่าจาก `data-status` ของการ์ด).
+- แถบสถิติ (Statistics Row): แสดงจำนวน Total Notes, Completed, Images, Files แบบ card สไตล์ neo-morphism.
+- ฟังก์ชัน `refreshNoteListPreserveFilters()` ใน `main.js`: รีโหลดรายการโน้ตหลัง Add/Edit โดยไม่สูญเสียค่าการค้นหาและกรอง.
+- พื้นหลัง fallback สำหรับ note cards ที่ไม่มีรูปภาพ: ใช้ `note-cover` div พร้อมกราเดียนต์สีแบรนด์.
 
 ### แก้ไข (Changed)
 - ปรับสไตล์โมดอล Add/Edit ให้เป็นกราเดียนต์สีแบรนด์, ปุ่มเป็น pill + soft shadow, badge สถานะเป็น pill.
 - ปรับฟอร์มภายในให้มีพื้นหลังโปร่งใสแบบ glass และกรอบมนใหญ่ เพื่อความอ่านง่าย.
 - ปรับปุ่ม Edit/Delete และการ์ดโน้ตเป็น `neo-card` (soft elevation + hover lift).
+- ย้ายปุ่ม Edit/Delete ไปชิดขวาของการ์ด (`justify-content-end`).
+- ปรับความสมดุลและความสดใสของ UI elements: stat cards, chips, note cards ให้ดูนุ่มนวลและใช้งานง่าย.
+- แก้ไข URL รูปภาพใน Modal Edit: เปลี่ยนจาก hardcode `/static/` เป็น `{{ url_for('static', filename='') }}` เหมือน card note.
+- เพิ่ม debug logging สำหรับการ parse JSON ของ images และ files ใน modal edit.
 
 ### ลบ (Removed)
 - ลบแท็บปุ่ม (Info/Notes/Media) ใต้หัวโมดอลเพื่อให้หน้าตาเรียบง่ายและโฟกัสที่การกรอกข้อมูล.
 
 ### ไฟล์ที่เปลี่ยนแปลง
-- `app/templates/note_fragment.html` (เพิ่ม/แก้ไขโครงสร้างโมดอล, toolbar, ชิป filter, CSS และ JS ฝังหน้า)
+- `app/templates/note_fragment.html` (เพิ่ม/แก้ไขโครงสร้างโมดอล, toolbar, ชิป filter, statistics row, CSS และ JS ฝังหน้า)
 - `app/templates/notes/list.html` (เพิ่มสไตล์ glass/neo สำหรับโมดอลอย่างย่อ)
+- `app/static/js/main.js` (เพิ่มฟังก์ชัน search/filter และ preserve filters หลัง add/edit)
+
+### ปัญหาที่แก้ไข
+- **รูปภาพไม่แสดงใน Modal Edit**: แก้ไข URL path จาก hardcode `/static/` เป็น `{{ url_for('static', filename='') }}`
+- **Search/Filter ไม่ทำงาน**: เพิ่ม event listeners และ filter logic ใน `setupNoteListFilters()`
+- **สูญเสียค่า Search/Filter หลัง Add/Edit**: เพิ่มฟังก์ชัน `refreshNoteListPreserveFilters()` เพื่อรักษาสถานะ
 
 ### ผลลัพธ์
-- ผู้ใช้สามารถค้นหา + กรองสถานะโน้ตได้ทันทีบนหน้าเดียว, โมดอลใช้งานง่ายขึ้น (โฟกัสอัตโนมัติ, คีย์ลัด), และภาพรวม UI เข้ากับ Bootstrap 5/สีประจำโปรเจกต์.
+- ผู้ใช้สามารถค้นหา + กรองสถานะโน้ตได้ทันทีบนหน้าเดียว
+- โมดอลใช้งานง่ายขึ้น (โฟกัสอัตโนมัติ, คีย์ลัด, รูปภาพแสดงถูกต้อง)
+- UI มีความสมดุลและเข้ากับ Bootstrap 5/สีประจำโปรเจกต์
+- การ Add/Edit โน้ตไม่ทำให้สูญเสียค่าการค้นหาและกรอง
 
 ## รายงานการแก้ไขฟีเจอร์ Note: การลบแล้วโหลดหน้ารายการใหม่ทันที
 
