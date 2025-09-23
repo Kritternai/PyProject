@@ -202,15 +202,14 @@
         </div>
         <div class="modal-body">
             <form id="add-note-form" action="/partial/note/add" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                <div class="mb-3">
+                <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
                     <label for="title" class="form-label section-title"><i class="bi bi-type me-1"></i>Title</label>
                     <input type="text" class="form-control" id="title" name="title" maxlength="80" aria-describedby="titleHelp titleCounter" placeholder="Enter a concise title" required>
                     <div class="d-flex justify-content-between">
                         <div id="titleHelp" class="form-text">Keep it short and clear.</div>
                         <div id="titleCounter" class="form-text">0/80</div>
                     </div>
-                </div>
-                <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
+                    <div class="mt-3"></div>
                     <label for="content" class="form-label section-title"><i class="bi bi-textarea-t me-1"></i>Content</label>
                     <textarea class="form-control" id="content" name="content" rows="5" maxlength="2000" aria-describedby="contentHelp contentCounter" placeholder="Write your note here..." required></textarea>
                     <div class="d-flex justify-content-between">
@@ -218,63 +217,61 @@
                         <div id="contentCounter" class="form-text">0/2000</div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="mb-3 col-md-6">
-                        <label for="tags" class="form-label section-title"><i class="bi bi-tags me-1"></i>Tags</label>
-                        <div class="input-group">
-                            <span class="input-group-text" data-bs-toggle="tooltip" title="Comma-separated tags"><i class="bi bi-hash"></i></span>
-                            <input type="text" class="form-control" id="tags" name="tags" placeholder="e.g. math, homework" aria-describedby="tagsHelp">
+                <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
+                    <div class="row">
+                        <div class="mb-3 col-md-6">
+                            <label for="tags" class="form-label section-title"><i class="bi bi-tags me-1"></i>Tags</label>
+                            <div class="input-group">
+                                <span class="input-group-text" data-bs-toggle="tooltip" title="Comma-separated tags"><i class="bi bi-hash"></i></span>
+                                <input type="text" class="form-control" id="tags" name="tags" placeholder="e.g. math, homework" aria-describedby="tagsHelp">
+                            </div>
+                            <div id="tagsHelp" class="form-text">Separate multiple tags with commas.</div>
                         </div>
-                        <div id="tagsHelp" class="form-text">Separate multiple tags with commas.</div>
+                        <div class="mb-3 col-md-6">
+                            <label for="status" class="form-label section-title"><i class="bi bi-ui-checks-grid me-1"></i>Status</label>
+                            <div class="input-group">
+                                <span class="input-group-text" data-bs-toggle="tooltip" title="Current status"><i class="bi bi-ui-checks-grid"></i></span>
+                                <select class="form-select" id="status" name="status" aria-describedby="statusHelp addStatusBadge">
+                                    <option value="pending">Pending</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                                <span class="bg-transparent border-0 input-group-text"><span id="addStatusBadge" class="badge bg-secondary">Pending</span></span>
+                            </div>
+                            <div id="statusHelp" class="form-text">Track your progress.</div>
+                        </div>
                     </div>
-                    <div class="mb-3 col-md-6">
-                        <label for="status" class="form-label section-title"><i class="bi bi-ui-checks-grid me-1"></i>Status</label>
-                        <div class="input-group">
-                            <span class="input-group-text" data-bs-toggle="tooltip" title="Current status"><i class="bi bi-ui-checks-grid"></i></span>
-                            <select class="form-select" id="status" name="status" aria-describedby="statusHelp addStatusBadge">
-                                <option value="pending">Pending</option>
-                                <option value="in-progress">In Progress</option>
-                                <option value="completed">Completed</option>
+                    <div class="row">
+                        <div class="mb-3 col-md-6">
+                            <label for="note_type" class="form-label section-title"><i class="bi bi-list-nested me-1"></i>Note Type</label>
+                            <select class="form-select" id="note_type" name="note_type">
+                                <option value="text">Text</option>
+                                <option value="markdown">Markdown</option>
+                                <option value="code">Code</option>
+                                <option value="image">Image</option>
+                                <option value="audio">Audio</option>
+                                <option value="video">Video</option>
                             </select>
-                            <span class="bg-transparent border-0 input-group-text"><span id="addStatusBadge" class="badge bg-secondary">Pending</span></span>
                         </div>
-                        <div id="statusHelp" class="form-text">Track your progress.</div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="mb-3 col-md-6">
-                        <label for="note_type" class="form-label section-title"><i class="bi bi-list-nested me-1"></i>Note Type</label>
-                        <select class="form-select" id="note_type" name="note_type">
-                            <option value="text">Text</option>
-                            <option value="markdown">Markdown</option>
-                            <option value="code">Code</option>
-                            <option value="image">Image</option>
-                            <option value="audio">Audio</option>
-                            <option value="video">Video</option>
-                        </select>
-                    </div>
-                    <div class="mb-3 col-md-6 d-flex align-items-end">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="is_public" name="is_public">
-                            <label class="form-check-label" for="is_public">Public</label>
+                        <div class="mb-3 col-md-6 d-flex align-items-end">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="is_public" name="is_public">
+                                <label class="form-check-label" for="is_public">Public</label>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
                     <label for="external_link" class="form-label section-title"><i class="bi bi-link-45deg me-1"></i>External Link</label>
-                    <div class="input-group">
+                    <div class="input-group mb-3">
                         <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
                         <input type="url" class="form-control" id="external_link" name="external_link" placeholder="https://example.com" aria-describedby="linkHelp">
                     </div>
-                    <div id="linkHelp" class="form-text">Optional reference link (must be a valid URL).</div>
-                </div>
-                <div class="mb-3">
+                    <div id="linkHelp" class="mb-3 form-text">Optional reference link (must be a valid URL).</div>
                     <label for="image" class="form-label section-title"><i class="bi bi-image me-1"></i>Image</label>
                     <input class="form-control" type="file" id="image" name="image" accept="image/*" aria-describedby="imageHelp">
                     <div id="imageHelp" class="form-text">PNG, JPG or GIF.</div>
-                    <div id="add-image-preview" class="mt-2"></div>
-                </div>
-                <div class="mb-3">
+                    <div id="add-image-preview" class="mt-2 mb-3"></div>
                     <label for="file" class="form-label section-title"><i class="bi bi-paperclip me-1"></i>File Attachment</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-paperclip"></i></span>
@@ -378,13 +375,15 @@
                     </div>
                 </div>
                 
-                <!-- New Image Upload -->
-                <div class="mb-3">
+                <!-- New Uploads -->
+                <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
                     <label for="edit-image" class="form-label">Upload New Image</label>
                     <input class="form-control" type="file" id="edit-image" name="image" accept="image/*">
-                    <div id="edit-image-new-preview" class="mt-2"></div>
+                    <div id="edit-image-new-preview" class="mt-2 mb-3"></div>
+                    <label for="edit-file" class="form-label">Upload New File</label>
+                    <input class="form-control" type="file" id="edit-file" name="file">
+                    <div id="edit-file-new-preview" class="mt-2"></div>
                 </div>
-                
                 <!-- Current Files Section -->
                 <div class="mb-3">
                     <label class="form-label">Current Files</label>
@@ -392,13 +391,7 @@
                         <!-- Current files will be populated here -->
                     </div>
                 </div>
-                
-                <!-- New File Upload -->
-                <div class="mb-3">
-                    <label for="edit-file" class="form-label">Upload New File</label>
-                    <input class="form-control" type="file" id="edit-file" name="file">
-                    <div id="edit-file-new-preview" class="mt-2"></div>
-                </div>
+
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary btn-soft" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i>Close</button>

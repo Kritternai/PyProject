@@ -4,57 +4,61 @@
 </div>
 <form hx-post="/partial/note/add" hx-target="#main-content" hx-swap="innerHTML" hx-encoding="multipart/form-data" class="needs-validation" novalidate hx-disabled-elt="button[type='submit']" hx-indicator="#addNoteSavingIndicator">
     <div class="modal-body">
-        <div class="row align-items-start mb-3 g-3">
-            <div class="col">
-                <label for="title" class="form-label">Title</label>
-                <input type="text" class="form-control" id="title" name="title" placeholder="Enter a concise title" aria-describedby="titleHelp titleCounter" maxlength="80" required>
+        <div class="p-3 mb-3 bg-light rounded-3 border">
+            <div class="row align-items-start g-3">
+                <div class="col">
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="title" name="title" placeholder="Enter a concise title" aria-describedby="titleHelp titleCounter" maxlength="80" required>
+                    <div class="d-flex justify-content-between">
+                        <div id="titleHelp" class="form-text">Keep it short and clear.</div>
+                        <div class="form-text" id="titleCounter">0/80</div>
+                    </div>
+                    <div class="invalid-feedback">Please provide a title.</div>
+                </div>
+                <div class="col-auto text-center">
+                    <div id="imagePlaceholder" class="rounded-circle bg-light d-flex align-items-center justify-content-center border" style="width:72px;height:72px;">
+                        <i class="bi bi-camera-fill text-secondary" data-bs-toggle="tooltip" title="Add a cover photo"></i>
+                    </div>
+                    <img id="imagePreview" class="rounded-circle border d-none" style="width:72px;height:72px;object-fit:cover;" alt="Preview">
+                    <div class="small text-muted mt-2">Add Photo</div>
+                    <button type="button" class="btn btn-sm btn-warning mt-1" onclick="document.getElementById('image').click()">
+                        <i class="bi bi-camera-fill me-1"></i>Choose
+                    </button>
+                </div>
+            </div>
+            <div class="mt-3">
+                <label for="body" class="form-label">Body</label>
+                <textarea class="form-control" id="body" name="body" rows="5" placeholder="Write your note here..." aria-describedby="bodyHelp bodyCounter" maxlength="2000" required></textarea>
                 <div class="d-flex justify-content-between">
-                    <div id="titleHelp" class="form-text">Keep it short and clear.</div>
-                    <div class="form-text" id="titleCounter">0/80</div>
+                    <div id="bodyHelp" class="form-text">Describe the details. You can add links and files below.</div>
+                    <div class="form-text" id="bodyCounter">0/2000</div>
                 </div>
-                <div class="invalid-feedback">Please provide a title.</div>
-            </div>
-            <div class="col-auto text-center">
-                <div id="imagePlaceholder" class="rounded-circle bg-light d-flex align-items-center justify-content-center border" style="width:72px;height:72px;">
-                    <i class="bi bi-camera-fill text-secondary" data-bs-toggle="tooltip" title="Add a cover photo"></i>
-                </div>
-                <img id="imagePreview" class="rounded-circle border d-none" style="width:72px;height:72px;object-fit:cover;" alt="Preview">
-                <div class="small text-muted mt-2">Add Photo</div>
-                <button type="button" class="btn btn-sm btn-warning mt-1" onclick="document.getElementById('image').click()">
-                    <i class="bi bi-camera-fill me-1"></i>Choose
-                </button>
+                <div class="invalid-feedback">Please add some content.</div>
             </div>
         </div>
-        <div class="mb-3 p-3 bg-light rounded-3 border">
-            <label for="body" class="form-label">Body</label>
-            <textarea class="form-control" id="body" name="body" rows="5" placeholder="Write your note here..." aria-describedby="bodyHelp bodyCounter" maxlength="2000" required></textarea>
-            <div class="d-flex justify-content-between">
-                <div id="bodyHelp" class="form-text">Describe the details. You can add links and files below.</div>
-                <div class="form-text" id="bodyCounter">0/2000</div>
-            </div>
-            <div class="invalid-feedback">Please add some content.</div>
-        </div>
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="tags" class="form-label">Tags</label>
-                <div class="input-group">
-                    <span class="input-group-text" data-bs-toggle="tooltip" title="Comma-separated tags"><i class="bi bi-hash"></i></span>
-                    <input type="text" class="form-control" id="tags" name="tags" placeholder="e.g. math, homework" aria-describedby="tagsHelp" autocomplete="off">
+        <div class="p-3 mb-3 bg-light rounded-3 border">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="tags" class="form-label">Tags</label>
+                    <div class="input-group">
+                        <span class="input-group-text" data-bs-toggle="tooltip" title="Comma-separated tags"><i class="bi bi-hash"></i></span>
+                        <input type="text" class="form-control" id="tags" name="tags" placeholder="e.g. math, homework" aria-describedby="tagsHelp" autocomplete="off">
+                    </div>
+                    <div id="tagsHelp" class="form-text">Separate multiple tags with commas.</div>
                 </div>
-                <div id="tagsHelp" class="form-text">Separate multiple tags with commas.</div>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="status" class="form-label">Status</label>
-                <div class="input-group">
-                    <span class="input-group-text" data-bs-toggle="tooltip" title="Current status"><i class="bi bi-ui-checks-grid"></i></span>
-                    <select class="form-select" id="status" name="status" aria-describedby="statusHelp statusBadge">
-                        <option value="pending">Pending</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                    <span class="input-group-text bg-transparent border-0"><span id="statusBadge" class="badge bg-secondary">Pending</span></span>
+                <div class="col-md-6 mb-3">
+                    <label for="status" class="form-label">Status</label>
+                    <div class="input-group">
+                        <span class="input-group-text" data-bs-toggle="tooltip" title="Current status"><i class="bi bi-ui-checks-grid"></i></span>
+                        <select class="form-select" id="status" name="status" aria-describedby="statusHelp statusBadge">
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                        <span class="input-group-text bg-transparent border-0"><span id="statusBadge" class="badge bg-secondary">Pending</span></span>
+                    </div>
+                    <div id="statusHelp" class="form-text">Track your progress.</div>
                 </div>
-                <div id="statusHelp" class="form-text">Track your progress.</div>
             </div>
         </div>
         <div class="mb-3 p-3 bg-light rounded-3 border">
@@ -66,18 +70,18 @@
             <div id="linkHelp" class="form-text">Optional reference link (must be a valid URL).</div>
             <div class="invalid-feedback">Please enter a valid URL.</div>
         </div>
-        <div class="mb-3 p-3 bg-light rounded-3 border">
+        <div class="p-3 mb-3 bg-light rounded-3 border">
             <label for="image" class="form-label">Image</label>
             <input class="form-control d-none" type="file" id="image" name="image" accept="image/*" aria-describedby="imageHelp">
             <div id="imageHelp" class="form-text">PNG, JPG or GIF.</div>
-        </div>
-        <div class="mb-3 p-3 bg-light rounded-3 border">
-            <label for="file" class="form-label">File Attachment</label>
-            <div class="input-group">
-                <span class="input-group-text" data-bs-toggle="tooltip" title="Attach a file"><i class="bi bi-paperclip"></i></span>
-                <input class="form-control" type="file" id="file" name="file" aria-describedby="fileHelp">
+            <div class="mt-3">
+                <label for="file" class="form-label">File Attachment</label>
+                <div class="input-group">
+                    <span class="input-group-text" data-bs-toggle="tooltip" title="Attach a file"><i class="bi bi-paperclip"></i></span>
+                    <input class="form-control" type="file" id="file" name="file" aria-describedby="fileHelp">
+                </div>
+                <div id="fileHelp" class="form-text">Attach any supporting files (optional).</div>
             </div>
-            <div id="fileHelp" class="form-text">Attach any supporting files (optional).</div>
         </div>
     </div>
     <div class="modal-footer">
