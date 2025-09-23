@@ -526,12 +526,14 @@
 }
 .modal-backdrop.show { backdrop-filter: blur(4px); }
 .page-toolbar .form-control, .page-toolbar .form-select { min-height: 40px; }
-.search-bar .input-group-text { background: #fff; border-right: 0; }
-.search-bar .form-control { border-left: 0; }
+.search-bar .input-group { border-radius: 999px; overflow: hidden; box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9); }
+.search-bar .input-group-text { background: linear-gradient(145deg, #ffffff, #e6e9ef); border-right: 0; }
+.search-bar .form-control { border-left: 0; background: linear-gradient(145deg, #ffffff, #e6e9ef); }
+.search-bar .form-control:focus { box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15), inset 4px 4px 8px rgba(0,0,0,0.06), inset -4px -4px 8px rgba(255,255,255,0.8); border-color: rgba(var(--bs-primary-rgb), .35); }
 .add-link { color: var(--slh-primary-2); font-weight: 600; }
 .add-link:hover { color: var(--slh-primary); }
-.chip-group .chip { border-radius: 999px; padding: 6px 14px; border: 1px solid rgba(0,0,0,.06); box-shadow: 2px 2px 6px rgba(0,0,0,0.06), -2px -2px 6px rgba(255,255,255,.8); }
-.chip-group .chip.active { background: #eae8ff; color: #4b3fb8; border-color: #d7d3ff; }
+.chip-group .chip { border-radius: 999px; padding: 6px 14px; border: 1px solid rgba(0,59,142,.25); box-shadow: 2px 2px 6px rgba(0,0,0,0.06), -2px -2px 6px rgba(255,255,255,.8); background:#fff; color: var(--slh-primary); transition: all .15s ease; }
+.chip-group .chip.active { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); color: #fff; border-color: var(--slh-primary); }
 .stats-row .stat-card { background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%); border:1px solid rgba(0,0,0,.05); border-radius:14px; padding:14px 16px; min-height:72px; box-shadow: 0 6px 18px rgba(0,0,0,.06), 0 1px 0 rgba(255,255,255,.9) inset; transition: transform .15s ease, box-shadow .15s ease; }
 .stats-row .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.08), 0 1px 0 rgba(255,255,255,.95) inset; }
 .stat-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; }
@@ -539,15 +541,18 @@
 .bg-success-subtle { background: rgba(25, 135, 84, .12) !important; }
 .bg-primary-subtle { background: rgba(13, 110, 253, .12) !important; }
 .bg-info-subtle { background: rgba(13, 202, 240, .12) !important; }
-.chip-group .chip { background:#fff; }
-.chip-group .chip:hover { background:#f3f5fb; }
-.chip-group .chip.active { background: #eae8ff; color: #4b3fb8; border-color: #d7d3ff; box-shadow: 0 8px 16px rgba(75,63,184,.12); }
+.chip-group .chip:hover { background: rgba(0,59,142,.08); color: var(--slh-primary-2); }
+.chip-group .chip:focus-visible { outline: none; box-shadow: 0 0 0 .2rem rgba(0,59,142,.25); }
+.chip-group .chip.active { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); color: #fff; border-color: var(--slh-primary); box-shadow: 0 8px 16px rgba(0,59,142,.18); }
 .neo-card { background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%); }
 .neo-card .card-footer { border-top: 1px solid rgba(0,0,0,.05); }
 .note-cover { height:140px; background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3)); border-top-left-radius: .375rem; border-top-right-radius: .375rem; }
 </style>
 
 <script>
+// Set static URL for file paths
+const staticUrl = "{{ url_for('static', filename='') }}";
+
 // Function to populate edit note modal with data
 function populateEditNoteModal(button) {
   const noteId = button.getAttribute('data-note-id');
@@ -611,7 +616,7 @@ function populateEditNoteModal(button) {
             imgContainer.className = 'd-flex align-items-center';
             
             const img = document.createElement('img');
-            img.src = "{{ url_for('static', filename='') }}" + image.file_path;
+            img.src = staticUrl + image.file_path;
             img.className = 'rounded me-3';
             img.style.maxHeight = '60px';
             img.style.maxWidth = '60px';
@@ -674,7 +679,7 @@ function populateEditNoteModal(button) {
             fileInfo.innerHTML = `
               <div class="fw-semibold">${file.file_name}</div>
               <div class="text-muted small">Document</div>
-              <a href="{{ url_for('static', filename='') }}${file.file_path}" target="_blank" class="mt-1 btn btn-sm btn-outline-primary">
+              <a href="${staticUrl}${file.file_path}" target="_blank" class="mt-1 btn btn-sm btn-outline-primary">
                 <i class="fas fa-download me-1"></i>Download
               </a>
             `;
