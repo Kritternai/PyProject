@@ -79,8 +79,29 @@ def partial_class():
     if not g.user:
         return jsonify({'error': 'Not authenticated'}), 401
     try:
+        print(f"🔍 partial_class: Loading lessons for user {g.user.id}")
         lesson_service = get_service(LessonService)
         lessons = lesson_service.get_user_lessons(g.user.id)
+        print(f"✅ Found {len(lessons)} lessons")
+        
+        # Sort lessons: Favorites first (pinned), then by created_at desc
+        # Key explanation: (is_favorite, created_at) with reverse=True
+        # - True > False, so favorites come first
+        # - Within each group, newer dates come first
+        lessons = sorted(lessons, key=lambda x: (x.is_favorite, x.created_at), reverse=True)
+        print(f"📌 Sorted: Favorites first, then newest")
+        
+        # Debug sorting
+        if lessons:
+            fav_count = sum(1 for l in lessons if l.is_favorite)
+            print(f"   Favorites: {fav_count}, Regular: {len(lessons) - fav_count}")
+        
+        # Debug: print first lesson
+        if lessons:
+            first = lessons[0]
+            print(f"📝 First lesson: id={first.id}, title={first.title}, status={first.status}, is_favorite={first.is_favorite}")
+        else:
+            print("⚠️ No lessons found!")
         
         # Check Microsoft Teams connection status
         microsoft_teams_connected = session.get('microsoft_teams_connected', False)
@@ -93,12 +114,53 @@ def partial_class():
                              microsoft_teams_connected=microsoft_teams_connected,
                              microsoft_teams_data=microsoft_teams_data)
     except Exception as e:
+        print(f"❌ Error loading lessons: {e}")
+        import traceback
+        traceback.print_exc()
         return render_template('class_fragment.html', 
                              lessons=[], 
                              user=g.user,
                              google_classroom_connected=False,
                              microsoft_teams_connected=False,
                              microsoft_teams_data=None)
+
+@main_bp.route('/debug/lessons')
+@login_required_web
+def debug_lessons():
+    """Debug route to check lessons data"""
+    if not g.user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = get_service(LessonService)
+        lessons = lesson_service.get_user_lessons(g.user.id)
+        
+        lessons_data = []
+        for lesson in lessons:
+            lessons_data.append({
+                'id': lesson.id,
+                'title': lesson.title,
+                'description': lesson.description,
+                'status': str(lesson.status),
+                'color_theme': lesson.color_theme,
+                'author_name': lesson.author_name,
+                'created_at': str(lesson.created_at) if lesson.created_at else None,
+                'is_favorite': lesson.is_favorite
+            })
+        
+        return jsonify({
+            'success': True,
+            'user_id': g.user.id,
+            'lessons_count': len(lessons),
+            'lessons': lessons_data
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 @main_bp.route('/partial/class/add', methods=['POST'])
 @login_required_web
@@ -108,15 +170,20 @@ def add_lesson():
         return jsonify({'success': False, 'message': 'Not authenticated'}), 401
     
     try:
+        from app.domain.entities.lesson import LessonStatus, DifficultyLevel
         lesson_service = get_service(LessonService)
         
         # Get form data
         title = request.form.get('title')
         description = request.form.get('description')
-        status = request.form.get('status', 'active')
+        status = request.form.get('status', 'not_started')
         author_name = request.form.get('author_name')
-        tags = request.form.get('tags')
+        tags = request.form.get('tags', '')
         selected_color = request.form.get('selectedColor', '1')
+        difficulty = request.form.get('difficulty_level', 'beginner')
+        duration = request.form.get('estimated_duration')
+        
+        print(f"📝 Creating lesson: title={title}, status={status}, difficulty={difficulty}, duration={duration}")
         
         if not title:
             return jsonify({'success': False, 'message': 'Title is required'}), 400
@@ -127,17 +194,55 @@ def add_lesson():
         except:
             color_theme = 1
         
-        # Create lesson using OOP service (no status parameter available)
+        # Convert difficulty to enum
+        difficulty_map = {
+            'beginner': DifficultyLevel.BEGINNER,
+            'intermediate': DifficultyLevel.INTERMEDIATE,
+            'advanced': DifficultyLevel.ADVANCED
+        }
+        difficulty_level = difficulty_map.get(difficulty, DifficultyLevel.BEGINNER)
+        
+        # Convert duration to int
+        estimated_duration = None
+        if duration:
+            try:
+                estimated_duration = int(duration)
+            except:
+                pass
+        
+        # Create lesson using OOP service
         lesson = lesson_service.create_lesson(
             user_id=g.user.id,
             title=title,
             description=description or '',
             color_theme=color_theme,
-            author_name=author_name if author_name else None
+            author_name=author_name if author_name else None,
+            difficulty_level=difficulty_level,
+            estimated_duration=estimated_duration
         )
         
-        # Note: Status and tags are not supported by the current lesson model
-        # TODO: Add status and tags fields to lesson model if needed
+        # Update status using direct SQL (since the model uses enums)
+        from app import db
+        from sqlalchemy import text
+        
+        # Map status string to enum value
+        status_map = {
+            'not_started': 'not_started',
+            'in_progress': 'in_progress', 
+            'completed': 'completed',
+            'archived': 'archived',
+            'active': 'not_started'  # fallback
+        }
+        status_value = status_map.get(status, 'not_started')
+        
+        # Update status and tags
+        db.session.execute(
+            text("UPDATE lesson SET status = :status, tags = :tags WHERE id = :lesson_id"),
+            {"status": status_value, "tags": tags, "lesson_id": lesson.id}
+        )
+        db.session.commit()
+        
+        print(f"✅ Lesson created: id={lesson.id}, status={status_value}, tags={tags}")
         
         return jsonify({
             'success': True,
@@ -146,7 +251,7 @@ def add_lesson():
         })
         
     except Exception as e:
-        print(f"Error creating lesson: {e}")
+        print(f"❌ Error creating lesson: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -272,15 +377,36 @@ def toggle_lesson_favorite(lesson_id):
     
     try:
         lesson_service = get_service(LessonService)
-        # TODO: Implement toggle_favorite in lesson service
-        # For now, just return success
+        
+        # Get current lesson
+        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        if not lesson:
+            return jsonify({'success': False, 'message': 'Lesson not found'}), 404
+        
+        # Toggle favorite
+        new_favorite_status = not lesson.is_favorite
+        
+        # Update using direct SQL
+        from app import db
+        from sqlalchemy import text
+        
+        db.session.execute(
+            text("UPDATE lesson SET is_favorite = :fav WHERE id = :lesson_id AND user_id = :user_id"),
+            {"fav": new_favorite_status, "lesson_id": lesson_id, "user_id": g.user.id}
+        )
+        db.session.commit()
+        
+        print(f"✅ Toggled favorite for lesson {lesson_id}: {new_favorite_status}")
+        
         return jsonify({
             'success': True,
-            'message': 'Favorite toggled (not implemented yet)',
-            'is_favorite': True
+            'message': 'Favorite toggled successfully',
+            'is_favorite': new_favorite_status
         })
     except Exception as e:
-        print(f"Error toggling favorite: {e}")
+        print(f"❌ Error toggling favorite: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @main_bp.route('/partial/class/<lesson_id>/delete', methods=['POST'])

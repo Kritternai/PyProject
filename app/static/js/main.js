@@ -1310,6 +1310,31 @@ window.clearSearchAndFilter = function() {
   }
 }
 
+// Global updateCharCount function for form validation
+window.updateCharCount = function(element, counterId, maxLength) {
+  const counter = document.getElementById(counterId);
+  if (counter) {
+    const currentLength = element.value.length;
+    counter.textContent = currentLength;
+    
+    // Add color feedback
+    if (currentLength > maxLength * 0.9) {
+      counter.style.color = '#dc3545'; // danger
+    } else if (currentLength > maxLength * 0.7) {
+      counter.style.color = '#ffc107'; // warning
+    } else {
+      counter.style.color = '#6c757d'; // muted
+    }
+  }
+};
+
+// Global updatePreview function (placeholder - can be enhanced later)
+window.updatePreview = function() {
+  // This function can be enhanced to show live preview
+  // For now, it's just a placeholder to prevent errors
+  console.log('Preview updated');
+};
+
 // Global color selection function - UPDATED for single selection
 window.selectColor = function(element, colorId) {
   console.log('=== main.js selectColor START ===');
@@ -1396,25 +1421,90 @@ window.selectColor = function(element, colorId) {
   }
 }
 
-// Global favorite toggle function
+// Global favorite toggle function - REALTIME UPDATE
 window.toggleFavorite = function(lessonId, btn) {
+  console.log('🌟 Toggle favorite:', lessonId);
+  
   fetch(`/partial/class/${lessonId}/favorite`, {
     method: 'POST',
-    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    headers: { 
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/json'
+    }
   })
   .then(r => r.json())
   .then(data => {
+    console.log('Favorite response:', data);
     if (data.success) {
-      const icon = btn.querySelector('i');
+      // Update button appearance
       if (data.is_favorite) {
-        icon.classList.add('text-warning', 'favorite-active');
-        icon.classList.remove('text-secondary');
+        btn.classList.add('active');
+        console.log('✅ Added to favorites');
       } else {
-        icon.classList.remove('text-warning', 'favorite-active');
-        icon.classList.add('text-secondary');
+        btn.classList.remove('active');
+        console.log('✅ Removed from favorites');
       }
-      // Reload lessons to re-sort
-      loadPage('class');
+      
+      // REALTIME UPDATE: Move card to top or reorder
+      const lessonCard = document.querySelector(`.lesson-item[data-lesson-id="${lessonId}"]`);
+      if (lessonCard) {
+        const lessonsGrid = lessonCard.parentElement;
+        
+        // Update data attribute
+        lessonCard.setAttribute('data-is-favorite', data.is_favorite ? 'true' : 'false');
+        
+        if (data.is_favorite) {
+          // Move to top (after any existing favorites)
+          const firstNonFavorite = lessonsGrid.querySelector('.lesson-item[data-is-favorite="false"]');
+          if (firstNonFavorite) {
+            lessonsGrid.insertBefore(lessonCard, firstNonFavorite);
+          } else {
+            // All are favorites or this is the first, move to beginning
+            lessonsGrid.insertBefore(lessonCard, lessonsGrid.firstChild);
+          }
+          
+          // Add animation
+          lessonCard.style.animation = 'slideDown 0.5s ease-out';
+          setTimeout(() => {
+            lessonCard.style.animation = '';
+          }, 500);
+          
+          console.log('📌 Card moved to favorites section (top)');
+        } else {
+          // Move to after all favorites
+          const favorites = lessonsGrid.querySelectorAll('.lesson-item[data-is-favorite="true"]');
+          if (favorites.length > 0) {
+            const lastFavorite = favorites[favorites.length - 1];
+            lessonsGrid.insertBefore(lessonCard, lastFavorite.nextSibling);
+          }
+          
+          console.log('📍 Card moved to regular section');
+        }
+        
+        // Update stats
+        updateStatsCounters();
+      }
+    } else {
+      console.error('Failed to toggle favorite:', data.message);
+      alert('Failed to toggle favorite: ' + data.message);
     }
+  })
+  .catch(err => {
+    console.error('Error toggling favorite:', err);
+    alert('Error toggling favorite');
   });
+}
+
+// Helper function to update stats counters
+function updateStatsCounters() {
+  const allLessons = document.querySelectorAll('.lesson-item');
+  const favorites = document.querySelectorAll('.lesson-item[data-is-favorite="true"]');
+  
+  // Update favorites counter
+  const favCounter = document.querySelector('.stat-card .stat-icon.bg-warning-subtle').closest('.stat-card').querySelector('.display-6');
+  if (favCounter) {
+    favCounter.textContent = favorites.length;
+  }
+  
+  console.log(`📊 Stats updated: ${favorites.length} favorites out of ${allLessons.length} total`);
 }
