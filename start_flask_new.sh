@@ -1,4 +1,4 @@
-#!/bin/bash
+ิดตั้ง#!/bin/bash
 
 # =============================================================================
 # Smart Learning Hub - OOP Architecture Flask Startup Script
