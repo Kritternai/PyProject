@@ -1310,35 +1310,90 @@ window.clearSearchAndFilter = function() {
   }
 }
 
-// Global color selection function
+// Global color selection function - UPDATED for single selection
 window.selectColor = function(element, colorId) {
+  console.log('=== main.js selectColor START ===');
   console.log('selectColor called with colorId:', colorId);
   
-  // Remove active class from all color options
-  const colorOptions = document.querySelectorAll('.color-option');
-  colorOptions.forEach(opt => opt.classList.remove('active'));
-  
-  // Add active class to clicked element
-  element.classList.add('active');
-  
-  // Update preview card header
-  const previewCardHeader = document.getElementById('previewCardHeader');
-  const colorInput = document.getElementById('selectedColor');
-  
-  const colors = {
-    1: { primary: '#007bff', secondary: '#0056b3' },
-    2: { primary: '#28a745', secondary: '#1e7e34' },
-    3: { primary: '#dc3545', secondary: '#c82333' },
-    4: { primary: '#ffc107', secondary: '#e0a800' },
-    5: { primary: '#6f42c1', secondary: '#5a2d91' },
-    6: { primary: '#fd7e14', secondary: '#e8690b' }
-  };
-  
-  const color = colors[colorId];
-  if (previewCardHeader && color) {
-    previewCardHeader.style.background = `linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%)`;
+  // Prevent default and stop propagation
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
   }
-  if (colorInput) colorInput.value = colorId;
+  
+  try {
+    // Find the actual color div (support both .color-option and .color-option-neo)
+    const colorDiv = (element.classList.contains('color-option') || element.classList.contains('color-option-neo'))
+      ? element 
+      : element.closest('.color-option, .color-option-neo');
+      
+    if (!colorDiv) {
+      console.error('❌ Could not find color element');
+      return;
+    }
+    
+    console.log('✓ Found colorDiv:', colorDiv);
+    
+    // Remove active from ALL color options (both old and neo styles)
+    const allColorOptions = document.querySelectorAll('.color-option, .color-option-neo');
+    console.log('Total colors found:', allColorOptions.length);
+    
+    allColorOptions.forEach(function(opt, index) {
+      const hadActive = opt.classList.contains('active');
+      opt.classList.remove('active');
+      console.log(`Color ${index + 1}: had active=${hadActive}, removed`);
+    });
+    
+    // Verify all removed
+    const stillActiveCount = document.querySelectorAll('.color-option.active, .color-option-neo.active').length;
+    console.log('Active colors after removal:', stillActiveCount);
+    
+    // Add active class to clicked element ONLY
+    colorDiv.classList.add('active');
+    console.log('✓ Added active to color', colorId);
+    
+    // Verify exactly one active
+    const finalActiveCount = document.querySelectorAll('.color-option.active, .color-option-neo.active').length;
+    console.log('✓ Final active count:', finalActiveCount, '(should be 1)');
+    
+    if (finalActiveCount !== 1) {
+      console.error('⚠️ WARNING: Active count is not 1!');
+    }
+    
+    // Update preview card header (if exists)
+    const previewCardHeader = document.getElementById('previewCardHeader');
+    const colorInput = document.getElementById('selectedColor');
+    
+    const colors = {
+      1: { primary: '#007bff', secondary: '#0056b3', name: 'Blue' },
+      2: { primary: '#28a745', secondary: '#1e7e34', name: 'Green' },
+      3: { primary: '#dc3545', secondary: '#c82333', name: 'Red' },
+      4: { primary: '#ffc107', secondary: '#e0a800', name: 'Yellow' },
+      5: { primary: '#6f42c1', secondary: '#5a2d91', name: 'Purple' },
+      6: { primary: '#fd7e14', secondary: '#e8690b', name: 'Orange' }
+    };
+    
+    const color = colors[colorId];
+    if (previewCardHeader && color) {
+      previewCardHeader.style.background = `linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%)`;
+    }
+    if (colorInput) {
+      colorInput.value = colorId;
+      console.log('✓ Hidden input updated:', colorId);
+    }
+    
+    // Update color name display (if exists)
+    const colorNameElement = document.getElementById('selected-color-name');
+    if (colorNameElement && color) {
+      colorNameElement.textContent = color.name;
+      console.log('✓ Color name updated:', color.name);
+    }
+    
+    console.log('=== main.js selectColor END ===\n');
+    
+  } catch (error) {
+    console.error('❌ Error in selectColor:', error);
+  }
 }
 
 // Global favorite toggle function
