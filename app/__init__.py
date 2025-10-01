@@ -66,10 +66,16 @@ def register_blueprints(app):
     from .presentation.routes.register_routes import register_bp
     from .presentation.routes.pomodoro_routes import pomodoro_bp
     from .presentation.routes.tracking_routes import tracking_bp
-    from .routes_new import main_bp
+    from .routes_new import main_bp as main_bp
+    from .routes_google_classroom import google_classroom_bp
+    from .routes_microsoft_teams import microsoft_teams_bp
+    # from .routes import main_bp as legacy_bp  # Temporarily disabled due to route conflicts
     
     # Register main routes (for HTML pages)
     app.register_blueprint(main_bp)
+    app.register_blueprint(google_classroom_bp)  # Google Classroom integration
+    app.register_blueprint(microsoft_teams_bp)  # Microsoft Teams integration (mockup)
+    # app.register_blueprint(legacy_bp)  # Legacy routes temporarily disabled - most routes now in routes_new.py
     app.register_blueprint(register_bp)
     app.register_blueprint(pomodoro_bp)
     app.register_blueprint(tracking_bp)

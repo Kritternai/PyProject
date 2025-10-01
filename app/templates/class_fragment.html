@@ -1,1691 +1,1061 @@
-<div class="container-fluid">
-  <!-- Header Section -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <h2 class="h3 mb-1">My Lessons</h2>
-          <p class="text-muted mb-0">Organize your learning materials</p>
-        </div>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
-          <i class="fas fa-plus me-2"></i>Add New Lesson
-        </button>
-      </div>
-      
-      
+<div class="px-4 container-fluid" id="class-list-container">
+    <div class="">
+      <h1 class="">All Lessons</h1>
     </div>
-  </div>
-
-  <!-- Search and Filter Section -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="d-flex gap-3 align-items-center">
-        <!-- Search Input -->
-        <div class="flex-grow-1">
-          <div class="input-group">
-            <span class="input-group-text bg-light border-end-0">
-              <i class="fas fa-search text-muted"></i>
-            </span>
-            <input type="text" class="form-control border-start-0" id="lessonSearch" placeholder="Search lessons..." style="border-left: none;">
-            <button class="btn btn-outline-secondary border-start-0" type="button" id="clearSearch" onclick="clearSearchAndFilter()" style="display: none;">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
+    
+    <!-- Toolbar: Search & Add -->
+    <div class="mb-3 d-flex justify-content-between align-items-center page-toolbar">
+        <div class="flex-grow-1 me-3" style="max-width: 640px;">
+            <div class="input-group search-bar">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input id="lessonSearch" type="text" class="form-control" placeholder="Search lessons...">
+            </div>
         </div>
-        
-        <!-- Filter Dropdown -->
-        <div class="flex-shrink-0">
-          <select class="form-select" id="lessonFilter" style="min-width: 150px;">
-            <option value="">All Status</option>
-            <option value="Not Started">Not Started</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-          </select>
-        </div>
-        
-        <!-- Advanced Search Toggle -->
-        <div class="flex-shrink-0">
-          <button class="btn btn-outline-secondary" type="button" id="advancedSearchToggle" onclick="toggleAdvancedSearch()" title="Advanced Search">
-            <i class="fas fa-sliders-h"></i>
-          </button>
-        </div>
-        
-        <!-- View Mode Toggle -->
-        <div class="flex-shrink-0">
-          <div class="btn-group" role="group">
-            <input type="radio" class="btn-check" name="viewMode" id="cardView" value="card" checked>
-            <label class="btn btn-outline-secondary" for="cardView" title="Card View">
-              <i class="fas fa-th-large"></i>
-            </label>
-            
-            <input type="radio" class="btn-check" name="viewMode" id="listView" value="list">
-            <label class="btn btn-outline-secondary" for="listView" title="List View">
-              <i class="fas fa-list"></i>
-            </label>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Advanced Search Panel -->
-      <div id="advancedSearchPanel" class="mt-3 p-3 bg-light rounded" style="display: none;">
-        <div class="row g-3">
-          <div class="col-md-4">
-            <label for="tagFilter" class="form-label small">Tags</label>
-            <input type="text" class="form-control form-control-sm" id="tagFilter" placeholder="Filter by tags...">
-          </div>
-          <div class="col-md-4">
-            <label for="authorFilter" class="form-label small">Author</label>
-            <input type="text" class="form-control form-control-sm" id="authorFilter" placeholder="Filter by author...">
-          </div>
-          <div class="col-md-4">
-            <label for="dateFilter" class="form-label small">Date Range</label>
-            <select class="form-select form-select-sm" id="dateFilter">
-              <option value="">All Time</option>
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="year">This Year</option>
-            </select>
-          </div>
-        </div>
-      </div>
+        <a href="#" class="text-decoration-none add-link" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+            <i class="bi bi-plus-circle me-1"></i>Add new lesson
+        </a>
     </div>
-  </div>
-
-     <!-- Google Classroom Auto-Import Status -->
-   {% if show_google_courses and unimported_google_courses and unimported_google_courses|length > 0 %}
-   <div class="row mb-4">
-     <div class="col-12">
-       <div class="alert alert-info border-0">
-         <div class="d-flex justify-content-between align-items-center">
-           <div>
-             <h6 class="mb-1">
-               <i class="fas fa-sync-alt me-2"></i>
-               Google Classroom Auto-Import
-             </h6>
-             <small class="text-muted">
-               {{ unimported_google_courses|length }} new courses found. 
-               <button class="btn btn-link btn-sm p-0 text-decoration-none" onclick="autoImportAllGoogleClassroomCourses()">
-                 Click here to import all courses automatically
-               </button>
-             </small>
-           </div>
-           <div>
-             <button class="btn btn-outline-info btn-sm" onclick="refreshGoogleClassroomData()">
-               <i class="fas fa-sync-alt me-1"></i>Refresh
-             </button>
-           </div>
-         </div>
-       </div>
-     </div>
-   </div>
-  {% elif show_google_courses and google_classroom_connected %}
-  <!-- No Google Classroom Courses to Import -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card border-success">
-        <div class="card-body text-center">
-          <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
-          <h5 class="text-success">Google Classroom Connected!</h5>
-          <p class="text-muted">All your Google Classroom courses have been imported as lessons.</p>
-          <button class="btn btn-outline-success btn-sm" onclick="refreshGoogleClassroomData()">
-            <i class="fas fa-sync-alt me-1"></i>Refresh Data
-          </button>
+    
+    <!-- Status Chips -->
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div class="gap-2 d-flex chip-group">
+            <button type="button" class="btn btn-light chip active" data-filter="">All</button>
+            <button type="button" class="btn btn-light chip" data-filter="active">Active</button>
+            <button type="button" class="btn btn-light chip" data-filter="completed">Completed</button>
+            <button type="button" class="btn btn-light chip" data-filter="archived">Archived</button>
         </div>
-      </div>
+        <div></div>
     </div>
-  </div>
-  {% endif %}
-
-  <!-- Google Classroom Connection Status -->
-  {% if not google_classroom_connected %}
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card border-info">
-        <div class="card-body text-center">
-          <i class="fas fa-info-circle text-info fa-3x mb-3"></i>
-          <h5 class="text-info">Connect to Google Classroom</h5>
-          <p class="text-muted">Import your Google Classroom courses as lessons to get started.</p>
-          <a href="{{ url_for('authorize_google_classroom') }}" class="btn btn-primary">
-            <i class="fas fa-chalkboard-teacher me-1"></i>Connect Google Classroom
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Existing Lessons Section -->
-  <div class="row g-4" id="lessons-container">
+    
+    <!-- Calculate Statistics -->
+    {% set stats = namespace(total=0, active=0, completed=0, archived=0, favorites=0) %}
     {% if lessons %}
+      {% set stats.total = lessons|length %}
       {% for lesson in lessons %}
-      <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 lesson-card-wrapper">
-        <div class="card lesson-card" style="cursor:pointer; position:relative;" onclick="loadPage('class/{{ lesson.id }}')">
-          <button class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite('{{ lesson.id }}', this);" aria-label="Toggle favorite">
-            <i class="fas fa-star{% if lesson.is_favorite %} text-warning{% else %} text-secondary{% endif %}{% if lesson.is_favorite %} favorite-active{% endif %}"></i>
-          </button>
-          <div class="card-header-image" style="background: linear-gradient(135deg, {{ lesson | get_lesson_color | lesson_color_primary }} 0%, {{ lesson | get_lesson_color | lesson_color_secondary }} 100%);">
-            <div class="header-content">
-              <i class="fas fa-graduation-cap fa-3x text-white opacity-75"></i>
-              <div class="tags-container">
-                {% if lesson.tags %}
-                  {% for tag in lesson.tags.split(',')[:2] %}
-                    {% if tag.strip() == 'Featured' %}
-                      <span class="badge bg-success tag-badge">{{ tag.strip() }}</span>
-                    {% else %}
-                      <span class="badge bg-light text-dark border tag-badge">{{ tag.strip() }}</span>
-                    {% endif %}
-                  {% endfor %}
-                  {% if lesson.tags.split(',')|length > 2 %}
-                    <span class="badge bg-secondary tag-badge">+{{ lesson.tags.split(',')|length - 2 }}</span>
-                  {% endif %}
-                {% endif %}
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="stats-row">
-              <div class="stat-item">
-                <i class="fas fa-tasks text-muted"></i>
-                <span class="stat-value">{{ (lesson.classroom_assignments_count | default(0)) + (lesson.manual_assignment_count | default(0)) }}</span>
-              </div>
-              <div class="stat-item">
-                <i class="fas fa-sticky-note text-muted"></i>
-                <span class="stat-value">{{ lesson.note_count | default(0) }}</span>
-              </div>
-              <div class="stat-item">
-                <i class="fas fa-file text-muted"></i>
-                <span class="stat-value">{{ lesson.file_count | default(0) }}</span>
-              </div>
-            </div>
-            
-            <div class="lesson-content">
-              <h5 class="lesson-title">{{ lesson.title or 'Untitled Lesson' }}</h5>
-              <p class="lesson-description">{{ lesson.description or 'No description provided.' }}</p>
-            </div>
-            
-            <div class="lesson-footer">
-              <div class="author-info">
-                <i class="fas fa-user-edit text-muted me-1"></i>
-                <span class="author-name">{{ lesson.author_name or 'Unknown Author' }}</span>
-              </div>
-              <span class="status-badge status-{{ lesson.status|lower|replace(' ', '-') }}">{{ lesson.status or 'No Status' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+        {% if lesson.status == 'active' %}{% set stats.active = stats.active + 1 %}{% endif %}
+        {% if lesson.status == 'completed' %}{% set stats.completed = stats.completed + 1 %}{% endif %}
+        {% if lesson.status == 'archived' %}{% set stats.archived = stats.archived + 1 %}{% endif %}
+        {% if lesson.is_favorite %}{% set stats.favorites = stats.favorites + 1 %}{% endif %}
       {% endfor %}
-    {% else %}
-      <div class="col-12">
-        <div class="empty-state">
-          <i class="fas fa-graduation-cap"></i>
-          <h4>No Lessons Yet</h4>
-          <p>Start by creating your first lesson to organize your learning materials.</p>
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
-            <i class="fas fa-plus me-2"></i>Create Your First Lesson
-          </button>
+    {% endif %}
+    
+    <!-- Stats Cards -->
+    <div class="mb-3 row g-3 stats-row">
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="text-white stat-icon bg-brand me-2"><i class="bi bi-journal-bookmark"></i></div>
+            <div class="small text-muted">Total Lessons</div>
+          </div>
+          <div class="m-0 display-6 fw-semibold">{{ stats.total }}</div>
         </div>
       </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon bg-success-subtle text-success me-2"><i class="bi bi-check2-circle"></i></div>
+            <div class="small text-muted">Completed</div>
+          </div>
+          <div class="m-0 display-6 fw-semibold">{{ stats.completed }}</div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon bg-primary-subtle text-primary me-2"><i class="bi bi-play-circle"></i></div>
+            <div class="small text-muted">Active</div>
+          </div>
+          <div class="m-0 display-6 fw-semibold">{{ stats.active }}</div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon bg-warning-subtle text-warning me-2"><i class="bi bi-star-fill"></i></div>
+            <div class="small text-muted">Favorites</div>
+          </div>
+          <div class="m-0 display-6 fw-semibold">{{ stats.favorites }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Integration Connection Cards -->
+    <div class="row mb-4">
+      <!-- Google Classroom Connection -->
+      {% if not google_classroom_connected %}
+      <div class="col-lg-6 col-12 mb-3">
+        <div class="card border-primary h-100">
+          <div class="card-body text-center">
+            <i class="fab fa-google text-primary fa-3x mb-3"></i>
+            <h5 class="text-primary">Connect to Google Classroom</h5>
+            <p class="text-muted small">Import your Google Classroom courses as lessons.</p>
+            <a href="{{ url_for('google_classroom.authorize') }}" class="btn btn-primary btn-sm">
+              <i class="fas fa-plug me-1"></i>Connect
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- Microsoft Teams Connection -->
+      {% if not microsoft_teams_connected %}
+      <div class="col-lg-6 col-12 mb-3">
+        <div class="card border-info h-100">
+          <div class="card-body text-center">
+            <i class="fab fa-microsoft text-info fa-3x mb-3"></i>
+            <h5 class="text-info">Connect to Microsoft Teams</h5>
+            <p class="text-muted small">Import your Teams channels and assignments. (Mockup)</p>
+            <a href="{{ url_for('microsoft_teams.authorize') }}" class="btn btn-info btn-sm">
+              <i class="fas fa-plug me-1"></i>Connect
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    
+    <!-- Microsoft Teams Status (if connected) -->
+    {% if microsoft_teams_connected %}
+    {% include 'microsoft_teams_status.html' %}
     {% endif %}
+    
+    <!-- Lessons Grid -->
+    <div class="row" id="lessons-grid">
+        {% if lessons %}
+            {% for lesson in lessons %}
+                <div class="mb-4 col-md-6 col-lg-4 lesson-item" data-status="{{ lesson.status or 'active' }}">
+                    <div class="card h-100 neo-card" style="cursor:pointer;" onclick="if(typeof loadPage === 'function') { loadPage('class/{{ lesson.id }}'); } else { window.location.href='/class/{{ lesson.id }}'; }">
+                        <!-- Cover Image -->
+                        <div class="lesson-cover-wrapper">
+                            {% if lesson.cover_image %}
+                                <img src="{{ url_for('static', filename=lesson.cover_image) }}" class="card-img-top" alt="cover" style="object-fit:cover;height:160px;">
+                            {% else %}
+                                <div class="lesson-cover bg-brand" style="height:160px;display:flex;align-items:center;justify-content:center;">
+                                    <i class="fas fa-graduation-cap fa-3x text-white opacity-75"></i>
+                                </div>
+                            {% endif %}
+                            <!-- Favorite Button -->
+                            <button class="favorite-btn-neo {% if lesson.is_favorite %}active{% endif %}" 
+                                    onclick="event.stopPropagation(); if(typeof window.toggleFavorite === 'function') { window.toggleFavorite('{{ lesson.id }}', this); }" 
+                                    aria-label="Toggle favorite">
+                                <i class="fas fa-star"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Card Body -->
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-2 d-flex justify-content-between align-items-start">
+                                <h5 class="mb-0 card-title">{{ lesson.title }}</h5>
+                                {% set status_badge = 'secondary' %}
+                                {% if lesson.status == 'active' %}{% set status_badge = 'primary' %}
+                                {% elif lesson.status == 'completed' %}{% set status_badge = 'success' %}
+                                {% elif lesson.status == 'archived' %}{% set status_badge = 'warning' %}{% endif %}
+                                <span class="badge status-pill bg-{{ status_badge }} text-uppercase">{{ lesson.status or 'active' }}</span>
+                            </div>
+                            
+                            <p class="card-text text-truncate-3">{{ (lesson.description or 'No description')|striptags }}</p>
+                            
+                            <!-- Tags -->
+                            {% if lesson.tags %}
+                            <div class="mb-2">
+                                {% if lesson.tags is string %}
+                                    {% for tag in lesson.tags.split(',')[:3] %}
+                                        <span class="border badge text-bg-light me-1">{{ tag.strip() }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for tag in lesson.tags[:3] %}
+                                        <span class="border badge text-bg-light me-1">{{ tag }}</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Meta Info -->
+                            <div class="mt-auto small text-muted">
+                                <span class="me-2">
+                                    <i class="bi bi-calendar2-week me-1"></i>
+                                    {{ lesson.created_at.strftime('%Y-%m-%d') if lesson.created_at else '' }}
+                                </span>
+                                {% if lesson.author_name %}
+                                <span><i class="bi bi-person me-1"></i>{{ lesson.author_name }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Card Footer -->
+                        <div class="gap-2 pt-0 pb-3 bg-white border-0 card-footer d-flex justify-content-end">
+                            <button type="button" class="btn btn-sm btn-outline-warning btn-soft" 
+                                    onclick="event.stopPropagation();"
+                                    data-bs-toggle="modal" data-bs-target="#editLessonModal"
+                                    data-lesson-id="{{ lesson.id }}"
+                                    data-lesson-title="{{ lesson.title }}"
+                                    data-lesson-description="{{ lesson.description or '' }}"
+                                    data-lesson-status="{{ lesson.status or 'active' }}">
+                                <i class="fas fa-pen me-1"></i>Edit
+                            </button>
+                            <button onclick="event.stopPropagation(); if(confirm('Are you sure you want to delete this lesson?') && typeof window.deleteLesson === 'function') { window.deleteLesson('{{ lesson.id }}'); }" 
+                                    class="btn btn-sm btn-outline-danger btn-soft">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col">
+                <div class="py-5 text-center text-muted">
+                    <i class="mb-3 fas fa-book-open fa-4x"></i>
+                    <p class="mb-2">You don't have any lessons yet.</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+                        <i class="fas fa-plus me-1"></i>Create your first lesson
+                    </button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Lesson Modal -->
+<div class="modal fade modal-glass" id="addLessonModal" tabindex="-1" aria-labelledby="addLessonModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 90vw; max-height: 90vh;">
+    <div class="modal-content">
+        <div class="text-white border-0 modal-header hero bg-success">
+            <div class="d-flex align-items-center">
+                <div class="hero-icon me-2"><i class="bi bi-journal-plus"></i></div>
+                <div>
+                    <h5 class="mb-0 text-white modal-title" id="addLessonModalLabel">Create New Lesson</h5>
+                    <div class="opacity-75 small">Fill in the details to create your new lesson</div>
+                </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0" style="max-height: 75vh; overflow: hidden;">
+            <div class="row g-0" style="height: 100%;">
+                <!-- Left Side - Form -->
+                <div class="col-lg-8" style="overflow-y: auto; max-height: 75vh;">
+                    <div class="p-4">
+                        <form id="add-lesson-form" class="needs-validation" novalidate>
+                            <input type="hidden" id="selectedColor" name="selectedColor" value="1">
+                            
+                            <!-- Basic Information -->
+                            <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
+                                <h6 class="section-title mb-3">
+                                    <i class="bi bi-info-circle me-2"></i>Basic Information
+                                </h6>
+                                
+                                <div class="mb-3">
+                                    <label for="lesson-title" class="form-label fw-semibold">
+                                        <i class="bi bi-type me-1"></i>Lesson Title <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg" id="lesson-title" name="title" maxlength="100" placeholder="Enter a descriptive title" required>
+                                    <div class="invalid-feedback">Please provide a lesson title.</div>
+                                </div>
+                                
+                                <div class="mb-0">
+                                    <label for="lesson-description" class="form-label fw-semibold">
+                                        <i class="bi bi-textarea-t me-1"></i>Description
+                                    </label>
+                                    <textarea class="form-control" id="lesson-description" name="description" rows="4" maxlength="500" placeholder="Provide a brief description of what this lesson covers..."></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- Lesson Details -->
+                            <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
+                                <h6 class="section-title mb-3">
+                                    <i class="bi bi-gear me-2"></i>Lesson Details
+                                </h6>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="lesson-status" class="form-label fw-semibold">
+                                            <i class="bi bi-ui-checks-grid me-1"></i>Status
+                                        </label>
+                                        <select class="form-select" id="lesson-status" name="status">
+                                            <option value="active" selected>📋 Active</option>
+                                            <option value="completed">✅ Completed</option>
+                                            <option value="archived">📦 Archived</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="lesson-author" class="form-label fw-semibold">
+                                            <i class="bi bi-person me-1"></i>Author Name
+                                        </label>
+                                        <input type="text" class="form-control" id="lesson-author" name="author_name" placeholder="Who created this lesson?">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Tags -->
+                            <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
+                                <h6 class="section-title mb-3">
+                                    <i class="bi bi-tags me-2"></i>Tags & Categories
+                                </h6>
+                                
+                                <label for="lesson-tags" class="form-label fw-semibold">
+                                    <i class="bi bi-tag me-1"></i>Tags
+                                </label>
+                                <input type="text" class="form-control" id="lesson-tags" name="tags" placeholder="e.g., Mathematics, Science, Programming, Beginner">
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>Separate multiple tags with commas. Tags help organize and find your lessons.
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-soft flex-grow-1">
+                                    <i class="bi bi-save2-fill me-2"></i>Create Lesson
+                                </button>
+                                <button type="reset" class="btn btn-outline-secondary btn-soft">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Right Side - Preview & Customization -->
+                <div class="col-lg-4 bg-light border-start" style="overflow-y: auto; max-height: 75vh;">
+                    <div class="p-4">
+                        <div class="text-center mb-4">
+                            <h6 class="fw-bold mb-2">
+                                <i class="bi bi-eye me-2"></i>Live Preview
+                            </h6>
+                            <p class="text-muted small">See how your lesson will appear</p>
+                        </div>
+                        
+                        <!-- Color Picker -->
+                        <div class="mb-4">
+                            <h6 class="fw-semibold mb-3">
+                                <i class="bi bi-palette me-2"></i>Card Theme
+                            </h6>
+                            <div class="d-flex gap-2 flex-wrap justify-content-center">
+                                <div class="color-option-neo active" data-color="1" style="background: linear-gradient(135deg, #007bff, #0056b3);" onclick="selectColorNeo(this, 1)" title="Blue">
+                                    <i class="fas fa-check text-white"></i>
+                                </div>
+                                <div class="color-option-neo" data-color="2" style="background: linear-gradient(135deg, #28a745, #1e7e34);" onclick="selectColorNeo(this, 2)" title="Green">
+                                    <i class="fas fa-check text-white"></i>
+                                </div>
+                                <div class="color-option-neo" data-color="3" style="background: linear-gradient(135deg, #dc3545, #bd2130);" onclick="selectColorNeo(this, 3)" title="Red">
+                                    <i class="fas fa-check text-white"></i>
+                                </div>
+                                <div class="color-option-neo" data-color="4" style="background: linear-gradient(135deg, #ffc107, #e0a800);" onclick="selectColorNeo(this, 4)" title="Yellow">
+                                    <i class="fas fa-check text-white"></i>
+                                </div>
+                                <div class="color-option-neo" data-color="5" style="background: linear-gradient(135deg, #6f42c1, #5a32a3);" onclick="selectColorNeo(this, 5)" title="Purple">
+                                    <i class="fas fa-check text-white"></i>
+                                </div>
+                                <div class="color-option-neo" data-color="6" style="background: linear-gradient(135deg, #fd7e14, #e8590c);" onclick="selectColorNeo(this, 6)" title="Orange">
+                                    <i class="fas fa-check text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Preview Card -->
+                        <div class="preview-card-neo" id="previewCard">
+                            <div class="preview-card-header" id="previewCardHeader" style="background: linear-gradient(135deg, #007bff, #0056b3);">
+                                <i class="fas fa-graduation-cap fa-3x text-white opacity-75"></i>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-title mb-2 fw-bold" id="previewTitle">Your Lesson Title</h6>
+                                <p class="card-text text-muted small mb-2 text-truncate-3" id="previewDescription">Your lesson description will appear here...</p>
+                                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                                    <span class="text-muted small" id="previewAuthor">
+                                        <i class="bi bi-person me-1"></i>Unknown Author
+                                    </span>
+                                    <span class="badge bg-primary rounded-pill small" id="previewStatus">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Google Classroom Integration -->
+                        <div class="mt-4 p-3 bg-white rounded-3 border">
+                            <h6 class="fw-semibold mb-2">
+                                <i class="fab fa-google me-2 text-primary"></i>Quick Import
+                            </h6>
+                            <p class="text-muted small mb-2">
+                                Connect Google Classroom to import courses as lessons.
+                            </p>
+                            <a href="{{ url_for('google_classroom.authorize') }}" class="btn btn-outline-primary btn-sm w-100">
+                                <i class="fab fa-google me-2"></i>Connect Google Classroom
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
   </div>
 </div>
 
 <style>
-  /* Enhanced Header Styles */
-  .input-group-text {
-    border-color: #dee2e6;
-  }
-  
-  .input-group .form-control:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-  }
-  
-  .form-select:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-  }
-  
-  /* Search Container Styles */
-  .search-container {
-    position: relative;
-  }
-  
-  .search-container.searching::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #007bff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    z-index: 10;
-  }
-  
-  #clearSearch {
-    transition: all 0.2s ease;
-  }
-  
-  #clearSearch:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
-  }
-  
-  /* Advanced Search Panel Styles */
-  #advancedSearchPanel {
-    animation: slideDown 0.3s ease-out;
-  }
-  
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  #advancedSearchPanel .card {
-    border-radius: 0.75rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  #advancedSearchPanel .form-check {
-    margin-bottom: 0.25rem;
-  }
-  
-  #advancedSearchPanel .form-check-label {
-    font-size: 0.875rem;
-    color: #495057;
-    cursor: pointer;
-  }
-  
-  #advancedSearchPanel .form-check-label:hover {
-    color: #007bff;
-  }
-  
-  #advancedSearchPanel .form-select-sm {
-    font-size: 0.875rem;
-  }
-  
-  /* Advanced Search Toggle Button */
-  #advancedSearchToggle {
-    transition: all 0.2s ease;
-  }
-  
-  #advancedSearchToggle:hover {
-    transform: scale(1.05);
-  }
-  
-  #advancedSearchToggle.btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-  }
-  
-  /* Toast styles */
-  .toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    min-width: 300px;
-  }
-  
-  /* Enhanced Card Transitions */
-  .lesson-card-wrapper {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  
-  .lesson-card-wrapper.hidden {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-    pointer-events: none;
-  }
-  
-  .lesson-card-wrapper.visible {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-    pointer-events: auto;
-  }
-  
-  /* No Results Animation */
-  #no-results-message {
-    animation: fadeInUp 0.5s ease-out;
-  }
-  
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .row.align-items-center {
-      flex-direction: column;
-      gap: 1rem;
-    }
-    
-    .col-md-4, .col-md-5, .col-md-3 {
-      width: 100%;
-      text-align: center;
-    }
-    
-    .d-flex.gap-2 {
-      flex-direction: column;
-      gap: 0.5rem !important;
-    }
-    
-    .input-group {
-      margin-bottom: 0.5rem;
-    }
-    
-    /* Advanced search responsive */
-    #advancedSearchPanel .row {
-      flex-direction: column;
-    }
-    
-    #advancedSearchPanel .col-md-4 {
-      margin-bottom: 1rem;
-    }
-    
-    #advancedSearchPanel .form-check {
-      display: inline-block;
-      margin-right: 1rem;
-      margin-bottom: 0.5rem;
-    }
-    
-    .lesson-card {
-      margin-bottom: 1rem;
-    }
-    
-    .card-header-image {
-      height: 120px;
-    }
-    
-    .card-body {
-      padding: 1rem;
-    }
-    
-    .lesson-title {
-      font-size: 1rem;
-      min-height: 2.4rem;
-    }
-    
-    .lesson-description {
-      font-size: 0.85rem;
-      min-height: 3.6rem;
-    }
-    
-    .stats-row {
-      padding: 0.5rem;
-      margin-bottom: 0.75rem;
-    }
-    
-    .stat-item i {
-      font-size: 0.9rem;
-    }
-    
-    .stat-value {
-      font-size: 0.8rem;
-    }
-  }
-  
-  /* Lesson Card Styles */
-  .lesson-card-wrapper {
-    display: flex;
-    margin-bottom: 1.5rem;
-  }
-  
-  .lesson-card {
-    width: 100%;
-    height: 100%;
-    border: none;
-    border-radius: 1rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    overflow: hidden;
-    background: white;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .lesson-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  }
-  
-  .card-header-image {
-    height: 140px;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
-  
-  .header-content {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .tags-container {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    right: 1rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  
-  .tag-badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.5rem;
-    font-weight: 500;
-  }
-  
-  .card-body {
-    padding: 1.5rem;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .stats-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding: 0.75rem;
-    background: #f8f9fa;
-    border-radius: 0.75rem;
-  }
-  
-  .stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    flex: 1;
-  }
-  
-  .stat-item i {
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
-    color: #6c757d;
-  }
-  
-  .stat-value {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #495057;
-  }
-  
-  .lesson-content {
-    flex: 1;
-    margin-bottom: 1rem;
-  }
-  
-  .lesson-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #212529;
-    margin-bottom: 0.75rem;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    min-height: 2.8rem;
-  }
-  
-  .lesson-description {
-    font-size: 0.9rem;
-    color: #6c757d;
-    line-height: 1.5;
-    margin-bottom: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    min-height: 4.05rem;
-  }
-  
-  .lesson-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 1rem;
-    border-top: 1px solid #e9ecef;
-    margin-top: auto;
-  }
-  
-  .author-info {
-    display: flex;
-    align-items: center;
-    flex: 1;
-  }
-  
-  .author-name {
-    font-size: 0.85rem;
-    color: #6c757d;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .status-badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  
-  .status-not-started {
-    background: #e9ecef;
-    color: #6c757d;
-  }
-  
-  .status-in-progress {
-    background: #fff3cd;
-    color: #856404;
-  }
-  
-  .status-completed {
-    background: #d1edff;
-    color: #0c5460;
-  }
-  
-  .status-no-status {
-    background: #f8f9fa;
-    color: #6c757d;
-  }
-  
-  /* Grid System */
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-    margin: 0 -0.75rem;
-  }
-  
-  .col-xl-3, .col-lg-4, .col-md-6, .col-sm-12 {
-    padding: 0 0.75rem;
-    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-  }
-  
-  /* Equal height cards */
-  .lesson-card-wrapper {
-    height: 100%;
-  }
-  
-  .lesson-card {
-    height: 100%;
-    min-height: 400px;
-  }
-  
-  /* Smooth transitions for filtering */
-  .col-xl-3, .col-lg-4, .col-md-6, .col-sm-12 {
-    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-  }
-  
-  /* Empty state */
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: #6c757d;
-  }
-  
-  .empty-state i {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
-  }
-  
-  .empty-state h4 {
-    margin-bottom: 0.5rem;
-    color: #495057;
-  }
-  
-  .empty-state p {
-    margin-bottom: 2rem;
-  }
-  
-  /* Loading state for search */
-  .search-loading {
-    position: relative;
-  }
-  
-  .search-loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #007bff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-    0% { transform: translateY(-50%) rotate(0deg); }
-    100% { transform: translateY(-50%) rotate(360deg); }
-  }
-
-  /* Lesson Card Enhancements */
-  .lesson-card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    border-radius: 0.75rem; /* More rounded corners */
-    overflow: hidden; /* Ensures content respects border-radius */
-  }
-  .lesson-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-  }
-
-  
-
-  .card-title {
-    font-weight: 600;
-  }
-
-  .lesson-card .card-body {
-    padding: 1.25rem;
-  }
-
-  .lesson-card .card-text {
-    font-size: 0.9rem;
-    line-height: 1.5;
-    color: var(--text-muted);
-  }
-
-  .lesson-card .badge {
-    font-size: 0.75rem;
-    padding: 0.4em 0.6em;
-    border-radius: 0.3rem;
-  }
-
-  /* Dropdown for actions */
-  .lesson-card .dropdown-toggle::after {
-    display: none; /* Hide default caret */
-  }
-  .lesson-card .dropdown-item {
-    font-size: 0.9rem;
-  }
-  .favorite-btn {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    z-index: 2;
-    background: rgba(255,255,255,0.85);
-    border: none;
-    border-radius: 50%;
-    width: 2.25rem;
-    height: 2.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    transition: background 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-  }
-  .favorite-btn:hover, .favorite-btn:focus {
-    background: #fffbe6;
-    box-shadow: 0 4px 16px rgba(255, 193, 7, 0.15);
-  }
-  .favorite-btn .fa-star {
-    font-size: 1.25rem;
-    transition: color 0.2s;
-  }
-  .favorite-btn .fa-star.text-warning {
-    color: #ffc107 !important;
-    text-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);
-  }
-  .favorite-btn .fa-star.text-secondary {
-    color: #ced4da !important;
-  }
-  .favorite-btn .fa-star.favorite-active {
-    filter: drop-shadow(0 0 4px #ffc107);
-  }
-
-/* View Mode Styles */
-.list-view .lesson-card {
+/* Color Picker Neo-morphism */
+.color-option-neo {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
-  border: 1px solid #e9ecef;
-  border-radius: 0.5rem;
-  background: white;
+  justify-content: center;
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+  box-shadow: 4px 4px 8px rgba(0,0,0,0.15), -2px -2px 6px rgba(255,255,255,0.7);
+}
+
+.color-option-neo:hover {
+  transform: scale(1.15);
+  box-shadow: 6px 6px 12px rgba(0,0,0,0.2), -3px -3px 8px rgba(255,255,255,0.8);
+}
+
+.color-option-neo.active {
+  border-color: #fff;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px rgba(0,123,255,0.5), 6px 6px 12px rgba(0,0,0,0.2);
+}
+
+.color-option-neo i {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-size: 18px;
+}
+
+.color-option-neo.active i {
+  opacity: 1;
+}
+
+/* Preview Card Neo-morphism */
+.preview-card-neo {
+  background: linear-gradient(145deg, #ffffff, #f0f0f0);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 8px 8px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9);
   transition: all 0.3s ease;
 }
 
-.list-view .lesson-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
+.preview-card-neo:hover {
+  transform: translateY(-4px);
+  box-shadow: 12px 12px 20px rgba(0,0,0,0.12), -6px -6px 14px rgba(255,255,255,0.95);
 }
 
-.list-view .lesson-card .lesson-info {
-  flex: 1;
-  margin-right: 1rem;
-}
-
-.list-view .lesson-card .lesson-title {
-  font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
-}
-
-.list-view .lesson-card .lesson-description {
-  font-size: 0.875rem;
-  color: #6c757d;
-  margin-bottom: 0.25rem;
-}
-
-.list-view .lesson-card .lesson-meta {
+.preview-card-header {
+  height: 100px;
   display: flex;
-  gap: 1rem;
-  font-size: 0.75rem;
-  color: #6c757d;
-}
-
-.list-view .lesson-card .lesson-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.list-view .lesson-card .btn {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-}
-
-/* Search and Filter Styles */
-.search-container {
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 
-.search-container .form-control:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+/* Modal adjustments for better form display */
+.modal-xl .modal-body {
+  padding: 0;
 }
 
-#advancedSearchPanel {
-  border: 1px solid #dee2e6;
-  background-color: #f8f9fa;
+.modal-xl .glass-section {
+  animation: slideInUp 0.3s ease-out;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .d-flex.gap-3 {
-    flex-direction: column;
-    gap: 1rem !important;
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  
-  .flex-grow-1 {
-    width: 100%;
-  }
-  
-  .flex-shrink-0 {
-    width: 100%;
-  }
-  
-  .btn-group {
-    width: 100%;
-  }
-  
-  .btn-group .btn {
-    flex: 1;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>
 
-<script>
-  // Placeholder for deleteLesson function - needs to be implemented in main.js
-  function deleteLesson(lessonId) {
-    console.log('Delete lesson with ID:', lessonId);
-    // Example: Implement AJAX call to delete lesson
-    // fetch('/api/lessons/' + lessonId, { method: 'DELETE' })
-    //   .then(response => response.json())
-    //   .then(data => {
-    //     if (data.success) {
-    //       loadPage('class'); // Reload the class list
-    //     } else {
-    //       alert('Error deleting lesson: ' + data.message);
-    //     }
-    //   })
-    //   .catch(error => console.error('Error:', error));
-  }
-  
-  // Initialize tooltips
-  document.addEventListener('DOMContentLoaded', function() {
-    // Add smooth scrolling for better UX
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-          target.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }
-      });
-    });
-  });
-</script>
-
-  <!-- Include Google Classroom Import Modal -->
-  {% include 'lessons/_google_classroom_import_modal.html' %}
-  
-  <!-- Add Lesson Modal -->
-  <div class="modal fade" id="addLessonModal" tabindex="-1" aria-labelledby="addLessonModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width:95vw; height:90vh;">
-    <div class="modal-content h-100">
-      <div class="modal-header bg-primary text-white py-3">
-        <h5 class="modal-title" id="addLessonModalLabel">
-          <i class="fas fa-plus-circle me-2"></i>Create New Lesson
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-0 flex-grow-1">
-        {% include 'lessons/_add.html' %}
-      </div>
+<!-- Edit Lesson Modal -->
+<div class="modal fade modal-glass" id="editLessonModal" tabindex="-1" aria-labelledby="editLessonModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+        <div class="text-white border-0 modal-header hero bg-warning">
+            <div class="d-flex align-items-center">
+                <div class="hero-icon me-2"><i class="bi bi-pencil"></i></div>
+                <div>
+                    <h5 class="mb-0 text-white modal-title" id="editLessonModalLabel">Edit Lesson</h5>
+                    <div class="opacity-75 small">Update lesson details</div>
+                </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <form id="edit-lesson-form" class="needs-validation" novalidate>
+                <input type="hidden" id="edit-lesson-id" name="lesson_id">
+                
+                <div class="mb-3">
+                    <label for="edit-lesson-title" class="form-label section-title"><i class="bi bi-type me-1"></i>Title</label>
+                    <input type="text" class="form-control" id="edit-lesson-title" name="title" maxlength="100" required>
+                </div>
+                
+                <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
+                    <label for="edit-lesson-description" class="form-label section-title"><i class="bi bi-textarea-t me-1"></i>Description</label>
+                    <textarea class="form-control" id="edit-lesson-description" name="description" rows="4" maxlength="500"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="edit-lesson-status" class="form-label section-title"><i class="bi bi-ui-checks-grid me-1"></i>Status</label>
+                    <select class="form-select" id="edit-lesson-status" name="status">
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-soft" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Close
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-soft">
+                        <i class="bi bi-pencil-square me-1"></i>Update Lesson
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
   </div>
 </div>
 
+<style>
+/* Copy styles from note_fragment.html */
+.root, :root {
+  --slh-primary: #003B8E;
+  --slh-primary-2: #2B6BCF;
+  --slh-primary-3: #002862;
+}
+
+.text-truncate-3 { 
+  display:-webkit-box; 
+  -webkit-line-clamp:3; 
+  -webkit-box-orient:vertical; 
+  overflow:hidden; 
+}
+
+/* Neo-morphism Cards */
+.neo-card {
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 16px;
+  background: linear-gradient(145deg, #ffffff, #eef1f6);
+  box-shadow: 8px 8px 20px rgba(0,0,0,0.08), -6px -6px 16px rgba(255,255,255,0.9);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.neo-card:hover { 
+  transform: translateY(-4px); 
+  box-shadow: 12px 12px 26px rgba(0,0,0,0.10), -8px -8px 18px rgba(255,255,255,0.95); 
+}
+
+.status-pill { 
+  border-radius: 999px; 
+  letter-spacing: .3px; 
+  font-size: 11px;
+  padding: 4px 10px;
+}
+
+/* Glassmorphism Modals */
+.modal-glass .modal-content {
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15), inset 1px 1px 0 rgba(255,255,255,0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+}
+
+.modal-glass .modal-header {
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+
+.modal-glass .modal-header.bg-success { 
+  background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3)) !important; 
+}
+
+.modal-glass .modal-header.bg-warning { 
+  background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)) !important; 
+}
+
+.modal-glass .modal-body {
+  background: radial-gradient(1200px circle at 10% 10%, rgba(255,255,255,.6), rgba(255,255,255,.4) 40%, rgba(255,255,255,.25) 70%);
+}
+
+.hero { 
+  background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); 
+}
+
+.hero .hero-icon { 
+  width: 36px; 
+  height: 36px; 
+  border-radius: 10px; 
+  background: rgba(255,255,255,.2); 
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+}
+
+.glass-section {
+  background: rgba(255,255,255,0.55) !important;
+  border: 1px solid rgba(255,255,255,0.35) !important;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.5), 8px 8px 18px rgba(0,0,0,0.05);
+}
+
+.section-title { 
+  font-weight: 600; 
+  color: #334155; 
+}
+
+.modal-glass .form-control,
+.modal-glass .form-select {
+  border-radius: 12px;
+  background: linear-gradient(145deg, #ffffff, #e6e9ef);
+  box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.modal-glass .form-control:focus,
+.modal-glass .form-select:focus {
+  box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15), inset 4px 4px 8px rgba(0,0,0,0.06), inset -4px -4px 8px rgba(255,255,255,0.8);
+  border-color: rgba(var(--bs-primary-rgb), .35);
+}
+
+.modal-glass .btn-primary {
+  background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary));
+  border-color: var(--slh-primary);
+}
+
+.modal-glass .btn-primary:hover,
+.modal-glass .btn-primary:focus {
+  background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3));
+  border-color: var(--slh-primary-3);
+}
+
+.btn-soft {
+  border-radius: 12px;
+  box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.btn-soft:active {
+  box-shadow: inset 4px 4px 8px rgba(0,0,0,0.08), inset -4px -4px 8px rgba(255,255,255,0.8);
+}
+
+/* Search Bar */
+.search-bar .input-group { 
+  border-radius: 999px; 
+  overflow: hidden; 
+  box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9); 
+}
+
+.search-bar .input-group-text { 
+  background: linear-gradient(145deg, #ffffff, #e6e9ef); 
+  border-right: 0; 
+}
+
+.search-bar .form-control { 
+  border-left: 0; 
+  background: linear-gradient(145deg, #ffffff, #e6e9ef); 
+}
+
+.search-bar .form-control:focus { 
+  box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15), inset 4px 4px 8px rgba(0,0,0,0.06), inset -4px -4px 8px rgba(255,255,255,0.8); 
+  border-color: rgba(var(--bs-primary-rgb), .35); 
+}
+
+.add-link { 
+  color: var(--slh-primary-2); 
+  font-weight: 600; 
+  white-space: nowrap;
+}
+
+.add-link:hover { 
+  color: var(--slh-primary); 
+}
+
+/* Chip Filters */
+.chip-group .chip { 
+  border-radius: 999px; 
+  padding: 6px 14px; 
+  border: 1px solid rgba(0,59,142,.25); 
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.06), -2px -2px 6px rgba(255,255,255,.8); 
+  background:#fff; 
+  color: var(--slh-primary); 
+  transition: all .15s ease; 
+}
+
+.chip-group .chip:hover { 
+  background: rgba(0,59,142,.08); 
+  color: var(--slh-primary-2); 
+}
+
+.chip-group .chip.active { 
+  background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); 
+  color: #fff; 
+  border-color: var(--slh-primary); 
+  box-shadow: 0 8px 16px rgba(0,59,142,.18); 
+}
+
+/* Stats Cards */
+.stats-row .stat-card { 
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%); 
+  border:1px solid rgba(0,0,0,.05); 
+  border-radius:14px; 
+  padding:14px 16px; 
+  min-height:72px; 
+  box-shadow: 0 6px 18px rgba(0,0,0,.06), 0 1px 0 rgba(255,255,255,.9) inset; 
+  transition: transform .15s ease, box-shadow .15s ease; 
+}
+
+.stats-row .stat-card:hover { 
+  transform: translateY(-2px); 
+  box-shadow: 0 10px 24px rgba(0,0,0,.08), 0 1px 0 rgba(255,255,255,.95) inset; 
+}
+
+.stat-icon { 
+  width:36px; 
+  height:36px; 
+  border-radius:10px; 
+  display:flex; 
+  align-items:center; 
+  justify-content:center; 
+  font-size:18px; 
+}
+
+.bg-brand { 
+  background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); 
+}
+
+.bg-success-subtle { 
+  background: rgba(25, 135, 84, .12) !important; 
+}
+
+.bg-primary-subtle { 
+  background: rgba(13, 110, 253, .12) !important; 
+}
+
+.bg-warning-subtle { 
+  background: rgba(255, 193, 7, .12) !important; 
+}
+
+/* Lesson Cover */
+.lesson-cover-wrapper {
+  position: relative;
+}
+
+.lesson-cover {
+  height:160px;
+  background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3));
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+}
+
+/* Favorite Button */
+.favorite-btn-neo {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 10;
+}
+
+.favorite-btn-neo:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.favorite-btn-neo i {
+  color: #6c757d;
+  font-size: 18px;
+  transition: color 0.2s ease;
+}
+
+.favorite-btn-neo.active i {
+  color: #ffc107;
+}
+
+.neo-card .card-footer { 
+  border-top: 1px solid rgba(0,0,0,.05); 
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+</style>
+
 <script>
-// Google Classroom Functions - Global scope
-let googleClassroomCourses = [];
-let selectedCourse = null;
-
-function showToast(type, message) {
-  // Create toast element
-  const toast = document.createElement('div');
-  toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
-  toast.setAttribute('role', 'alert');
-  toast.setAttribute('aria-live', 'assertive');
-  toast.setAttribute('aria-atomic', 'true');
-  
-  toast.innerHTML = `
-    <div class="d-flex">
-      <div class="toast-body">
-        ${message}
-      </div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-  `;
-  
-  // Add to page
-  document.body.appendChild(toast);
-  
-  // Show toast
-  const bsToast = new bootstrap.Toast(toast);
-  bsToast.show();
-  
-  // Remove after hidden
-  toast.addEventListener('hidden.bs.toast', () => {
-    document.body.removeChild(toast);
-  });
-}
-
-function autoImportAllGoogleClassroomCourses() {
-  if (!confirm('Import all Google Classroom courses automatically? This will create lessons with default settings.')) {
-    return;
-  }
-  
-  // Show loading state
-  const button = event.target;
-  const originalText = button.innerHTML;
-  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing...';
-  button.disabled = true;
-  
-  fetch('/api/google_classroom/auto_import_all', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
+// Attach all functions to window object for global access (needed for AJAX-loaded content)
+window.selectColorNeo = function(element, colorId) {
+    console.log('Color selected:', colorId);
+    
+    // Remove active class from all color options
+    document.querySelectorAll('.color-option-neo').forEach(opt => {
+        opt.classList.remove('active');
+    });
+    
+    // Add active class to selected color
+    element.classList.add('active');
+    
+    // Update hidden input
+    const selectedColorInput = document.getElementById('selectedColor');
+    if (selectedColorInput) {
+        selectedColorInput.value = colorId;
+        console.log('Hidden input updated:', selectedColorInput.value);
     }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      showToast('success', data.message);
-      // Refresh the page to show the new lessons
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
+    
+    // Update preview card header color
+    const previewCardHeader = document.getElementById('previewCardHeader');
+    if (previewCardHeader) {
+        const colorGradients = {
+            1: 'linear-gradient(135deg, #007bff, #0056b3)',
+            2: 'linear-gradient(135deg, #28a745, #1e7e34)',
+            3: 'linear-gradient(135deg, #dc3545, #bd2130)',
+            4: 'linear-gradient(135deg, #ffc107, #e0a800)',
+            5: 'linear-gradient(135deg, #6f42c1, #5a32a3)',
+            6: 'linear-gradient(135deg, #fd7e14, #e8590c)'
+        };
+        
+        const newGradient = colorGradients[colorId] || colorGradients[1];
+        previewCardHeader.style.background = newGradient;
+        previewCardHeader.style.backgroundImage = newGradient;
+        console.log('Preview header color updated to:', newGradient);
     } else {
-      showToast('error', data.message || 'Failed to auto-import courses');
-      // Reset button state
-      button.innerHTML = originalText;
-      button.disabled = false;
+        console.error('Preview card header not found');
     }
-  })
-  .catch(error => {
-    console.error('Error auto-importing courses:', error);
-    showToast('error', 'Error auto-importing courses');
-    // Reset button state
-    button.innerHTML = originalText;
-    button.disabled = false;
-  });
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Class fragment: DOMContentLoaded');
+    
+    // Search functionality
+    const searchInput = document.getElementById('lessonSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', window.filterLessons);
+    }
+    
+    // Chip filters
+    document.querySelectorAll('.chip-group .chip').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.chip-group .chip').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            window.filterLessons();
+        });
+    });
+    
+    // Edit lesson modal
+    const editLessonModal = document.getElementById('editLessonModal');
+    if (editLessonModal) {
+        editLessonModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            if (button) {
+                const id = button.getAttribute('data-lesson-id');
+                const title = button.getAttribute('data-lesson-title');
+                const description = button.getAttribute('data-lesson-description');
+                const status = button.getAttribute('data-lesson-status');
+                
+                document.getElementById('edit-lesson-id').value = id;
+                document.getElementById('edit-lesson-title').value = title;
+                document.getElementById('edit-lesson-description').value = description;
+                document.getElementById('edit-lesson-status').value = status || 'active';
+            }
+        });
+    }
+    
+    // Setup Add Lesson Modal
+    const addLessonModal = document.getElementById('addLessonModal');
+    if (addLessonModal) {
+        addLessonModal.addEventListener('shown.bs.modal', function() {
+            console.log('Add Lesson Modal shown, setting up preview...');
+            setupAddLessonPreview();
+        });
+        
+        addLessonModal.addEventListener('hidden.bs.modal', function() {
+            // Reset form when modal is closed
+            const form = document.getElementById('add-lesson-form');
+            if (form) {
+                form.reset();
+                form.classList.remove('was-validated');
+            }
+        });
+    }
+    
+    // Setup Add Lesson Form Submission
+    const addLessonForm = document.getElementById('add-lesson-form');
+    if (addLessonForm) {
+        addLessonForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!addLessonForm.checkValidity()) {
+                e.stopPropagation();
+                addLessonForm.classList.add('was-validated');
+                return;
+            }
+            
+            const formData = new FormData(addLessonForm);
+            
+            fetch('/partial/class/add', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addLessonModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    loadPage('class');
+                } else {
+                    alert(data.message || 'Error creating lesson');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error creating lesson');
+            });
+        });
+    }
+});
+
+function setupAddLessonPreview() {
+    // Setup input listeners with debouncing
+    const titleInput = document.getElementById('lesson-title');
+    const descriptionInput = document.getElementById('lesson-description');
+    const authorInput = document.getElementById('lesson-author');
+    const statusSelect = document.getElementById('lesson-status');
+    
+    function updatePreview() {
+        const title = titleInput?.value || 'Your Lesson Title';
+        const description = descriptionInput?.value || 'Your lesson description will appear here...';
+        const author = authorInput?.value || 'Unknown Author';
+        const status = statusSelect?.value || 'active';
+        
+        const previewTitle = document.getElementById('previewTitle');
+        const previewDescription = document.getElementById('previewDescription');
+        const previewAuthor = document.getElementById('previewAuthor');
+        const previewStatus = document.getElementById('previewStatus');
+        
+        if (previewTitle) previewTitle.textContent = title;
+        if (previewDescription) previewDescription.textContent = description;
+        if (previewAuthor) previewAuthor.innerHTML = '<i class="bi bi-person me-1"></i>' + author;
+        if (previewStatus) {
+            previewStatus.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            previewStatus.className = 'badge rounded-pill small';
+            if (status === 'active') previewStatus.classList.add('bg-primary');
+            else if (status === 'completed') previewStatus.classList.add('bg-success');
+            else if (status === 'archived') previewStatus.classList.add('bg-warning');
+        }
+    }
+    
+    // Add event listeners with immediate feedback
+    if (titleInput) {
+        titleInput.addEventListener('input', updatePreview);
+        titleInput.addEventListener('keyup', updatePreview);
+    }
+    if (descriptionInput) {
+        descriptionInput.addEventListener('input', updatePreview);
+        descriptionInput.addEventListener('keyup', updatePreview);
+    }
+    if (authorInput) {
+        authorInput.addEventListener('input', updatePreview);
+        authorInput.addEventListener('keyup', updatePreview);
+    }
+    if (statusSelect) {
+        statusSelect.addEventListener('change', updatePreview);
+    }
+    
+    // Initial update
+    updatePreview();
 }
 
-function openGoogleClassroomImportModal() {
-  // Fetch courses data if not already loaded
-  if (googleClassroomCourses.length === 0) {
-    fetchGoogleClassroomCourses();
-  } else {
-    populateCoursesList();
-    $('#googleClassroomImportModal').modal('show');
-  }
-}
+// Attach all helper functions to window object for global access
+window.filterLessons = function() {
+    const searchTerm = document.getElementById('lessonSearch')?.value.toLowerCase() || '';
+    const activeChip = document.querySelector('.chip-group .chip.active');
+    const filterStatus = activeChip?.getAttribute('data-filter') || '';
+    
+    document.querySelectorAll('.lesson-item').forEach(item => {
+        const title = item.querySelector('.card-title')?.textContent.toLowerCase() || '';
+        const description = item.querySelector('.card-text')?.textContent.toLowerCase() || '';
+        const status = item.getAttribute('data-status') || '';
+        
+        const matchesSearch = !searchTerm || title.includes(searchTerm) || description.includes(searchTerm);
+        const matchesFilter = !filterStatus || status === filterStatus;
+        
+        item.style.display = (matchesSearch && matchesFilter) ? '' : 'none';
+    });
+};
 
-function fetchGoogleClassroomCourses() {
-  fetch('/api/google_classroom/lessons')
+window.toggleFavorite = function(lessonId, button) {
+    console.log('Toggle favorite for lesson:', lessonId);
+    button.classList.toggle('active');
+    
+    // TODO: Implement API call to toggle favorite
+    fetch(`/partial/class/${lessonId}/favorite`, { 
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
     .then(response => response.json())
     .then(data => {
-      if (data.lessons) {
-        googleClassroomCourses = data.lessons;
-        populateCoursesList();
-        $('#googleClassroomImportModal').modal('show');
-      } else {
-        showToast('error', 'Failed to fetch Google Classroom courses');
-      }
+        if (data.success) {
+            console.log('Favorite toggled successfully');
+        }
     })
     .catch(error => {
-      console.error('Error fetching courses:', error);
-      showToast('error', 'Error fetching Google Classroom courses');
+        console.error('Error toggling favorite:', error);
+        // Keep the UI change even if API fails
     });
-}
+};
 
-function populateCoursesList() {
-  const coursesList = document.getElementById('googleCoursesList');
-  coursesList.innerHTML = '';
-  
-  googleClassroomCourses.forEach(course => {
-    const courseItem = document.createElement('a');
-    courseItem.href = '#';
-    courseItem.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-start';
-    courseItem.onclick = (e) => {
-      e.preventDefault();
-      selectCourseForImport(course.id, course.name);
-    };
-    
-    courseItem.innerHTML = `
-      <div class="ms-2 me-auto">
-        <div class="fw-bold">${course.name}</div>
-        ${course.section ? `<small class="text-muted">${course.section}</small>` : ''}
-      </div>
-      <span class="badge bg-primary rounded-pill">${course.announcements?.length || 0 + course.courseWork?.length || 0 + course.materials?.length || 0}</span>
-    `;
-    
-    coursesList.appendChild(courseItem);
-  });
-}
-
-function selectCourseForImport(courseId, courseName) {
-  selectedCourse = googleClassroomCourses.find(c => c.id === courseId);
-  if (!selectedCourse) return;
-  
-  // Populate the import form
-  populateImportForm(selectedCourse);
-  
-  // Show the modal if not already shown
-  if (!$('#googleClassroomImportModal').hasClass('show')) {
-    $('#googleClassroomImportModal').modal('show');
-  }
-}
-
-function populateImportForm(course) {
-  const formContainer = document.getElementById('importFormContainer');
-  const template = document.getElementById('courseImportFormTemplate');
-  
-  // Clone the template content
-  const formContent = template.content.cloneNode(true);
-  
-  // Replace the container content
-  formContainer.innerHTML = '';
-  formContainer.appendChild(formContent);
-  
-  // Populate form fields
-  document.getElementById('selectedCourseId').value = course.id;
-  document.getElementById('lessonTitle').value = course.name;
-  document.getElementById('lessonDescription').value = course.description || course.section || '';
-  document.getElementById('courseIdDisplay').value = course.id;
-  document.getElementById('courseSectionDisplay').value = course.section || 'N/A';
-  document.getElementById('announcementsCount').value = course.announcements?.length || 0;
-  document.getElementById('assignmentsCount').value = course.courseWork?.length || 0;
-  document.getElementById('materialsCount').value = course.materials?.length || 0;
-  
-  // Generate preview
-  generateImportPreview(course);
-  
-  // Enable import button
-  document.getElementById('importButton').disabled = false;
-  
-  // Add form submit handler
-  document.getElementById('googleClassroomImportForm').onsubmit = (e) => {
-    e.preventDefault();
-    submitGoogleClassroomImport();
-  };
-  
-  // Add form change listeners for live preview
-  document.getElementById('lessonStatus').addEventListener('change', updatePreview);
-  document.getElementById('lessonColor').addEventListener('change', updatePreview);
-}
-
-function generateImportPreview(course) {
-  const previewContainer = document.getElementById('importPreview');
-  
-  let previewHTML = `
-    <div class="row">
-      <div class="col-md-6">
-        <h6 class="text-success">Lesson Details</h6>
-        <ul class="list-unstyled">
-          <li><strong>Title:</strong> ${course.name}</li>
-          <li><strong>Section:</strong> ${course.section || 'N/A'}</li>
-          <li><strong>Status:</strong> <span id="previewStatus">Active</span></li>
-          <li><strong>Color:</strong> <span id="previewColor">Blue</span></li>
-        </ul>
-      </div>
-      <div class="col-md-6">
-        <h6 class="text-success">Content to Import</h6>
-        <ul class="list-unstyled">
-          <li><i class="fas fa-bullhorn text-info"></i> Announcements: ${course.announcements?.length || 0}</li>
-          <li><i class="fas fa-tasks text-warning"></i> Assignments: ${course.courseWork?.length || 0}</li>
-          <li><i class="fas fa-file-alt text-secondary"></i> Materials: ${course.materials?.length || 0}</li>
-        </ul>
-      </div>
-    </div>
-  `;
-  
-  // Add sample content preview
-  if (course.announcements && course.announcements.length > 0) {
-    previewHTML += `
-      <div class="mt-3">
-        <h6 class="text-success">Sample Announcements</h6>
-        <div class="border rounded p-2 bg-white">
-          ${course.announcements.slice(0, 2).map(announcement => 
-            `<div class="mb-2"><i class="fas fa-bullhorn text-info me-2"></i>${announcement.text || 'Announcement'}</div>`
-          ).join('')}
-        </div>
-      </div>
-    `;
-  }
-  
-  previewContainer.innerHTML = previewHTML;
-  
-  // Update preview when form changes
-  updatePreview();
-}
-
-function updatePreview() {
-  const status = document.getElementById('lessonStatus').value;
-  const color = document.getElementById('lessonColor').value;
-  
-  const previewStatus = document.getElementById('previewStatus');
-  const previewColor = document.getElementById('previewColor');
-  
-  if (previewStatus) previewStatus.textContent = status;
-  if (previewColor) previewColor.textContent = color;
-}
-
-function submitGoogleClassroomImport() {
-  const form = document.getElementById('googleClassroomImportForm');
-  const formData = new FormData(form);
-  
-  // Get checkbox values
-  formData.append('import_announcements', document.getElementById('importAnnouncements').checked);
-  formData.append('import_assignments', document.getElementById('importAssignments').checked);
-  formData.append('import_materials', document.getElementById('importMaterials').checked);
-  formData.append('import_topics', document.getElementById('importTopics').checked);
-  
-  // Convert to JSON
-  const importData = {};
-  for (let [key, value] of formData.entries()) {
-    importData[key] = value;
-  }
-  
-  // Add course data
-  importData.course_data = selectedCourse;
-  
-  // Show loading state
-  const importButton = document.getElementById('importButton');
-  const originalText = importButton.innerHTML;
-  importButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing...';
-  importButton.disabled = true;
-  
-  fetch('/api/google_classroom/import_course_customized', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(importData)
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      showToast('success', data.message);
-      $('#googleClassroomImportModal').modal('hide');
-      // Refresh the page to show the new lesson
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
+window.viewLesson = function(lessonId) {
+    console.log('View lesson:', lessonId);
+    // Navigate to lesson detail page
+    if (typeof loadPage === 'function') {
+        loadPage('class/' + lessonId);
     } else {
-      showToast('error', data.message || 'Failed to import course');
-      // Reset button state
-      importButton.innerHTML = originalText;
-      importButton.disabled = false;
+        window.location.href = '/class/' + lessonId;
     }
-  })
-  .catch(error => {
-    console.error('Error importing course:', error);
-    showToast('error', 'Error importing course');
-    // Reset button state
-    importButton.innerHTML = originalText;
-    importButton.disabled = false;
-  });
-}
+};
 
-// Auto-import function is now defined in global scope above
+window.deleteLesson = function(lessonId) {
+    if (confirm('Are you sure you want to delete this lesson?')) {
+        console.log('Delete lesson:', lessonId);
+        
+        fetch(`/partial/class/${lessonId}/delete`, { 
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload the class page
+                if (typeof loadPage === 'function') {
+                    loadPage('class');
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                alert(data.message || 'Error deleting lesson');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting lesson:', error);
+            alert('Error deleting lesson');
+        });
+    }
+};
+</script>
 
-function bulkImportGoogleClassroom() {
-  if (!confirm('Import all Google Classroom courses as lessons?')) {
-    return;
-  }
-  
-  // Show loading state
-  const button = event.target;
-  const originalText = button.innerHTML;
-  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing All...';
-  button.disabled = true;
-  
-  fetch('/api/google_classroom/bulk_import', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      showToast('success', data.message);
-      // Refresh the page to show the new lessons
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
-    } else {
-      showToast('error', data.message || 'Failed to bulk import courses');
-      // Reset button state
-      button.innerHTML = originalText;
-      button.disabled = false;
-    }
-  })
-  .catch(error => {
-    console.error('Error bulk importing courses:', error);
-    showToast('error', 'Error bulk importing courses');
-    // Reset button state
-    button.disabled = false;
-    button.innerHTML = originalText;
-  });
-}
-
-function refreshGoogleClassroomData() {
-  fetch('/api/google_classroom/sync', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.lessons) {
-      showToast('success', 'Google Classroom data refreshed successfully');
-      // Refresh the page to show updated data
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
-    } else {
-      showToast('error', data.error || 'Failed to refresh data');
-    }
-  })
-  .catch(error => {
-    console.error('Error refreshing data:', error);
-    showToast('error', 'Error refreshing Google Classroom data');
-  });
-}
-
-function showToast(type, message) {
-  // Create toast element
-  const toast = document.createElement('div');
-  toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
-  toast.setAttribute('role', 'alert');
-  toast.setAttribute('aria-live', 'assertive');
-  toast.setAttribute('aria-atomic', 'true');
-  
-  toast.innerHTML = `
-    <div class="d-flex">
-      <div class="toast-body">
-        ${message}
-      </div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-  `;
-  
-  // Add to page
-  document.body.appendChild(toast);
-  
-  // Show toast
-  const bsToast = new bootstrap.Toast(toast);
-  bsToast.show();
-  
-  // Remove after hidden
-  toast.addEventListener('hidden.bs.toast', () => {
-    document.body.removeChild(toast);
-  });
-}
-
-// Multiple event listeners to ensure setupAddLessonModal is called
-document.addEventListener('DOMContentLoaded', function() {
-  const modal = document.getElementById('addLessonModal');
-  if (modal) {
-    // Bootstrap 5 modal events
-    modal.addEventListener('shown.bs.modal', function() {
-      console.log('Modal shown event triggered');
-      if (typeof setupAddLessonModal === 'function') {
-        setupAddLessonModal();
-      }
-    });
-    
-    modal.addEventListener('show.bs.modal', function() {
-      console.log('Modal show event triggered');
-      setTimeout(() => {
-        if (typeof setupAddLessonModal === 'function') {
-          setupAddLessonModal();
-        }
-      }, 200);
-    });
-  }
-});
-
-// Global click handler
-document.addEventListener('click', function(e) {
-  if (e.target && e.target.getAttribute('data-bs-target') === '#addLessonModal') {
-    console.log('Modal button clicked');
-    setTimeout(() => {
-      if (typeof setupAddLessonModal === 'function') {
-        setupAddLessonModal();
-      }
-    }, 300);
-  }
-});
-
-// MutationObserver as backup
-const observer = new MutationObserver(function(mutations) {
-  mutations.forEach(function(mutation) {
-    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-      const modal = document.getElementById('addLessonModal');
-      if (modal && modal.classList.contains('show')) {
-        console.log('Modal class changed to show');
-        setTimeout(() => {
-          if (typeof setupAddLessonModal === 'function') {
-            setupAddLessonModal();
-          }
-        }, 100);
-      }
-    }
-  });
-});
-
-// Start observing modal
-const modal = document.getElementById('addLessonModal');
-if (modal) {
-  observer.observe(modal, {
-    attributes: true,
-    attributeFilter: ['class']
-  });
-}
-
-// Search and Filter Functions
-let searchTimeout;
-
-function performSearch() {
-  const searchTerm = document.getElementById('lessonSearch').value.toLowerCase();
-  const statusFilter = document.getElementById('lessonFilter').value;
-  const tagFilter = document.getElementById('tagFilter').value.toLowerCase();
-  const authorFilter = document.getElementById('authorFilter').value.toLowerCase();
-  const dateFilter = document.getElementById('dateFilter').value;
-  
-  const lessonCards = document.querySelectorAll('.lesson-card');
-  let visibleCount = 0;
-  
-  lessonCards.forEach(card => {
-    const title = card.querySelector('.lesson-title').textContent.toLowerCase();
-    const description = card.querySelector('.lesson-description')?.textContent.toLowerCase() || '';
-    const status = card.querySelector('.lesson-status')?.textContent || '';
-    const tags = card.querySelector('.lesson-tags')?.textContent.toLowerCase() || '';
-    const author = card.querySelector('.lesson-author')?.textContent.toLowerCase() || '';
-    const createdDate = card.querySelector('.lesson-date')?.textContent || '';
-    
-    let matches = true;
-    
-    // Search term filter
-    if (searchTerm && !title.includes(searchTerm) && !description.includes(searchTerm)) {
-      matches = false;
-    }
-    
-    // Status filter
-    if (statusFilter && status !== statusFilter) {
-      matches = false;
-    }
-    
-    // Tag filter
-    if (tagFilter && !tags.includes(tagFilter)) {
-      matches = false;
-    }
-    
-    // Author filter
-    if (authorFilter && !author.includes(authorFilter)) {
-      matches = false;
-    }
-    
-    // Date filter
-    if (dateFilter && createdDate) {
-      const created = new Date(createdDate);
-      const now = new Date();
-      let shouldShow = true;
-      
-      switch (dateFilter) {
-        case 'today':
-          shouldShow = created.toDateString() === now.toDateString();
-          break;
-        case 'week':
-          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          shouldShow = created >= weekAgo;
-          break;
-        case 'month':
-          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          shouldShow = created >= monthAgo;
-          break;
-        case 'year':
-          const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-          shouldShow = created >= yearAgo;
-          break;
-      }
-      
-      if (!shouldShow) {
-        matches = false;
-      }
-    }
-    
-    if (matches) {
-      card.style.display = '';
-      visibleCount++;
-    } else {
-      card.style.display = 'none';
-    }
-  });
-  
-  // Show/hide clear search button
-  const clearSearchBtn = document.getElementById('clearSearch');
-  if (searchTerm || statusFilter || tagFilter || authorFilter || dateFilter) {
-    clearSearchBtn.style.display = '';
-  } else {
-    clearSearchBtn.style.display = 'none';
-  }
-  
-  // Show no results message
-  const noResultsMsg = document.getElementById('noResultsMessage');
-  if (visibleCount === 0) {
-    if (!noResultsMsg) {
-      const msg = document.createElement('div');
-      msg.id = 'noResultsMessage';
-      msg.className = 'text-center text-muted py-4';
-      msg.innerHTML = '<i class="fas fa-search fa-2x mb-2"></i><p>No lessons found matching your criteria.</p>';
-      document.getElementById('lessons-container').appendChild(msg);
-    }
-  } else {
-    if (noResultsMsg) {
-      noResultsMsg.remove();
-    }
-  }
-}
-
-function clearSearchAndFilter() {
-  document.getElementById('lessonSearch').value = '';
-  document.getElementById('lessonFilter').value = '';
-  document.getElementById('tagFilter').value = '';
-  document.getElementById('authorFilter').value = '';
-  document.getElementById('dateFilter').value = '';
-  performSearch();
-}
-
-// Google Classroom Functions
-function importGoogleClassroomCourse(courseId, courseName) {
-  if (!confirm(`Import "${courseName}" as a lesson?`)) {
-    return;
-  }
-  
-  // Show loading state
-  const button = event.target;
-  const originalText = button.innerHTML;
-  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing...';
-  button.disabled = true;
-  
-  fetch('/api/google_classroom/import_course', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      course_id: courseId
-    })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      showToast('success', data.message);
-      // Refresh the page to show the new lesson
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
-    } else {
-      showToast('error', data.message || 'Failed to import course');
-      // Reset button state
-      button.innerHTML = originalText;
-      button.disabled = false;
-    }
-  })
-  .catch(error => {
-    console.error('Error importing course:', error);
-    showToast('error', 'Error importing course');
-    // Reset button state
-    button.disabled = false;
-    button.innerHTML = originalText;
-  });
-}
-
-function bulkImportGoogleClassroom() {
-  if (!confirm('Import all Google Classroom courses as lessons?')) {
-    return;
-  }
-  
-  // Show loading state
-  const button = event.target;
-  const originalText = button.innerHTML;
-  button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing All...';
-  button.disabled = true;
-  
-  fetch('/api/google_classroom/bulk_import', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      showToast('success', data.message);
-      // Refresh the page to show the new lessons
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
-    } else {
-      showToast('error', data.message || 'Failed to bulk import courses');
-      // Reset button state
-      button.innerHTML = originalText;
-      button.disabled = false;
-    }
-  })
-  .catch(error => {
-    console.error('Error bulk importing courses:', error);
-    showToast('error', 'Error bulk importing courses');
-    // Reset button state
-    button.disabled = false;
-    button.innerHTML = originalText;
-  });
-}
-
-function refreshGoogleClassroomData() {
-  fetch('/api/google_classroom/sync', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.lessons) {
-      showToast('success', 'Google Classroom data refreshed successfully');
-      // Refresh the page to show updated data
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
-    } else {
-      showToast('error', data.error || 'Failed to refresh data');
-    }
-  })
-  .catch(error => {
-    console.error('Error refreshing data:', error);
-    showToast('error', 'Error refreshing Google Classroom data');
-  });
-}
-
-function showToast(type, message) {
-  // Create toast element
-  const toast = document.createElement('div');
-  toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
-  toast.setAttribute('role', 'alert');
-  toast.setAttribute('aria-live', 'assertive');
-  toast.setAttribute('aria-atomic', 'true');
-  
-  toast.innerHTML = `
-    <div class="d-flex">
-      <div class="toast-body">
-        ${message}
-      </div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-  `;
-  
-  // Add to page
-  document.body.appendChild(toast);
-  
-  // Show toast
-  const bsToast = new bootstrap.Toast(toast);
-  bsToast.show();
-  
-  // Remove after hidden
-  toast.addEventListener('hidden.bs.toast', () => {
-    document.body.removeChild(toast);
-  });
-}
-
-function toggleAdvancedSearch() {
-  const panel = document.getElementById('advancedSearchPanel');
-  const toggleBtn = document.getElementById('advancedSearchToggle');
-  
-  if (panel.style.display === 'none') {
-    panel.style.display = 'block';
-    toggleBtn.classList.add('active');
-  } else {
-    panel.style.display = 'none';
-    toggleBtn.classList.remove('active');
-  }
-}
-
-function toggleViewMode() {
-  const container = document.getElementById('lessons-container');
-  const cardView = document.getElementById('cardView');
-  const listView = document.getElementById('listView');
-  
-  if (listView.checked) {
-    container.classList.add('list-view');
-  } else {
-    container.classList.remove('list-view');
-  }
-}
-
-// Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-  // Search input with debouncing
-  const searchInput = document.getElementById('lessonSearch');
-  if (searchInput) {
-    searchInput.addEventListener('input', function() {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(performSearch, 300);
-    });
-  }
-  
-  // Filter dropdowns
-  const filterSelects = ['lessonFilter', 'dateFilter'];
-  filterSelects.forEach(id => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.addEventListener('change', performSearch);
-    }
-  });
-  
-  // Advanced search inputs
-  const advancedInputs = ['tagFilter', 'authorFilter'];
-  advancedInputs.forEach(id => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(performSearch, 300);
-      });
-    }
-  });
-  
-  // View mode toggle
-  const viewModeInputs = document.querySelectorAll('input[name="viewMode"]');
-  viewModeInputs.forEach(input => {
-    input.addEventListener('change', toggleViewMode);
-  });
-});
-</script> 

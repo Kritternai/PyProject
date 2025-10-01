@@ -81,9 +81,228 @@ def partial_class():
     try:
         lesson_service = get_service(LessonService)
         lessons = lesson_service.get_user_lessons(g.user.id)
-        return render_template('class_fragment.html', lessons=lessons, user=g.user)
+        
+        # Check Microsoft Teams connection status
+        microsoft_teams_connected = session.get('microsoft_teams_connected', False)
+        microsoft_teams_data = session.get('microsoft_teams_data', None)
+        
+        return render_template('class_fragment.html', 
+                             lessons=lessons, 
+                             user=g.user,
+                             google_classroom_connected=False,  # TODO: implement real check
+                             microsoft_teams_connected=microsoft_teams_connected,
+                             microsoft_teams_data=microsoft_teams_data)
     except Exception as e:
-        return render_template('class_fragment.html', lessons=[], user=g.user)
+        return render_template('class_fragment.html', 
+                             lessons=[], 
+                             user=g.user,
+                             google_classroom_connected=False,
+                             microsoft_teams_connected=False,
+                             microsoft_teams_data=None)
+
+@main_bp.route('/partial/class/add', methods=['POST'])
+@login_required_web
+def add_lesson():
+    """Add new lesson"""
+    if not g.user:
+        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = get_service(LessonService)
+        
+        # Get form data
+        title = request.form.get('title')
+        description = request.form.get('description')
+        status = request.form.get('status', 'active')
+        author_name = request.form.get('author_name')
+        tags = request.form.get('tags')
+        selected_color = request.form.get('selectedColor', '1')
+        
+        if not title:
+            return jsonify({'success': False, 'message': 'Title is required'}), 400
+        
+        # Convert color to integer
+        try:
+            color_theme = int(selected_color)
+        except:
+            color_theme = 1
+        
+        # Create lesson using OOP service (no status parameter available)
+        lesson = lesson_service.create_lesson(
+            user_id=g.user.id,
+            title=title,
+            description=description or '',
+            color_theme=color_theme,
+            author_name=author_name if author_name else None
+        )
+        
+        # Note: Status and tags are not supported by the current lesson model
+        # TODO: Add status and tags fields to lesson model if needed
+        
+        return jsonify({
+            'success': True,
+            'message': 'Lesson created successfully',
+            'lesson_id': lesson.id
+        })
+        
+    except Exception as e:
+        print(f"Error creating lesson: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@main_bp.route('/partial/class/<lesson_id>')
+@login_required_web
+def view_lesson_detail(lesson_id):
+    """View lesson detail page"""
+    if not g.user:
+        return '<div class="alert alert-danger">Not authenticated</div>', 401
+    
+    try:
+        from app import db
+        lesson_service = get_service(LessonService)
+        
+        # Get lesson by ID
+        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        if not lesson:
+            return '<div class="alert alert-danger">Lesson not found or no permission.</div>', 404
+        
+        # Get sections using direct SQL query to avoid model import conflicts
+        sections = []
+        try:
+            # Query sections directly from database without importing the model
+            section_query = db.session.execute(
+                db.text("""
+                    SELECT id, lesson_id, type, title, content, files, 
+                           assignment_due, created_at, updated_at, sort_order
+                    FROM lesson_section 
+                    WHERE lesson_id = :lesson_id 
+                    ORDER BY sort_order ASC, created_at ASC
+                """),
+                {'lesson_id': lesson_id}
+            )
+            
+            # Convert to dict objects for template compatibility
+            for row in section_query:
+                sections.append({
+                    'id': row[0],
+                    'lesson_id': row[1],
+                    'type': row[2],
+                    'title': row[3],
+                    'content': row[4],
+                    'files': row[5],
+                    'assignment_due': row[6],
+                    'created_at': row[7],
+                    'updated_at': row[8],
+                    'sort_order': row[9]
+                })
+        except Exception as e:
+            print(f"Warning: Could not load sections: {e}")
+            sections = []
+        
+        # Get notes using direct SQL query
+        notes = []
+        try:
+            note_query = db.session.execute(
+                db.text("""
+                    SELECT id, title, content, tags, created_at, updated_at
+                    FROM note 
+                    WHERE lesson_id = :lesson_id AND user_id = :user_id
+                    ORDER BY created_at DESC
+                """),
+                {'lesson_id': lesson_id, 'user_id': g.user.id}
+            )
+            
+            for row in note_query:
+                notes.append({
+                    'id': row[0],
+                    'title': row[1],
+                    'content': row[2],
+                    'tags': row[3],
+                    'created_at': row[4],
+                    'updated_at': row[5]
+                })
+        except Exception as e:
+            print(f"Warning: Could not load notes: {e}")
+            notes = []
+        
+        # Prepare lesson_summary (for compatibility with template)
+        lesson_summary = {
+            'notes': notes,
+            'sections': sections
+        }
+        
+        # Handle Google Classroom data if needed
+        if hasattr(lesson, 'source_platform') and lesson.source_platform == 'google_classroom':
+            import json
+            try:
+                lesson.announcements = json.loads(lesson.announcements_data) if hasattr(lesson, 'announcements_data') and lesson.announcements_data else []
+            except Exception:
+                lesson.announcements = []
+            try:
+                lesson.grouped_by_topic = json.loads(lesson.topics_data) if hasattr(lesson, 'topics_data') and lesson.topics_data else []
+            except Exception:
+                lesson.grouped_by_topic = []
+            try:
+                lesson.roster = json.loads(lesson.roster_data) if hasattr(lesson, 'roster_data') and lesson.roster_data else {}
+            except Exception:
+                lesson.roster = {}
+            try:
+                lesson.all_attachments = json.loads(lesson.attachments_data) if hasattr(lesson, 'attachments_data') and lesson.attachments_data else []
+            except Exception:
+                lesson.all_attachments = []
+        
+        return render_template('lessons/_detail.html', 
+                             lesson=lesson, 
+                             sections=sections, 
+                             lesson_summary=lesson_summary,
+                             user=g.user)
+    except Exception as e:
+        print(f"Error viewing lesson detail: {e}")
+        import traceback
+        traceback.print_exc()
+        return f'<div class="alert alert-danger">Error loading lesson: {str(e)}</div>', 500
+
+@main_bp.route('/partial/class/<lesson_id>/favorite', methods=['POST'])
+@login_required_web
+def toggle_lesson_favorite(lesson_id):
+    """Toggle lesson favorite status"""
+    if not g.user:
+        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = get_service(LessonService)
+        # TODO: Implement toggle_favorite in lesson service
+        # For now, just return success
+        return jsonify({
+            'success': True,
+            'message': 'Favorite toggled (not implemented yet)',
+            'is_favorite': True
+        })
+    except Exception as e:
+        print(f"Error toggling favorite: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@main_bp.route('/partial/class/<lesson_id>/delete', methods=['POST'])
+@login_required_web
+def delete_lesson(lesson_id):
+    """Delete a lesson"""
+    if not g.user:
+        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = get_service(LessonService)
+        lesson_service.delete_lesson(lesson_id, g.user.id)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Lesson deleted successfully'
+        })
+    except Exception as e:
+        print(f"Error deleting lesson: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @main_bp.route('/partial/note')
 @login_required_web
