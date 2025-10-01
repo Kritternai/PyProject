@@ -1,0 +1,183 @@
+<!-- Progress Tracking Fragment -->
+<div class="container-fluid">
+    <div class="row">
+        <!-- Today's Progress -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>📊 Today's Progress
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Pomodoros Progress -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold">🍅 Pomodoros</span>
+                            <span id="pomodoro-goal" class="text-muted">0/8</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div id="pomodoro-progress" class="progress-bar bg-primary" role="progressbar" 
+                                 style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Study Time Progress -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold">⏰ Study Time</span>
+                            <span id="study-time-goal" class="text-muted">0/240 min</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div id="study-time-progress" class="progress-bar bg-success" role="progressbar" 
+                                 style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lessons Progress -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold">📚 Lessons</span>
+                            <span id="lessons-goal" class="text-muted">0/3</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div id="lessons-progress" class="progress-bar bg-warning" role="progressbar" 
+                                 style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes Progress -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold">📝 Notes</span>
+                            <span id="notes-goal" class="text-muted">0/5</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div id="notes-progress" class="progress-bar bg-info" role="progressbar" 
+                                 style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="resetDailyProgress()">
+                            <i class="fas fa-redo me-1"></i>Reset Today
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Weekly Chart -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>📈 Weekly Progress
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="progress-chart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Time Distribution -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>⏱️ Time Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="time-chart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Achievements -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trophy me-2"></i>🏆 Achievements
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="achievements-list">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-star fa-2x mb-2"></i>
+                            <p>Complete goals to unlock achievements!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Summary -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>📊 Statistics Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="h3 text-primary" id="total-pomodoros">0</div>
+                            <div class="text-muted">Total Pomodoros</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h3 text-success" id="total-study-time">0h</div>
+                            <div class="text-muted">Study Time</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h3 text-warning" id="total-lessons">0</div>
+                            <div class="text-muted">Lessons</div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h3 text-info" id="total-notes">0</div>
+                            <div class="text-muted">Notes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.progress {
+    border-radius: 10px;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+}
+
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+}
+
+@media (max-width: 768px) {
+    .card-body canvas {
+        max-height: 200px;
+    }
+}
+</style>
