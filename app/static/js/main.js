@@ -13,6 +13,7 @@ function loadPage(page) {
           setupLessonEditForm(); // <-- เพิ่มตรงนี้
           setupSectionForms(); // เรียก setupSectionForms หลัง loadPage
           setupNoteForms(); // เรียก setupNoteForms หลัง loadPage
+          setupNoteListFilters(); // ตั้งค่า search + status chips สำหรับหน้าโน้ต
           setupLessonAddModal(); // เรียก setupLessonAddModal หลัง loadPage
           setupSectionFilter(); // เรียก setupSectionFilter() หลัง loadPage
           setupLessonSearchAndFilter(); // เรียก setupLessonSearchAndFilter หลัง loadPage
@@ -531,7 +532,10 @@ window.deleteNote = function(noteId) {
   console.log('DEBUG: Deleting note with ID:', noteId);
   if (confirm('Are you sure you want to delete this note?')) {
     fetch(`/partial/note/${noteId}/delete`, {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
     })
     .then(response => response.text())
     .then(html => {
@@ -548,48 +552,53 @@ window.deleteNote = function(noteId) {
 // Function to populate edit note modal with data
 window.populateEditNoteModal = function(button) {
   const noteId = button.getAttribute('data-note-id');
-  const noteTitle = button.getAttribute('data-note-title');
-  const noteBody = button.getAttribute('data-note-body');
-  const noteTags = button.getAttribute('data-note-tags');
-  const noteStatus = button.getAttribute('data-note-status');
-  const noteExternalLink = button.getAttribute('data-note-external-link');
-  
-  // Set form action
+  const noteTitle = button.getAttribute('data-note-title') || '';
+  const noteContent = button.getAttribute('data-note-content') || '';
+  const noteTags = button.getAttribute('data-note-tags') || '';
+  const noteStatus = button.getAttribute('data-note-status') || 'pending';
+  const noteType = button.getAttribute('data-note-type') || 'text';
+  const noteIsPublic = (button.getAttribute('data-note-is-public') || '0') === '1';
+  const noteExternalLink = button.getAttribute('data-note-external-link') || '';
+
   const editForm = document.getElementById('edit-note-form');
   editForm.action = `/partial/note/${noteId}/edit`;
   editForm.method = 'post';
-  
-  // Populate form fields
-  document.getElementById('edit-note-id').value = noteId;
-  document.getElementById('edit-title').value = noteTitle;
-  document.getElementById('edit-body').value = noteBody;
-  document.getElementById('edit-tags').value = noteTags;
-  document.getElementById('edit-status').value = noteStatus;
-  document.getElementById('edit-external-link').value = noteExternalLink;
 
-  // Show preview for existing image/file
-  const imagePath = button.getAttribute('data-note-image');
-  const filePath = button.getAttribute('data-note-file');
-  const imagePreview = document.getElementById('edit-image-preview');
-  const filePreview = document.getElementById('edit-file-preview');
-  imagePreview.innerHTML = '';
-  filePreview.innerHTML = '';
-  if (imagePath) {
-    const img = document.createElement('img');
-    img.src = '/static/' + imagePath;
-    img.className = 'img-fluid';
-    img.style.maxHeight = '200px';
-    imagePreview.appendChild(img);
-  }
-  if (filePath && filePath.endsWith('.pdf')) {
-    const embed = document.createElement('embed');
-    embed.src = '/static/' + filePath;
-    embed.type = 'application/pdf';
-    embed.width = '100%';
-    embed.height = '300px';
-    filePreview.appendChild(embed);
-  }
+  document.getElementById('edit-note-id').value = noteId;
+  const titleEl = document.getElementById('edit-title'); if (titleEl) titleEl.value = noteTitle;
+  const contentEl = document.getElementById('edit-content'); if (contentEl) contentEl.value = noteContent;
+  const tagsEl = document.getElementById('edit-tags'); if (tagsEl) tagsEl.value = noteTags;
+  const statusEl = document.getElementById('edit-status'); if (statusEl) statusEl.value = noteStatus;
+  const typeEl = document.getElementById('edit-note-type'); if (typeEl) typeEl.value = noteType;
+  const publicEl = document.getElementById('edit-is-public'); if (publicEl) publicEl.checked = noteIsPublic;
+  const linkEl = document.getElementById('edit-external-link'); if (linkEl) linkEl.value = noteExternalLink;
+
+  // Clear previews (files/images will be previewed only after user selects new ones)
+  const imagePreview = document.getElementById('edit-image-preview'); if (imagePreview) imagePreview.innerHTML = '';
+  const filePreview = document.getElementById('edit-file-preview'); if (filePreview) filePreview.innerHTML = '';
 };
+
+function fetchAndPopulateEditModal(button) {
+  const noteId = button.getAttribute('data-note-id');
+  fetch(`/partial/note/${noteId}/data`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(r => r.json())
+    .then(json => {
+      if (json && json.success && json.data) {
+        button.setAttribute('data-note-title', json.data.title || '');
+        button.setAttribute('data-note-content', json.data.content || '');
+        const tags = Array.isArray(json.data.tags) ? json.data.tags.join(', ') : (json.data.tags || '');
+        button.setAttribute('data-note-tags', tags);
+        button.setAttribute('data-note-type', (json.data.note_type || 'text'));
+        button.setAttribute('data-note-is-public', json.data.is_public ? '1' : '0');
+        if (json.data.status !== undefined) button.setAttribute('data-note-status', json.data.status || 'pending');
+        if (json.data.external_link !== undefined) button.setAttribute('data-note-external-link', json.data.external_link || '');
+      }
+      window.populateEditNoteModal(button);
+    })
+    .catch(() => {
+      window.populateEditNoteModal(button);
+    });
+}
 
 function setupEditNotePreview() {
   // Image preview
@@ -705,11 +714,9 @@ function setupNoteEditForm() {
       .then(r => r.json())
       .then(data => {
         if (data.success) {
-          // Close modal
           const modal = bootstrap.Modal.getInstance(document.getElementById('editNoteModal'));
-          modal.hide();
-          // Reload note list
-          loadPage('note');
+          if (modal) modal.hide();
+          refreshNoteListPreserveFilters();
         } else {
           alert(data.message || 'Error updating note.');
         }
@@ -749,11 +756,22 @@ function setupNoteForms() {
       .then(r => r.json())
       .then(data => {
         if (data.success && data.html) {
-          document.getElementById('main-content').innerHTML = data.html;
           const modal = bootstrap.Modal.getInstance(addNoteModal);
-          modal.hide();
+          if (modal) modal.hide();
           addNoteForm.reset();
-          setupNoteForms(); // re-bind modal events for new Edit buttons
+          // Replace only the list container to preserve toolbar
+          const temp = document.createElement('div');
+          temp.innerHTML = data.html;
+          const newList = temp.querySelector('#note-list-container');
+          if (newList) {
+            const oldList = document.getElementById('note-list-container');
+            if (oldList) oldList.outerHTML = newList.outerHTML;
+            setupNoteListFilters();
+            refreshNoteListPreserveFilters();
+          } else {
+            // fallback: full replacement
+            document.getElementById('main-content').innerHTML = data.html;
+          }
         } else {
           alert(data.message || 'Error adding note.');
         }
@@ -767,7 +785,7 @@ function setupNoteForms() {
     editNoteModal.addEventListener('show.bs.modal', function (event) {
       const button = event.relatedTarget;
       if (button) {
-        populateEditNoteModal(button);
+        fetchAndPopulateEditModal(button);
       }
     });
     
@@ -783,6 +801,78 @@ function setupNoteForms() {
   // Setup edit note form
   setupNoteEditForm();
   setupAddNotePreview();
+}
+
+// Initialize search + status chip filters on Note list page
+function setupNoteListFilters() {
+  const container = document.getElementById('note-list-container');
+  if (!container) return;
+  const searchInput = container.querySelector('#noteSearch');
+  const cards = () => container.querySelectorAll('.neo-card');
+  function applyFilter(status) {
+    const term = (searchInput?.value || '').toLowerCase();
+    cards().forEach(card => {
+      const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+      const body = card.querySelector('.card-text')?.textContent.toLowerCase() || '';
+      const st = card.getAttribute('data-status') || '';
+      const show = (!term || title.includes(term) || body.includes(term)) && (!status || status === st);
+      card.parentElement.style.display = show ? '' : 'none';
+    });
+  }
+  if (searchInput) {
+    searchInput.addEventListener('input', () => applyFilter(document.querySelector('.chip-group .chip.active')?.getAttribute('data-status') || ''));
+  }
+  container.querySelectorAll('.chip-group .chip').forEach(btn => {
+    btn.addEventListener('click', function() {
+      container.querySelectorAll('.chip-group .chip').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      applyFilter(this.getAttribute('data-status') || '');
+    });
+  });
+}
+
+// Refresh only note list fragment and re-apply current search/filter without full page reload
+function refreshNoteListPreserveFilters() {
+  const container = document.getElementById('note-list-container');
+  if (!container) return;
+  const term = (container.querySelector('#noteSearch')?.value || '').toLowerCase();
+  const activeChip = container.querySelector('.chip-group .chip.active');
+  const status = activeChip ? (activeChip.getAttribute('data-status') || '') : '';
+  fetch('/partial/note')
+    .then(r => r.text())
+    .then(html => {
+      // Replace list container only
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      const newList = temp.querySelector('#note-list-container');
+      if (newList) {
+        container.outerHTML = newList.outerHTML;
+        // re-bind and re-apply filters
+        setupNoteListFilters();
+        const newContainer = document.getElementById('note-list-container');
+        const searchInput = newContainer.querySelector('#noteSearch');
+        if (searchInput) searchInput.value = term;
+        // set active chip
+        if (status !== '') {
+          const chip = newContainer.querySelector(`.chip-group .chip[data-status="${status}"]`);
+          if (chip) {
+            newContainer.querySelectorAll('.chip-group .chip').forEach(b=>b.classList.remove('active'));
+            chip.classList.add('active');
+          }
+        }
+        // apply display
+        const active = newContainer.querySelector('.chip-group .chip.active');
+        const st = active ? active.getAttribute('data-status') || '' : '';
+        const cards = newContainer.querySelectorAll('.neo-card');
+        cards.forEach(card => {
+          const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+          const body = card.querySelector('.card-text')?.textContent.toLowerCase() || '';
+          const cst = card.getAttribute('data-status') || '';
+          const show = (!term || title.includes(term) || body.includes(term)) && (!st || st===cst);
+          card.parentElement.style.display = show ? '' : 'none';
+        });
+      }
+    });
 }
 
 function setupLessonAddModal() {

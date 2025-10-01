@@ -159,15 +159,16 @@ def import_models():
     Import all models to ensure they are registered with SQLAlchemy.
     This is necessary for database operations.
     """
-    # Import legacy models for backward compatibility
-    # Temporarily disabled to avoid table name conflicts
-    # from .core.user import User
-    # from .core.lesson import Lesson
-    # from .core.note import Note
-    # from .core.files import Files
+    # Import legacy models for backward compatibility (selective)
+    # Register Files model to support note attachments
+    from .core.files import Files
     # from .core.imported_data import ImportedData
     # from .core.google_credentials import GoogleCredentials
     # from .core.course_linkage import CourseLinkage
     
     # Import new infrastructure models
     from .infrastructure.database.models.user_model import UserModel
+    from .infrastructure.database.models.lesson_model import LessonModel
+    from .infrastructure.database.models.lesson_section_model import LessonSectionModel
+    from .infrastructure.database.models.note_model import NoteModel
+    from .infrastructure.database.models.task_model import TaskModel
