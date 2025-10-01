@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <header class="bg-blue-600 text-white p-4 shadow-md">
+        <nav class="container mx-auto flex justify-between items-center">
+            <a href="{{ url_for('index') }}" class="text-2xl font-bold">Smart Learning Hub</a>
+            <div>
+                <a href="{{ url_for('index') }}" class="hover:underline">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="ml-4 hover:underline">Logout</a>
+            </div>
+        </nav>
+    </header>
+    <main class="container mx-auto mt-8 p-4">
+        <div class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md">
+            <h1 class="text-2xl font-bold text-blue-700 mb-6">Edit Course Name</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul class="mb-4">
+                        {% for category, message in messages %}
+                            <li class="p-3 rounded-md {% if category == 'danger' %}bg-red-100 text-red-800{% endif %} mb-2">
+                                {{ message }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+            <form method="POST">
+                <div class="mb-4">
+                    <label for="current_name" class="block text-gray-700 text-sm font-bold mb-2">Current Name</label>
+                    <input type="text" id="current_name" value="{{ course.name }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-200" readonly>
+                </div>
+                <div class="mb-6">
+                    <label for="new_name" class="block text-gray-700 text-sm font-bold mb-2">New Name</label>
+                    <input type="text" id="new_name" name="new_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="flex items-center justify-between">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Save Changes
+                    </button>
+                    <a href="{{ url_for('course_detail', course_id=course.id) }}" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

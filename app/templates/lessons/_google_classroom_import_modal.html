@@ -1,0 +1,211 @@
+<!-- Google Classroom Import Modal -->
+<div class="modal fade" id="googleClassroomImportModal" tabindex="-1" aria-labelledby="googleClassroomImportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width:95vw; height:90vh;">
+    <div class="modal-content h-100">
+      <div class="modal-header bg-success text-white py-3">
+        <h5 class="modal-title" id="googleClassroomImportModalLabel">
+          <i class="fas fa-chalkboard-teacher me-2"></i>Import from Google Classroom
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0 flex-grow-1">
+        <div class="container-fluid h-100">
+          <div class="row h-100">
+            <!-- Course Selection Sidebar -->
+            <div class="col-md-4 border-end p-3" style="height: 100%; overflow-y: auto;">
+              <h6 class="text-success mb-3">
+                <i class="fas fa-list me-2"></i>Available Courses
+              </h6>
+              <div id="googleCoursesList" class="list-group">
+                <!-- Courses will be populated here -->
+              </div>
+            </div>
+            
+            <!-- Import Form -->
+            <div class="col-md-8 p-3" style="height: 100%; overflow-y: auto;">
+              <div id="importFormContainer">
+                <div class="text-center text-muted py-5">
+                  <i class="fas fa-chalkboard-teacher fa-3x mb-3"></i>
+                  <h6>Select a course to import</h6>
+                  <p class="small">Choose a course from the left sidebar to start importing</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancel
+        </button>
+        <button type="button" class="btn btn-success" id="importButton" disabled>
+          <i class="fas fa-download me-1"></i>Import Course
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Course Import Form Template -->
+<template id="courseImportFormTemplate">
+  <form id="googleClassroomImportForm">
+    <input type="hidden" id="selectedCourseId" name="course_id">
+    
+    <!-- Basic Information -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <h6 class="text-success border-bottom pb-2 mb-3">
+          <i class="fas fa-info-circle me-2"></i>Course Information
+        </h6>
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <label for="lessonTitle" class="form-label">Lesson Title *</label>
+        <input type="text" class="form-control" id="lessonTitle" name="title" required>
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <label for="lessonDescription" class="form-label">Description</label>
+        <textarea class="form-control" id="lessonDescription" name="description" rows="2"></textarea>
+      </div>
+      
+      <div class="col-md-4 mb-3">
+        <label for="lessonStatus" class="form-label">Status</label>
+        <select class="form-select" id="lessonStatus" name="status">
+          <option value="active">Active</option>
+          <option value="draft">Draft</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+      
+      <div class="col-md-4 mb-3">
+        <label for="lessonColor" class="form-label">Color Theme</label>
+        <select class="form-select" id="lessonColor" name="color_theme">
+          <option value="blue">Blue</option>
+          <option value="green">Green</option>
+          <option value="purple">Purple</option>
+          <option value="orange">Orange</option>
+          <option value="red">Red</option>
+          <option value="teal">Teal</option>
+          <option value="pink">Pink</option>
+          <option value="indigo">Indigo</option>
+        </select>
+      </div>
+      
+      <div class="col-md-4 mb-3">
+        <label for="lessonDifficulty" class="form-label">Difficulty Level</label>
+        <select class="form-select" id="lessonDifficulty" name="difficulty_level">
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </div>
+    </div>
+    
+    <!-- Google Classroom Details -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <h6 class="text-success border-bottom pb-2 mb-3">
+          <i class="fas fa-chalkboard-teacher me-2"></i>Google Classroom Details
+        </h6>
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Course ID</label>
+        <input type="text" class="form-control" id="courseIdDisplay" readonly>
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Section</label>
+        <input type="text" class="form-control" id="courseSectionDisplay" readonly>
+      </div>
+      
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Announcements</label>
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="fas fa-bullhorn"></i>
+          </span>
+          <input type="text" class="form-control" id="announcementsCount" readonly>
+        </div>
+      </div>
+      
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Assignments</label>
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="fas fa-tasks"></i>
+          </span>
+          <input type="text" class="form-control" id="assignmentsCount" readonly>
+        </div>
+      </div>
+      
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Materials</label>
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="fas fa-file-alt"></i>
+          </span>
+          <input type="text" class="form-control" id="materialsCount" readonly>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Import Options -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <h6 class="text-success border-bottom pb-2 mb-3">
+          <i class="fas fa-cog me-2"></i>Import Options
+        </h6>
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="importAnnouncements" name="import_announcements" checked>
+          <label class="form-check-label" for="importAnnouncements">
+            Import announcements as lesson sections
+          </label>
+        </div>
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="importAssignments" name="import_assignments" checked>
+          <label class="form-check-label" for="importAssignments">
+            Import assignments as lesson sections
+          </label>
+        </div>
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="importMaterials" name="import_materials" checked>
+          <label class="form-check-label" for="importMaterials">
+            Import materials as lesson sections
+          </label>
+        </div>
+      </div>
+      
+      <div class="col-md-6 mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="importTopics" name="import_topics" checked>
+          <label class="form-check-label" for="importTopics">
+            Import topics as lesson sections
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Preview -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <h6 class="text-success border-bottom pb-2 mb-3">
+          <i class="fas fa-eye me-2"></i>Preview
+        </h6>
+        <div id="importPreview" class="border rounded p-3 bg-light">
+          <!-- Preview content will be populated here -->
+        </div>
+      </div>
+    </div>
+  </form>
+</template>
