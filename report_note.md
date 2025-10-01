@@ -140,3 +140,58 @@ window.deleteNote = function(noteId) {
 ### วิธี Rollback (ส่วนนี้ของ DB)
 - ลบไฟล์ `app/infrastructure/database/models/lesson_section_model.py`
 - ลบบรรทัด import `LessonSectionModel` ใน `app/__init__.py`
+
+## Verification — Note Search/Filter Feature (2025-10-01)
+
+### ขอบเขตการตรวจสอบ
+- ยืนยันการทำงานของการค้นหาและกรองรายการโน้ต (client-side) และตรวจสอบ API ฝั่งเซิร์ฟเวอร์ที่เกี่ยวข้อง
+- อ้างอิงเฉพาะโค้ดที่มีในรีโพนี้เท่านั้น ทั้งชั้น presentation, service, repository, และโมเดล
+
+### ภาพรวมการทำงานตามโค้ด
+- Client-side filtering (ทันที ไม่เรียกเซิร์ฟเวอร์):
+  - ฟังก์ชัน `setupNoteListFilters()` ใน `app/static/js/main.js` ค้นหาจากเนื้อหา card โดยอ่าน `.card-title` และ `.card-text` และกรองสถานะจาก `data-status` ของการ์ด
+  - ฟังก์ชัน `refreshNoteListPreserveFilters()` รีโหลด fragment `/partial/note` แล้วคงค่า search term และ chip สถานะเดิมไว้ จากนั้น re-bind filter และ re-apply เงื่อนไขเดิม
+- Partial routes สำหรับ SPA fragments:
+  - `/partial/note`, `/partial/note/add`, `/partial/note/<id>/edit`, `/partial/note/<id>/delete`, `/partial/note/<id>/data` ถูกกำหนดใน `app/routes_new.py` (และมีฉบับ legacy ใน `app/routes.py`)
+  - การลบโน้ตฝั่ง client (`window.deleteNote`) ส่ง header `X-Requested-With: XMLHttpRequest` เพื่อให้ฝั่งเซิร์ฟเวอร์ส่ง HTML fragment กลับมาแทนการ redirect ทั้งหน้า
+- REST API สำหรับการค้นหา (พร้อมใช้งานหากต้องการ server-side search):
+  - เส้นทางใน `app/presentation/routes/note_routes.py`: `GET /api/notes/search` และ `GET /api/notes/search/tags`
+  - ตัวควบคุม `NoteController.search_notes` และ `NoteController.search_notes_by_tags` (
+    เรียก `NoteService.search_notes` และ `NoteService.search_notes_by_tags`)
+  - Service `NoteServiceImpl` มอบหมายไปยัง Repository (`NoteRepositoryImpl.search` และ `search_by_tags`)
+  - Repository ใช้ SQLAlchemy `contains()` กับฟิลด์ `title`, `content` และ `tags` (แบบ simple JSON text contains) พร้อมสั่งเรียงตาม `created_at DESC`
+
+### ประเด็นโค้ดสำคัญที่ยืนยันแล้ว
+- UI search/filter:
+  - `app/static/js/main.js`: `setupNoteListFilters()` และ `refreshNoteListPreserveFilters()` ทำงานร่วมกับ DOM โครงสร้าง card และ chip สถานะอย่างถูกต้อง
+  - เหตุการณ์ input และ click ถูก bind และยกเลิก/ตั้งค่า class display card อย่างเหมาะสม ไม่พึ่งพา API ค้นหา
+- API และ business layer:
+  - `app/presentation/controllers/note_controller.py`: เมธอด `search_notes` ตรวจสอบสิทธิ์, รับพารามิเตอร์ `q`, `limit` และคืนค่า list ของ `note.to_dict()`
+  - `app/application/services/note_service.py`: `search_notes()` และ `search_notes_by_tags()` เรียก repository โดยตรง (ไม่มี business rule พิเศษเพิ่มในการค้นหา)
+  - `app/infrastructure/database/repositories/note_repository.py`: ค้นหาด้วย `NoteModel.title.contains(query) | NoteModel.content.contains(query)` และกรณี tags loop filter ต่อเนื่องด้วย `.tags.contains(tag)` แบบ simple matching
+- โครงสร้างโมเดลที่เกี่ยวข้องกับฟีเจอร์:
+  - `app/core/note.py` ใช้คอลัมน์ `content` (ยืนยันการเปลี่ยนชื่อจาก `body` เป็น `content` แล้ว)
+  - มีการคงอยู่ของหลายเลเยอร์โมเดล (`app/core/note.py`, `app/infrastructure/database/models/note_model.py`, และ `database/models/note.py`) ซึ่งสะท้อนสภาพ migration/legacy ร่วมกับ clean architecture ที่กำลังย้ายเข้า
+
+### ข้อสังเกต/ความเสี่ยง
+- ขนาดข้อมูล: ปัจจุบันหน้า Note ใช้ client-side filtering; เมื่อจำนวนโน้ตมาก อาจเกิดปัญหาประสิทธิภาพฝั่งเบราว์เซอร์
+  - แนวโน้มทางแก้: เชื่อม UI ให้เรียก `GET /api/notes/search` แทนการกรอง DOM ล้วน เมื่อเกิน threshold ที่กำหนด
+- การค้นหา tags แบบ `.contains()` บน JSON string เป็น simple matching อาจเกิด false positive (เช่น คำที่เป็น prefix/substring)
+  - ทางเลือก: แยกตาราง tags หรือเก็บเป็น JSON array จริงและใช้ฟังก์ชัน DB เฉพาะทาง (เช่น JSON operators)
+- โมเดลซ้ำซ้อน: มีทั้ง `core` และ `infrastructure` + โฟลเดอร์ `database/` legacy อาจทำให้ schema drift ได้ถ้าแก้ไขไม่สอดคล้องกัน
+  - แนะนำ: กำหนดแหล่งความจริงของ schema หนึ่งที่ชัดเจนและห่อชั้นอื่นด้วย mapping เท่านั้น
+- ฟิลด์ legacy เช่น `status`, `external_link` ยังไม่ถูกรวมใน Domain Entity ตามที่ระบุไว้ในส่วนก่อนหน้า
+
+### ผลการทดสอบเชิงพฤติกรรม (อ่านจากโค้ด + manual flow สั้น)
+- Search box และ status chips ทำงานทันทีที่หน้าโน้ต (ไม่รีเฟรชหน้า)
+- หลัง Add/Edit/Delete มีการรีเฟรช fragment ด้วย `refreshNoteListPreserveFilters()` ทำให้ค่าค้นหา/กรองเดิมยังคงอยู่
+- API ค้นหา `/api/notes/search` พร้อมใช้งาน แต่ UI ปัจจุบันยังไม่เรียก API นี้โดยตรง
+
+### ข้อเสนอแนะเชิงเทคนิค (ไม่ breaking)
+- เพิ่ม switch ใน UI: หากจำนวนการ์ดเกิน N ให้เปลี่ยนเป็น server-side search (เรียก `/api/notes/search` พร้อม debounce)
+- ปรับ tag storage/search ให้แม่นยำขึ้น (ตาราง tags หรือ JSON operator) เมื่อต้องรองรับการค้นหาที่ซับซ้อน
+- ค่อยๆ ลดการพึ่งพา `core` model ตรงๆ ใน partial routes และใช้ service/repository เป็นหลัก เพื่อเลี่ยง schema drift
+
+### สรุปสถานะ
+- ฟีเจอร์ค้นหา/กรองโน้ตแบบ client-side ใช้งานได้ดีตามโค้ดปัจจุบัน และคงค่าการค้นหา/กรองหลังแก้ไขข้อมูลสำเร็จ
+- โครง API สำหรับ server-side search พร้อมแล้ว เหมาะสำหรับ scale-up ในอนาคตเมื่อจำนวนโน้ตเพิ่มมาก
