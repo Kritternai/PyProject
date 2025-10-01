@@ -4,9 +4,9 @@ class Authenticator:
     def __init__(self, user_manager: UserManager):
         self.user_manager = user_manager
 
-    def login(self, username, password):
-        """Login user with username and password"""
-        user = self.user_manager.get_user_by_username(username)
+    def login(self, email, password):
+        """Login user with email and password"""
+        user = self.user_manager.get_user_by_email(email)
         if user and user.check_password(password):
             # Update last login time
             from datetime import datetime
@@ -16,28 +16,28 @@ class Authenticator:
             return user
         return None
 
-    def register(self, username, email, password, first_name=None, last_name=None, role='student'):
+    def register(self, email, password, username=None, first_name=None, last_name=None, role='student'):
         """Register new user with enhanced profile information"""
         user = self.user_manager.add_user(
-            username=username, 
             email=email, 
             password=password,
+            username=username,
             first_name=first_name,
             last_name=last_name,
             role=role
         )
         return user
     
-    def register_with_profile(self, username, email, password, profile_data):
+    def register_with_profile(self, email, password, profile_data, username=None):
         """Register new user with complete profile data"""
         first_name = profile_data.get('first_name')
         last_name = profile_data.get('last_name')
         role = profile_data.get('role', 'student')
         
         user = self.user_manager.add_user(
-            username=username,
             email=email,
             password=password,
+            username=username,
             first_name=first_name,
             last_name=last_name,
             role=role

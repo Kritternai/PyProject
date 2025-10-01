@@ -50,30 +50,30 @@ class AuthController:
                     return redirect(url_for('auth.login_page'))
             
             # Validate required fields
-            username = data.get('username', '').strip()
+            email = data.get('email', '').strip()
             password = data.get('password', '')
             
-            if not username or not password:
+            if not email or not password:
                 if request.is_json:
                     return jsonify({
                         'success': False,
-                        'message': 'Username and password are required'
+                        'message': 'Email and password are required'
                     }), 400
                 else:
-                    flash('Username and password are required.', 'error')
+                    flash('Email and password are required.', 'error')
                     return redirect(url_for('auth.login_page'))
             
             # Authenticate user
-            user = self._user_service.authenticate_user(username, password)
+            user = self._user_service.authenticate_user(email, password)
             if not user:
                 if request.is_json:
                     return jsonify({
                         'success': False,
-                        'message': 'Invalid username or password',
+                        'message': 'Invalid email or password',
                         'error_code': 'INVALID_CREDENTIALS'
                     }), 401
                 else:
-                    flash('Invalid username or password.', 'error')
+                    flash('Invalid email or password.', 'error')
                     return redirect(url_for('auth.login_page'))
             
             # Create session
@@ -172,7 +172,7 @@ class AuthController:
                     return redirect(url_for('auth.register'))
             
             # Validate required fields
-            required_fields = ['username', 'email', 'password']
+            required_fields = ['email', 'password']
             for field in required_fields:
                 if field not in data or not data[field]:
                     if request.is_json:
@@ -184,26 +184,15 @@ class AuthController:
                         flash(f'{field.title()} is required.', 'error')
                         return redirect(url_for('auth.register'))
             
-            # Validate password confirmation
-            if 'confirm_password' in data and data['password'] != data['confirm_password']:
-                if request.is_json:
-                    return jsonify({
-                        'success': False,
-                        'message': 'Passwords do not match'
-                    }), 400
-                else:
-                    flash('Passwords do not match.', 'error')
-                    return redirect(url_for('auth.register'))
-            
             # Create value objects
             email = Email(data['email'])
             password = Password(data['password'])
             
-            # Create user
+            # Create user (username will be auto-generated from email)
             user = self._user_service.create_user(
-                username=data['username'],
                 email=email,
                 password=password,
+                username=None,
                 first_name=data.get('first_name'),
                 last_name=data.get('last_name'),
                 role=data.get('role', 'student')

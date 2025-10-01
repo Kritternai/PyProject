@@ -16,13 +16,13 @@ class Password(ValueObject):
     Immutable and self-validating.
     """
     
-    # Password requirements
-    MIN_LENGTH = 8
+    # Password requirements - Basic mode (no complexity requirements)
+    MIN_LENGTH = 1  # Accept any non-empty password
     MAX_LENGTH = 128
-    REQUIRE_UPPERCASE = True
-    REQUIRE_LOWERCASE = True
-    REQUIRE_DIGITS = True
-    REQUIRE_SPECIAL_CHARS = True
+    REQUIRE_UPPERCASE = False
+    REQUIRE_LOWERCASE = False
+    REQUIRE_DIGITS = False
+    REQUIRE_SPECIAL_CHARS = False
     
     # Special characters allowed
     SPECIAL_CHARS = r'!@#$%^&*()_+-=[]{}|;:,.<>?'

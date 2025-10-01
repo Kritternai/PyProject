@@ -36,9 +36,12 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    def __init__(self, username, email, password, first_name=None, last_name=None, role='student'):
-        self.username = username
+    def __init__(self, email, password, username=None, first_name=None, last_name=None, role='student'):
         self.email = email
+        # Auto-generate username from email if not provided
+        if username is None:
+            username = email.split('@')[0]
+        self.username = username
         self.first_name = first_name
         self.last_name = last_name
         self.role = role

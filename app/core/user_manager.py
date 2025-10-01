@@ -3,15 +3,27 @@ from app.core.user import User
 import uuid
 
 class UserManager:
-    def add_user(self, username, email, password, first_name=None, last_name=None, role='student'):
+    def add_user(self, email, password, username=None, first_name=None, last_name=None, role='student'):
         """Add a new user with enhanced profile information"""
-        if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
+        # Check if email already exists
+        if User.query.filter_by(email=email).first():
             return None
         
+        # Auto-generate username from email if not provided
+        if username is None:
+            username = email.split('@')[0]
+        
+        # Check if username already exists (in case of collision)
+        existing_username = User.query.filter_by(username=username).first()
+        if existing_username:
+            # Add random suffix to make it unique
+            import random
+            username = f"{username}_{random.randint(1000, 9999)}"
+        
         user = User(
-            username=username, 
             email=email, 
             password=password,
+            username=username,
             first_name=first_name,
             last_name=last_name,
             role=role

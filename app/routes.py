@@ -1078,37 +1078,36 @@ def sync_files_between_entities(source_type, source_id, target_type, target_id):
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        email = request.form.get('email')
         password = request.form.get('password')
-        user = authenticator.login(username, password)
+        user = authenticator.login(email, password)
         if user:
             session['user_id'] = user.id
             return redirect(url_for('dashboard'))
         else:
-            return render_template('login_fragment.html', success=False, message='Invalid username or password.')
+            return render_template('login_fragment.html', success=False, message='Invalid email or password.')
     return render_template('login_fragment.html')
 
 @main_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
-        if not username or not email or not password:
+        if not email or not password:
             return render_template('register_fragment.html', success=False, message='Please fill out all fields.')
-        user = authenticator.register(username, email, password)
+        user = authenticator.register(email, password)
         if user:
             return render_template('register_fragment.html', success=True, message='Registration successful! Please log in.')
         else:
-            return render_template('register_fragment.html', success=False, message='Username or email already exists.')
+            return render_template('register_fragment.html', success=False, message='Email already exists.')
     return render_template('register_fragment.html')
 
 @main_bp.route('/partial/login', methods=['GET', 'POST'])
 def partial_login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        email = request.form.get('email')
         password = request.form.get('password')
-        user = authenticator.login(username, password)
+        user = authenticator.login(email, password)
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes['application/json']
         if user:
             session['user_id'] = user.id
@@ -1118,35 +1117,26 @@ def partial_login():
                 return render_template('login_fragment.html', success=True, message='Logged in successfully!')
         else:
             if is_ajax:
-                return jsonify(success=False, message='Invalid username or password.')
+                return jsonify(success=False, message='Invalid email or password.')
             else:
-                return render_template('login_fragment.html', success=False, message='Invalid username or password.')
+                return render_template('login_fragment.html', success=False, message='Invalid email or password.')
     return render_template('login_fragment.html')
 
 @main_bp.route('/partial/register', methods=['GET', 'POST'])
 def partial_register():
     if request.method == 'POST':
-        username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes['application/json']
-        if not username or not email or not password:
+        if not email or not password:
             if is_ajax:
                 return jsonify(success=False, message='Please fill out all fields.')
             else:
                 return render_template('register_fragment.html', success=False, message='Please fill out all fields.')
-        # Get additional profile information from form
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        role = request.form.get('role', 'student')
         
         user = authenticator.register(
-            username=username, 
             email=email, 
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            role=role
+            password=password
         )
         if user:
             if is_ajax:
@@ -1155,9 +1145,9 @@ def partial_register():
                 return render_template('register_fragment.html', success=True, message='Registration successful! Please log in.')
         else:
             if is_ajax:
-                return jsonify(success=False, message='Username or email already exists.')
+                return jsonify(success=False, message='Email already exists.')
             else:
-                return render_template('register_fragment.html', success=False, message='Username or email already exists.')
+                return render_template('register_fragment.html', success=False, message='Email already exists.')
     return render_template('register_fragment.html')
 
 @main_bp.route('/partial/sidebar-auth')

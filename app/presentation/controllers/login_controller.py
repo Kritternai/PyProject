@@ -92,7 +92,11 @@ class LoginController:
             return redirect(url_for('register.login'))
             
         except Exception as e:
-            flash('An unexpected error occurred during login.', 'danger')
+            # Log the actual error for debugging
+            import traceback
+            print(f"Login error: {str(e)}")
+            print(traceback.format_exc())
+            flash(f'Login error: {str(e)}', 'danger')
             return redirect(url_for('register.login'))
     
     def get_login_form(self):

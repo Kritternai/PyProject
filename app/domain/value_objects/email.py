@@ -15,10 +15,13 @@ class Email(ValueObject):
     Immutable and self-validating.
     """
     
-    # RFC 5322 compliant email regex (simplified)
+    # RFC 5322 compliant email regex (simplified) - DISABLED for basic mode
     EMAIL_REGEX = re.compile(
         r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     )
+    
+    # Basic mode - accept any non-empty string as email
+    BASIC_MODE = True
     
     def __init__(self, value: str):
         """
@@ -38,12 +41,14 @@ class Email(ValueObject):
         
         value = value.strip().lower()
         
-        if not self.EMAIL_REGEX.match(value):
-            raise ValidationException(
-                f"Invalid email format: {value}",
-                field="email",
-                value=value
-            )
+        # Basic mode: accept any non-empty string
+        if not self.BASIC_MODE:
+            if not self.EMAIL_REGEX.match(value):
+                raise ValidationException(
+                    f"Invalid email format: {value}",
+                    field="email",
+                    value=value
+                )
         
         if len(value) > 254:  # RFC 5321 limit
             raise ValidationException(
@@ -62,12 +67,16 @@ class Email(ValueObject):
     @property
     def domain(self) -> str:
         """Get the domain part of the email."""
-        return self._value.split('@')[1]
+        if '@' in self._value:
+            return self._value.split('@')[1]
+        return ''  # Return empty if no @ symbol
     
     @property
     def local_part(self) -> str:
         """Get the local part of the email."""
-        return self._value.split('@')[0]
+        if '@' in self._value:
+            return self._value.split('@')[0]
+        return self._value  # Return full value if no @ symbol
     
     def __str__(self) -> str:
         return self._value

@@ -33,9 +33,9 @@ class UserServiceImpl(UserService):
     
     def create_user(
         self,
-        username: str,
         email: Email,
         password: Password,
+        username: Optional[str] = None,
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
         role: str = 'student'
@@ -58,13 +58,16 @@ class UserServiceImpl(UserService):
             ValidationException: If user data is invalid
             BusinessLogicException: If business rules are violated
         """
-        # Business validation
-        if self._user_repository.exists_by_username(username):
-            raise BusinessLogicException(
-                f"Username '{username}' is already taken",
-                rule="unique_username"
-            )
+        # Auto-generate username from email if not provided
+        if username is None:
+            username = email.value.split('@')[0]
         
+        # Check if username already exists (handle collision)
+        if self._user_repository.exists_by_username(username):
+            import random
+            username = f"{username}_{random.randint(1000, 9999)}"
+        
+        # Business validation
         if self._user_repository.exists_by_email(email):
             raise BusinessLogicException(
                 f"Email '{email}' is already registered",
@@ -192,39 +195,39 @@ class UserServiceImpl(UserService):
         except ValueError as e:
             raise ValidationException(str(e), field="old_password")
     
-    def authenticate_user(self, username: str, password: str) -> Optional[User]:
+    def authenticate_user(self, email_str: str, password: str) -> User:
         """
-        Authenticate user with username and password.
+        Authenticate user with email and password.
         
         Args:
-            username: Username or email
+            email_str: Email address
             password: Plain text password
             
         Returns:
-            User entity if authentication successful, None otherwise
+            User entity if authentication successful
+            
+        Raises:
+            ValidationException: If credentials are invalid
+            NotFoundException: If user not found
         """
-        # Try to find user by username first
-        user = self._user_repository.get_by_username(username)
-        
-        # If not found by username, try by email
-        if not user:
-            try:
-                email = Email(username)
-                user = self._user_repository.get_by_email(email)
-            except ValidationException:
-                # Invalid email format, user not found
-                return None
+        # Find user by email
+        try:
+            email = Email(email_str)
+            user = self._user_repository.get_by_email(email)
+        except ValidationException as e:
+            # Invalid email format
+            raise ValidationException("Invalid email format", field="email")
         
         if not user:
-            return None
+            raise NotFoundException("User", email_str)
         
         # Check if user is active
         if not user.is_active:
-            return None
+            raise ValidationException("Account is inactive", field="email")
         
         # Verify password
         if not user.password.check_password(password):
-            return None
+            raise ValidationException("Invalid email or password", field="password")
         
         # Update last login
         user.update_last_login()
@@ -395,14 +398,14 @@ class UserServiceImpl(UserService):
         # For now, we'll just update the user to trigger the updated_at timestamp
         self._user_repository.update(user)
     
-    def register_user(self, username: str, email: str, password: str) -> User:
+    def register_user(self, email: str, password: str, username: Optional[str] = None) -> User:
         """
         Register a new user (convenience method for create_user).
         
         Args:
-            username: Unique username
             email: Email string
             password: Password string
+            username: Optional username (auto-generated from email if not provided)
             
         Returns:
             Created user entity
@@ -419,37 +422,5 @@ class UserServiceImpl(UserService):
         password_vo = Password(password)
         
         # Use the existing create_user method
-        return self.create_user(username, email_vo, password_vo)
-    
-    def authenticate_user(self, email: str, password: str) -> User:
-        """
-        Authenticate a user (convenience method).
-        
-        Args:
-            email: Email string
-            password: Password string
-            
-        Returns:
-            Authenticated user entity
-            
-        Raises:
-            NotFoundException: If user not found
-            ValidationException: If credentials are invalid
-        """
-        from app.domain.value_objects.email import Email
-        from app.domain.value_objects.password import Password
-        
-        # Convert string parameters to value objects
-        email_vo = Email(email)
-        password_vo = Password(password)
-        
-        # Get user by email
-        user = self._user_repository.get_by_email(email_vo)
-        if not user:
-            raise NotFoundException("User", email)
-        
-        # Verify password
-        if not user.password.check_password(password):
-            raise ValidationException("Invalid credentials")
-        
-        return user
+        # Note: create_user now requires email as first parameter
+        return self.create_user(email_vo, password_vo, username=username)

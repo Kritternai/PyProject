@@ -27,19 +27,18 @@ class RegisterController:
         """
         try:
             # Get form data
-            username = request.form.get('username')
             email = request.form.get('email')
             password = request.form.get('password')
             
             # Validate required fields
-            if not username or not email or not password:
+            if not email or not password:
                 return jsonify({
                     'success': False,
-                    'message': 'All fields are required.'
+                    'message': 'Email and password are required.'
                 }), 400
             
-            # Register user using service
-            self._user_service.register_user(username, email, password)
+            # Register user using service (username will be auto-generated from email)
+            self._user_service.register_user(email, password)
             
             return jsonify({
                 'success': True,
@@ -74,17 +73,16 @@ class RegisterController:
         """
         try:
             # Get form data
-            username = request.form.get('username')
             email = request.form.get('email')
             password = request.form.get('password')
             
             # Validate required fields
-            if not username or not email or not password:
-                flash('All fields are required.', 'danger')
+            if not email or not password:
+                flash('Email and password are required.', 'danger')
                 return redirect(url_for('register.register'))
             
-            # Register user using service
-            self._user_service.register_user(username, email, password)
+            # Register user using service (username will be auto-generated from email)
+            self._user_service.register_user(email, password)
             
             flash('Registration successful! Please log in.', 'success')
             return redirect(url_for('register.login'))

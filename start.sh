@@ -234,6 +234,85 @@ with app.app_context():
 fi
 
 # =============================================================================
+# 5.5. CREATE DEFAULT USER (OOP Architecture)
+# =============================================================================
+print_step "Creating default test user..."
+
+PYTHONPATH=. python -c "
+import sys
+from werkzeug.security import generate_password_hash
+import uuid
+from datetime import datetime
+
+try:
+    # Use OOP Architecture
+    from app import create_app, db
+    from app.infrastructure.di.container import get_service
+    from app.domain.interfaces.services.user_service import UserService
+    from app.domain.value_objects.email import Email
+    from app.domain.value_objects.password import Password
+    
+    app = create_app()
+    with app.app_context():
+        try:
+            user_service = get_service(UserService)
+            
+            # Check if user exists
+            from app.domain.interfaces.repositories.user_repository import UserRepository
+            user_repo = get_service(UserRepository)
+            existing = user_repo.get_by_email(Email('1'))
+            
+            if existing:
+                print('Default test user already exists')
+            else:
+                # Create user with OOP architecture
+                # Use longer username to pass validation (min 3 chars)
+                email = Email('1')
+                password = Password('1')
+                user = user_service.create_user(email=email, password=password, username='user1')
+                print(f'Default test user created: email=1, password=1, username=user1, id={user.id}')
+        except Exception as e:
+            # Fallback: use direct SQL if OOP fails
+            print(f'OOP creation failed, using SQL fallback...')
+            import sqlite3
+            password_hash = generate_password_hash('1')
+            user_id = str(uuid.uuid4())
+            created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            conn = sqlite3.connect('instance/site.db')
+            cursor = conn.cursor()
+            
+            # Check if user exists
+            cursor.execute('SELECT id FROM user WHERE email = ?', ('1',))
+            if cursor.fetchone():
+                print('Default test user already exists')
+            else:
+                cursor.execute('''
+                    INSERT INTO user (id, username, email, password_hash, role, is_active, 
+                                    email_verified, created_at, updated_at, total_lessons, 
+                                    total_notes, total_tasks)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (user_id, '1', '1', password_hash, 'student', 1, 0, 
+                      created_at, created_at, 0, 0, 0))
+                conn.commit()
+                print(f'Default test user created via SQL: email=1, password=1, id={user_id}')
+            conn.close()
+            
+    sys.exit(0)
+except Exception as e:
+    print(f'Error: {e}')
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
+" 2>&1
+
+if [ $? -eq 0 ]; then
+    print_status "Default test user ready (email: 1, password: 1)"
+else
+    print_warning "Failed to create default user, but continuing..."
+fi
+
+# =============================================================================
 # 6. OOP ARCHITECTURE TEST
 # =============================================================================
 print_step "Testing OOP Architecture..."
