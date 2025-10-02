@@ -1,0 +1,200 @@
+<!-- Class Notes Grid (Note System Style) -->
+{% if notes %}
+    {% for note in notes %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 note-card-enhanced" data-status="{{ note.status }}" data-note-id="{{ note.id }}" 
+             style="border-radius: 16px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor: pointer;"
+             onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'"
+             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'">
+            
+            <!-- Enhanced Note Cover -->
+            {% if note.files %}
+                {% set first_image = note.files | selectattr('file_type', 'equalto', 'image') | list | first %}
+                {% if first_image %}
+                    <div class="position-relative" style="height: 160px; overflow: hidden; border-radius: 16px 16px 0 0;">
+                        <img src="{{ url_for('static', filename=first_image.file_path) }}" 
+                             class="w-100 h-100" alt="note cover" 
+                             style="object-fit: cover; transition: transform 0.3s ease;"
+                             onmouseover="this.style.transform='scale(1.05)'"
+                             onmouseout="this.style.transform='scale(1)'">
+                        <div class="position-absolute top-0 end-0 m-2">
+                            {% if note.is_class_note %}
+                                <span class="badge bg-primary" style="border-radius: 12px;">
+                                    <i class="bi bi-book me-1"></i>Class Note
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary" style="border-radius: 12px;">
+                                    <i class="bi bi-journal-text me-1"></i>General Note
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="note-cover-enhanced" style="height:160px;display:flex;align-items:center;justify-content:center;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px 16px 0 0; position: relative;">
+                        <i class="bi bi-journal-text fa-3x text-white opacity-75"></i>
+                        <div class="position-absolute top-0 end-0 m-2">
+                            {% if note.is_class_note %}
+                                <span class="badge bg-primary" style="border-radius: 12px;">
+                                    <i class="bi bi-book me-1"></i>Class Note
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary" style="border-radius: 12px;">
+                                    <i class="bi bi-journal-text me-1"></i>General Note
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="note-cover-enhanced" style="height:160px;display:flex;align-items:center;justify-content:center;background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px 16px 0 0; position: relative;">
+                    <i class="bi bi-journal-text fa-3x text-white opacity-75"></i>
+                    <div class="position-absolute top-0 end-0 m-2">
+                        {% if note.is_class_note %}
+                            <span class="badge bg-primary" style="border-radius: 12px;">
+                                <i class="bi bi-book me-1"></i>Class Note
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary" style="border-radius: 12px;">
+                                <i class="bi bi-journal-text me-1"></i>General Note
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Enhanced Card Body -->
+            <div class="card-body d-flex flex-column p-4">
+                <!-- Title and Status -->
+                <div class="mb-3 d-flex justify-content-between align-items-start">
+                    <h5 class="mb-0 card-title fw-bold" style="color: #2c3e50; line-height: 1.3;">
+                        {{ note.title }}
+                    </h5>
+                    {% set status_badge = 'secondary' %}
+                    {% set status_icon = 'clock' %}
+                    {% if note.status == 'in-progress' %}
+                        {% set status_badge = 'warning' %}
+                        {% set status_icon = 'arrow-right-circle' %}
+                    {% elif note.status == 'completed' %}
+                        {% set status_badge = 'success' %}
+                        {% set status_icon = 'check-circle' %}
+                    {% endif %}
+                    <span class="badge bg-{{ status_badge }} text-uppercase" style="border-radius: 12px; font-size: 0.7rem; padding: 6px 12px;">
+                        <i class="bi bi-{{ status_icon }} me-1"></i>{{ note.status.replace('-', ' ') }}
+                    </span>
+                </div>
+                
+                <!-- Enhanced Content Preview -->
+                <p class="card-text text-muted mb-3" style="line-height: 1.5; font-size: 0.9rem;">
+                    {{ note.content | striptags | truncate(120) }}
+                </p>
+                
+                <!-- Enhanced Tags -->
+                {% if note.tags %}
+                <div class="mb-3">
+                    {% if note.tags is string %}
+                        {% for tag in note.tags.split(',')[:3] %}
+                            <span class="badge bg-light text-dark border-0 me-1 mb-1" style="font-size: 0.7rem; border-radius: 12px; padding: 4px 8px; background: #f8f9fa !important;">
+                                <i class="bi bi-tag-fill me-1" style="color: #6c757d;"></i>{{ tag.strip() }}
+                            </span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Enhanced File Count -->
+                {% if note.file_count > 0 %}
+                <div class="mb-3">
+                    <span class="badge bg-info text-white" style="border-radius: 12px; padding: 4px 8px; font-size: 0.7rem;">
+                        <i class="bi bi-paperclip me-1"></i>{{ note.file_count }} file{{ 's' if note.file_count > 1 else '' }}
+                    </span>
+                </div>
+                {% endif %}
+                
+                <!-- Spacer to push actions to bottom -->
+                <div class="mt-auto"></div>
+                
+                <!-- Enhanced Actions -->
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <div class="d-flex align-items-center">
+                        <small class="text-muted me-2">
+                            <i class="bi bi-calendar3 me-1"></i>{{ note.created_at[:10] if note.created_at else 'Today' }}
+                        </small>
+                        {% if note.is_class_note %}
+                            <span class="badge bg-primary" style="font-size: 0.6rem; border-radius: 8px;">
+                                <i class="bi bi-book me-1"></i>Class
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary btn-sm" onclick="toggleNoteStatus('{{ note.id }}')" 
+                                title="Toggle Status" style="border-radius: 8px; padding: 6px 10px;">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="editNote('{{ note.id }}')" 
+                                title="Edit" style="border-radius: 8px; padding: 6px 10px;">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteNote('{{ note.id }}')" 
+                                title="Delete" style="border-radius: 8px; padding: 6px 10px;">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="col-12 text-center py-5">
+        <div class="empty-state" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 20px; padding: 3rem 2rem;">
+            <div class="mb-4">
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                    <i class="bi bi-journal-text text-white" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+            <h4 class="mb-3" style="color: #2c3e50; font-weight: 600;">No notes yet</h4>
+            <p class="text-muted mb-4" style="font-size: 1.1rem; line-height: 1.6;">
+                Start documenting your thoughts, ideas, and important information for this class.
+            </p>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <button class="btn btn-primary btn-lg" onclick="openNoteModal()" style="border-radius: 25px; padding: 12px 24px;">
+                    <i class="bi bi-plus-circle me-2"></i>Create Your First Note
+                </button>
+                <button class="btn btn-outline-primary btn-lg" onclick="openAnnouncementModal()" style="border-radius: 25px; padding: 12px 24px;">
+                    <i class="bi bi-chat-text me-2"></i>Make an Announcement
+                </button>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+// Note Management Functions
+function toggleNoteStatus(noteId) {
+    htmx.ajax('POST', `/class/{{ lesson_id }}/notes/${noteId}/toggle-status`, {
+        target: '#class-notes-grid',
+        swap: 'innerHTML'
+    });
+}
+
+function editNote(noteId) {
+    // Load note data and open edit modal
+    htmx.ajax('GET', `/class/{{ lesson_id }}/notes/${noteId}/edit`, {
+        target: '#editNoteModal .modal-body',
+        swap: 'innerHTML',
+        onAfterSwap: function() {
+            const modal = new bootstrap.Modal(document.getElementById('editNoteModal'));
+            modal.show();
+        }
+    });
+}
+
+function deleteNote(noteId) {
+    if (confirm('Are you sure you want to delete this note?')) {
+        htmx.ajax('POST', `/class/{{ lesson_id }}/notes/${noteId}/delete`, {
+            target: '#class-notes-grid',
+            swap: 'innerHTML'
+        });
+    }
+}
+</script>

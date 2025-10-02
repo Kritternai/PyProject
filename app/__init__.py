@@ -66,6 +66,8 @@ def register_blueprints(app):
     from .presentation.routes.register_routes import register_bp
     from .presentation.routes.pomodoro_routes import pomodoro_bp
     from .presentation.routes.tracking_routes import tracking_bp
+    from .presentation.routes.announcement_routes import announcement_bp
+    from .presentation.routes.class_note_routes import class_note_bp
     from .routes_new import main_bp as main_bp
     from .routes_google_classroom import google_classroom_bp
     from .routes_microsoft_teams import microsoft_teams_bp
@@ -86,6 +88,10 @@ def register_blueprints(app):
     app.register_blueprint(lesson_bp)
     app.register_blueprint(note_bp)
     app.register_blueprint(task_bp)
+    
+    # Register Class System blueprints
+    app.register_blueprint(announcement_bp)
+    app.register_blueprint(class_note_bp)
 
 
 def register_template_filters(app):

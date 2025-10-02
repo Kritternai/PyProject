@@ -89,7 +89,7 @@
         {% if lessons %}
             {% for lesson in lessons %}
                 <div class="mb-4 col-md-6 col-lg-4 lesson-item" data-lesson-id="{{ lesson.id }}" data-status="{{ lesson.status or 'active' }}" data-is-favorite="{{ 'true' if lesson.is_favorite else 'false' }}">
-                    <div class="card h-100 neo-card" style="cursor:pointer; position: relative;" onclick="if(typeof loadPage === 'function') { loadPage('class/{{ lesson.id }}'); } else { window.location.href='/class/{{ lesson.id }}'; }">
+                    <div class="card h-100 neo-card" style="cursor:pointer; position: relative;" onclick="window.location.href='/class/{{ lesson.id }}'">
                         <!-- Cover Image -->
                         <div class="lesson-cover-wrapper">
                             {% if lesson.cover_image %}
@@ -128,7 +128,7 @@
                                         </span>
                                     {% endfor %}
                                 {% endif %}
-                            </div>
+        </div>
                             {% endif %}
                             
                             <div class="mb-2 d-flex justify-content-between align-items-start">

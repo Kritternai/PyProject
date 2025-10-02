@@ -1421,6 +1421,247 @@ window.selectColor = function(element, colorId) {
   }
 }
 
+// Class Notes System Functions
+window.openNoteModal = function() {
+    const modal = new bootstrap.Modal(document.getElementById('createNoteModal'));
+    modal.show();
+}
+
+window.openAnnouncementModal = function() {
+    const modal = new bootstrap.Modal(document.getElementById('createAnnouncementModal'));
+    modal.show();
+}
+
+window.previewNoteImage = function(input) {
+    const preview = document.getElementById('noteImagePreview');
+    const placeholder = document.getElementById('noteImagePlaceholder');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('d-none');
+            placeholder.classList.add('d-none');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+window.filterNotes = function(status) {
+    // Update active filter button
+    document.querySelectorAll('.class-notes-section .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Get lesson ID from current URL
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    
+    console.log(`🔧 Filtering notes by status: ${status}`);
+    
+    // Load notes with filter
+    fetch(`/class/${lessonId}/notes?status=${status}`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('class-notes-grid').innerHTML = html;
+            console.log('✅ Notes filtered successfully');
+        })
+        .catch(error => {
+            console.error('❌ Error filtering notes:', error);
+        });
+}
+
+window.searchNotes = function(query) {
+    console.log(`🔧 Searching notes: "${query}"`);
+    
+    const noteCards = document.querySelectorAll('.note-card-enhanced');
+    noteCards.forEach(card => {
+        const title = card.querySelector('.card-title').textContent.toLowerCase();
+        const content = card.querySelector('.card-text').textContent.toLowerCase();
+        const searchQuery = query.toLowerCase();
+        
+        if (title.includes(searchQuery) || content.includes(searchQuery)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+window.sortNotes = function(sortBy) {
+    console.log(`🔧 Sorting notes by: ${sortBy}`);
+    
+    const grid = document.getElementById('class-notes-grid');
+    const noteCards = Array.from(grid.querySelectorAll('.note-card-enhanced'));
+    
+    noteCards.sort((a, b) => {
+        switch(sortBy) {
+            case 'newest':
+                return new Date(b.dataset.createdAt || 0) - new Date(a.dataset.createdAt || 0);
+            case 'oldest':
+                return new Date(a.dataset.createdAt || 0) - new Date(b.dataset.createdAt || 0);
+            case 'title':
+                return a.querySelector('.card-title').textContent.localeCompare(b.querySelector('.card-title').textContent);
+            default:
+                return 0;
+        }
+    });
+    
+    // Re-append sorted cards
+    noteCards.forEach(card => grid.appendChild(card));
+    console.log('✅ Notes sorted successfully');
+}
+
+// iPhone-style Notes Functions
+window.openNote = function(noteId) {
+    console.log(`🔧 Opening note: ${noteId}`);
+    currentNoteId = noteId;
+    
+    // Update active note in list
+    document.querySelectorAll('.note-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.querySelector(`[data-note-id="${noteId}"]`).classList.add('active');
+    
+    // Load note content
+    fetch(`/class/{{ lesson.id }}/notes/${noteId}`)
+        .then(response => response.json())
+        .then(note => {
+            document.getElementById('noteTitle').value = note.title;
+            document.getElementById('noteContent').innerHTML = note.content;
+            document.getElementById('lastSaved').textContent = 'Loaded';
+        })
+        .catch(error => {
+            console.error('❌ Error loading note:', error);
+        });
+}
+
+window.createNewNote = function() {
+    console.log('🔧 Creating new note');
+    currentNoteId = null;
+    document.getElementById('noteTitle').value = '';
+    document.getElementById('noteContent').innerHTML = '';
+    document.getElementById('lastSaved').textContent = 'Not saved';
+    
+    // Remove active state from all notes
+    document.querySelectorAll('.note-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Focus on title
+    document.getElementById('noteTitle').focus();
+}
+
+window.saveNote = function() {
+    const title = document.getElementById('noteTitle').value.trim();
+    const content = document.getElementById('noteContent').innerHTML;
+    
+    if (!title) {
+        alert('Please enter a note title');
+        return;
+    }
+    
+    const lessonId = '{{ lesson.id }}';
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    formData.append('status', 'pending');
+    
+    const url = currentNoteId ? 
+        `/class/${lessonId}/notes/${currentNoteId}/update` : 
+        `/class/${lessonId}/notes/create`;
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text())
+    .then(html => {
+        console.log('✅ Note saved successfully');
+        document.getElementById('lastSaved').textContent = 'Saved';
+        loadNotesList();
+    })
+    .catch(error => {
+        console.error('❌ Error saving note:', error);
+        alert('Error saving note');
+    });
+}
+
+window.autoSaveNote = function() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+        if (currentNoteId) {
+            saveNote();
+        }
+    }, 2000);
+}
+
+window.loadNotesList = function() {
+    const lessonId = '{{ lesson.id }}';
+    console.log('🔧 Loading notes list for lesson:', lessonId);
+    
+    fetch(`/class/${lessonId}/notes-list`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('notesList').innerHTML = html;
+            console.log('✅ Notes list loaded');
+        })
+        .catch(error => {
+            console.error('❌ Error loading notes list:', error);
+        });
+}
+
+// Global function to load class notes
+window.loadClassNotes = function() {
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    console.log('🔧 Loading class notes for lesson:', lessonId);
+    
+    fetch(`/class/${lessonId}/notes`)
+        .then(response => response.text())
+        .then(html => {
+            console.log('✅ Class notes loaded');
+            document.getElementById('class-notes-grid').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('❌ Error loading class notes:', error);
+        });
+}
+
+window.submitNoteForm = function(event) {
+    event.preventDefault();
+    const form = document.getElementById('createNoteForm');
+    const formData = new FormData(form);
+    
+    console.log('🔧 Submitting note form...');
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text())
+    .then(html => {
+        console.log('✅ Note created successfully');
+        // Close modal first
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createNoteModal'));
+        modal.hide();
+        // Reset form
+        form.reset();
+        // Reload notes grid
+        if (typeof loadClassNotes === 'function') {
+            loadClassNotes();
+        } else {
+            // Fallback: reload the page
+            window.location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error creating note:', error);
+        alert('Error creating note. Please try again.');
+    });
+}
+
 // Global favorite toggle function - REALTIME UPDATE
 window.toggleFavorite = function(lessonId, btn) {
   console.log('🌟 Toggle favorite:', lessonId);

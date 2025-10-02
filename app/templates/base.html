@@ -72,21 +72,23 @@ function setActiveNav(el) {
   el.classList.add('active');
 }
 window.addEventListener('DOMContentLoaded', function() {
-  {% if initial_page %}
-    const initial = '{{ initial_page }}';
-    const navInit = document.querySelector(`.sidebar .nav-link[data-page=\"${initial}\"]`);
-    if (navInit) navInit.classList.add('active');
-    loadPage(initial);
-  {% elif google_connected %}
-    // If user just connected Google Classroom, load class page
-    const navClass = document.querySelector('.sidebar .nav-link[data-page=\"class\"]');
-    if (navClass) navClass.classList.add('active');
-    loadPage('class');
-  {% else %}
-    // Default: load dashboard
-    const navDash = document.querySelector('.sidebar .nav-link[data-page=\"dashboard\"]');
-    if (navDash) navDash.classList.add('active');
-    loadPage('dashboard');
+  {% if not skip_auto_load %}
+    {% if initial_page %}
+      const initial = '{{ initial_page }}';
+      const navInit = document.querySelector(`.sidebar .nav-link[data-page=\"${initial}\"]`);
+      if (navInit) navInit.classList.add('active');
+      loadPage(initial);
+    {% elif google_connected %}
+      // If user just connected Google Classroom, load class page
+      const navClass = document.querySelector('.sidebar .nav-link[data-page=\"class\"]');
+      if (navClass) navClass.classList.add('active');
+      loadPage('class');
+    {% else %}
+      // Default: load dashboard
+      const navDash = document.querySelector('.sidebar .nav-link[data-page=\"dashboard\"]');
+      if (navDash) navDash.classList.add('active');
+      loadPage('dashboard');
+    {% endif %}
   {% endif %}
 });
 </script>

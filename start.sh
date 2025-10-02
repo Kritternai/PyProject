@@ -181,6 +181,18 @@ if [ ! -d "instance" ]; then
     mkdir -p instance
 fi
 
+# Run complete database migration
+print_step "Running complete database migration..."
+if [ -f "database/migrations/create_complete_database.py" ]; then
+    if PYTHONPATH=. python database/migrations/create_complete_database.py; then
+        print_success "Complete database migration completed"
+    else
+        print_warning "Complete database migration failed, but continuing..."
+    fi
+else
+    print_warning "Complete database migration script not found, skipping..."
+fi
+
 # Check if database file exists
 if [ -f "instance/site.db" ]; then
     print_status "Database file exists, checking health..."

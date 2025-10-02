@@ -237,8 +237,8 @@ def add_lesson():
         
         # Update status and tags
         db.session.execute(
-            text("UPDATE lesson SET status = :status, tags = :tags WHERE id = :lesson_id"),
-            {"status": status_value, "tags": tags, "lesson_id": lesson.id}
+            text("UPDATE lesson SET status = :status WHERE id = :lesson_id"),
+            {"status": status_value, "lesson_id": lesson.id}
         )
         db.session.commit()
         
@@ -256,10 +256,54 @@ def add_lesson():
         traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@main_bp.route('/class/<lesson_id>')
+@login_required_web
+def view_class_detail(lesson_id):
+    """View class detail page with tabs"""
+    if not g.user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = get_service(LessonService)
+        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        
+        if not lesson:
+            return jsonify({'error': 'Lesson not found'}), 404
+        
+        return render_template('class_detail.html', 
+                             lesson=lesson, 
+                             user=g.user)
+        
+    except Exception as e:
+        print(f"Error loading class detail: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/class/<lesson_id>/stream-notes')
+@login_required_web
+def stream_notes(lesson_id):
+    """Load stream notes template"""
+    if not g.user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    try:
+        lesson_service = get_service(LessonService)
+        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        if not lesson:
+            return jsonify({'error': 'Lesson not found'}), 404
+        if lesson.user_id != g.user.id:
+            return jsonify({'error': 'Unauthorized'}), 403
+        return render_template('class_detail/_stream_notes.html', lesson=lesson, user=g.user)
+    except Exception as e:
+        print(f"Error loading stream notes: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @main_bp.route('/partial/class/<lesson_id>')
 @login_required_web
 def view_lesson_detail(lesson_id):
-    """View lesson detail page"""
+    """View lesson detail page (legacy route)"""
     if not g.user:
         return '<div class="alert alert-danger">Not authenticated</div>', 401
     
