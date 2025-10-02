@@ -1876,3 +1876,304 @@ function updateStatsCounters() {
   
   console.log(`📊 Stats updated: ${favorites.length} favorites out of ${allLessons.length} total`);
 }
+
+// =============================================================================
+// CLASSWORK FUNCTIONS
+// =============================================================================
+
+// Classwork modal functions
+window.openCreateTaskModal = function() {
+    console.log('🔧 Opening create task modal');
+    const modal = new bootstrap.Modal(document.getElementById('createTaskModal'));
+    modal.show();
+};
+
+window.openCreateMaterialModal = function() {
+    console.log('🔧 Opening create material modal');
+    const modal = new bootstrap.Modal(document.getElementById('createMaterialModal'));
+    modal.show();
+};
+
+
+// Classwork submit functions
+window.submitCreateTask = function() {
+    console.log('🔧 Submitting create task');
+    const form = document.getElementById('createTaskForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Get lesson ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    data.lesson_id = lessonId;
+    
+    fetch('/classwork/tasks', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('createTaskModal')).hide();
+            if (typeof loadClassworkTasks === 'function') {
+                loadClassworkTasks();
+            }
+            if (typeof loadClassworkDashboard === 'function') {
+                loadClassworkDashboard();
+            }
+        } else {
+            alert('Error creating task: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating task');
+    });
+};
+
+window.submitCreateMaterial = function() {
+    console.log('🔧 Submitting create material');
+    const form = document.getElementById('createMaterialForm');
+    const formData = new FormData(form);
+    
+    // Get lesson ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    formData.append('lesson_id', lessonId);
+    
+    fetch('/classwork/materials', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('createMaterialModal')).hide();
+            if (typeof loadClassworkMaterials === 'function') {
+                loadClassworkMaterials();
+            }
+        } else {
+            alert('Error creating material: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating material');
+    });
+};
+
+
+// Load classwork dashboard
+window.loadClassworkDashboard = function() {
+    console.log('🔧 Loading classwork dashboard');
+    fetch('/classwork/dashboard')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('total-tasks').textContent = data.dashboard.total_tasks;
+                document.getElementById('completed-tasks').textContent = data.dashboard.completed_tasks;
+                document.getElementById('in-progress-tasks').textContent = data.dashboard.in_progress_tasks;
+                document.getElementById('overdue-tasks').textContent = data.dashboard.overdue_tasks;
+            }
+        })
+        .catch(error => console.error('Error loading dashboard:', error));
+};
+
+// Load classwork tasks
+window.loadClassworkTasks = function() {
+    console.log('🔧 Loading classwork tasks');
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    
+    fetch(`/classwork/lessons/${lessonId}/tasks`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (typeof renderClassworkTasks === 'function') {
+                    renderClassworkTasks(data.tasks);
+                }
+            }
+        })
+        .catch(error => console.error('Error loading tasks:', error));
+};
+
+// Load classwork materials
+window.loadClassworkMaterials = function() {
+    console.log('🔧 Loading classwork materials');
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    
+    fetch(`/classwork/lessons/${lessonId}/materials`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (typeof renderClassworkMaterials === 'function') {
+                    renderClassworkMaterials(data.materials);
+                }
+            }
+        })
+        .catch(error => console.error('Error loading materials:', error));
+};
+
+// Render classwork tasks
+window.renderClassworkTasks = function(tasks) {
+    console.log('🔧 Rendering classwork tasks:', tasks);
+    const container = document.getElementById('classwork-tasks');
+    if (!container) return;
+    
+    if (tasks.length === 0) {
+        container.innerHTML = '<p class="text-muted">No tasks yet. Create your first task!</p>';
+        return;
+    }
+    
+    container.innerHTML = tasks.map(task => `
+        <div class="classwork-task-item mb-3 p-3 border rounded">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${task.title}</h6>
+                    <p class="text-muted mb-2">${task.description || 'No description'}</p>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-${getPriorityColor(task.priority)}">${task.priority}</span>
+                        <span class="badge bg-${getStatusColor(task.status)}">${task.status}</span>
+                        ${task.subject ? `<span class="badge bg-secondary">${task.subject}</span>` : ''}
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="editTask('${task.id}')">Edit</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="deleteTask('${task.id}')">Delete</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `).join('');
+};
+
+// Render classwork materials
+window.renderClassworkMaterials = function(materials) {
+    console.log('🔧 Rendering classwork materials:', materials);
+    const container = document.getElementById('classwork-materials');
+    if (!container) return;
+    
+    if (materials.length === 0) {
+        container.innerHTML = '<p class="text-muted">No materials yet. Upload your first material!</p>';
+        return;
+    }
+    
+    container.innerHTML = materials.map(material => `
+        <div class="classwork-material-item mb-3 p-3 border rounded">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${material.title}</h6>
+                    <p class="text-muted mb-2">${material.description || 'No description'}</p>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-info">${material.file_type || 'File'}</span>
+                        ${material.subject ? `<span class="badge bg-secondary">${material.subject}</span>` : ''}
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="downloadMaterial('${material.id}')">Download</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="editMaterial('${material.id}')">Edit</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="deleteMaterial('${material.id}')">Delete</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `).join('');
+};
+
+// Utility functions
+window.getPriorityColor = function(priority) {
+    switch(priority) {
+        case 'high': return 'danger';
+        case 'medium': return 'warning';
+        case 'low': return 'success';
+        default: return 'secondary';
+    }
+};
+
+window.getStatusColor = function(status) {
+    switch(status) {
+        case 'done': return 'success';
+        case 'in_progress': return 'warning';
+        case 'todo': return 'secondary';
+        default: return 'secondary';
+    }
+};
+
+// Action functions
+window.editTask = function(taskId) {
+    console.log('Edit task:', taskId);
+    // TODO: Implement edit task
+};
+
+window.deleteTask = function(taskId) {
+    if (confirm('Are you sure you want to delete this task?')) {
+        fetch(`/classwork/tasks/${taskId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadClassworkTasks();
+                loadClassworkDashboard();
+            } else {
+                alert('Error deleting task: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting task');
+        });
+    }
+};
+
+window.downloadMaterial = function(materialId) {
+    console.log('Download material:', materialId);
+    // TODO: Implement download material
+};
+
+window.editMaterial = function(materialId) {
+    console.log('Edit material:', materialId);
+    // TODO: Implement edit material
+};
+
+window.deleteMaterial = function(materialId) {
+    if (confirm('Are you sure you want to delete this material?')) {
+        fetch(`/classwork/materials/${materialId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadClassworkMaterials();
+            } else {
+                alert('Error deleting material: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting material');
+        });
+    }
+};
+
+// Initialize classwork
+window.initClasswork = function(lessonId) {
+    console.log('🔧 Initializing classwork for lesson:', lessonId);
+    loadClassworkDashboard();
+    loadClassworkTasks();
+    loadClassworkMaterials();
+};
+
+console.log('✅ Classwork functions loaded');

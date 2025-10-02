@@ -251,6 +251,118 @@ def create_complete_database():
         
         print("✅ Created uploads directories")
         
+        # 12. Create classwork tables
+        print("🔧 Creating classwork tables...")
+        
+        # classwork_task table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_task (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                subject TEXT,
+                category TEXT,
+                priority TEXT DEFAULT 'medium',
+                status TEXT DEFAULT 'todo',
+                due_date TIMESTAMP,
+                estimated_time INTEGER DEFAULT 0,
+                actual_time INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id)
+            )
+        """)
+        
+        # classwork_material table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_material (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                title TEXT NOT NULL,
+                description TEXT,
+                file_path TEXT,
+                file_type TEXT,
+                file_size INTEGER,
+                subject TEXT,
+                category TEXT,
+                tags TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
+            )
+        """)
+        
+        # classwork_note table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_note (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                title TEXT NOT NULL,
+                content TEXT,
+                subject TEXT,
+                category TEXT,
+                tags TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
+            )
+        """)
+        
+        # classwork_session table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_session (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                session_name TEXT,
+                start_time TIMESTAMP,
+                end_time TIMESTAMP,
+                duration INTEGER DEFAULT 0,
+                break_duration INTEGER DEFAULT 0,
+                productivity_score INTEGER DEFAULT 0,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
+            )
+        """)
+        
+        # classwork_progress table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_progress (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                progress_percentage INTEGER DEFAULT 0,
+                completed_at TIMESTAMP,
+                time_spent INTEGER DEFAULT 0,
+                achievement_badges TEXT,
+                streak_count INTEGER DEFAULT 0,
+                last_activity TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
+            )
+        """)
+        
+        print("✅ Created classwork tables")
+        
         # Commit changes
         conn.commit()
         print("🎉 Complete database created successfully!")

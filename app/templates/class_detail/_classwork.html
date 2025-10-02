@@ -1,0 +1,292 @@
+<!-- Classwork Tab Content -->
+<div class="classwork-container">
+    <!-- Classwork Header -->
+    <div class="classwork-header mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">
+                <i class="bi bi-book-fill text-primary me-2"></i>
+                Classwork
+            </h3>
+            <div class="classwork-actions">
+                <button class="btn btn-primary btn-sm me-2" onclick="openCreateTaskModal()">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    New Task
+                </button>
+                <button class="btn btn-outline-primary btn-sm me-2" onclick="openCreateMaterialModal()">
+                    <i class="bi bi-upload me-1"></i>
+                    Upload Material
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Classwork Dashboard -->
+    <div class="classwork-dashboard mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="mb-0" id="total-tasks">0</h4>
+                                <p class="mb-0">Total Tasks</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-list-task fs-2"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="mb-0" id="completed-tasks">0</h4>
+                                <p class="mb-0">Completed</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-check-circle fs-2"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="mb-0" id="in-progress-tasks">0</h4>
+                                <p class="mb-0">In Progress</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-clock fs-2"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="mb-0" id="overdue-tasks">0</h4>
+                                <p class="mb-0">Overdue</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-exclamation-triangle fs-2"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Classwork Content -->
+    <div class="classwork-content">
+        <div class="row">
+            <!-- Tasks Column -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-task me-2"></i>
+                            Tasks
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="classwork-tasks" id="classwork-tasks">
+                            <!-- Tasks will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materials Column -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-folder me-2"></i>
+                            Materials
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="classwork-materials" id="classwork-materials">
+                            <!-- Materials will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Create Task Modal -->
+<div class="modal fade" id="createTaskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Create New Task
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createTaskForm">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="taskTitle" class="form-label">Task Title</label>
+                                <input type="text" class="form-control" id="taskTitle" name="title" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="taskDescription" name="description" rows="3"></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="taskSubject" class="form-label">Subject</label>
+                                        <input type="text" class="form-control" id="taskSubject" name="subject">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="taskCategory" class="form-label">Category</label>
+                                        <input type="text" class="form-control" id="taskCategory" name="category">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="taskPriority" class="form-label">Priority</label>
+                                <select class="form-select" id="taskPriority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskStatus" class="form-label">Status</label>
+                                <select class="form-select" id="taskStatus" name="status">
+                                    <option value="todo" selected>Todo</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="done">Done</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskDueDate" class="form-label">Due Date</label>
+                                <input type="datetime-local" class="form-control" id="taskDueDate" name="due_date">
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskEstimatedTime" class="form-label">Estimated Time (minutes)</label>
+                                <input type="number" class="form-control" id="taskEstimatedTime" name="estimated_time" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitCreateTask()">Create Task</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Material Modal -->
+<div class="modal fade" id="createMaterialModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-upload me-2"></i>
+                    Upload Material
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createMaterialForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="materialFile" class="form-label">Select File</label>
+                        <input type="file" class="form-control" id="materialFile" name="file" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="materialTitle" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="materialTitle" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="materialDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="materialDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="materialSubject" class="form-label">Subject</label>
+                                <input type="text" class="form-control" id="materialSubject" name="subject">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="materialCategory" class="form-label">Category</label>
+                                <input type="text" class="form-control" id="materialCategory" name="category">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="materialTags" class="form-label">Tags (comma-separated)</label>
+                        <input type="text" class="form-control" id="materialTags" name="tags" placeholder="e.g., important, homework, exam">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitCreateMaterial()">Upload Material</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+// Classwork JavaScript Functions
+let currentLessonId = null;
+
+// Initialize classwork (functions moved to main.js)
+function initClasswork(lessonId) {
+    currentLessonId = lessonId;
+    if (typeof loadClassworkDashboard === 'function') {
+        loadClassworkDashboard();
+    }
+    if (typeof loadClassworkTasks === 'function') {
+        loadClassworkTasks();
+    }
+    if (typeof loadClassworkMaterials === 'function') {
+        loadClassworkMaterials();
+    }
+    if (typeof loadClassworkNotes === 'function') {
+        loadClassworkNotes();
+    }
+}
+
+// Functions moved to main.js
+
+
+// Render functions moved to main.js
+
+
+// Modal and submit functions are now in main.js
+
+// All functions moved to main.js
+
+
+// All functions are now in main.js
+</script>
