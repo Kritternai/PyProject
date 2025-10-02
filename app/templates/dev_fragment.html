@@ -11,10 +11,22 @@
         <div class="card-body">
           <h5 class="card-title">Your Modules</h5>
           <ul class="list-group list-group-flush">
-            <li class="list-group-item"><a href="{{ url_for('list_lessons') }}">Lesson Management</a></li>
-            <li class="list-group-item"><a href="{{ url_for('view_external_data') }}">View External Data (from Extension)</a></li>
-            <li class="list-group-item"><a href="{{ url_for('authorize_google_classroom') }}">Connect Google Classroom API</a></li>
-            <li class="list-group-item"><a href="{{ url_for('kmitl_classroom_link') }}">Link KMITL & Google Classroom</a></li>
+            <li class="list-group-item">
+              <a href="{{ url_for('google_classroom.authorize') }}">
+                <i class="fab fa-google text-primary me-2"></i>Connect Google Classroom API
+              </a>
+            </li>
+            <li class="list-group-item">
+              <a href="{{ url_for('microsoft_teams.authorize') }}">
+                <i class="fab fa-microsoft text-info me-2"></i>Connect Microsoft Teams (Mockup)
+              </a>
+            </li>
+            <li class="list-group-item text-muted">
+              <i class="fas fa-book me-2"></i>Lesson Management (Coming Soon)
+            </li>
+            <li class="list-group-item text-muted">
+              <i class="fas fa-database me-2"></i>View External Data (Coming Soon)
+            </li>
           </ul>
         </div>
       </div>
@@ -44,7 +56,7 @@
               {% endfor %}
             </div>
           {% else %}
-            <p class="text-muted">No Google Classroom data found. <a href="{{ url_for('authorize_google_classroom') }}">Connect your account</a> to see your courses.</p>
+            <p class="text-muted">No Google Classroom data found. <a href="{{ url_for('google_classroom.authorize') }}">Connect your account</a> to see your courses.</p>
           {% endif %}
         </div>
       </div>

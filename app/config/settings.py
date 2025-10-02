@@ -31,6 +31,9 @@ class Config:
     # Pagination settings
     DEFAULT_PAGE_SIZE = 20
     MAX_PAGE_SIZE = 100
+    
+    # Server settings
+    PORT = int(os.environ.get('PORT', 5004))
 
 
 class DevelopmentConfig(Config):

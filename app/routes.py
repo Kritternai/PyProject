@@ -7,45 +7,13 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from functools import wraps
 from .presentation.middleware.auth_middleware import login_required, get_current_user
 
-# Create main blueprint
-main_bp = Blueprint('main', __name__)
+# Create legacy blueprint for backward compatibility
+main_bp = Blueprint('legacy', __name__)
 
 
-@main_bp.route('/')
-@main_bp.route('/index')
-def index():
-    """Main index page."""
-    # Check if user just connected Google Classroom
-    google_connected = request.args.get('google_classroom_connected') == 'true'
-    return render_template('base.html', google_connected=google_connected)
-
-
-@main_bp.route('/dashboard')
-@login_required
-def dashboard():
-    """Dashboard page."""
-    return render_template('dashboard.html', user=g.user)
-
-
-@main_bp.route('/partial/dashboard')
-def partial_dashboard():
-    """Dashboard partial for SPA."""
-    return render_template('dashboard_fragment.html', user=g.user)
-
-
-# Legacy routes for backward compatibility
-# These will be gradually migrated to the new architecture
-
-@main_bp.route('/login')
-def login_page():
-    """Login page."""
-    return render_template('login.html')
-
-
-@main_bp.route('/register')
-def register_page():
-    """Registration page."""
-    return render_template('register.html')
+# Routes '/', '/index', '/dashboard', '/partial/dashboard', '/login', '/register'
+# are now handled by routes_new.py (main blueprint)
+# Removed here to avoid conflicts
 
 
 # Import legacy routes for backward compatibility

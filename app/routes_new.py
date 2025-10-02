@@ -79,11 +79,400 @@ def partial_class():
     if not g.user:
         return jsonify({'error': 'Not authenticated'}), 401
     try:
+        print(f"🔍 partial_class: Loading lessons for user {g.user.id}")
         lesson_service = get_service(LessonService)
         lessons = lesson_service.get_user_lessons(g.user.id)
-        return render_template('class_fragment.html', lessons=lessons, user=g.user)
+        print(f"✅ Found {len(lessons)} lessons")
+        
+        # Sort lessons: Favorites first (pinned), then by created_at desc
+        # Key explanation: (is_favorite, created_at) with reverse=True
+        # - True > False, so favorites come first
+        # - Within each group, newer dates come first
+        lessons = sorted(lessons, key=lambda x: (x.is_favorite, x.created_at), reverse=True)
+        print(f"📌 Sorted: Favorites first, then newest")
+        
+        # Debug sorting
+        if lessons:
+            fav_count = sum(1 for l in lessons if l.is_favorite)
+            print(f"   Favorites: {fav_count}, Regular: {len(lessons) - fav_count}")
+        
+        # Debug: print first lesson
+        if lessons:
+            first = lessons[0]
+            print(f"📝 First lesson: id={first.id}, title={first.title}, status={first.status}, is_favorite={first.is_favorite}")
+        else:
+            print("⚠️ No lessons found!")
+        
+        # Check Microsoft Teams connection status
+        microsoft_teams_connected = session.get('microsoft_teams_connected', False)
+        microsoft_teams_data = session.get('microsoft_teams_data', None)
+        
+        return render_template('class_fragment.html', 
+                             lessons=lessons, 
+                             user=g.user,
+                             google_classroom_connected=False,  # TODO: implement real check
+                             microsoft_teams_connected=microsoft_teams_connected,
+                             microsoft_teams_data=microsoft_teams_data)
     except Exception as e:
-        return render_template('class_fragment.html', lessons=[], user=g.user)
+        print(f"❌ Error loading lessons: {e}")
+        import traceback
+        traceback.print_exc()
+        return render_template('class_fragment.html', 
+                             lessons=[], 
+                             user=g.user,
+                             google_classroom_connected=False,
+                             microsoft_teams_connected=False,
+                             microsoft_teams_data=None)
+
+@main_bp.route('/debug/lessons')
+@login_required_web
+def debug_lessons():
+    """Debug route to check lessons data"""
+    if not g.user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = get_service(LessonService)
+        lessons = lesson_service.get_user_lessons(g.user.id)
+        
+        lessons_data = []
+        for lesson in lessons:
+            lessons_data.append({
+                'id': lesson.id,
+                'title': lesson.title,
+                'description': lesson.description,
+                'status': str(lesson.status),
+                'color_theme': lesson.color_theme,
+                'author_name': lesson.author_name,
+                'created_at': str(lesson.created_at) if lesson.created_at else None,
+                'is_favorite': lesson.is_favorite
+            })
+        
+        return jsonify({
+            'success': True,
+            'user_id': g.user.id,
+            'lessons_count': len(lessons),
+            'lessons': lessons_data
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+@main_bp.route('/partial/class/add', methods=['POST'])
+@login_required_web
+def add_lesson():
+    """Add new lesson"""
+    if not g.user:
+        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    
+    try:
+        from app.domain.entities.lesson import LessonStatus, DifficultyLevel
+        lesson_service = get_service(LessonService)
+        
+        # Get form data
+        title = request.form.get('title')
+        description = request.form.get('description')
+        status = request.form.get('status', 'not_started')
+        author_name = request.form.get('author_name')
+        tags = request.form.get('tags', '')
+        selected_color = request.form.get('selectedColor', '1')
+        difficulty = request.form.get('difficulty_level', 'beginner')
+        duration = request.form.get('estimated_duration')
+        
+        print(f"📝 Creating lesson: title={title}, status={status}, difficulty={difficulty}, duration={duration}")
+        
+        if not title:
+            return jsonify({'success': False, 'message': 'Title is required'}), 400
+        
+        # Convert color to integer
+        try:
+            color_theme = int(selected_color)
+        except:
+            color_theme = 1
+        
+        # Convert difficulty to enum
+        difficulty_map = {
+            'beginner': DifficultyLevel.BEGINNER,
+            'intermediate': DifficultyLevel.INTERMEDIATE,
+            'advanced': DifficultyLevel.ADVANCED
+        }
+        difficulty_level = difficulty_map.get(difficulty, DifficultyLevel.BEGINNER)
+        
+        # Convert duration to int
+        estimated_duration = None
+        if duration:
+            try:
+                estimated_duration = int(duration)
+            except:
+                pass
+        
+        # Create lesson using OOP service
+        lesson = lesson_service.create_lesson(
+            user_id=g.user.id,
+            title=title,
+            description=description or '',
+            color_theme=color_theme,
+            author_name=author_name if author_name else None,
+            difficulty_level=difficulty_level,
+            estimated_duration=estimated_duration
+        )
+        
+        # Update status using direct SQL (since the model uses enums)
+        from app import db
+        from sqlalchemy import text
+        
+        # Map status string to enum value
+        status_map = {
+            'not_started': 'not_started',
+            'in_progress': 'in_progress', 
+            'completed': 'completed',
+            'archived': 'archived',
+            'active': 'not_started'  # fallback
+        }
+        status_value = status_map.get(status, 'not_started')
+        
+        # Update status and tags
+        db.session.execute(
+            text("UPDATE lesson SET status = :status WHERE id = :lesson_id"),
+            {"status": status_value, "lesson_id": lesson.id}
+        )
+        db.session.commit()
+        
+        print(f"✅ Lesson created: id={lesson.id}, status={status_value}, tags={tags}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Lesson created successfully',
+            'lesson_id': lesson.id
+        })
+        
+    except Exception as e:
+        print(f"❌ Error creating lesson: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@main_bp.route('/class/<lesson_id>')
+@login_required_web
+def view_class_detail(lesson_id):
+    """View class detail page with tabs"""
+    if not g.user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = get_service(LessonService)
+        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        
+        if not lesson:
+            return jsonify({'error': 'Lesson not found'}), 404
+        
+        return render_template('class_detail.html', 
+                             lesson=lesson, 
+                             user=g.user)
+        
+    except Exception as e:
+        print(f"Error loading class detail: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/class/<lesson_id>/stream-notes')
+@login_required_web
+def stream_notes(lesson_id):
+    """Load stream notes template"""
+    if not g.user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    try:
+        lesson_service = get_service(LessonService)
+        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        if not lesson:
+            return jsonify({'error': 'Lesson not found'}), 404
+        if lesson.user_id != g.user.id:
+            return jsonify({'error': 'Unauthorized'}), 403
+        return render_template('class_detail/_stream_notes.html', lesson=lesson, user=g.user)
+    except Exception as e:
+        print(f"Error loading stream notes: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/partial/class/<lesson_id>')
+@login_required_web
+def view_lesson_detail(lesson_id):
+    """View lesson detail page (legacy route)"""
+    if not g.user:
+        return '<div class="alert alert-danger">Not authenticated</div>', 401
+    
+    try:
+        from app import db
+        lesson_service = get_service(LessonService)
+        
+        # Get lesson by ID
+        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        if not lesson:
+            return '<div class="alert alert-danger">Lesson not found or no permission.</div>', 404
+        
+        # Get sections using direct SQL query to avoid model import conflicts
+        sections = []
+        try:
+            # Query sections directly from database without importing the model
+            section_query = db.session.execute(
+                db.text("""
+                    SELECT id, lesson_id, type, title, content, files, 
+                           assignment_due, created_at, updated_at, sort_order
+                    FROM lesson_section 
+                    WHERE lesson_id = :lesson_id 
+                    ORDER BY sort_order ASC, created_at ASC
+                """),
+                {'lesson_id': lesson_id}
+            )
+            
+            # Convert to dict objects for template compatibility
+            for row in section_query:
+                sections.append({
+                    'id': row[0],
+                    'lesson_id': row[1],
+                    'type': row[2],
+                    'title': row[3],
+                    'content': row[4],
+                    'files': row[5],
+                    'assignment_due': row[6],
+                    'created_at': row[7],
+                    'updated_at': row[8],
+                    'sort_order': row[9]
+                })
+        except Exception as e:
+            print(f"Warning: Could not load sections: {e}")
+            sections = []
+        
+        # Get notes using direct SQL query
+        notes = []
+        try:
+            note_query = db.session.execute(
+                db.text("""
+                    SELECT id, title, content, tags, created_at, updated_at
+                    FROM note 
+                    WHERE lesson_id = :lesson_id AND user_id = :user_id
+                    ORDER BY created_at DESC
+                """),
+                {'lesson_id': lesson_id, 'user_id': g.user.id}
+            )
+            
+            for row in note_query:
+                notes.append({
+                    'id': row[0],
+                    'title': row[1],
+                    'content': row[2],
+                    'tags': row[3],
+                    'created_at': row[4],
+                    'updated_at': row[5]
+                })
+        except Exception as e:
+            print(f"Warning: Could not load notes: {e}")
+            notes = []
+        
+        # Prepare lesson_summary (for compatibility with template)
+        lesson_summary = {
+            'notes': notes,
+            'sections': sections
+        }
+        
+        # Handle Google Classroom data if needed
+        if hasattr(lesson, 'source_platform') and lesson.source_platform == 'google_classroom':
+            import json
+            try:
+                lesson.announcements = json.loads(lesson.announcements_data) if hasattr(lesson, 'announcements_data') and lesson.announcements_data else []
+            except Exception:
+                lesson.announcements = []
+            try:
+                lesson.grouped_by_topic = json.loads(lesson.topics_data) if hasattr(lesson, 'topics_data') and lesson.topics_data else []
+            except Exception:
+                lesson.grouped_by_topic = []
+            try:
+                lesson.roster = json.loads(lesson.roster_data) if hasattr(lesson, 'roster_data') and lesson.roster_data else {}
+            except Exception:
+                lesson.roster = {}
+            try:
+                lesson.all_attachments = json.loads(lesson.attachments_data) if hasattr(lesson, 'attachments_data') and lesson.attachments_data else []
+            except Exception:
+                lesson.all_attachments = []
+        
+        return render_template('lessons/_detail.html', 
+                             lesson=lesson, 
+                             sections=sections, 
+                             lesson_summary=lesson_summary,
+                             user=g.user)
+    except Exception as e:
+        print(f"Error viewing lesson detail: {e}")
+        import traceback
+        traceback.print_exc()
+        return f'<div class="alert alert-danger">Error loading lesson: {str(e)}</div>', 500
+
+@main_bp.route('/partial/class/<lesson_id>/favorite', methods=['POST'])
+@login_required_web
+def toggle_lesson_favorite(lesson_id):
+    """Toggle lesson favorite status"""
+    if not g.user:
+        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = get_service(LessonService)
+        
+        # Get current lesson
+        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        if not lesson:
+            return jsonify({'success': False, 'message': 'Lesson not found'}), 404
+        
+        # Toggle favorite
+        new_favorite_status = not lesson.is_favorite
+        
+        # Update using direct SQL
+        from app import db
+        from sqlalchemy import text
+        
+        db.session.execute(
+            text("UPDATE lesson SET is_favorite = :fav WHERE id = :lesson_id AND user_id = :user_id"),
+            {"fav": new_favorite_status, "lesson_id": lesson_id, "user_id": g.user.id}
+        )
+        db.session.commit()
+        
+        print(f"✅ Toggled favorite for lesson {lesson_id}: {new_favorite_status}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Favorite toggled successfully',
+            'is_favorite': new_favorite_status
+        })
+    except Exception as e:
+        print(f"❌ Error toggling favorite: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@main_bp.route('/partial/class/<lesson_id>/delete', methods=['POST'])
+@login_required_web
+def delete_lesson(lesson_id):
+    """Delete a lesson"""
+    if not g.user:
+        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = get_service(LessonService)
+        lesson_service.delete_lesson(lesson_id, g.user.id)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Lesson deleted successfully'
+        })
+    except Exception as e:
+        print(f"Error deleting lesson: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @main_bp.route('/partial/note')
 @login_required_web
