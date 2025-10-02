@@ -196,6 +196,10 @@ function loadTabContent(tabName) {
                     if (typeof loadNotesList === 'function') {
                         loadNotesList();
                     }
+                    // Also attach note functions
+                    if (typeof attachNoteFunctions === 'function') {
+                        attachNoteFunctions();
+                    }
                 }, 500);
             })
             .catch(err => {
@@ -224,6 +228,10 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         if (typeof loadNotesList === 'function') {
             loadNotesList();
+        }
+        // Also attach note functions
+        if (typeof attachNoteFunctions === 'function') {
+            attachNoteFunctions();
         }
     }, 1000);
 });

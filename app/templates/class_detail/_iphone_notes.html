@@ -183,7 +183,103 @@ let autoSaveTimer = null;
 document.addEventListener('DOMContentLoaded', function() {
     loadNotesList();
     setupRichTextEditor();
+    
+    // Add direct event listeners to toolbar buttons
+    setTimeout(() => {
+        setupToolbarButtons();
+    }, 1000);
+    
+    // Also setup when stream content is loaded
+    setTimeout(() => {
+        setupToolbarButtons();
+    }, 2000);
 });
+
+// Setup toolbar buttons with direct event listeners
+function setupToolbarButtons() {
+    console.log('🔧 Setting up toolbar buttons');
+    
+    // Bold button
+    const boldBtn = document.querySelector('button[onclick*="formatText(\'bold\')"]');
+    if (boldBtn) {
+        boldBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔧 Bold button clicked directly');
+            formatText('bold');
+        });
+    }
+    
+    // Italic button
+    const italicBtn = document.querySelector('button[onclick*="formatText(\'italic\')"]');
+    if (italicBtn) {
+        italicBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔧 Italic button clicked directly');
+            formatText('italic');
+        });
+    }
+    
+    // Underline button
+    const underlineBtn = document.querySelector('button[onclick*="formatText(\'underline\')"]');
+    if (underlineBtn) {
+        underlineBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔧 Underline button clicked directly');
+            formatText('underline');
+        });
+    }
+    
+    // Strikethrough button
+    const strikeBtn = document.querySelector('button[onclick*="formatText(\'strikeThrough\')"]');
+    if (strikeBtn) {
+        strikeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔧 Strikethrough button clicked directly');
+            formatText('strikeThrough');
+        });
+    }
+    
+    console.log('✅ Toolbar buttons setup complete');
+}
+
+// Global function to setup toolbar when content is loaded
+window.setupToolbarButtons = setupToolbarButtons;
+
+// Functions will be attached to window at the end of script
+
+// Define missing functions
+window.searchNotes = function() {
+    console.log('🔧 Search notes clicked');
+    document.getElementById('notesSearch').focus();
+};
+
+window.toggleNotesSidebar = function() {
+    console.log('🔧 Toggle sidebar');
+    const sidebar = document.getElementById('notesSidebar');
+    if (sidebar) {
+        sidebar.style.display = sidebar.style.display === 'none' ? 'block' : 'none';
+    }
+};
+
+window.searchNotesList = function(query) {
+    console.log(`🔧 Searching notes: ${query}`);
+    const notes = document.querySelectorAll('.note-item');
+    notes.forEach(note => {
+        const title = note.querySelector('.note-title')?.textContent.toLowerCase() || '';
+        const content = note.querySelector('.note-preview')?.textContent.toLowerCase() || '';
+        const searchQuery = query.toLowerCase();
+        
+        if (title.includes(searchQuery) || content.includes(searchQuery)) {
+            note.style.display = 'block';
+        } else {
+            note.style.display = 'none';
+        }
+    });
+};
 
 // Load notes list
 function loadNotesList() {
@@ -273,28 +369,17 @@ function formatText(command) {
     
     console.log(`🔧 Selected text: "${selectedText}"`);
     
-    if (selectedText) {
-        // Apply formatting to selected text
-        document.execCommand(command, false, null);
-        console.log(`✅ Applied ${command} to selected text`);
-    } else {
-        // If no text selected, insert formatted text
-        if (command === 'bold') {
-            document.execCommand('insertHTML', false, '<strong>Bold text</strong>');
-        } else if (command === 'italic') {
-            document.execCommand('insertHTML', false, '<em>Italic text</em>');
-        } else if (command === 'underline') {
-            document.execCommand('insertHTML', false, '<u>Underlined text</u>');
-        } else if (command === 'strikeThrough') {
-            document.execCommand('insertHTML', false, '<del>Strikethrough text</del>');
-        }
-        console.log(`✅ Inserted ${command} text`);
-    }
+    // Apply formatting command
+    const success = document.execCommand(command, false, null);
+    console.log(`✅ Command ${command} executed: ${success}`);
     
     // Update toolbar button states
     setTimeout(() => {
         updateToolbarState();
     }, 100);
+    
+    // Keep focus on editor
+    editor.focus();
 }
 
 function insertList(type) {
@@ -528,29 +613,43 @@ function setupRichTextEditor() {
         const onclick = button.getAttribute('onclick');
         console.log(`🔧 Button clicked: ${onclick}`);
         
-        if (onclick.includes('formatText')) {
-            const command = onclick.match(/'([^']+)'/)[1];
-            console.log(`🔧 Executing formatText: ${command}`);
-            formatText(command);
-        } else if (onclick.includes('insertList')) {
-            const type = onclick.match(/'([^']+)'/)[1];
-            insertList(type);
-        } else if (onclick.includes('alignText')) {
-            const alignment = onclick.match(/'([^']+)'/)[1];
-            alignText(alignment);
-        } else if (onclick.includes('insertImage')) {
-            insertImage();
-        } else if (onclick.includes('insertLink')) {
-            insertLink();
-        } else if (onclick.includes('insertTable')) {
-            insertTable();
-        } else if (onclick.includes('undoAction')) {
-            undoAction();
-        } else if (onclick.includes('redoAction')) {
-            redoAction();
+        // Execute the onclick function directly
+        try {
+            eval(onclick);
+        } catch (error) {
+            console.error('❌ Error executing button click:', error);
         }
     });
 }
+
+// Attach all functions to window object for global access
+window.formatText = formatText;
+window.insertList = insertList;
+window.alignText = alignText;
+window.insertImage = insertImage;
+window.insertLink = insertLink;
+window.insertTable = insertTable;
+window.undoAction = undoAction;
+window.redoAction = redoAction;
+window.updateToolbarState = updateToolbarState;
+window.handleImageUpload = handleImageUpload;
+window.createNewNote = createNewNote;
+window.saveNote = saveNote;
+window.autoSaveNote = autoSaveNote;
+window.loadNotesList = loadNotesList;
+window.openNote = openNote;
+window.toggleNotesSidebar = toggleNotesSidebar;
+window.searchNotes = searchNotes;
+window.searchNotesList = searchNotesList;
+
+console.log('✅ All functions attached to window object');
+
+// Setup toolbar buttons after functions are attached
+setTimeout(() => {
+    if (typeof setupToolbarButtons === 'function') {
+        setupToolbarButtons();
+    }
+}, 100);
 </script>
 
 <style>

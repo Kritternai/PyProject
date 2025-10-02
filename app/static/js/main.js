@@ -1606,10 +1606,137 @@ window.loadNotesList = function() {
         .then(html => {
             document.getElementById('notesList').innerHTML = html;
             console.log('✅ Notes list loaded');
+            
+            // Setup toolbar buttons after notes are loaded
+            setTimeout(() => {
+                if (typeof window.setupToolbarButtons === 'function') {
+                    window.setupToolbarButtons();
+                }
+            }, 500);
+            
+            // Also attach functions to window object
+            setTimeout(() => {
+                attachNoteFunctions();
+            }, 1000);
         })
         .catch(error => {
             console.error('❌ Error loading notes list:', error);
         });
+}
+
+// Attach note functions to window object
+function attachNoteFunctions() {
+    console.log('🔧 Attaching note functions to window object');
+    
+    // Initialize global variables
+    window.autoSaveTimer = null;
+    
+    // Basic formatting functions
+    window.formatText = function(command) {
+        console.log(`🔧 Formatting text: ${command}`);
+        const editor = document.getElementById('noteContent');
+        if (editor) {
+            editor.focus();
+            const success = document.execCommand(command, false, null);
+            console.log(`✅ Command ${command} executed: ${success}`);
+        }
+    };
+    
+    window.insertList = function(type) {
+        console.log(`🔧 Inserting ${type} list`);
+        const editor = document.getElementById('noteContent');
+        if (editor) {
+            editor.focus();
+            if (type === 'ul') {
+                document.execCommand('insertHTML', false, '<ul><li>List item</li></ul>');
+            } else {
+                document.execCommand('insertHTML', false, '<ol><li>List item</li></ol>');
+            }
+        }
+    };
+    
+    window.alignText = function(alignment) {
+        console.log(`🔧 Aligning text: ${alignment}`);
+        const editor = document.getElementById('noteContent');
+        if (editor) {
+            editor.focus();
+            document.execCommand(alignment, false, null);
+        }
+    };
+    
+    window.insertImage = function() {
+        console.log('🔧 Inserting image');
+        const imageInput = document.getElementById('imageInput');
+        if (imageInput) {
+            imageInput.click();
+        }
+    };
+    
+    window.insertLink = function() {
+        console.log('🔧 Inserting link');
+        const url = prompt('Enter URL:');
+        if (url) {
+            const text = window.getSelection().toString() || 'Link text';
+            document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${text}</a>`);
+        }
+    };
+    
+    window.insertTable = function() {
+        console.log('🔧 Inserting table');
+        const tableHTML = `
+            <table style="border-collapse: collapse; width: 100%; margin: 10px 0;">
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Cell 1</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Cell 2</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Cell 3</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Cell 4</td>
+                </tr>
+            </table>
+        `;
+        document.execCommand('insertHTML', false, tableHTML);
+    };
+    
+    window.undoAction = function() {
+        console.log('🔧 Undo action');
+        document.execCommand('undo', false, null);
+    };
+    
+    window.redoAction = function() {
+        console.log('🔧 Redo action');
+        document.execCommand('redo', false, null);
+    };
+    
+    // Auto-save functionality
+    window.autoSaveNote = function() {
+        if (window.autoSaveTimer) {
+            clearTimeout(window.autoSaveTimer);
+        }
+        window.autoSaveTimer = setTimeout(() => {
+            console.log('🔧 Auto-saving note...');
+            // Auto-save logic here
+        }, 2000);
+    };
+    
+    // Image upload handler
+    window.handleImageUpload = function(input) {
+        console.log('🔧 Handling image upload');
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+                document.execCommand('insertHTML', false, img.outerHTML);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    
+    console.log('✅ Note functions attached to window object');
 }
 
 // Global function to load class notes
