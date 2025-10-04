@@ -29,9 +29,15 @@ def create_complete_database():
                 username TEXT UNIQUE NOT NULL,
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
+                first_name TEXT,
+                last_name TEXT,
+                profile_image TEXT,
+                bio TEXT,
                 role TEXT DEFAULT 'student',
+                preferences TEXT,
                 is_active BOOLEAN DEFAULT 1,
                 email_verified BOOLEAN DEFAULT 0,
+                last_login TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 total_lessons INTEGER DEFAULT 0,
@@ -40,6 +46,27 @@ def create_complete_database():
             )
         """)
         print("✅ Created user table")
+        
+        # Add missing columns to user table if they don't exist
+        user_columns = [
+            "ALTER TABLE user ADD COLUMN first_name TEXT",
+            "ALTER TABLE user ADD COLUMN last_name TEXT",
+            "ALTER TABLE user ADD COLUMN profile_image TEXT",
+            "ALTER TABLE user ADD COLUMN bio TEXT",
+            "ALTER TABLE user ADD COLUMN preferences TEXT",
+            "ALTER TABLE user ADD COLUMN last_login TIMESTAMP"
+        ]
+        
+        for column_sql in user_columns:
+            try:
+                cursor.execute(column_sql)
+            except sqlite3.OperationalError as e:
+                if "duplicate column name" in str(e):
+                    print(f"   User column already exists, skipping...")
+                else:
+                    print(f"   Warning: {e}")
+        
+        print("✅ Updated user table columns")
         
         # 2. Create lesson table with all columns
         cursor.execute("""
