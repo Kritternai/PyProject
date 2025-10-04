@@ -74,14 +74,14 @@ class ClassworkTaskController:
                 'message': f'Error getting task: {str(e)}'
             }), 500
     
-    def get_dashboard(self) -> Dict[str, Any]:
-        """Get classwork dashboard"""
+    def get_dashboard(self, lesson_id: str = None) -> Dict[str, Any]:
+        """Get classwork dashboard for a specific lesson or all lessons"""
         try:
             # Use default user for now
             user_id = '1'  # Default test user
             
             # Get dashboard stats
-            dashboard = self.task_service.get_dashboard(user_id)
+            dashboard = self.task_service.get_dashboard(user_id, lesson_id)
             
             return jsonify({
                 'success': True,
@@ -272,9 +272,8 @@ class ClassworkMaterialController:
             else:
                 data = request.get_json()
             
-            user_id = session.get('user_id')
-            if not user_id:
-                return jsonify({'success': False, 'message': 'Please login first'}), 401
+            # Use default user for now
+            user_id = '1'  # Default test user
             
             material = self.material_service.create_material(
                 user_id=user_id,

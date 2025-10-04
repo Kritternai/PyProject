@@ -43,11 +43,15 @@ class ClassworkTaskService:
         """Get task by ID"""
         return self.task_repository.get_task_by_id(task_id, user_id)
     
-    def get_dashboard(self, user_id: str) -> Dict[str, Any]:
-        """Get dashboard statistics"""
+    def get_dashboard(self, user_id: str, lesson_id: str = None) -> Dict[str, Any]:
+        """Get dashboard statistics for a specific lesson or all lessons"""
         try:
-            # Get all tasks for user
-            all_tasks = self.task_repository.get_user_tasks(user_id)
+            if lesson_id:
+                # Get tasks for specific lesson only
+                all_tasks = self.task_repository.get_tasks_by_lesson(lesson_id, user_id)
+            else:
+                # Get all tasks for user
+                all_tasks = self.task_repository.get_user_tasks(user_id)
             
             # Calculate statistics
             total_tasks = len(all_tasks)
@@ -159,7 +163,7 @@ class ClassworkMaterialService:
     def create_material(self, user_id: str, lesson_id: str, title: str, **kwargs) -> ClassworkMaterial:
         """Create a new classwork material"""
         material = ClassworkMaterial(
-            id=kwargs.get('id'),
+            id=str(uuid.uuid4()),
             user_id=user_id,
             lesson_id=lesson_id,
             task_id=kwargs.get('task_id'),

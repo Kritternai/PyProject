@@ -95,8 +95,13 @@ def search_tasks():
 
 @classwork_bp.route('/dashboard', methods=['GET'])
 def get_dashboard():
-    """Get classwork dashboard"""
+    """Get classwork dashboard for all lessons"""
     return task_controller.get_dashboard()
+
+@classwork_bp.route('/lessons/<lesson_id>/dashboard', methods=['GET'])
+def get_lesson_dashboard(lesson_id):
+    """Get classwork dashboard for a specific lesson"""
+    return task_controller.get_dashboard(lesson_id)
 
 @classwork_bp.route('/lessons/<lesson_id>/tasks', methods=['GET'])
 def get_lesson_tasks(lesson_id):

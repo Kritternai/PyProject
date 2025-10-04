@@ -1386,22 +1386,22 @@ window.selectColor = function(element, colorId) {
     }
     
     // Update preview card header (if exists)
-    const previewCardHeader = document.getElementById('previewCardHeader');
-    const colorInput = document.getElementById('selectedColor');
-    
-    const colors = {
+  const previewCardHeader = document.getElementById('previewCardHeader');
+  const colorInput = document.getElementById('selectedColor');
+  
+  const colors = {
       1: { primary: '#007bff', secondary: '#0056b3', name: 'Blue' },
       2: { primary: '#28a745', secondary: '#1e7e34', name: 'Green' },
       3: { primary: '#dc3545', secondary: '#c82333', name: 'Red' },
       4: { primary: '#ffc107', secondary: '#e0a800', name: 'Yellow' },
       5: { primary: '#6f42c1', secondary: '#5a2d91', name: 'Purple' },
       6: { primary: '#fd7e14', secondary: '#e8690b', name: 'Orange' }
-    };
-    
-    const color = colors[colorId];
-    if (previewCardHeader && color) {
-      previewCardHeader.style.background = `linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%)`;
-    }
+  };
+  
+  const color = colors[colorId];
+  if (previewCardHeader && color) {
+    previewCardHeader.style.background = `linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%)`;
+  }
     if (colorInput) {
       colorInput.value = colorId;
       console.log('✓ Hidden input updated:', colorId);
@@ -1514,6 +1514,9 @@ window.sortNotes = function(sortBy) {
 }
 
 // iPhone-style Notes Functions
+let currentNoteId = null;
+let autoSaveTimer = null;
+
 window.openNote = function(noteId) {
     console.log(`🔧 Opening note: ${noteId}`);
     currentNoteId = noteId;
@@ -1524,8 +1527,12 @@ window.openNote = function(noteId) {
     });
     document.querySelector(`[data-note-id="${noteId}"]`).classList.add('active');
     
+    // Get lesson ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[2]; // /class/{lessonId}/...
+    
     // Load note content
-    fetch(`/class/{{ lesson.id }}/notes/${noteId}`)
+    fetch(`/class/${lessonId}/notes/${noteId}`)
         .then(response => response.json())
         .then(note => {
             document.getElementById('noteTitle').value = note.title;
@@ -1562,7 +1569,10 @@ window.saveNote = function() {
         return;
     }
     
-    const lessonId = '{{ lesson.id }}';
+    // Get lesson ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[2]; // /class/{lessonId}/...
+    
     const formData = new FormData();
     formData.append('title', title);
     formData.append('content', content);
@@ -1598,7 +1608,9 @@ window.autoSaveNote = function() {
 }
 
 window.loadNotesList = function() {
-    const lessonId = '{{ lesson.id }}';
+    // Get lesson ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[2]; // /class/{lessonId}/...
     console.log('🔧 Loading notes list for lesson:', lessonId);
     
     fetch(`/class/${lessonId}/notes-list`)
@@ -1966,12 +1978,16 @@ window.submitCreateMaterial = function() {
 };
 
 
-// Load classwork dashboard
-window.loadClassworkDashboard = function() {
-    console.log('🔧 Loading classwork dashboard');
-    fetch('/classwork/dashboard')
+// Load classwork dashboard for specific lesson
+window.loadClassworkDashboard = function(lessonId = null) {
+    console.log('🔧 Loading classwork dashboard for lesson:', lessonId);
+    
+    const url = lessonId ? `/classwork/lessons/${lessonId}/dashboard` : '/classwork/dashboard';
+    
+    fetch(url)
         .then(response => response.json())
         .then(data => {
+            console.log('🔧 Dashboard data:', data);
             if (data.success) {
                 document.getElementById('total-tasks').textContent = data.dashboard.total_tasks;
                 document.getElementById('completed-tasks').textContent = data.dashboard.completed_tasks;
@@ -2018,75 +2034,154 @@ window.loadClassworkMaterials = function() {
         .catch(error => console.error('Error loading materials:', error));
 };
 
-// Render classwork tasks
+// Render classwork tasks in Kanban format
 window.renderClassworkTasks = function(tasks) {
-    console.log('🔧 Rendering classwork tasks:', tasks);
-    const container = document.getElementById('classwork-tasks');
+    console.log('🔧 Rendering classwork tasks in Kanban format:', tasks);
+    
+    // Group tasks by status
+    const todoTasks = tasks.filter(task => task.status === 'todo');
+    const inProgressTasks = tasks.filter(task => task.status === 'in_progress');
+    const doneTasks = tasks.filter(task => task.status === 'done');
+    
+    // Update counters
+    document.getElementById('todo-count').textContent = todoTasks.length;
+    document.getElementById('inprogress-count').textContent = inProgressTasks.length;
+    document.getElementById('done-count').textContent = doneTasks.length;
+    
+    // Render each column
+    renderKanbanColumn('todo-tasks', todoTasks);
+    renderKanbanColumn('inprogress-tasks', inProgressTasks);
+    renderKanbanColumn('done-tasks', doneTasks);
+};
+
+// Render individual Kanban column with professional styling
+function renderKanbanColumn(containerId, tasks) {
+    const container = document.getElementById(containerId);
     if (!container) return;
     
     if (tasks.length === 0) {
-        container.innerHTML = '<p class="text-muted">No tasks yet. Create your first task!</p>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-list-task"></i>
+                </div>
+                <p class="empty-text">No tasks yet</p>
+            </div>
+        `;
         return;
     }
     
     container.innerHTML = tasks.map(task => `
-        <div class="classwork-task-item mb-3 p-3 border rounded">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1">
-                    <h6 class="mb-1">${task.title}</h6>
-                    <p class="text-muted mb-2">${task.description || 'No description'}</p>
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-${getPriorityColor(task.priority)}">${task.priority}</span>
-                        <span class="badge bg-${getStatusColor(task.status)}">${task.status}</span>
-                        ${task.subject ? `<span class="badge bg-secondary">${task.subject}</span>` : ''}
-                    </div>
+        <div class="task-card" data-task-id="${task.id}">
+            <h6>${task.title}</h6>
+            <p>${task.description || 'No description'}</p>
+            
+            ${task.progress_percentage > 0 ? `
+                <div class="task-progress">
+                    <div class="task-progress-bar bg-${getProgressColor(task.progress_percentage)}" 
+                         style="width: ${task.progress_percentage}%"></div>
+                </div>
+            ` : ''}
+            
+            <div class="task-meta">
+                <div class="task-badges">
+                    <span class="badge bg-${getPriorityColor(task.priority)}">${task.priority}</span>
+                    ${task.subject ? `<span class="badge bg-light text-dark">${task.subject}</span>` : ''}
                 </div>
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
-                        <i class="bi bi-three-dots"></i>
+                    <button class="btn btn-sm btn-outline-secondary border-0" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="editTask('${task.id}')">Edit</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="deleteTask('${task.id}')">Delete</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="editTask('${task.id}')">
+                            <i class="bi bi-pencil me-2"></i>Edit
+                        </a></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask('${task.id}')">
+                            <i class="bi bi-trash me-2"></i>Delete
+                        </a></li>
                     </ul>
                 </div>
             </div>
         </div>
     `).join('');
-};
+}
 
-// Render classwork materials
+// Get progress bar color based on percentage
+function getProgressColor(percentage) {
+    if (percentage >= 100) return 'success';
+    if (percentage >= 70) return 'primary';
+    if (percentage >= 40) return 'warning';
+    return 'danger';
+}
+
+// Render classwork materials in grid format
 window.renderClassworkMaterials = function(materials) {
-    console.log('🔧 Rendering classwork materials:', materials);
+    console.log('🔧 Rendering classwork materials in grid format:', materials);
     const container = document.getElementById('classwork-materials');
+    const materialCount = document.getElementById('material-count');
     if (!container) return;
     
+    // Update material count
+    if (materialCount) {
+        materialCount.textContent = materials.length;
+    }
+    
     if (materials.length === 0) {
-        container.innerHTML = '<p class="text-muted">No materials yet. Upload your first material!</p>';
+        container.innerHTML = `
+            <div class="empty-materials">
+                <div class="empty-icon">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <h6 class="empty-title">No materials yet</h6>
+                <p class="empty-subtitle">Upload your first material to get started</p>
+                <button class="btn btn-primary btn-sm" onclick="openCreateMaterialModal()">
+                    <i class="bi bi-upload me-2"></i>
+                    Upload Material
+                </button>
+            </div>
+        `;
         return;
     }
     
     container.innerHTML = materials.map(material => `
-        <div class="classwork-material-item mb-3 p-3 border rounded">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1">
-                    <h6 class="mb-1">${material.title}</h6>
-                    <p class="text-muted mb-2">${material.description || 'No description'}</p>
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-info">${material.file_type || 'File'}</span>
-                        ${material.subject ? `<span class="badge bg-secondary">${material.subject}</span>` : ''}
-                    </div>
-                </div>
+        <div class="material-card" data-material-id="${material.id}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0">${material.title}</h6>
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
-                        <i class="bi bi-three-dots"></i>
+                    <button class="btn btn-sm btn-outline-secondary border-0" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="downloadMaterial('${material.id}')">Download</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="editMaterial('${material.id}')">Edit</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="deleteMaterial('${material.id}')">Delete</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="downloadMaterial('${material.id}')">
+                            <i class="bi bi-download me-2"></i>Download
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="editMaterial('${material.id}')">
+                            <i class="bi bi-pencil me-2"></i>Edit
+                        </a></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteMaterial('${material.id}')">
+                            <i class="bi bi-trash me-2"></i>Delete
+                        </a></li>
                     </ul>
                 </div>
+            </div>
+            
+            <p class="text-muted small mb-3">${material.description || 'No description'}</p>
+            
+            <div class="d-flex gap-1 flex-wrap mb-2">
+                <span class="badge bg-info">${material.file_type || 'File'}</span>
+                ${material.subject ? `<span class="badge bg-light text-dark">${material.subject}</span>` : ''}
+                ${material.file_size ? `<span class="badge bg-light text-dark">${(material.file_size / 1024).toFixed(1)}KB</span>` : ''}
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    <i class="bi bi-calendar me-1"></i>
+                    ${new Date(material.created_at).toLocaleDateString()}
+                </small>
+                <button class="btn btn-sm btn-outline-info" onclick="downloadMaterial('${material.id}')">
+                    <i class="bi bi-download me-1"></i>
+                    Download
+                </button>
             </div>
         </div>
     `).join('');
@@ -2171,7 +2266,7 @@ window.deleteMaterial = function(materialId) {
 // Initialize classwork
 window.initClasswork = function(lessonId) {
     console.log('🔧 Initializing classwork for lesson:', lessonId);
-    loadClassworkDashboard();
+    loadClassworkDashboard(lessonId);
     loadClassworkTasks();
     loadClassworkMaterials();
 };
