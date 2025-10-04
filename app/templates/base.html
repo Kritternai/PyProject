@@ -64,7 +64,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
+<!-- Removed old pomodoro.js - using new OOP system -->
 <script src="{{ url_for('static', filename='js/tracking.js') }}"></script>
 <script>
 function setActiveNav(el) {
@@ -92,5 +92,8 @@ window.addEventListener('DOMContentLoaded', function() {
   {% endif %}
 });
 </script>
+
+<!-- Pomodoro OOP Integration -->
+<script src="{{ url_for('static', filename='js/pomodoro_oop.js') }}"></script>
 </body>
 </html> 
