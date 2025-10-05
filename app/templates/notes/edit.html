@@ -32,11 +32,11 @@
                 </div>
               </div>
               <div class="mt-3">
-                <label for="body" class="form-label">Content</label>
-                <textarea class="form-control" id="body" name="body" rows="8" placeholder="Update your note content..." aria-describedby="bodyHelp bodyCounter" maxlength="2000" required>{{ section.body }}</textarea>
+                <label for="content" class="form-label">Content</label>
+                <textarea class="form-control" id="content" name="content" rows="8" placeholder="Update your note content..." aria-describedby="contentHelp contentCounter" maxlength="2000" required>{{ section.content }}</textarea>
                 <div class="d-flex justify-content-between">
-                  <div id="bodyHelp" class="form-text">Describe the details. Links and files can be attached below.</div>
-                  <div class="form-text" id="bodyCounter">0/2000</div>
+                  <div id="contentHelp" class="form-text">Describe the details. Links and files can be attached below.</div>
+                  <div class="form-text" id="contentCounter">0/2000</div>
                 </div>
                 <div class="invalid-feedback">Please add some content.</div>
               </div>
@@ -144,14 +144,14 @@ document.addEventListener('DOMContentLoaded', function() {
   // counters
   const title = document.getElementById('title');
   const titleCounter = document.getElementById('titleCounter');
-  const body = document.getElementById('body');
-  const bodyCounter = document.getElementById('bodyCounter');
+  const content = document.getElementById('content');
+  const contentCounter = document.getElementById('contentCounter');
   function updateCounter(input, counter){ if(!input||!counter) return; counter.textContent = `${input.value.length}/${input.maxLength}`; }
   ['input','change'].forEach(evt=>{
     title?.addEventListener(evt, ()=>updateCounter(title,titleCounter));
-    body?.addEventListener(evt, ()=>updateCounter(body,bodyCounter));
+    content?.addEventListener(evt, ()=>updateCounter(content,contentCounter));
   });
-  updateCounter(title,titleCounter); updateCounter(body,bodyCounter);
+  updateCounter(title,titleCounter); updateCounter(content,contentCounter);
   // status badge color
   const statusSelect = document.getElementById('status');
   const statusBadge = document.getElementById('statusBadge');

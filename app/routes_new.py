@@ -6,6 +6,7 @@ Clean routes that integrate with the new OOP system.
 from flask import Blueprint, render_template, request, redirect, url_for, session, g, jsonify, current_app
 from functools import wraps
 from .presentation.middleware.auth_middleware import login_required, get_current_user
+from .presentation.middleware.rate_limiter import rate_limit, strict_rate_limit
 from .infrastructure.di.container import get_service
 from .domain.interfaces.services.user_service import UserService
 from .domain.interfaces.services.lesson_service import LessonService
@@ -112,6 +113,7 @@ def notes_page():
 
 @main_bp.route('/partial/note/add', methods=['POST'])
 @login_required_web
+@rate_limit(user_limit=10, ip_limit=20, window=5)
 def partial_note_add():
     """Create a new note from the partial UI."""
     if not g.user:
@@ -198,6 +200,7 @@ def partial_note_add():
 
 @main_bp.route('/partial/note/<note_id>/delete', methods=['POST'])
 @login_required_web
+@strict_rate_limit(user_limit=5, ip_limit=10, window=5)
 def partial_note_delete(note_id):
     """Delete a note and return updated fragment."""
     if not g.user:
@@ -219,6 +222,7 @@ def partial_note_delete(note_id):
 
 @main_bp.route('/partial/note/<note_id>/edit', methods=['POST'])
 @login_required_web
+@rate_limit(user_limit=10, ip_limit=20, window=5)
 def partial_note_edit(note_id):
     """Update a note and return JSON for SPA."""
     if not g.user:

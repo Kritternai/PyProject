@@ -55,7 +55,7 @@
             {% endif %}
 
             <div class="mb-3">
-              {{ (note.content or note.body)|safe }}
+              {{ note.content|safe }}
             </div>
 
             {% if note.file_urls %}

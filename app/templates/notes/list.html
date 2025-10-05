@@ -76,7 +76,7 @@
               {% if st == 'in-progress' %}{% set badge = 'warning' %}{% elif st == 'completed' %}{% set badge = 'success' %}{% endif %}
               <span class="badge bg-{{ badge }} ms-2 text-uppercase status-pill" style="letter-spacing:.3px;">{{ st.replace('-', ' ') }}</span>
             </div>
-            <p class="card-text text-truncate-3">{{ (note.body or '')|striptags|truncate(180) }}</p>
+            <p class="card-text text-truncate-3">{{ (note.content or '')|striptags|truncate(180) }}</p>
             {% if note.tags %}
             <div class="mb-2">
               {% for tag in note.tags.split(',') %}
