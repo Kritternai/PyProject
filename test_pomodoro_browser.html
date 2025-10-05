@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pomodoro Test</title>
+</head>
+<body>
+    <h1>Pomodoro Test Page</h1>
+    <button onclick="testPomodoro()">Test Pomodoro</button>
+    <div id="result"></div>
+    
+    <script src="http://127.0.0.1:5004/static/js/pomodoro_oop.js"></script>
+    <script>
+        function testPomodoro() {
+            const result = document.getElementById('result');
+            
+            if (typeof window.PomodoroOOP !== 'undefined') {
+                result.innerHTML = '✅ PomodoroOOP loaded successfully!';
+                console.log('PomodoroOOP:', window.PomodoroOOP);
+            } else {
+                result.innerHTML = '❌ PomodoroOOP not loaded';
+                console.log('PomodoroOOP not found');
+            }
+        }
+    </script>
+</body>
+</html>

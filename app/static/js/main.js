@@ -17,6 +17,7 @@ function loadPage(page) {
           setupLessonAddModal(); // เรียก setupLessonAddModal หลัง loadPage
           setupSectionFilter(); // เรียก setupSectionFilter() หลัง loadPage
           setupLessonSearchAndFilter(); // เรียก setupLessonSearchAndFilter หลัง loadPage
+          
           // Auto show Lesson Content tab and scroll if on lesson detail
           if (page.startsWith('class/')) {
             // Activate Content tab

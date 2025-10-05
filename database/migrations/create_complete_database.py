@@ -29,9 +29,15 @@ def create_complete_database():
                 username TEXT UNIQUE NOT NULL,
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
+                first_name TEXT,
+                last_name TEXT,
+                profile_image TEXT,
+                bio TEXT,
                 role TEXT DEFAULT 'student',
+                preferences TEXT,
                 is_active BOOLEAN DEFAULT 1,
                 email_verified BOOLEAN DEFAULT 0,
+                last_login TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 total_lessons INTEGER DEFAULT 0,
@@ -40,6 +46,27 @@ def create_complete_database():
             )
         """)
         print("✅ Created user table")
+        
+        # Add missing columns to user table if they don't exist
+        user_columns = [
+            "ALTER TABLE user ADD COLUMN first_name TEXT",
+            "ALTER TABLE user ADD COLUMN last_name TEXT",
+            "ALTER TABLE user ADD COLUMN profile_image TEXT",
+            "ALTER TABLE user ADD COLUMN bio TEXT",
+            "ALTER TABLE user ADD COLUMN preferences TEXT",
+            "ALTER TABLE user ADD COLUMN last_login TIMESTAMP"
+        ]
+        
+        for column_sql in user_columns:
+            try:
+                cursor.execute(column_sql)
+            except sqlite3.OperationalError as e:
+                if "duplicate column name" in str(e):
+                    print(f"   User column already exists, skipping...")
+                else:
+                    print(f"   Warning: {e}")
+        
+        print("✅ Updated user table columns")
         
         # 2. Create lesson table with all columns
         cursor.execute("""
@@ -250,6 +277,54 @@ def create_complete_database():
             os.makedirs(upload_dir, exist_ok=True)
         
         print("✅ Created uploads directories")
+        
+        # 13. Create pomodoro tables
+        print("🔧 Creating pomodoro tables...")
+        
+        # pomodoro_session table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS pomodoro_session (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                session_type TEXT NOT NULL,
+                duration INTEGER NOT NULL,
+                start_time TIMESTAMP NOT NULL,
+                end_time TIMESTAMP,
+                actual_duration INTEGER,
+                status TEXT NOT NULL DEFAULT 'active',
+                is_completed BOOLEAN DEFAULT FALSE,
+                is_interrupted BOOLEAN DEFAULT FALSE,
+                interruption_count INTEGER DEFAULT 0,
+                interruption_reasons TEXT,
+                lesson_id TEXT,
+                section_id TEXT,
+                task_id TEXT,
+                auto_start_next BOOLEAN DEFAULT TRUE,
+                notification_enabled BOOLEAN DEFAULT TRUE,
+                sound_enabled BOOLEAN DEFAULT TRUE,
+                notes TEXT,
+                productivity_score INTEGER,
+                mood_before TEXT,
+                mood_after TEXT,
+                focus_score INTEGER,
+                energy_level INTEGER,
+                difficulty_level INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id)
+            )
+        """)
+        
+        # Create pomodoro indexes
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_user ON pomodoro_session(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_type ON pomodoro_session(session_type)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_status ON pomodoro_session(status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_start_time ON pomodoro_session(start_time)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_lesson ON pomodoro_session(lesson_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_completed ON pomodoro_session(is_completed)")
+        
+        print("✅ Created pomodoro tables")
         
         # Commit changes
         conn.commit()
