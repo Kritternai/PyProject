@@ -1007,6 +1007,35 @@ document.addEventListener('DOMContentLoaded', function() {
     const addModalEl = document.getElementById('addNoteModal');
     if (addModalEl) {
       addModalEl.addEventListener('shown.bs.modal', function(){
+        // Reset form
+        const form = document.getElementById('add-note-form');
+        if (form) {
+          form.reset();
+          form.classList.remove('was-validated');
+        }
+        
+        // Clear file previews
+        const imagePreview = document.getElementById('add-image-preview');
+        const filePreview = document.getElementById('add-file-preview');
+        if (imagePreview) imagePreview.innerHTML = '';
+        if (filePreview) filePreview.innerHTML = '';
+        
+        // Reset counters
+        const titleCounter = document.getElementById('titleCounter');
+        const contentCounter = document.getElementById('contentCounter');
+        if (titleCounter) titleCounter.textContent = '0/80';
+        if (contentCounter) contentCounter.textContent = '0/2000';
+        
+        // Reset status badge
+        const statusSelect = document.getElementById('status');
+        const statusBadge = document.getElementById('addStatusBadge');
+        if (statusSelect && statusBadge) {
+          statusSelect.value = 'pending';
+          statusBadge.textContent = 'Pending';
+          statusBadge.className = 'badge bg-secondary';
+        }
+        
+        // Focus on title field
         const el = document.getElementById('title');
         if (el) el.focus();
       });

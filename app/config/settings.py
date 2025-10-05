@@ -32,8 +32,12 @@ class Config:
     DEFAULT_PAGE_SIZE = 20
     MAX_PAGE_SIZE = 100
     
-    # Server settings
-    PORT = int(os.environ.get('PORT', 5004))
+    # Rate limiting settings (DoS protection)
+    RATE_LIMIT_USER_DEFAULT = 10  # requests per user per window
+    RATE_LIMIT_IP_DEFAULT = 20    # requests per IP per window
+    RATE_LIMIT_WINDOW = 5         # time window in seconds
+    RATE_LIMIT_STRICT_USER = 5    # strict limit for sensitive operations
+    RATE_LIMIT_STRICT_IP = 10     # strict IP limit for sensitive operations
 
 
 class DevelopmentConfig(Config):

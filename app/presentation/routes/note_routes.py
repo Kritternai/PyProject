@@ -6,6 +6,7 @@ Defines HTTP endpoints for note operations.
 from flask import Blueprint
 from ..controllers.note_controller import NoteController
 from ..middleware.auth_middleware import login_required
+from ..middleware.rate_limiter import rate_limit, strict_rate_limit
 
 # Create blueprint
 note_bp = Blueprint('note', __name__, url_prefix='/api/notes')
@@ -16,6 +17,7 @@ note_controller = NoteController()
 
 @note_bp.route('', methods=['POST'])
 @login_required
+@rate_limit(user_limit=10, ip_limit=20, window=5)
 def create_note():
     """Create a new note."""
     return note_controller.create_note()
@@ -37,6 +39,7 @@ def get_user_notes():
 
 @note_bp.route('/<note_id>', methods=['PUT'])
 @login_required
+@rate_limit(user_limit=10, ip_limit=20, window=5)
 def update_note(note_id):
     """Update note."""
     return note_controller.update_note(note_id)
@@ -44,6 +47,7 @@ def update_note(note_id):
 
 @note_bp.route('/<note_id>', methods=['DELETE'])
 @login_required
+@strict_rate_limit(user_limit=5, ip_limit=10, window=5)
 def delete_note(note_id):
     """Delete note."""
     return note_controller.delete_note(note_id)

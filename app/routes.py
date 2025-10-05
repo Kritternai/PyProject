@@ -6,6 +6,7 @@ Legacy routes that will be gradually migrated to new architecture.
 from flask import Blueprint, render_template, request, redirect, url_for, session, g
 from functools import wraps
 from .presentation.middleware.auth_middleware import login_required, get_current_user
+from .presentation.middleware.rate_limiter import rate_limit, strict_rate_limit
 
 # Create legacy blueprint for backward compatibility
 main_bp = Blueprint('legacy', __name__)
@@ -119,6 +120,7 @@ def partial_note_list():
 
 @main_bp.route('/partial/note/add', methods=['GET', 'POST'])
 @login_required
+@rate_limit(user_limit=10, ip_limit=20, window=5)
 def partial_note_add_standalone():
     if request.method == 'POST':
         from app.core.note import Note
@@ -675,6 +677,7 @@ def allowed_file(filename, file_type='all'):
 # Note Management Routes is now part of LessonSection
 @main_bp.route('/partial/class/<lesson_id>/notes/add', methods=['GET', 'POST'])
 @login_required
+@rate_limit(user_limit=10, ip_limit=20, window=5)
 def partial_note_add(lesson_id):
     from app.core.integration_service import IntegrationService
     
@@ -781,6 +784,7 @@ def partial_note_add(lesson_id):
 
 @main_bp.route('/partial/class/<lesson_id>/notes/<section_id>/edit', methods=['GET', 'POST'])
 @login_required
+@rate_limit(user_limit=10, ip_limit=20, window=5)
 def partial_note_edit(lesson_id, section_id):
     lesson = lesson_manager.get_lesson_by_id(lesson_id)
     section = lesson_manager.get_section_by_id(section_id)
@@ -789,7 +793,7 @@ def partial_note_edit(lesson_id, section_id):
 
     if request.method == 'POST':
         title = request.form.get('title')
-        body = request.form.get('body')
+        content = request.form.get('content')
         tags = request.form.get('tags')
         status = request.form.get('status')
         external_link = request.form.get('external_link')
@@ -851,7 +855,7 @@ def partial_note_edit(lesson_id, section_id):
         lesson_manager.update_section(
             section_id=section_id,
             title=title,
-            body=body,
+            body=content,
             tags=tags,
             status=status,
             image_path=image_path,
@@ -867,6 +871,7 @@ def partial_note_edit(lesson_id, section_id):
 
 @main_bp.route('/partial/note/<note_id>/delete', methods=['POST'])
 @login_required
+@strict_rate_limit(user_limit=5, ip_limit=10, window=5)
 def partial_note_delete_standalone(note_id):
     from app.core.note import Note
     
@@ -893,6 +898,7 @@ def partial_note_delete_standalone(note_id):
 
 @main_bp.route('/partial/note/<note_id>/edit', methods=['GET', 'POST'])
 @login_required
+@rate_limit(user_limit=10, ip_limit=20, window=5)
 def partial_note_edit_standalone(note_id):
     from app.core.note import Note
     
@@ -993,11 +999,12 @@ def partial_note_edit_standalone(note_id):
             return jsonify(success=False, message=f'Error updating note: {str(e)}')
     
         # For GET requests, return the edit form template
-    return render_template('notes/_edit.html', note=note)
+    return render_template('notes/edit.html', note=note)
 
 # Integration Routes
 @main_bp.route('/api/integration/sync-note-to-lesson/<note_id>/<lesson_id>', methods=['POST'])
 @login_required
+@rate_limit(user_limit=5, ip_limit=10, window=5)
 def sync_note_to_lesson(note_id, lesson_id):
     """Sync a note to a lesson"""
     from app.core.integration_service import IntegrationService
@@ -1013,6 +1020,7 @@ def sync_note_to_lesson(note_id, lesson_id):
 
 @main_bp.route('/api/integration/sync-lesson-to-note/<lesson_id>/<section_id>', methods=['POST'])
 @login_required
+@rate_limit(user_limit=5, ip_limit=10, window=5)
 def sync_lesson_to_note(lesson_id, section_id):
     """Sync a lesson section to a note"""
     from app.core.integration_service import IntegrationService

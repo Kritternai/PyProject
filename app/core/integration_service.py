@@ -22,7 +22,7 @@ class IntegrationService:
             lesson_id=lesson_id,
             section_id=section_id,
             title=section.title,
-            content=section.body or section.content or '',
+            content=section.content or '',
             tags=section.tags,
             status=section.status,
             external_link=section.external_link
@@ -64,11 +64,9 @@ class IntegrationService:
             lesson_id=lesson_id,
             title=note.title,
             content=note.content,
-            type='note',
-            body=note.content,
+            section_type='note',
             tags=note.tags,
-            status=note.status,
-            external_link=note.external_link
+            status=note.status
         )
         
         db.session.add(section)
