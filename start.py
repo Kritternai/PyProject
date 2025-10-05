@@ -214,7 +214,12 @@ def initialize_database():
     
     # Run complete database migration
     print_step("Running complete database migration...")
-    if check_file_exists("database/migrations/create_complete_database.py"):
+    if check_file_exists("database/migrations/complete_database_schema.py"):
+        if run_command("python database/migrations/complete_database_schema.py", check=False):
+            print_success("Complete database schema created successfully")
+        else:
+            print_warning("Complete database schema creation failed, but continuing...")
+    elif check_file_exists("database/migrations/create_complete_database.py"):
         if run_command("python database/migrations/create_complete_database.py", check=False):
             print_success("Complete database migration completed")
         else:
