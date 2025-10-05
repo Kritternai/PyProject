@@ -64,7 +64,7 @@ def register_blueprints(app):
     from .presentation.routes.task_routes import task_bp
     from .presentation.routes.web_routes import web_bp
     from .presentation.routes.register_routes import register_bp
-    from .presentation.routes.pomodoro_routes import pomodoro_bp
+    # from .presentation.routes.pomodoro_routes import pomodoro_bp  # Removed old Pomodoro system
     from .presentation.routes.tracking_routes import tracking_bp
     from .presentation.routes.announcement_routes import announcement_bp
     from .presentation.routes.class_note_routes import class_note_bp
@@ -81,7 +81,7 @@ def register_blueprints(app):
     app.register_blueprint(microsoft_teams_bp)  # Microsoft Teams integration (mockup)
     # app.register_blueprint(legacy_bp)  # Legacy routes temporarily disabled - most routes now in routes_new.py
     app.register_blueprint(register_bp)
-    app.register_blueprint(pomodoro_bp)
+    # app.register_blueprint(pomodoro_bp)  # Removed old Pomodoro system
     app.register_blueprint(tracking_bp)
     
     # Register API blueprints
@@ -94,8 +94,8 @@ def register_blueprints(app):
     # Register Class System blueprints
     app.register_blueprint(announcement_bp)
     app.register_blueprint(class_note_bp)
-    app.register_blueprint(classwork_bp)
-    app.register_blueprint(classwork_detail_bp)
+    
+    # Simple Pomodoro uses fragment system - no blueprint needed
 
 
 def register_template_filters(app):

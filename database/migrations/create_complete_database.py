@@ -29,9 +29,15 @@ def create_complete_database():
                 username TEXT UNIQUE NOT NULL,
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
+                first_name TEXT,
+                last_name TEXT,
+                profile_image TEXT,
+                bio TEXT,
                 role TEXT DEFAULT 'student',
+                preferences TEXT,
                 is_active BOOLEAN DEFAULT 1,
                 email_verified BOOLEAN DEFAULT 0,
+                last_login TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 total_lessons INTEGER DEFAULT 0,
@@ -40,6 +46,27 @@ def create_complete_database():
             )
         """)
         print("✅ Created user table")
+        
+        # Add missing columns to user table if they don't exist
+        user_columns = [
+            "ALTER TABLE user ADD COLUMN first_name TEXT",
+            "ALTER TABLE user ADD COLUMN last_name TEXT",
+            "ALTER TABLE user ADD COLUMN profile_image TEXT",
+            "ALTER TABLE user ADD COLUMN bio TEXT",
+            "ALTER TABLE user ADD COLUMN preferences TEXT",
+            "ALTER TABLE user ADD COLUMN last_login TIMESTAMP"
+        ]
+        
+        for column_sql in user_columns:
+            try:
+                cursor.execute(column_sql)
+            except sqlite3.OperationalError as e:
+                if "duplicate column name" in str(e):
+                    print(f"   User column already exists, skipping...")
+                else:
+                    print(f"   Warning: {e}")
+        
+        print("✅ Updated user table columns")
         
         # 2. Create lesson table with all columns
         cursor.execute("""
@@ -251,24 +278,37 @@ def create_complete_database():
         
         print("✅ Created uploads directories")
         
-        # 12. Create classwork tables
-        print("🔧 Creating classwork tables...")
+        # 13. Create pomodoro tables
+        print("🔧 Creating pomodoro tables...")
         
-        # classwork_task table
+        # pomodoro_session table
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS classwork_task (
+            CREATE TABLE IF NOT EXISTS pomodoro_session (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
-                lesson_id TEXT NOT NULL,
-                title TEXT NOT NULL,
-                description TEXT,
-                subject TEXT,
-                category TEXT,
-                priority TEXT DEFAULT 'medium',
-                status TEXT DEFAULT 'todo',
-                due_date TIMESTAMP,
-                estimated_time INTEGER DEFAULT 0,
-                actual_time INTEGER DEFAULT 0,
+                session_type TEXT NOT NULL,
+                duration INTEGER NOT NULL,
+                start_time TIMESTAMP NOT NULL,
+                end_time TIMESTAMP,
+                actual_duration INTEGER,
+                status TEXT NOT NULL DEFAULT 'active',
+                is_completed BOOLEAN DEFAULT FALSE,
+                is_interrupted BOOLEAN DEFAULT FALSE,
+                interruption_count INTEGER DEFAULT 0,
+                interruption_reasons TEXT,
+                lesson_id TEXT,
+                section_id TEXT,
+                task_id TEXT,
+                auto_start_next BOOLEAN DEFAULT TRUE,
+                notification_enabled BOOLEAN DEFAULT TRUE,
+                sound_enabled BOOLEAN DEFAULT TRUE,
+                notes TEXT,
+                productivity_score INTEGER,
+                mood_before TEXT,
+                mood_after TEXT,
+                focus_score INTEGER,
+                energy_level INTEGER,
+                difficulty_level INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES user(id),
@@ -276,92 +316,15 @@ def create_complete_database():
             )
         """)
         
-        # classwork_material table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS classwork_material (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                lesson_id TEXT NOT NULL,
-                task_id TEXT,
-                title TEXT NOT NULL,
-                description TEXT,
-                file_path TEXT,
-                file_type TEXT,
-                file_size INTEGER,
-                subject TEXT,
-                category TEXT,
-                tags TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES user(id),
-                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
-                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
-            )
-        """)
+        # Create pomodoro indexes
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_user ON pomodoro_session(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_type ON pomodoro_session(session_type)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_status ON pomodoro_session(status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_start_time ON pomodoro_session(start_time)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_lesson ON pomodoro_session(lesson_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_completed ON pomodoro_session(is_completed)")
         
-        # classwork_note table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS classwork_note (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                lesson_id TEXT NOT NULL,
-                task_id TEXT,
-                title TEXT NOT NULL,
-                content TEXT,
-                subject TEXT,
-                category TEXT,
-                tags TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES user(id),
-                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
-                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
-            )
-        """)
-        
-        # classwork_session table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS classwork_session (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                lesson_id TEXT NOT NULL,
-                task_id TEXT,
-                session_name TEXT,
-                start_time TIMESTAMP,
-                end_time TIMESTAMP,
-                duration INTEGER DEFAULT 0,
-                break_duration INTEGER DEFAULT 0,
-                productivity_score INTEGER DEFAULT 0,
-                notes TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES user(id),
-                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
-                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
-            )
-        """)
-        
-        # classwork_progress table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS classwork_progress (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                lesson_id TEXT NOT NULL,
-                task_id TEXT,
-                progress_percentage INTEGER DEFAULT 0,
-                completed_at TIMESTAMP,
-                time_spent INTEGER DEFAULT 0,
-                achievement_badges TEXT,
-                streak_count INTEGER DEFAULT 0,
-                last_activity TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES user(id),
-                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
-                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
-            )
-        """)
-        
-        print("✅ Created classwork tables")
+        print("✅ Created pomodoro tables")
         
         # Commit changes
         conn.commit()
