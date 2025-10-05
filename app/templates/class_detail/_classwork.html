@@ -1,0 +1,944 @@
+<!-- Classwork Tab Content -->
+<div class="classwork-container">
+    <!-- Professional Header -->
+    <div class="classwork-header mb-5">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="header-icon me-3">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <div>
+                    <h3 class="mb-1 fw-bold text-dark">Classwork</h3>
+                    <p class="text-muted mb-0 small">Manage your learning tasks and materials</p>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary btn-sm px-3" onclick="openCreateTaskModal()">
+                    <i class="bi bi-plus-lg me-2"></i>
+                    New Task
+                </button>
+                <button class="btn btn-outline-primary btn-sm px-3" onclick="openCreateMaterialModal()">
+                    <i class="bi bi-upload me-2"></i>
+                    Upload Material
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Professional Dashboard -->
+    <div class="classwork-dashboard mb-5">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon bg-primary">
+                        <i class="bi bi-list-task"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number" id="total-tasks">0</div>
+                        <div class="stats-label">Total Tasks</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon bg-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number" id="completed-tasks">0</div>
+                        <div class="stats-label">Completed</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon bg-warning">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number" id="in-progress-tasks">0</div>
+                        <div class="stats-label">In Progress</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon bg-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stats-number" id="overdue-tasks">0</div>
+                        <div class="stats-label">Overdue</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Professional Kanban Board -->
+    <div class="classwork-content">
+        <div class="kanban-board">
+            <div class="row g-4">
+                <!-- To Do Column -->
+                <div class="col-lg-4">
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div class="kanban-dot bg-warning"></div>
+                                    <h6 class="mb-0 ms-2 fw-bold">To Do</h6>
+                                </div>
+                                <span class="kanban-count" id="todo-count">0</span>
+                            </div>
+                        </div>
+                        <div class="kanban-body" id="todo-tasks">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="bi bi-list-task"></i>
+                                </div>
+                                <p class="empty-text">No tasks yet</p>
+                            </div>
+                        </div>
+                        <div class="kanban-footer">
+                            <button class="btn btn-outline-primary btn-sm w-100" onclick="openCreateTaskModal()">
+                                <i class="bi bi-plus-lg me-2"></i>
+                                Add new task
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- In Progress Column -->
+                <div class="col-lg-4">
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div class="kanban-dot bg-primary"></div>
+                                    <h6 class="mb-0 ms-2 fw-bold">In Progress</h6>
+                                </div>
+                                <span class="kanban-count" id="inprogress-count">0</span>
+                            </div>
+                        </div>
+                        <div class="kanban-body" id="inprogress-tasks">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="bi bi-clock"></i>
+                                </div>
+                                <p class="empty-text">No tasks in progress</p>
+                            </div>
+                        </div>
+                        <div class="kanban-footer">
+                            <button class="btn btn-outline-primary btn-sm w-100" onclick="openCreateTaskModal()">
+                                <i class="bi bi-plus-lg me-2"></i>
+                                Add new task
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Done Column -->
+                <div class="col-lg-4">
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div class="kanban-dot bg-success"></div>
+                                    <h6 class="mb-0 ms-2 fw-bold">Done</h6>
+                                </div>
+                                <span class="kanban-count" id="done-count">0</span>
+                            </div>
+                        </div>
+                        <div class="kanban-body" id="done-tasks">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="bi bi-check-circle"></i>
+                                </div>
+                                <p class="empty-text">No completed tasks</p>
+                            </div>
+                        </div>
+                        <div class="kanban-footer">
+                            <button class="btn btn-outline-primary btn-sm w-100" onclick="openCreateTaskModal()">
+                                <i class="bi bi-plus-lg me-2"></i>
+                                Add new task
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional Materials Section -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="materials-section">
+                    <div class="materials-header">
+                        <div class="d-flex align-items-center">
+                            <div class="materials-icon me-3">
+                                <i class="bi bi-folder"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1 fw-bold">Learning Materials</h5>
+                                <p class="text-muted mb-0 small">Upload and organize your study materials</p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <span class="materials-count" id="material-count">0</span>
+                            <button class="btn btn-primary btn-sm px-3" onclick="openCreateMaterialModal()">
+                                <i class="bi bi-upload me-2"></i>
+                                Upload Material
+                            </button>
+                        </div>
+                    </div>
+                    <div class="materials-grid" id="classwork-materials">
+                        <div class="empty-materials">
+                            <div class="empty-icon">
+                                <i class="bi bi-folder"></i>
+                            </div>
+                            <h6 class="empty-title">No materials yet</h6>
+                            <p class="empty-subtitle">Upload your first material to get started</p>
+                            <button class="btn btn-primary btn-sm" onclick="openCreateMaterialModal()">
+                                <i class="bi bi-upload me-2"></i>
+                                Upload Material
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Professional Classwork UI */
+.classwork-container {
+    padding: 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    min-height: 100vh;
+}
+
+/* Professional Header */
+.classwork-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 2rem 0;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.header-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+}
+
+/* Professional Dashboard */
+.classwork-dashboard {
+    margin-bottom: 3rem;
+}
+
+.stats-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #f0f0f0;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #0d6efd, #6610f2);
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.stats-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Professional Kanban Board */
+.kanban-board {
+    background: #fff;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+    border: 1px solid #f0f0f0;
+}
+
+.kanban-column {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 16px;
+    border: 1px solid #e9ecef;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.kanban-column:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.kanban-header {
+    padding: 1.5rem;
+    background: #fff;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 16px 16px 0 0;
+    position: relative;
+}
+
+.kanban-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.kanban-count {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
+}
+
+.kanban-body {
+    flex: 1;
+    padding: 1.5rem;
+    min-height: 400px;
+    background: #fafbfc;
+}
+
+.kanban-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e9ecef;
+    background: #fff;
+    border-radius: 0 0 16px 16px;
+}
+
+/* Professional Task Cards */
+.task-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.task-card:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 8px 25px rgba(13, 110, 253, 0.15);
+    transform: translateY(-3px);
+}
+
+.task-card h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.task-card p {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.task-progress {
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.task-progress-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.task-meta {
+    display: flex;
+    justify-content-between;
+    align-items-center;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.task-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.task-badges .badge {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Professional Materials Section */
+.materials-section {
+    background: #fff;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+    border: 1px solid #f0f0f0;
+    margin-top: 2rem;
+}
+
+.materials-header {
+    display: flex;
+    justify-content-between;
+    align-items-center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.materials-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #17a2b8, #20c997);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+}
+
+.materials-count {
+    background: linear-gradient(135deg, #17a2b8, #20c997);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+}
+
+.materials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.material-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.material-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #17a2b8, #20c997);
+}
+
+.material-card:hover {
+    border-color: #17a2b8;
+    box-shadow: 0 8px 25px rgba(23, 162, 184, 0.15);
+    transform: translateY(-3px);
+}
+
+/* Professional Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+    color: #adb5bd;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.empty-text {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+.empty-materials {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-materials .empty-icon {
+    width: 100px;
+    height: 100px;
+    font-size: 3rem;
+    margin-bottom: 2rem;
+}
+
+.empty-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.empty-subtitle {
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+/* Professional Buttons */
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    border: none;
+}
+
+.btn-outline-primary {
+    border: 2px solid #0d6efd;
+    color: #0d6efd;
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    border-color: transparent;
+}
+
+/* Professional Modal */
+.modal-content {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    border: none;
+    padding: 1.5rem 2rem;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    transform: translateY(-1px);
+}
+
+.form-label {
+    color: #495057;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Professional Animations */
+@keyframes fadeInUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0; 
+        transform: translateX(-20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateX(0); 
+    }
+}
+
+.task-card, .material-card {
+    animation: fadeInUp 0.4s ease;
+}
+
+.stats-card {
+    animation: slideIn 0.4s ease;
+}
+
+/* Professional Responsive Design */
+@media (max-width: 768px) {
+    .classwork-header .d-flex {
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: flex-start !important;
+    }
+    
+    .materials-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start !important;
+    }
+    
+    .materials-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .kanban-board {
+        padding: 1rem;
+    }
+    
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Professional Drag and Drop */
+.kanban-body.drag-over {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.05), rgba(102, 16, 242, 0.05));
+    border: 2px dashed #0d6efd;
+    border-radius: 12px;
+}
+
+.task-card.dragging {
+    opacity: 0.7;
+    transform: rotate(3deg) scale(1.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* Professional Scrollbar */
+.kanban-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.kanban-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.kanban-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    border-radius: 3px;
+}
+
+.kanban-body::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #0b5ed7, #5a0fc8);
+}
+</style>
+
+<!-- Create Task Modal -->
+<div class="modal fade" id="createTaskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Create New Task
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="createTaskForm">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="taskTitle" class="form-label fw-semibold">
+                                    <i class="bi bi-pencil-square me-1"></i>
+                                    Task Title
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="taskTitle" name="title" 
+                                       placeholder="Enter task title..." required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskDescription" class="form-label fw-semibold">
+                                    <i class="bi bi-text-paragraph me-1"></i>
+                                    Description
+                                </label>
+                                <textarea class="form-control" id="taskDescription" name="description" 
+                                          rows="3" placeholder="Describe your task..."></textarea>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="taskSubject" class="form-label fw-semibold">
+                                            <i class="bi bi-book me-1"></i>
+                                            Subject
+                                        </label>
+                                        <input type="text" class="form-control" id="taskSubject" name="subject"
+                                               placeholder="e.g., Mathematics">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="taskCategory" class="form-label fw-semibold">
+                                            <i class="bi bi-tag me-1"></i>
+                                            Category
+                                        </label>
+                                        <input type="text" class="form-control" id="taskCategory" name="category"
+                                               placeholder="e.g., Homework">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="taskPriority" class="form-label fw-semibold">
+                                    <i class="bi bi-flag me-1"></i>
+                                    Priority
+                                </label>
+                                <select class="form-select" id="taskPriority" name="priority">
+                                    <option value="low">
+                                        <i class="bi bi-flag text-success"></i> Low
+                                    </option>
+                                    <option value="medium" selected>
+                                        <i class="bi bi-flag text-warning"></i> Medium
+                                    </option>
+                                    <option value="high">
+                                        <i class="bi bi-flag text-danger"></i> High
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskStatus" class="form-label">Status</label>
+                                <select class="form-select" id="taskStatus" name="status">
+                                    <option value="todo" selected>Todo</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="done">Done</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskDueDate" class="form-label">Due Date</label>
+                                <input type="datetime-local" class="form-control" id="taskDueDate" name="due_date">
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskEstimatedTime" class="form-label">Estimated Time (minutes)</label>
+                                <input type="number" class="form-control" id="taskEstimatedTime" name="estimated_time" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitCreateTask()">Create Task</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Material Modal -->
+<div class="modal fade" id="createMaterialModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-upload me-2"></i>
+                    Upload Material
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="createMaterialForm" enctype="multipart/form-data">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="materialFile" class="form-label fw-semibold">
+                                    <i class="bi bi-cloud-upload me-1"></i>
+                                    Select File
+                                </label>
+                                <input type="file" class="form-control form-control-lg" id="materialFile" name="file" 
+                                       accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mp3,.zip" required>
+                                <div class="form-text">Supported formats: PDF, DOC, DOCX, TXT, Images, Videos, Audio, ZIP</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="materialTitle" class="form-label fw-semibold">
+                                    <i class="bi bi-pencil-square me-1"></i>
+                                    Title
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="materialTitle" name="title" 
+                                       placeholder="Enter material title..." required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="materialDescription" class="form-label fw-semibold">
+                                    <i class="bi bi-text-paragraph me-1"></i>
+                                    Description
+                                </label>
+                                <textarea class="form-control" id="materialDescription" name="description" 
+                                          rows="3" placeholder="Describe your material..."></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="materialSubject" class="form-label fw-semibold">
+                                    <i class="bi bi-book me-1"></i>
+                                    Subject
+                                </label>
+                                <input type="text" class="form-control" id="materialSubject" name="subject"
+                                       placeholder="e.g., Mathematics">
+                            </div>
+                            <div class="mb-3">
+                                <label for="materialCategory" class="form-label fw-semibold">
+                                    <i class="bi bi-tag me-1"></i>
+                                    Category
+                                </label>
+                                <input type="text" class="form-control" id="materialCategory" name="category"
+                                       placeholder="e.g., Lecture Notes">
+                            </div>
+                            <div class="mb-3">
+                                <label for="materialTags" class="form-label fw-semibold">
+                                    <i class="bi bi-hash me-1"></i>
+                                    Tags
+                                </label>
+                                <input type="text" class="form-control" id="materialTags" name="tags"
+                                       placeholder="e.g., important, review, exam">
+                                <div class="form-text">Separate tags with commas</div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-success" onclick="submitCreateMaterial()">
+                    <i class="bi bi-upload me-1"></i>
+                    Upload Material
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+// Classwork JavaScript Functions
+let currentLessonId = null;
+
+// Initialize classwork (functions moved to main.js)
+function initClasswork(lessonId) {
+    currentLessonId = lessonId;
+    if (typeof loadClassworkDashboard === 'function') {
+        loadClassworkDashboard();
+    }
+    if (typeof loadClassworkTasks === 'function') {
+        loadClassworkTasks();
+    }
+    if (typeof loadClassworkMaterials === 'function') {
+        loadClassworkMaterials();
+    }
+    if (typeof loadClassworkNotes === 'function') {
+        loadClassworkNotes();
+    }
+}
+
+// Functions moved to main.js
+
+
+// Render functions moved to main.js
+
+
+// Modal and submit functions are now in main.js
+
+// All functions moved to main.js
+
+
+// All functions are now in main.js
+</script>
+

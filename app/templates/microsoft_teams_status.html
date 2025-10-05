@@ -1,0 +1,64 @@
+<!-- Microsoft Teams Status Card (to be included in class_fragment.html) -->
+{% if microsoft_teams_connected %}
+<div class="card border-info mb-4">
+  <div class="card-header bg-info text-white">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="fab fa-microsoft me-2"></i>
+        Microsoft Teams (Mockup)
+      </h5>
+      <form action="{{ url_for('microsoft_teams.disconnect') }}" method="POST" style="display: inline;">
+        <button type="submit" class="btn btn-sm btn-light">
+          <i class="fas fa-unlink me-1"></i>Disconnect
+        </button>
+      </form>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      {% if microsoft_teams_data and microsoft_teams_data.teams %}
+        {% for team in microsoft_teams_data.teams[:3] %}
+        <div class="col-md-4 mb-3">
+          <div class="card h-100">
+            <div class="card-body">
+              <h6 class="card-title">
+                <i class="fas fa-users text-info me-1"></i>
+                {{ team.displayName }}
+              </h6>
+              <p class="card-text small text-muted">{{ team.description }}</p>
+              <div class="small">
+                <div class="mb-1">
+                  <i class="fas fa-comments text-secondary me-1"></i>
+                  {{ team.channels|length }} Channels
+                </div>
+                <div class="mb-1">
+                  <i class="fas fa-tasks text-warning me-1"></i>
+                  {{ team.assignments|length }} Assignments
+                </div>
+                <div>
+                  <i class="fas fa-user-friends text-success me-1"></i>
+                  {{ team.members|length }} Members
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        
+        {% if microsoft_teams_data.teams|length > 3 %}
+        <div class="col-12 text-center mt-2">
+          <small class="text-muted">
+            And {{ microsoft_teams_data.teams|length - 3 }} more teams...
+          </small>
+        </div>
+        {% endif %}
+      {% else %}
+        <div class="col-12 text-center">
+          <p class="text-muted">No teams found.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+

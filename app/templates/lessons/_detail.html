@@ -3,14 +3,58 @@
     <div class="col-lg-10 col-xl-8">
       <!-- Header -->
       <div class="d-flex align-items-center justify-content-between mb-3">
-        <div>
-          <h1 class="display-5 fw-bold mb-0">{{ lesson.title }}</h1>
-          <span class="badge bg-primary ms-2">{{ lesson.status }}</span>
+        <div class="flex-grow-1">
+          <div class="d-flex align-items-center gap-2">
+            <h1 class="display-5 fw-bold mb-0">{{ lesson.title }}</h1>
+            <button class="btn btn-sm {% if lesson.is_favorite %}btn-warning{% else %}btn-outline-warning{% endif %}" 
+                    onclick="if(typeof window.toggleFavorite === 'function') { window.toggleFavorite('{{ lesson.id }}', this); }" 
+                    title="Toggle favorite">
+              <i class="fas fa-star"></i>
+            </button>
+          </div>
+          <div class="mt-2">
+            {% set status_map = {
+                'not_started': {'text': 'Not Started', 'class': 'bg-secondary'},
+                'in_progress': {'text': 'In Progress', 'class': 'bg-primary'},
+                'completed': {'text': 'Completed', 'class': 'bg-success'},
+                'archived': {'text': 'Archived', 'class': 'bg-warning text-dark'},
+                'active': {'text': 'Active', 'class': 'bg-info'},
+                'LessonStatus.NOT_STARTED': {'text': 'Not Started', 'class': 'bg-secondary'},
+                'LessonStatus.IN_PROGRESS': {'text': 'In Progress', 'class': 'bg-primary'},
+                'LessonStatus.COMPLETED': {'text': 'Completed', 'class': 'bg-success'},
+                'LessonStatus.ARCHIVED': {'text': 'Archived', 'class': 'bg-warning text-dark'}
+            } %}
+            {% if lesson.status is string %}
+                {% set lesson_status = lesson.status %}
+            {% else %}
+                {% set lesson_status = lesson.status.value if lesson.status.value is defined else (lesson.status|string) %}
+            {% endif %}
+            {% set status_info = status_map.get(lesson_status, {'text': 'Not Started', 'class': 'bg-secondary'}) %}
+            <span class="badge {{ status_info.class }} me-2">{{ status_info.text }}</span>
+            
+            {% if lesson.author_name %}
+            <span class="text-muted small">
+              <i class="bi bi-person-circle"></i> {{ lesson.author_name }}
+            </span>
+            {% endif %}
+            
+            {% if lesson.created_at %}
+            <span class="text-muted small ms-2">
+              <i class="bi bi-calendar3"></i> {{ lesson.created_at.strftime('%d %b %Y') if lesson.created_at else 'Today' }}
+            </span>
+            {% endif %}
+          </div>
         </div>
         <div class="d-flex gap-2">
-          <button class="btn btn-outline-secondary btn-sm" onclick="loadPage('class')" title="Back"><i class="bi bi-arrow-left"></i> Back</button>
-          <button class="btn btn-outline-warning btn-sm" onclick="loadPage('class/{{ lesson.id }}/edit')" title="Edit"><i class="bi bi-pencil"></i></button>
-          <button class="btn btn-outline-danger btn-sm" onclick="deleteLesson('{{ lesson.id }}')" title="Delete"><i class="bi bi-trash"></i></button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="if(typeof loadPage === 'function') { loadPage('class'); } else { window.location.href='/class'; }" title="Back">
+            <i class="bi bi-arrow-left"></i> Back
+          </button>
+          <button class="btn btn-outline-primary btn-sm" onclick="alert('Edit feature coming soon!')" title="Edit">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-outline-danger btn-sm" onclick="if(typeof window.deleteLesson === 'function') { window.deleteLesson('{{ lesson.id }}'); }" title="Delete">
+            <i class="bi bi-trash"></i>
+          </button>
         </div>
       </div>
       <!-- Tabs -->
@@ -42,14 +86,49 @@
             <div class="col-md-4">
               <div class="card shadow-sm h-100">
                 <div class="card-body">
-                  <h6 class="text-muted mb-2">Tags</h6>
-                  <div>
-                    {% for tag in (lesson.tags or '').split(',') if tag.strip() %}
-                      <span class="badge bg-info text-dark me-1">{{ tag.strip() }}</span>
+                  <h6 class="text-muted mb-3">
+                    <i class="bi bi-tags"></i> Tags & Categories
+                  </h6>
+                  <div class="mb-3">
+                    <label class="small text-muted d-block mb-1">Tags:</label>
+                    {% if lesson.tags %}
+                      {% set tags_list = lesson.tags.split(',') if lesson.tags is string else lesson.tags %}
+                      {% for tag in tags_list if tag and tag.strip() %}
+                        <span class="badge bg-info text-white me-1 mb-1">
+                          <i class="bi bi-tag-fill"></i> {{ tag.strip() }}
+                        </span>
+                      {% endfor %}
                     {% else %}
-                      <span class="text-muted">-</span>
-                    {% endfor %}
+                      <span class="text-muted small">No tags</span>
+                    {% endif %}
                   </div>
+                  
+                  <div class="mb-2">
+                    <label class="small text-muted d-block mb-1">Difficulty:</label>
+                    {% if lesson.difficulty_level %}
+                      {% set difficulty = lesson.difficulty_level.value if lesson.difficulty_level.value is defined else (lesson.difficulty_level|string) %}
+                      {% if difficulty == 'beginner' or difficulty == 'DifficultyLevel.BEGINNER' %}
+                        <span class="badge bg-success"><i class="bi bi-star"></i> Beginner</span>
+                      {% elif difficulty == 'intermediate' or difficulty == 'DifficultyLevel.INTERMEDIATE' %}
+                        <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i><i class="bi bi-star"></i> Intermediate</span>
+                      {% elif difficulty == 'advanced' or difficulty == 'DifficultyLevel.ADVANCED' %}
+                        <span class="badge bg-danger"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i> Advanced</span>
+                      {% else %}
+                        <span class="text-muted small">Not set</span>
+                      {% endif %}
+                    {% else %}
+                      <span class="text-muted small">Not set</span>
+                    {% endif %}
+                  </div>
+                  
+                  {% if lesson.estimated_duration %}
+                  <div>
+                    <label class="small text-muted d-block mb-1">Duration:</label>
+                    <span class="badge bg-secondary">
+                      <i class="bi bi-clock"></i> {{ lesson.estimated_duration }} min
+                    </span>
+                  </div>
+                  {% endif %}
                 </div>
               </div>
             </div>

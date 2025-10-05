@@ -64,7 +64,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tracking.js') }}"></script>
 <script>
 function setActiveNav(el) {
@@ -72,21 +71,23 @@ function setActiveNav(el) {
   el.classList.add('active');
 }
 window.addEventListener('DOMContentLoaded', function() {
-  {% if initial_page %}
-    const initial = '{{ initial_page }}';
-    const navInit = document.querySelector(`.sidebar .nav-link[data-page=\"${initial}\"]`);
-    if (navInit) navInit.classList.add('active');
-    loadPage(initial);
-  {% elif google_connected %}
-    // If user just connected Google Classroom, load class page
-    const navClass = document.querySelector('.sidebar .nav-link[data-page=\"class\"]');
-    if (navClass) navClass.classList.add('active');
-    loadPage('class');
-  {% else %}
-    // Default: load dashboard
-    const navDash = document.querySelector('.sidebar .nav-link[data-page=\"dashboard\"]');
-    if (navDash) navDash.classList.add('active');
-    loadPage('dashboard');
+  {% if not skip_auto_load %}
+    {% if initial_page %}
+      const initial = '{{ initial_page }}';
+      const navInit = document.querySelector(`.sidebar .nav-link[data-page=\"${initial}\"]`);
+      if (navInit) navInit.classList.add('active');
+      loadPage(initial);
+    {% elif google_connected %}
+      // If user just connected Google Classroom, load class page
+      const navClass = document.querySelector('.sidebar .nav-link[data-page=\"class\"]');
+      if (navClass) navClass.classList.add('active');
+      loadPage('class');
+    {% else %}
+      // Default: load dashboard
+      const navDash = document.querySelector('.sidebar .nav-link[data-page=\"dashboard\"]');
+      if (navDash) navDash.classList.add('active');
+      loadPage('dashboard');
+    {% endif %}
   {% endif %}
 });
 </script>
