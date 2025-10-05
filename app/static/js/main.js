@@ -1387,22 +1387,22 @@ window.selectColor = function(element, colorId) {
     }
     
     // Update preview card header (if exists)
-    const previewCardHeader = document.getElementById('previewCardHeader');
-    const colorInput = document.getElementById('selectedColor');
-    
-    const colors = {
+  const previewCardHeader = document.getElementById('previewCardHeader');
+  const colorInput = document.getElementById('selectedColor');
+  
+  const colors = {
       1: { primary: '#007bff', secondary: '#0056b3', name: 'Blue' },
       2: { primary: '#28a745', secondary: '#1e7e34', name: 'Green' },
       3: { primary: '#dc3545', secondary: '#c82333', name: 'Red' },
       4: { primary: '#ffc107', secondary: '#e0a800', name: 'Yellow' },
       5: { primary: '#6f42c1', secondary: '#5a2d91', name: 'Purple' },
       6: { primary: '#fd7e14', secondary: '#e8690b', name: 'Orange' }
-    };
-    
-    const color = colors[colorId];
-    if (previewCardHeader && color) {
-      previewCardHeader.style.background = `linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%)`;
-    }
+  };
+  
+  const color = colors[colorId];
+  if (previewCardHeader && color) {
+    previewCardHeader.style.background = `linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%)`;
+  }
     if (colorInput) {
       colorInput.value = colorId;
       console.log('✓ Hidden input updated:', colorId);
@@ -1515,6 +1515,9 @@ window.sortNotes = function(sortBy) {
 }
 
 // iPhone-style Notes Functions
+let currentNoteId = null;
+let autoSaveTimer = null;
+
 window.openNote = function(noteId) {
     console.log(`🔧 Opening note: ${noteId}`);
     currentNoteId = noteId;
@@ -1525,8 +1528,12 @@ window.openNote = function(noteId) {
     });
     document.querySelector(`[data-note-id="${noteId}"]`).classList.add('active');
     
+    // Get lesson ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[2]; // /class/{lessonId}/...
+    
     // Load note content
-    fetch(`/class/{{ lesson.id }}/notes/${noteId}`)
+    fetch(`/class/${lessonId}/notes/${noteId}`)
         .then(response => response.json())
         .then(note => {
             document.getElementById('noteTitle').value = note.title;
@@ -1563,7 +1570,10 @@ window.saveNote = function() {
         return;
     }
     
-    const lessonId = '{{ lesson.id }}';
+    // Get lesson ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[2]; // /class/{lessonId}/...
+    
     const formData = new FormData();
     formData.append('title', title);
     formData.append('content', content);
@@ -1599,7 +1609,9 @@ window.autoSaveNote = function() {
 }
 
 window.loadNotesList = function() {
-    const lessonId = '{{ lesson.id }}';
+    // Get lesson ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[2]; // /class/{lessonId}/...
     console.log('🔧 Loading notes list for lesson:', lessonId);
     
     fetch(`/class/${lessonId}/notes-list`)
@@ -1607,10 +1619,137 @@ window.loadNotesList = function() {
         .then(html => {
             document.getElementById('notesList').innerHTML = html;
             console.log('✅ Notes list loaded');
+            
+            // Setup toolbar buttons after notes are loaded
+            setTimeout(() => {
+                if (typeof window.setupToolbarButtons === 'function') {
+                    window.setupToolbarButtons();
+                }
+            }, 500);
+            
+            // Also attach functions to window object
+            setTimeout(() => {
+                attachNoteFunctions();
+            }, 1000);
         })
         .catch(error => {
             console.error('❌ Error loading notes list:', error);
         });
+}
+
+// Attach note functions to window object
+function attachNoteFunctions() {
+    console.log('🔧 Attaching note functions to window object');
+    
+    // Initialize global variables
+    window.autoSaveTimer = null;
+    
+    // Basic formatting functions
+    window.formatText = function(command) {
+        console.log(`🔧 Formatting text: ${command}`);
+        const editor = document.getElementById('noteContent');
+        if (editor) {
+            editor.focus();
+            const success = document.execCommand(command, false, null);
+            console.log(`✅ Command ${command} executed: ${success}`);
+        }
+    };
+    
+    window.insertList = function(type) {
+        console.log(`🔧 Inserting ${type} list`);
+        const editor = document.getElementById('noteContent');
+        if (editor) {
+            editor.focus();
+            if (type === 'ul') {
+                document.execCommand('insertHTML', false, '<ul><li>List item</li></ul>');
+            } else {
+                document.execCommand('insertHTML', false, '<ol><li>List item</li></ol>');
+            }
+        }
+    };
+    
+    window.alignText = function(alignment) {
+        console.log(`🔧 Aligning text: ${alignment}`);
+        const editor = document.getElementById('noteContent');
+        if (editor) {
+            editor.focus();
+            document.execCommand(alignment, false, null);
+        }
+    };
+    
+    window.insertImage = function() {
+        console.log('🔧 Inserting image');
+        const imageInput = document.getElementById('imageInput');
+        if (imageInput) {
+            imageInput.click();
+        }
+    };
+    
+    window.insertLink = function() {
+        console.log('🔧 Inserting link');
+        const url = prompt('Enter URL:');
+        if (url) {
+            const text = window.getSelection().toString() || 'Link text';
+            document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${text}</a>`);
+        }
+    };
+    
+    window.insertTable = function() {
+        console.log('🔧 Inserting table');
+        const tableHTML = `
+            <table style="border-collapse: collapse; width: 100%; margin: 10px 0;">
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Cell 1</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Cell 2</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Cell 3</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Cell 4</td>
+                </tr>
+            </table>
+        `;
+        document.execCommand('insertHTML', false, tableHTML);
+    };
+    
+    window.undoAction = function() {
+        console.log('🔧 Undo action');
+        document.execCommand('undo', false, null);
+    };
+    
+    window.redoAction = function() {
+        console.log('🔧 Redo action');
+        document.execCommand('redo', false, null);
+    };
+    
+    // Auto-save functionality
+    window.autoSaveNote = function() {
+        if (window.autoSaveTimer) {
+            clearTimeout(window.autoSaveTimer);
+        }
+        window.autoSaveTimer = setTimeout(() => {
+            console.log('🔧 Auto-saving note...');
+            // Auto-save logic here
+        }, 2000);
+    };
+    
+    // Image upload handler
+    window.handleImageUpload = function(input) {
+        console.log('🔧 Handling image upload');
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+                document.execCommand('insertHTML', false, img.outerHTML);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    
+    console.log('✅ Note functions attached to window object');
 }
 
 // Global function to load class notes
@@ -1750,3 +1889,387 @@ function updateStatsCounters() {
   
   console.log(`📊 Stats updated: ${favorites.length} favorites out of ${allLessons.length} total`);
 }
+
+// =============================================================================
+// CLASSWORK FUNCTIONS
+// =============================================================================
+
+// Classwork modal functions
+window.openCreateTaskModal = function() {
+    console.log('🔧 Opening create task modal');
+    const modal = new bootstrap.Modal(document.getElementById('createTaskModal'));
+    modal.show();
+};
+
+window.openCreateMaterialModal = function() {
+    console.log('🔧 Opening create material modal');
+    const modal = new bootstrap.Modal(document.getElementById('createMaterialModal'));
+    modal.show();
+};
+
+
+// Classwork submit functions
+window.submitCreateTask = function() {
+    console.log('🔧 Submitting create task');
+    const form = document.getElementById('createTaskForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Get lesson ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    data.lesson_id = lessonId;
+    
+    fetch('/classwork/tasks', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('createTaskModal')).hide();
+            if (typeof loadClassworkTasks === 'function') {
+                loadClassworkTasks();
+            }
+            if (typeof loadClassworkDashboard === 'function') {
+                loadClassworkDashboard();
+            }
+        } else {
+            alert('Error creating task: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating task');
+    });
+};
+
+window.submitCreateMaterial = function() {
+    console.log('🔧 Submitting create material');
+    const form = document.getElementById('createMaterialForm');
+    const formData = new FormData(form);
+    
+    // Get lesson ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    formData.append('lesson_id', lessonId);
+    
+    fetch('/classwork/materials', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('createMaterialModal')).hide();
+            if (typeof loadClassworkMaterials === 'function') {
+                loadClassworkMaterials();
+            }
+        } else {
+            alert('Error creating material: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating material');
+    });
+};
+
+
+// Load classwork dashboard for specific lesson
+window.loadClassworkDashboard = function(lessonId = null) {
+    console.log('🔧 Loading classwork dashboard for lesson:', lessonId);
+    
+    const url = lessonId ? `/classwork/lessons/${lessonId}/dashboard` : '/classwork/dashboard';
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            console.log('🔧 Dashboard data:', data);
+            if (data.success) {
+                document.getElementById('total-tasks').textContent = data.dashboard.total_tasks;
+                document.getElementById('completed-tasks').textContent = data.dashboard.completed_tasks;
+                document.getElementById('in-progress-tasks').textContent = data.dashboard.in_progress_tasks;
+                document.getElementById('overdue-tasks').textContent = data.dashboard.overdue_tasks;
+            }
+        })
+        .catch(error => console.error('Error loading dashboard:', error));
+};
+
+// Load classwork tasks
+window.loadClassworkTasks = function() {
+    console.log('🔧 Loading classwork tasks');
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    
+    fetch(`/classwork/lessons/${lessonId}/tasks`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (typeof renderClassworkTasks === 'function') {
+                    renderClassworkTasks(data.tasks);
+                }
+            }
+        })
+        .catch(error => console.error('Error loading tasks:', error));
+};
+
+// Load classwork materials
+window.loadClassworkMaterials = function() {
+    console.log('🔧 Loading classwork materials');
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    
+    fetch(`/classwork/lessons/${lessonId}/materials`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (typeof renderClassworkMaterials === 'function') {
+                    renderClassworkMaterials(data.materials);
+                }
+            }
+        })
+        .catch(error => console.error('Error loading materials:', error));
+};
+
+// Render classwork tasks in Kanban format
+window.renderClassworkTasks = function(tasks) {
+    console.log('🔧 Rendering classwork tasks in Kanban format:', tasks);
+    
+    // Group tasks by status
+    const todoTasks = tasks.filter(task => task.status === 'todo');
+    const inProgressTasks = tasks.filter(task => task.status === 'in_progress');
+    const doneTasks = tasks.filter(task => task.status === 'done');
+    
+    // Update counters
+    document.getElementById('todo-count').textContent = todoTasks.length;
+    document.getElementById('inprogress-count').textContent = inProgressTasks.length;
+    document.getElementById('done-count').textContent = doneTasks.length;
+    
+    // Render each column
+    renderKanbanColumn('todo-tasks', todoTasks);
+    renderKanbanColumn('inprogress-tasks', inProgressTasks);
+    renderKanbanColumn('done-tasks', doneTasks);
+};
+
+// Render individual Kanban column with professional styling
+function renderKanbanColumn(containerId, tasks) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    if (tasks.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-list-task"></i>
+                </div>
+                <p class="empty-text">No tasks yet</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = tasks.map(task => `
+        <div class="task-card" data-task-id="${task.id}">
+            <h6>${task.title}</h6>
+            <p>${task.description || 'No description'}</p>
+            
+            ${task.progress_percentage > 0 ? `
+                <div class="task-progress">
+                    <div class="task-progress-bar bg-${getProgressColor(task.progress_percentage)}" 
+                         style="width: ${task.progress_percentage}%"></div>
+                </div>
+            ` : ''}
+            
+            <div class="task-meta">
+                <div class="task-badges">
+                    <span class="badge bg-${getPriorityColor(task.priority)}">${task.priority}</span>
+                    ${task.subject ? `<span class="badge bg-light text-dark">${task.subject}</span>` : ''}
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary border-0" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="editTask('${task.id}')">
+                            <i class="bi bi-pencil me-2"></i>Edit
+                        </a></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask('${task.id}')">
+                            <i class="bi bi-trash me-2"></i>Delete
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Get progress bar color based on percentage
+function getProgressColor(percentage) {
+    if (percentage >= 100) return 'success';
+    if (percentage >= 70) return 'primary';
+    if (percentage >= 40) return 'warning';
+    return 'danger';
+}
+
+// Render classwork materials in grid format
+window.renderClassworkMaterials = function(materials) {
+    console.log('🔧 Rendering classwork materials in grid format:', materials);
+    const container = document.getElementById('classwork-materials');
+    const materialCount = document.getElementById('material-count');
+    if (!container) return;
+    
+    // Update material count
+    if (materialCount) {
+        materialCount.textContent = materials.length;
+    }
+    
+    if (materials.length === 0) {
+        container.innerHTML = `
+            <div class="empty-materials">
+                <div class="empty-icon">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <h6 class="empty-title">No materials yet</h6>
+                <p class="empty-subtitle">Upload your first material to get started</p>
+                <button class="btn btn-primary btn-sm" onclick="openCreateMaterialModal()">
+                    <i class="bi bi-upload me-2"></i>
+                    Upload Material
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = materials.map(material => `
+        <div class="material-card" data-material-id="${material.id}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0">${material.title}</h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary border-0" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="downloadMaterial('${material.id}')">
+                            <i class="bi bi-download me-2"></i>Download
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="editMaterial('${material.id}')">
+                            <i class="bi bi-pencil me-2"></i>Edit
+                        </a></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteMaterial('${material.id}')">
+                            <i class="bi bi-trash me-2"></i>Delete
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <p class="text-muted small mb-3">${material.description || 'No description'}</p>
+            
+            <div class="d-flex gap-1 flex-wrap mb-2">
+                <span class="badge bg-info">${material.file_type || 'File'}</span>
+                ${material.subject ? `<span class="badge bg-light text-dark">${material.subject}</span>` : ''}
+                ${material.file_size ? `<span class="badge bg-light text-dark">${(material.file_size / 1024).toFixed(1)}KB</span>` : ''}
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    <i class="bi bi-calendar me-1"></i>
+                    ${new Date(material.created_at).toLocaleDateString()}
+                </small>
+                <button class="btn btn-sm btn-outline-info" onclick="downloadMaterial('${material.id}')">
+                    <i class="bi bi-download me-1"></i>
+                    Download
+                </button>
+            </div>
+        </div>
+    `).join('');
+};
+
+// Utility functions
+window.getPriorityColor = function(priority) {
+    switch(priority) {
+        case 'high': return 'danger';
+        case 'medium': return 'warning';
+        case 'low': return 'success';
+        default: return 'secondary';
+    }
+};
+
+window.getStatusColor = function(status) {
+    switch(status) {
+        case 'done': return 'success';
+        case 'in_progress': return 'warning';
+        case 'todo': return 'secondary';
+        default: return 'secondary';
+    }
+};
+
+// Action functions
+window.editTask = function(taskId) {
+    console.log('Edit task:', taskId);
+    // TODO: Implement edit task
+};
+
+window.deleteTask = function(taskId) {
+    if (confirm('Are you sure you want to delete this task?')) {
+        fetch(`/classwork/tasks/${taskId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadClassworkTasks();
+                loadClassworkDashboard();
+            } else {
+                alert('Error deleting task: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting task');
+        });
+    }
+};
+
+window.downloadMaterial = function(materialId) {
+    console.log('Download material:', materialId);
+    // TODO: Implement download material
+};
+
+window.editMaterial = function(materialId) {
+    console.log('Edit material:', materialId);
+    // TODO: Implement edit material
+};
+
+window.deleteMaterial = function(materialId) {
+    if (confirm('Are you sure you want to delete this material?')) {
+        fetch(`/classwork/materials/${materialId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadClassworkMaterials();
+            } else {
+                alert('Error deleting material: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting material');
+        });
+    }
+};
+
+// Initialize classwork
+window.initClasswork = function(lessonId) {
+    console.log('🔧 Initializing classwork for lesson:', lessonId);
+    loadClassworkDashboard(lessonId);
+    loadClassworkTasks();
+    loadClassworkMaterials();
+};
+
+console.log('✅ Classwork functions loaded');
