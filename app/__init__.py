@@ -93,9 +93,7 @@ def register_blueprints(app):
     app.register_blueprint(announcement_bp)
     app.register_blueprint(class_note_bp)
     
-    # Register Pomodoro OOP blueprints
-    from .presentation.routes.pomodoro_routes_new import pomodoro_bp as pomodoro_new_bp
-    app.register_blueprint(pomodoro_new_bp)
+    # Simple Pomodoro uses fragment system - no blueprint needed
 
 
 def register_template_filters(app):

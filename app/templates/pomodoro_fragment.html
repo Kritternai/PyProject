@@ -1,5 +1,6 @@
-<!-- Pomodoro Timer Fragment -->
-<script src="{{ url_for('static', filename='js/pomodoro_oop.js') }}"></script>
+<!-- Simple Pomodoro Timer Fragment -->
+<script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -55,33 +56,30 @@
                     
                     <!-- Control Buttons -->
                     <div class="mb-4">
-                        <button id="start-btn" class="btn btn-success btn-lg me-2" onclick="startPomodoroSession()">
+                        <button id="start-btn" class="btn btn-success btn-lg me-2">
                             <i class="fas fa-play me-1"></i>Start
                         </button>
-                        <button id="pause-btn" class="btn btn-warning btn-lg me-2" style="display: none;" onclick="pausePomodoroSession()">
+                        <button id="pause-btn" class="btn btn-warning btn-lg me-2" style="display: none;">
                             <i class="fas fa-pause me-1"></i>Pause
                         </button>
-                        <button id="resume-btn" class="btn btn-info btn-lg me-2" style="display: none;" onclick="resumePomodoroSession()">
+                        <button id="resume-btn" class="btn btn-info btn-lg me-2" style="display: none;">
                             <i class="fas fa-play me-1"></i>Resume
                         </button>
-                        <button id="complete-btn" class="btn btn-primary btn-lg me-2" style="display: none;" onclick="completePomodoroSession()">
-                            <i class="fas fa-check me-1"></i>Complete
-                        </button>
-                        <button id="cancel-btn" class="btn btn-danger btn-lg" onclick="cancelPomodoroSession()">
-                            <i class="fas fa-times me-1"></i>Cancel
+                        <button id="reset-btn" class="btn btn-danger btn-lg" style="display: none;">
+                            <i class="fas fa-stop me-1"></i>Reset
                         </button>
                     </div>
                     
                     <!-- Quick Actions -->
                     <div class="mb-3">
-                        <button class="btn btn-outline-primary btn-sm me-2" onclick="getPomodoroStatistics()">
-                            <i class="fas fa-chart-bar me-1"></i>Statistics
+                        <button class="btn btn-outline-primary btn-sm me-2" onclick="window.pomodoro.setSessionType('focus')">
+                            <i class="fas fa-brain me-1"></i>Focus (25min)
                         </button>
-                        <button class="btn btn-outline-info btn-sm me-2" onclick="getProductivityInsights()">
-                            <i class="fas fa-lightbulb me-1"></i>Insights
+                        <button class="btn btn-outline-info btn-sm me-2" onclick="window.pomodoro.setSessionType('short_break')">
+                            <i class="fas fa-coffee me-1"></i>Short Break (5min)
                         </button>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="getUserSessions()">
-                            <i class="fas fa-history me-1"></i>History
+                        <button class="btn btn-outline-success btn-sm" onclick="window.pomodoro.setSessionType('long_break')">
+                            <i class="fas fa-utensils me-1"></i>Long Break (15min)
                         </button>
                     </div>
                     
@@ -153,172 +151,22 @@
 </style>
 
 <script>
-// Pomodoro OOP Integration Functions
-async function startPomodoroSession() {
-    try {
-        const session = await window.PomodoroOOP.startSession('focus', 25);
-        updateUI(session);
-        showMessage('Session started! 🍅', 'success');
-    } catch (error) {
-        showMessage(`Error: ${error.message}`, 'error');
-    }
-}
-
-async function pausePomodoroSession() {
-    try {
-        const session = await window.PomodoroOOP.pauseSession();
-        updateUI(session);
-        showMessage('Session paused', 'info');
-    } catch (error) {
-        showMessage(`Error: ${error.message}`, 'error');
-    }
-}
-
-async function resumePomodoroSession() {
-    try {
-        const session = await window.PomodoroOOP.resumeSession();
-        updateUI(session);
-        showMessage('Session resumed', 'success');
-    } catch (error) {
-        showMessage(`Error: ${error.message}`, 'error');
-    }
-}
-
-async function completePomodoroSession() {
-    try {
-        // Get feedback from user
-        const productivityScore = prompt('Rate your productivity (1-10):', '8');
-        const moodAfter = prompt('How do you feel now?', 'satisfied');
-        const focusScore = prompt('Rate your focus (1-10):', '7');
-        
-        const session = await window.PomodoroOOP.completeSession({
-            productivityScore: parseInt(productivityScore),
-            moodAfter: moodAfter,
-            focusScore: parseInt(focusScore),
-            energyLevel: 6,
-            difficultyLevel: 5
-        });
-        
-        updateUI(null);
-        showMessage('Session completed! Great job! 🎉', 'success');
-    } catch (error) {
-        showMessage(`Error: ${error.message}`, 'error');
-    }
-}
-
-async function cancelPomodoroSession() {
-    if (confirm('Are you sure you want to cancel this session?')) {
-        try {
-            const session = await window.PomodoroOOP.cancelSession();
-            updateUI(null);
-            showMessage('Session cancelled', 'warning');
-        } catch (error) {
-            showMessage(`Error: ${error.message}`, 'error');
-        }
-    }
-}
-
-async function getPomodoroStatistics() {
-    try {
-        const stats = await window.PomodoroOOP.getStatistics('week');
-        showMessage(`Weekly Stats: ${stats.total_sessions} sessions, ${stats.total_focus_time} min focus time`, 'info');
-        console.log('Statistics:', stats);
-    } catch (error) {
-        showMessage(`Error: ${error.message}`, 'error');
-    }
-}
-
-async function getProductivityInsights() {
-    try {
-        const insights = await window.PomodoroOOP.getProductivityInsights(7);
-        showMessage(`Insights: ${insights.completion_rate}% completion rate`, 'info');
-        console.log('Insights:', insights);
-    } catch (error) {
-        showMessage(`Error: ${error.message}`, 'error');
-    }
-}
-
-async function getUserSessions() {
-    try {
-        const sessions = await window.PomodoroOOP.getUserSessions(10);
-        showMessage(`Found ${sessions.length} recent sessions`, 'info');
-        console.log('Sessions:', sessions);
-    } catch (error) {
-        showMessage(`Error: ${error.message}`, 'error');
-    }
-}
-
-function updateUI(session) {
-    const startBtn = document.getElementById('start-btn');
-    const pauseBtn = document.getElementById('pause-btn');
-    const resumeBtn = document.getElementById('resume-btn');
-    const completeBtn = document.getElementById('complete-btn');
-    const cancelBtn = document.getElementById('cancel-btn');
-    
-    if (session) {
-        // Session is active
-        startBtn.style.display = 'none';
-        pauseBtn.style.display = 'inline-block';
-        resumeBtn.style.display = 'none';
-        completeBtn.style.display = 'inline-block';
-        cancelBtn.style.display = 'inline-block';
-        
-        // Update session info
-        document.getElementById('session-type').textContent = window.PomodoroOOP.getSessionTypeName(session.session_type);
-    } else {
-        // No active session
-        startBtn.style.display = 'inline-block';
-        pauseBtn.style.display = 'none';
-        resumeBtn.style.display = 'none';
-        completeBtn.style.display = 'none';
-        cancelBtn.style.display = 'none';
-        
-        // Reset session info
-        document.getElementById('session-type').textContent = 'Focus Time';
-    }
-}
-
-function showMessage(message, type) {
-    // Create a simple notification
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show position-fixed`;
-    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    notification.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-        }
-    }, 3000);
-}
-
-// Attach functions to global scope
-window.startPomodoroSession = startPomodoroSession;
-window.pausePomodoroSession = pausePomodoroSession;
-window.resumePomodoroSession = resumePomodoroSession;
-window.completePomodoroSession = completePomodoroSession;
-window.cancelPomodoroSession = cancelPomodoroSession;
-window.getPomodoroStatistics = getPomodoroStatistics;
-window.getProductivityInsights = getProductivityInsights;
-window.getUserSessions = getUserSessions;
-
-// Initialize on page load
+// Initialize Pomodoro when fragment is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Check for active session
-    window.PomodoroOOP.getActiveSession()
-        .then(session => {
-            if (session) {
-                updateUI(session);
-            }
-        })
-        .catch(error => {
-            console.log('No active session');
-        });
+    if (typeof initializePomodoro === 'function') {
+        initializePomodoro();
+    } else {
+        // Fallback: initialize directly
+        if (!window.pomodoro) {
+            window.pomodoro = new SimplePomodoro();
+            console.log('🍅 Simple Pomodoro Timer loaded via fragment!');
+        }
+    }
 });
+
+// Also initialize immediately
+if (!window.pomodoro) {
+    window.pomodoro = new SimplePomodoro();
+    console.log('🍅 Simple Pomodoro Timer loaded via fragment!');
+}
 </script>
