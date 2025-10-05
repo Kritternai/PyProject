@@ -116,37 +116,34 @@ def ensure_dependencies() -> None:
 
 
 def validate_oop_files() -> None:
-    """Validate OOP architecture files"""
-    print_status("Validating OOP Architecture...")
+    """Validate MVC architecture files"""
+    print_status("Validating MVC Architecture...")
     
     required = [
-        "app/domain/entities/user.py",
-        "app/domain/entities/lesson.py", 
-        "app/domain/entities/note.py",
-        "app/domain/entities/task.py",
-        "app/application/services/user_service.py",
-        "app/application/services/lesson_service.py",
-        "app/application/services/note_service.py",
-        "app/application/services/task_service.py",
-        "app/infrastructure/database/models/user_model.py",
-        "app/infrastructure/database/models/lesson_model.py",
-        "app/infrastructure/database/models/note_model.py",
-        "app/infrastructure/database/models/task_model.py",
-        "app/presentation/controllers/user_controller.py",
-        "app/presentation/controllers/lesson_controller.py",
-        "app/presentation/controllers/note_controller.py",
-        "app/presentation/controllers/task_controller.py",
-        "app/infrastructure/di/container.py",
+        "app/models/user.py",
+        "app/models/lesson.py",
+        "app/models/note.py",
+        "app/models/task.py",
+        "app/views/user_views.py",
+        "app/views/lesson_views.py",
+        "app/views/note_views.py",
+        "app/views/task_views.py",
+        "app/services.py",
+        "app/routes/user_routes.py",
+        "app/routes/lesson_routes.py",
+        "app/routes/note_routes.py",
+        "app/routes/task_routes.py",
+        "app/middleware/auth_middleware.py",
     ]
     
     missing = [p for p in required if not os.path.isfile(p)]
     if missing:
-        print_error("Missing OOP architecture files:")
+        print_error("Missing MVC architecture files:")
         for m in missing:
             print_error(f"  - {m}")
         sys.exit(1)
     
-    print_success("All OOP architecture files found")
+    print_success("All MVC architecture files found")
 
 
 def setup_database() -> None:
@@ -218,19 +215,19 @@ def create_default_user() -> None:
 
 
 def test_oop_architecture() -> None:
-    """Test OOP architecture"""
-    print_status("Testing OOP Architecture...")
+    """Test MVC architecture"""
+    print_status("Testing MVC Architecture...")
     
     test_path = os.path.join("scripts", "tests", "test_oop.py")
     if os.path.isfile(test_path):
-        print_status("Running OOP architecture test...")
+        print_status("Running MVC architecture test...")
         try:
             subprocess.run([sys.executable, test_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-            print_success("OOP architecture test passed")
+            print_success("MVC architecture test passed")
         except subprocess.CalledProcessError:
-            print_warning("OOP architecture test failed, but continuing...")
+            print_warning("MVC architecture test failed, but continuing...")
     else:
-        print_warning("OOP architecture test not found, skipping...")
+        print_warning("MVC architecture test not found, skipping...")
 
 
 def try_port(port: int) -> bool:
@@ -242,11 +239,11 @@ def try_port(port: int) -> bool:
 
 def start_flask_server() -> None:
     """Start Flask development server"""
-    print_header("🚀 Starting Smart Learning Hub OOP Architecture Flask Application 🚀")
+    print_header("🚀 Starting Smart Learning Hub MVC Architecture Flask Application 🚀")
     
     port = 5003 if try_port(5003) else 5004
     print_status(f"Application will be available at: http://localhost:{port}")
-    print_status("Architecture: Clean Architecture + SOLID Principles")
+    print_status("Architecture: MVC (Model-View-Controller)")
     print_status("Features: User, Lesson, Note, Task, Pomodoro Management")
     print_status("Press Ctrl+C to stop the application")
     
@@ -269,7 +266,7 @@ def start_flask_server() -> None:
 
 def main() -> None:
     """Main startup function"""
-    print_header("Smart Learning Hub - OOP Architecture Environment Setup")
+    print_header("Smart Learning Hub - MVC Architecture Environment Setup")
     
     # Setup steps
     reexec_in_venv()
@@ -288,7 +285,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print_header("Shutting Down Smart Learning Hub OOP Architecture")
+        print_header("Shutting Down Smart Learning Hub MVC Architecture")
         print_status("Goodbye! 👋")
     except Exception as e:
         print_error(f"Unexpected error: {e}")

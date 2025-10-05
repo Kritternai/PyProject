@@ -6,8 +6,7 @@ Creates and configures Flask application with proper dependency injection.
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from .config.settings import get_config
-from .infrastructure.di.container import configure_services
-from .presentation.middleware.auth_middleware import load_user
+from .middleware.auth_middleware import load_user
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -32,8 +31,7 @@ def create_app(config_name=None):
     # Initialize extensions
     db.init_app(app)
     
-    # Configure dependency injection
-    configure_services()
+    # No dependency injection needed for simple MVC
     
     # Register middleware
     app.before_request(load_user)
@@ -57,19 +55,11 @@ def register_blueprints(app):
     Args:
         app: Flask application instance
     """
-    from .presentation.routes.auth_routes import auth_bp
-    from .presentation.routes.user_routes import user_bp
-    from .presentation.routes.lesson_routes import lesson_bp
-    from .presentation.routes.note_routes import note_bp
-    from .presentation.routes.task_routes import task_bp
-    from .presentation.routes.web_routes import web_bp
-    from .presentation.routes.register_routes import register_bp
-    # from .presentation.routes.pomodoro_routes import pomodoro_bp  # Removed old Pomodoro system
-    from .presentation.routes.tracking_routes import tracking_bp
-    from .presentation.routes.announcement_routes import announcement_bp
-    from .presentation.routes.class_note_routes import class_note_bp
-    from .presentation.routes.classwork_routes import classwork_bp
-    from .presentation.routes.classwork_detail_routes import classwork_detail_bp
+    from .routes.user_routes import user_bp
+    from .routes.lesson_routes import lesson_bp
+    from .routes.note_routes import note_bp
+    from .routes.task_routes import task_bp
+    # Legacy routes removed - using routes_new.py instead
     from .routes_new import main_bp as main_bp
     from .routes_google_classroom import google_classroom_bp
     from .routes_microsoft_teams import microsoft_teams_bp
@@ -79,21 +69,16 @@ def register_blueprints(app):
     app.register_blueprint(main_bp)
     app.register_blueprint(google_classroom_bp)  # Google Classroom integration
     app.register_blueprint(microsoft_teams_bp)  # Microsoft Teams integration (mockup)
-    # app.register_blueprint(legacy_bp)  # Legacy routes temporarily disabled - most routes now in routes_new.py
-    app.register_blueprint(register_bp)
-    # app.register_blueprint(pomodoro_bp)  # Removed old Pomodoro system
-    app.register_blueprint(tracking_bp)
     
     # Register API blueprints
+    from .routes.auth_routes import auth_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(lesson_bp)
     app.register_blueprint(note_bp)
     app.register_blueprint(task_bp)
     
-    # Register Class System blueprints
-    app.register_blueprint(announcement_bp)
-    app.register_blueprint(class_note_bp)
+    # Class System blueprints removed - using routes_new.py instead
     
     # Simple Pomodoro uses fragment system - no blueprint needed
 
@@ -175,16 +160,9 @@ def import_models():
     Import all models to ensure they are registered with SQLAlchemy.
     This is necessary for database operations.
     """
-    # Import legacy models for backward compatibility (selective)
-    # Register Files model to support note attachments
-    from .core.files import Files
-    # from .core.imported_data import ImportedData
-    # from .core.google_credentials import GoogleCredentials
-    # from .core.course_linkage import CourseLinkage
-    
-    # Import new infrastructure models
-    from .infrastructure.database.models.user_model import UserModel
-    from .infrastructure.database.models.lesson_model import LessonModel
-    from .infrastructure.database.models.lesson_section_model import LessonSectionModel
-    from .infrastructure.database.models.note_model import NoteModel
-    from .infrastructure.database.models.task_model import TaskModel
+    # Import MVC models
+    from .models.user import UserModel
+    from .models.lesson import LessonModel
+    from .models.lesson_section import LessonSectionModel
+    from .models.note import NoteModel
+    from .models.task import TaskModel

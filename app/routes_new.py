@@ -5,15 +5,10 @@ Clean routes that integrate with the new OOP system.
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, g, jsonify, current_app
 from functools import wraps
-from .presentation.middleware.auth_middleware import login_required, get_current_user
-from .infrastructure.di.container import get_service
-from .domain.interfaces.services.user_service import UserService
-from .domain.interfaces.services.lesson_service import LessonService
-from .domain.interfaces.services.note_service import NoteService
-from .domain.entities.note import NoteType
-from .domain.interfaces.services.task_service import TaskService
+from .middleware.auth_middleware import login_required
+from .services import UserService, LessonService, NoteService, TaskService
 from app import db
-from app.core.files import Files
+# from app.core.files import Files  # Removed - not needed for simple MVC
 from werkzeug.utils import secure_filename
 from sqlalchemy import text
 import os
@@ -22,12 +17,15 @@ import time
 # Create main blueprint
 main_bp = Blueprint('main', __name__)
 
+# Import login_required from middleware
+from app.middleware.auth_middleware import login_required
+
 def login_required_web(f):
     """Decorator to require login for web routes"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('register.login'))
+            return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -37,7 +35,7 @@ def load_logged_in_user():
     user_id = session.get('user_id')
     if user_id:
         try:
-            user_service = get_service(UserService)
+            user_service = UserService()
             g.user = user_service.get_user_by_id(user_id)
         except:
             g.user = None
@@ -50,38 +48,50 @@ def index():
     """Main index page."""
     # Check if user is logged in
     if 'user_id' in session:
-        return redirect(url_for('register.dashboard'))
+        return redirect(url_for('main.dashboard'))
     
     # Check if user just connected Google Classroom
     google_connected = request.args.get('google_classroom_connected') == 'true'
-    return render_template('base.html', google_connected=google_connected)
+    return render_template('base.html', google_connected=google_connected, user=None)
 
 @main_bp.route('/dashboard')
-@login_required_web
 def dashboard():
     """Dashboard page."""
-    if not g.user:
-        return redirect(url_for('register.login'))
-    return render_template('base.html', user=g.user)
+    # Simple check - if no user_id in session, redirect to login
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    # Get user from session
+    user_id = session.get('user_id')
+    if user_id:
+        try:
+            user_service = UserService()
+            user = user_service.get_user_by_id(user_id)
+            return render_template('base.html', user=user)
+        except Exception:
+            return redirect(url_for('auth.login'))
+    else:
+        return redirect(url_for('auth.login'))
 
 @main_bp.route('/partial/dashboard')
-@login_required_web
 def partial_dashboard():
     """Dashboard partial for SPA."""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     return render_template('dashboard_fragment.html', user=g.user)
 
 @main_bp.route('/partial/class')
-@login_required_web
 def partial_class():
     """Class/Lessons partial"""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+    
     try:
         print(f"🔍 partial_class: Loading lessons for user {g.user.id}")
-        lesson_service = get_service(LessonService)
-        lessons = lesson_service.get_user_lessons(g.user.id)
+        lesson_service = LessonService()
+        lessons = lesson_service.get_lessons_by_user(g.user.id)
         print(f"✅ Found {len(lessons)} lessons")
         
         # Sort lessons: Favorites first (pinned), then by created_at desc
@@ -125,15 +135,15 @@ def partial_class():
                              microsoft_teams_data=None)
 
 @main_bp.route('/debug/lessons')
-@login_required_web
 def debug_lessons():
     """Debug route to check lessons data"""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        lesson_service = get_service(LessonService)
-        lessons = lesson_service.get_user_lessons(g.user.id)
+        lesson_service = LessonService()
+        lessons = lesson_service.get_lessons_by_user(g.user.id)
         
         lessons_data = []
         for lesson in lessons:
@@ -163,15 +173,15 @@ def debug_lessons():
         }), 500
 
 @main_bp.route('/partial/class/add', methods=['POST'])
-@login_required_web
 def add_lesson():
     """Add new lesson"""
-    if not g.user:
-        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        from app.domain.entities.lesson import LessonStatus, DifficultyLevel
-        lesson_service = get_service(LessonService)
+        # from app.domain.entities.lesson import LessonStatus, DifficultyLevel
+        lesson_service = LessonService()
         
         # Get form data
         title = request.form.get('title')
@@ -194,13 +204,13 @@ def add_lesson():
         except:
             color_theme = 1
         
-        # Convert difficulty to enum
+        # Convert difficulty to string
         difficulty_map = {
-            'beginner': DifficultyLevel.BEGINNER,
-            'intermediate': DifficultyLevel.INTERMEDIATE,
-            'advanced': DifficultyLevel.ADVANCED
+            'beginner': 'beginner',
+            'intermediate': 'intermediate',
+            'advanced': 'advanced'
         }
-        difficulty_level = difficulty_map.get(difficulty, DifficultyLevel.BEGINNER)
+        difficulty_level = difficulty_map.get(difficulty, 'beginner')
         
         # Convert duration to int
         estimated_duration = None
@@ -214,11 +224,7 @@ def add_lesson():
         lesson = lesson_service.create_lesson(
             user_id=g.user.id,
             title=title,
-            description=description or '',
-            color_theme=color_theme,
-            author_name=author_name if author_name else None,
-            difficulty_level=difficulty_level,
-            estimated_duration=estimated_duration
+            description=description or ''
         )
         
         # Update status using direct SQL (since the model uses enums)
@@ -257,15 +263,15 @@ def add_lesson():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @main_bp.route('/class/<lesson_id>')
-@login_required_web
 def view_class_detail(lesson_id):
     """View class detail page with tabs"""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        lesson_service = get_service(LessonService)
-        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
         
         if not lesson:
             return jsonify({'error': 'Lesson not found'}), 404
@@ -281,14 +287,15 @@ def view_class_detail(lesson_id):
         return jsonify({'error': str(e)}), 500
 
 @main_bp.route('/class/<lesson_id>/stream-notes')
-@login_required_web
 def stream_notes(lesson_id):
     """Load stream notes template"""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+    
     try:
-        lesson_service = get_service(LessonService)
-        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
         if not lesson:
             return jsonify({'error': 'Lesson not found'}), 404
         if lesson.user_id != g.user.id:
@@ -301,18 +308,18 @@ def stream_notes(lesson_id):
         return jsonify({'error': str(e)}), 500
 
 @main_bp.route('/partial/class/<lesson_id>')
-@login_required_web
 def view_lesson_detail(lesson_id):
     """View lesson detail page (legacy route)"""
-    if not g.user:
-        return '<div class="alert alert-danger">Not authenticated</div>', 401
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
     
     try:
         from app import db
-        lesson_service = get_service(LessonService)
+        lesson_service = LessonService()
         
         # Get lesson by ID
-        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
         if not lesson:
             return '<div class="alert alert-danger">Lesson not found or no permission.</div>', 404
         
@@ -413,17 +420,17 @@ def view_lesson_detail(lesson_id):
         return f'<div class="alert alert-danger">Error loading lesson: {str(e)}</div>', 500
 
 @main_bp.route('/partial/class/<lesson_id>/favorite', methods=['POST'])
-@login_required_web
 def toggle_lesson_favorite(lesson_id):
     """Toggle lesson favorite status"""
-    if not g.user:
-        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        lesson_service = get_service(LessonService)
+        lesson_service = LessonService()
         
         # Get current lesson
-        lesson = lesson_service.get_lesson_by_id(lesson_id, g.user.id)
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
         if not lesson:
             return jsonify({'success': False, 'message': 'Lesson not found'}), 404
         
@@ -454,14 +461,14 @@ def toggle_lesson_favorite(lesson_id):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @main_bp.route('/partial/class/<lesson_id>/delete', methods=['POST'])
-@login_required_web
 def delete_lesson(lesson_id):
     """Delete a lesson"""
-    if not g.user:
-        return jsonify({'success': False, 'message': 'Not authenticated'}), 401
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        lesson_service = get_service(LessonService)
+        lesson_service = LessonService()
         lesson_service.delete_lesson(lesson_id, g.user.id)
         
         return jsonify({
@@ -475,13 +482,14 @@ def delete_lesson(lesson_id):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @main_bp.route('/partial/note')
-@login_required_web
 def partial_note():
     """Note partial"""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+    
     try:
-        note_service = get_service(NoteService)
+        note_service = NoteService()
         notes = note_service.get_user_notes(g.user.id)
         notes = _enrich_notes_with_status_and_files(notes)
         return render_template('note_fragment.html', notes=notes, user=g.user)
@@ -490,21 +498,23 @@ def partial_note():
 
 
 @main_bp.route('/notes')
-@login_required_web
 def notes_page():
     """Full page Notes view with CSS/JS via base layout."""
-    if not g.user:
-        return redirect(url_for('register.login'))
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
     # Render base and let SPA load note partial by default
     return render_template('base.html', user=g.user, initial_page='note')
 
 
 @main_bp.route('/partial/note/add', methods=['POST'])
-@login_required_web
 def partial_note_add():
     """Create a new note from the partial UI."""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+    
     try:
         title = request.form.get('title')
         content = request.form.get('content')
@@ -513,12 +523,7 @@ def partial_note_add():
         note_type_str = request.form.get('note_type')
         is_public_raw = request.form.get('is_public')
         # Convert note_type and is_public
-        note_type = None
-        if note_type_str:
-            try:
-                note_type = NoteType(note_type_str)
-            except Exception:
-                note_type = None
+        note_type = note_type_str if note_type_str else 'general'
         is_public = False
         if is_public_raw is not None:
             is_public = str(is_public_raw).lower() in ['1', 'true', 'on', 'yes']
@@ -532,36 +537,15 @@ def partial_note_add():
         if tags_str:
             tags = [t.strip() for t in tags_str.split(',') if t.strip()]
 
-        note_service = get_service(NoteService)
+        note_service = NoteService()
         note = note_service.create_note(
             user_id=g.user.id,
+            lesson_id=None,
             title=title,
-            content=content,
-            note_type=note_type or NoteType.TEXT,
-            tags=tags,
-            is_public=is_public
+            content=content
         )
 
-        # Persist additional fields (status, external_link) directly to DB (legacy columns)
-        try:
-            if status is not None or external_link is not None:
-                db.session.execute(
-                    text("""
-                        UPDATE note
-                        SET status = COALESCE(:status, status),
-                            external_link = COALESCE(:external_link, external_link)
-                        WHERE id = :note_id AND user_id = :user_id
-                    """),
-                    {
-                        'status': status,
-                        'external_link': external_link,
-                        'note_id': note.id,
-                        'user_id': g.user.id
-                    }
-                )
-                db.session.commit()
-        except Exception:
-            db.session.rollback()
+        # Note created successfully - no need for additional DB operations
 
         # Handle file uploads (image/file)
         try:
@@ -586,13 +570,14 @@ def partial_note_add():
 
 
 @main_bp.route('/partial/note/<note_id>/delete', methods=['POST'])
-@login_required_web
 def partial_note_delete(note_id):
     """Delete a note and return updated fragment."""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+    
     try:
-        note_service = get_service(NoteService)
+        note_service = NoteService()
         deleted = note_service.delete_note(note_id, g.user.id)
         if not deleted:
             return jsonify(success=False, message='Note not found or permission denied'), 404
@@ -607,11 +592,12 @@ def partial_note_delete(note_id):
 
 
 @main_bp.route('/partial/note/<note_id>/edit', methods=['POST'])
-@login_required_web
 def partial_note_edit(note_id):
     """Update a note and return JSON for SPA."""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+    
     try:
         title = request.form.get('title')
         content = request.form.get('content')
@@ -633,40 +619,17 @@ def partial_note_edit(note_id):
         if tags_str is not None:
             kwargs['tags'] = [t.strip() for t in tags_str.split(',') if t.strip()]
         if note_type_str is not None and note_type_str != '':
-            try:
-                kwargs['note_type'] = NoteType(note_type_str)
-            except Exception:
-                pass
+            kwargs['note_type'] = note_type_str
         if is_public_raw is not None:
             kwargs['is_public'] = str(is_public_raw).lower() in ['1', 'true', 'on', 'yes']
 
-        note_service = get_service(NoteService)
+        note_service = NoteService()
         updated_note = note_service.update_note(
             note_id=note_id,
-            user_id=g.user.id,
             **kwargs
         )
 
-        # Update additional fields (status, external_link) directly
-        try:
-            if status is not None or external_link is not None:
-                db.session.execute(
-                    text("""
-                        UPDATE note
-                        SET status = COALESCE(:status, status),
-                            external_link = COALESCE(:external_link, external_link)
-                        WHERE id = :note_id AND user_id = :user_id
-                    """),
-                    {
-                        'status': status,
-                        'external_link': external_link,
-                        'note_id': note_id,
-                        'user_id': g.user.id
-                    }
-                )
-                db.session.commit()
-        except Exception:
-            db.session.rollback()
+        # Note updated successfully
 
         # If AJAX request, return JSON for SPA handler
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -705,34 +668,30 @@ def partial_note_edit(note_id):
 
 
 @main_bp.route('/partial/note/<note_id>/data', methods=['GET'])
-@login_required_web
 def partial_note_data(note_id):
     """Fetch latest note data from DB for editing (without incrementing views)."""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+    
     try:
-        note_service = get_service(NoteService)
-        note = note_service.get_note_by_id(note_id, g.user.id)
+        note_service = NoteService()
+        note = note_service.get_note_by_id(note_id)
         if not note:
             return jsonify(success=False, message='Note not found or permission denied'), 404
 
-        data = note.to_dict()
-
-        # Attach legacy fields (status, external_link)
-        try:
-            row = db.session.execute(
-                text("""
-                    SELECT status, external_link
-                    FROM note
-                    WHERE id = :note_id AND user_id = :user_id
-                """),
-                { 'note_id': note_id, 'user_id': g.user.id }
-            ).fetchone()
-            if row:
-                data['status'] = row[0]
-                data['external_link'] = row[1]
-        except Exception:
-            pass
+        data = {
+            'id': note.id,
+            'title': note.title,
+            'content': note.content,
+            'created_at': note.created_at.isoformat() if note.created_at else None,
+            'status': 'pending',  # Default status
+            'external_link': '',  # Default external link
+            'tags': '',  # Default tags
+            'note_type': 'text',  # Default note type
+            'is_public': False,  # Default is_public
+            'files': []  # Default files array
+        }
 
         # Attach files (filter by user_id for security)
         try:
@@ -759,11 +718,12 @@ def partial_note_data(note_id):
         return jsonify(success=False, message=str(e)), 500
 
 @main_bp.route('/partial/track')
-@login_required_web
 def partial_track():
     """Track/Progress Tracking partial"""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+    
     try:
         # For now, just return the tracking fragment
         # Later we can add task service integration
@@ -772,11 +732,12 @@ def partial_track():
         return render_template('track_fragment.html', user=g.user)
 
 @main_bp.route('/partial/pomodoro')
-@login_required_web
 def partial_pomodoro():
     """Pomodoro timer partial"""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+    
     try:
         # Return the pomodoro fragment
         return render_template('pomodoro_fragment.html', user=g.user)
@@ -784,57 +745,69 @@ def partial_pomodoro():
         return render_template('pomodoro_fragment.html', user=g.user)
 
 @main_bp.route('/partial/dev')
-@login_required_web
 def partial_dev():
     """Development partial"""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+    
     return render_template('dev_fragment.html', user=g.user)
 
 # API endpoints for AJAX calls
 @main_bp.route('/api/lessons/data')
-@login_required_web
 def lessons_data():
     """Get lessons data for AJAX"""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        lesson_service = get_service(LessonService)
-        lessons = lesson_service.get_user_lessons(g.user.id)
+        lesson_service = LessonService()
+        lessons = lesson_service.get_lessons_by_user(g.user.id)
         return jsonify({
             'success': True,
-            'data': [lesson.to_dict() for lesson in lessons]
+            'data': [{
+                'id': lesson.id,
+                'title': lesson.title,
+                'description': lesson.description,
+                'status': getattr(lesson, 'status', 'not_started'),
+                'created_at': lesson.created_at.isoformat() if lesson.created_at else None
+            } for lesson in lessons]
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @main_bp.route('/api/notes/data')
-@login_required_web
 def notes_data():
     """Get notes data for AJAX"""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        note_service = get_service(NoteService)
+        note_service = NoteService()
         notes = note_service.get_user_notes(g.user.id)
         return jsonify({
             'success': True,
-            'data': [note.to_dict() for note in notes]
+            'data': [{
+                'id': note.id,
+                'title': note.title,
+                'content': note.content,
+                'created_at': note.created_at.isoformat() if note.created_at else None
+            } for note in notes]
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @main_bp.route('/api/tasks/data')
-@login_required_web
 def tasks_data():
     """Get tasks data for AJAX"""
-    if not g.user:
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        task_service = get_service(TaskService)
+        task_service = TaskService()
         tasks = task_service.get_user_tasks(g.user.id)
         return jsonify({
             'success': True,
@@ -843,6 +816,176 @@ def tasks_data():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+# Additional API endpoints for lesson detail pages
+@main_bp.route('/class/<lesson_id>/notes-list')
+def lesson_notes_list(lesson_id):
+    """Get notes list for a specific lesson."""
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        note_service = NoteService()
+        notes = note_service.get_notes_by_user(g.user.id)  # Get all notes for user
+        
+        # Return HTML fragment instead of JSON
+        return render_template('notes_list_fragment.html', notes=notes, user=g.user)
+    except Exception as e:
+        return render_template('notes_list_fragment.html', notes=[], user=g.user)
+
+@main_bp.route('/class/<lesson_id>/notes/create', methods=['POST'])
+def lesson_notes_create(lesson_id):
+    """Create a note for a specific lesson."""
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        title = request.form.get('title', '')
+        content = request.form.get('content', '')
+        
+        note_service = NoteService()
+        note = note_service.create_note(
+            user_id=g.user.id,
+            lesson_id=lesson_id,
+            title=title,
+            content=content
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'Note created successfully',
+            'data': {
+                'id': note.id,
+                'title': note.title,
+                'content': note.content
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/class/<lesson_id>/notes/<note_id>')
+def lesson_note_detail(lesson_id, note_id):
+    """Get a specific note for editing."""
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        note_service = NoteService()
+        note = note_service.get_note_by_id(note_id)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'id': note.id,
+                'title': note.title,
+                'content': note.content,
+                'created_at': note.created_at.isoformat() if note.created_at else None
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/class/<lesson_id>/notes/<note_id>/update', methods=['POST'])
+def lesson_note_update(lesson_id, note_id):
+    """Update a specific note."""
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        title = request.form.get('title', '')
+        content = request.form.get('content', '')
+        
+        note_service = NoteService()
+        note = note_service.update_note(note_id, title=title, content=content)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Note updated successfully',
+            'data': {
+                'id': note.id,
+                'title': note.title,
+                'content': note.content
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/class/<lesson_id>/classwork')
+def lesson_classwork(lesson_id):
+    """Get classwork content for a lesson."""
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'id': lesson.id,
+                'title': lesson.title,
+                'description': lesson.description,
+                'classwork': []  # Empty for now
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/classwork/lessons/<lesson_id>/dashboard')
+def classwork_dashboard(lesson_id):
+    """Get classwork dashboard for a lesson."""
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        return jsonify({
+            'success': True,
+            'data': {
+                'lesson_id': lesson_id,
+                'total_tasks': 0,
+                'completed_tasks': 0,
+                'progress': 0
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/classwork/lessons/<lesson_id>/materials')
+def classwork_materials(lesson_id):
+    """Get classwork materials for a lesson."""
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        return jsonify({
+            'success': True,
+            'data': []
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/classwork/lessons/<lesson_id>/tasks')
+def classwork_tasks(lesson_id):
+    """Get classwork tasks for a lesson."""
+    # Simple check - if no user_id in session, return 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        return jsonify({
+            'success': True,
+            'data': []
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Legacy routes for backward compatibility - removed to prevent redirect loops
 # All authentication routes are now handled by register_bp

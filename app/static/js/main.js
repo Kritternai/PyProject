@@ -496,6 +496,217 @@ window.deleteSection = function(lessonId, sectionId) {
 }; 
 
 // Global functions for note operations
+window.loadNote = function(noteId) {
+  console.log('🔧 Loading note for ID:', noteId);
+  
+  // Get lesson ID from URL
+  const pathParts = window.location.pathname.split('/');
+  const lessonId = pathParts[2]; // /class/{lessonId}/...
+  
+  // Fetch note data
+  fetch(`/class/${lessonId}/notes/${noteId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Populate the note editor with the loaded data
+        const titleInput = document.getElementById('noteTitle');
+        const contentEditor = document.getElementById('noteContent');
+        
+        console.log('🔍 Debug - titleInput element:', titleInput);
+        console.log('🔍 Debug - contentEditor element:', contentEditor);
+        
+        if (titleInput) {
+          titleInput.value = data.data.title;
+          console.log('✅ Title loaded:', data.data.title);
+        } else {
+          console.error('❌ Title input not found!');
+        }
+        
+        if (contentEditor) {
+          // Check if it's contenteditable or textarea
+          if (contentEditor.contentEditable === 'true') {
+            contentEditor.innerHTML = data.data.content;
+            console.log('✅ Content loaded (innerHTML):', data.data.content);
+          } else {
+            contentEditor.value = data.data.content;
+            console.log('✅ Content loaded (value):', data.data.content);
+          }
+        } else {
+          console.error('❌ Content editor not found!');
+        }
+        
+        // Set current note ID for updates
+        window.currentNoteId = noteId;
+        currentNoteId = noteId; // Also set the global variable
+        
+        // Start auto-save for loaded note
+        startAutoSave();
+        
+        console.log('✅ Note loaded successfully');
+      } else {
+        console.error('❌ Error loading note:', data.error);
+      }
+    })
+    .catch(error => {
+      console.error('❌ Error loading note:', error);
+    });
+};
+
+window.createNewNote = function() {
+  console.log('🔧 Creating new note');
+  
+  // Clear current note ID
+  window.currentNoteId = null;
+  currentNoteId = null; // Also clear the global variable
+  
+  // Clear the editor
+  const titleInput = document.getElementById('noteTitle');
+  const contentEditor = document.getElementById('noteContent');
+  
+  if (titleInput) {
+    titleInput.value = '';
+  }
+  
+  if (contentEditor) {
+    if (contentEditor.contentEditable === 'true') {
+      contentEditor.innerHTML = '';
+    } else {
+      contentEditor.value = '';
+    }
+  }
+  
+  // Focus on title
+  if (titleInput) {
+    titleInput.focus();
+  }
+  
+  // Start auto-save for new note
+  startAutoSave();
+  
+  console.log('✅ New note created');
+};
+
+// Auto-save functionality
+function startAutoSave() {
+  console.log('🔧 Starting auto-save');
+  
+  // Clear existing timer
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+  }
+  
+  // Start new timer
+  autoSaveTimer = setInterval(() => {
+    autoSaveNote();
+  }, autoSaveInterval);
+  
+  // Add event listeners for immediate auto-save on input
+  const titleInput = document.getElementById('noteTitle');
+  const contentEditor = document.getElementById('noteContent');
+  
+  if (titleInput) {
+    titleInput.addEventListener('input', () => {
+      // Clear existing timer and restart
+      if (autoSaveTimer) {
+        clearInterval(autoSaveTimer);
+      }
+      autoSaveTimer = setInterval(() => {
+        autoSaveNote();
+      }, autoSaveInterval);
+    });
+  }
+  
+  if (contentEditor) {
+    contentEditor.addEventListener('input', () => {
+      // Clear existing timer and restart
+      if (autoSaveTimer) {
+        clearInterval(autoSaveTimer);
+      }
+      autoSaveTimer = setInterval(() => {
+        autoSaveNote();
+      }, autoSaveInterval);
+    });
+  }
+}
+
+function stopAutoSave() {
+  console.log('🔧 Stopping auto-save');
+  
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+    autoSaveTimer = null;
+  }
+  
+  // Remove event listeners
+  const titleInput = document.getElementById('noteTitle');
+  const contentEditor = document.getElementById('noteContent');
+  
+  if (titleInput) {
+    titleInput.removeEventListener('input', () => {});
+  }
+  
+  if (contentEditor) {
+    contentEditor.removeEventListener('input', () => {});
+  }
+}
+
+// Function to stop auto-save when leaving note
+window.stopNoteAutoSave = function() {
+  stopAutoSave();
+};
+
+function autoSaveNote() {
+  const title = document.getElementById('noteTitle')?.value?.trim();
+  const content = document.getElementById('noteContent')?.innerHTML || document.getElementById('noteContent')?.value;
+  
+  // Only auto-save if there's content
+  if (!title && !content) {
+    return;
+  }
+  
+  console.log('🔧 Auto-saving note...');
+  
+  // Get lesson ID from URL
+  const pathParts = window.location.pathname.split('/');
+  const lessonId = pathParts[2]; // /class/{lessonId}/...
+  
+  const formData = new FormData();
+  formData.append('title', title || '');
+  formData.append('content', content || '');
+  formData.append('status', 'pending');
+  
+  const url = currentNoteId ? 
+    `/class/${lessonId}/notes/${currentNoteId}/update` : 
+    `/class/${lessonId}/notes/create`;
+  
+  fetch(url, {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Update currentNoteId if it was a new note
+      if (!currentNoteId && data.data?.id) {
+        currentNoteId = data.data.id;
+        window.currentNoteId = data.data.id;
+      }
+      
+      // Update last saved indicator
+      const lastSaved = document.getElementById('lastSaved');
+      if (lastSaved) {
+        lastSaved.textContent = 'Auto-saved';
+        lastSaved.style.color = '#28a745';
+      }
+      
+      console.log('✅ Auto-saved successfully');
+    }
+  })
+  .catch(error => {
+    console.error('❌ Auto-save error:', error);
+  });
+}
+
 window.loadNoteEdit = function(noteId) {
   console.log('DEBUG: Loading note edit for ID:', noteId);
   
@@ -1517,6 +1728,7 @@ window.sortNotes = function(sortBy) {
 // iPhone-style Notes Functions
 let currentNoteId = null;
 let autoSaveTimer = null;
+let autoSaveInterval = 2000; // Auto-save every 2 seconds
 
 window.openNote = function(noteId) {
     console.log(`🔧 Opening note: ${noteId}`);
@@ -1582,6 +1794,9 @@ window.saveNote = function() {
     const url = currentNoteId ? 
         `/class/${lessonId}/notes/${currentNoteId}/update` : 
         `/class/${lessonId}/notes/create`;
+    
+    console.log('🔧 Saving note - currentNoteId:', currentNoteId);
+    console.log('🔧 Using URL:', url);
     
     fetch(url, {
         method: 'POST',
