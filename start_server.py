@@ -33,9 +33,9 @@ def print_error(msg: str) -> None:
 
 
 def print_header(msg: str) -> None:
-    print("=" * 77)
+    print("=" * 80)
     print(msg)
-    print("=" * 77)
+    print("=" * 80)
 
 
 def in_venv() -> bool:
@@ -239,7 +239,7 @@ def try_port(port: int) -> bool:
 
 def start_flask_server() -> None:
     """Start Flask development server"""
-    print_header("🚀 Starting Smart Learning Hub MVC Architecture Flask Application 🚀")
+    print_header("Starting Smart Learning Hub MVC Architecture Flask Application")
     
     port = 5003 if try_port(5003) else 5004
     print_status(f"Application will be available at: http://localhost:{port}")
@@ -251,9 +251,9 @@ def start_flask_server() -> None:
     
     # Start Flask app
     print_status("Starting Flask development server...")
-    print_status(f"Flask will be available at: http://localhost:{port}")
-    print_status("Web Interface: http://localhost:{port}")
-    print_status("API Endpoints: http://localhost:{port}/api/")
+    print_status(f"Server running on: http://localhost:{port}")
+    print_status(f"Web Interface: http://localhost:{port}")
+    print_status(f"API Endpoints: http://localhost:{port}/api/")
     
     try:
         from app import create_app
@@ -286,7 +286,7 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print_header("Shutting Down Smart Learning Hub MVC Architecture")
-        print_status("Goodbye! 👋")
+        print_status("Goodbye!")
     except Exception as e:
         print_error(f"Unexpected error: {e}")
         sys.exit(1)
