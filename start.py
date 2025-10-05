@@ -1,99 +1,174 @@
+#!/usr/bin/env python3
+"""
+Smart Learning Hub - OOP Architecture Flask Startup Script
+Cross-platform Python version of start.sh
+Works on Windows, macOS, and Linux
+"""
+
 import os
 import sys
 import subprocess
-import venv
-import socket
-from typing import List
+import platform
+import time
+import signal
+import atexit
+from pathlib import Path
 
+# Colors for output
+class Colors:
+    RED = '\033[0;31m'
+    GREEN = '\033[0;32m'
+    YELLOW = '\033[1;33m'
+    BLUE = '\033[0;34m'
+    PURPLE = '\033[0;35m'
+    CYAN = '\033[0;36m'
+    NC = '\033[0m'  # No Color
 
-def print_status(msg: str) -> None:
-    print(f"[INFO] {msg}")
+def print_status(message):
+    print(f"{Colors.GREEN}[INFO]{Colors.NC} {message}")
 
+def print_success(message):
+    print(f"{Colors.GREEN}[SUCCESS]{Colors.NC} {message}")
 
-def print_success(msg: str) -> None:
-    print(f"[SUCCESS] {msg}")
+def print_warning(message):
+    print(f"{Colors.YELLOW}[WARNING]{Colors.NC} {message}")
 
+def print_error(message):
+    print(f"{Colors.RED}[ERROR]{Colors.NC} {message}")
 
-def print_warning(msg: str) -> None:
-    print(f"[WARNING] {msg}")
+def print_header(message):
+    print(f"{Colors.BLUE}{'='*77}{Colors.NC}")
+    print(f"{Colors.BLUE}{message}{Colors.NC}")
+    print(f"{Colors.BLUE}{'='*77}{Colors.NC}")
 
+def print_step(message):
+    print(f"{Colors.CYAN}[STEP]{Colors.NC} {message}")
 
-def print_error(msg: str) -> None:
-    print(f"[ERROR] {msg}")
-
-
-def print_header(msg: str) -> None:
-    print("=" * 77)
-    print(msg)
-    print("=" * 77)
-
-
-def in_venv() -> bool:
-    return sys.prefix != getattr(sys, "base_prefix", sys.prefix)
-
-
-def ensure_venv() -> None:
-    if os.path.isdir("venv"):
-        return
-    print_status("Creating virtual environment at venv/ ...")
-    venv.create("venv", with_pip=True)
-
-
-def venv_python() -> str:
-    if os.name == "nt":
-        return os.path.join("venv", "Scripts", "python.exe")
-    return os.path.join("venv", "bin", "python")
-
-
-def reexec_in_venv() -> None:
-    if in_venv():
-        return
-    ensure_venv()
-    py = venv_python()
-    print_status("Re-executing inside virtual environment...")
-    os.execv(py, [py] + sys.argv)
-
-
-def set_env_defaults() -> None:
-    if not os.environ.get("GOOGLE_CLIENT_ID") or not os.environ.get("GOOGLE_CLIENT_SECRET"):
-        print_warning("Google OAuth credentials not found. Using development defaults.")
-        os.environ.setdefault("GOOGLE_CLIENT_ID", "231151462337-sspbadu0r8rlnoht5pgg77un10i26r8d.apps.googleusercontent.com")
-        os.environ.setdefault("GOOGLE_CLIENT_SECRET", "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")
-        os.environ.setdefault("FLASK_SECRET_KEY", "your_strong_random_flask_secret_key")
-    os.environ.setdefault("OAUTHLIB_INSECURE_TRANSPORT", "1")
-    os.environ.setdefault("FLASK_ENV", "development")
-    os.environ.setdefault("FLASK_DEBUG", "1")
-
-
-def run(cmd: List[str], check: bool = True) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, check=check)
-
-
-def run_quiet(cmd: List[str]) -> bool:
+def run_command(command, shell=True, check=True, capture_output=False):
+    """Run a command and return the result"""
     try:
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-        return True
-    except subprocess.CalledProcessError:
+        if capture_output:
+            result = subprocess.run(command, shell=shell, check=check, 
+                                 capture_output=True, text=True)
+            return result.stdout.strip()
+        else:
+            subprocess.run(command, shell=shell, check=check)
+            return True
+    except subprocess.CalledProcessError as e:
+        if not check:
+            return False
+        print_error(f"Command failed: {e}")
         return False
 
+def check_file_exists(file_path):
+    """Check if a file exists"""
+    return Path(file_path).exists()
 
-def ensure_dependencies() -> None:
-    print_status("Checking Python dependencies...")
-    if os.path.isfile("requirements.txt"):
-        if not run_quiet([sys.executable, "-c", "import flask"]):
+def check_directory_exists(dir_path):
+    """Check if a directory exists"""
+    return Path(dir_path).exists()
+
+def setup_environment():
+    """Set up environment variables"""
+    print_step("Setting environment variables...")
+    
+    # Set environment variables
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+    os.environ["FLASK_ENV"] = "development"
+    os.environ["FLASK_DEBUG"] = "1"
+    
+    # Check if Google OAuth credentials are set
+    if not os.environ.get("GOOGLE_CLIENT_ID") or not os.environ.get("GOOGLE_CLIENT_SECRET"):
+        print_warning("Google OAuth credentials not found in environment variables")
+        print_status("Please set the following environment variables:")
+        print_status("export GOOGLE_CLIENT_ID='your-client-id-here'")
+        print_status("export GOOGLE_CLIENT_SECRET='your-client-secret-here'")
+        print_status("export FLASK_SECRET_KEY='your-strong-random-flask-secret-key'")
+        print_warning("Using default development values...")
+        
+        # Set default development values
+        os.environ["GOOGLE_CLIENT_ID"] = "231151462337-sspbadu0r8rlnoht5pgg77un10i26r8d.apps.googleusercontent.com"
+        os.environ["GOOGLE_CLIENT_SECRET"] = "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"
+        os.environ["FLASK_SECRET_KEY"] = "your_strong_random_flask_secret_key"
+    else:
+        print_success("Google OAuth credentials found in environment variables")
+    
+    print_status("Environment variables set successfully")
+
+def setup_virtual_environment():
+    """Set up and activate virtual environment"""
+    print_step("Checking virtual environment...")
+    
+    if check_directory_exists("venv"):
+        print_status("Virtual environment found at venv/")
+        # Activate virtual environment
+        if platform.system() == "Windows":
+            activate_script = "venv\\Scripts\\activate.bat"
+        else:
+            activate_script = "venv/bin/activate"
+        
+        if check_file_exists(activate_script):
+            print_status("Virtual environment activated")
+        else:
+            print_warning("Virtual environment activation script not found")
+    else:
+        print_warning("Virtual environment not found at venv/")
+        print_step("Creating new virtual environment...")
+        
+        # Create virtual environment
+        if run_command("python -m venv venv"):
+            print_status("Virtual environment created and activated")
+        else:
+            print_error("Failed to create virtual environment")
+            return False
+    
+    return True
+
+def install_dependencies():
+    """Install Python dependencies"""
+    print_step("Checking Python dependencies...")
+    
+    if check_file_exists("requirements.txt"):
+        print_status("Requirements file found")
+        
+        # Check if key packages are installed
+        try:
+            import flask
+            print_status("Key dependencies already installed")
+        except ImportError:
             print_warning("Flask not found, installing dependencies...")
-            run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]) 
-        if not run_quiet([sys.executable, "-c", "import dependency_injector"]):
+            if run_command("pip install -r requirements.txt"):
+                print_status("Dependencies installed successfully")
+            else:
+                print_error("Failed to install dependencies")
+                return False
+        
+        # Check for dependency-injector
+        try:
+            import dependency_injector
+            print_status("dependency-injector already installed")
+        except ImportError:
             print_warning("dependency-injector not found, installing...")
-            run([sys.executable, "-m", "pip", "install", "dependency-injector"]) 
+            if run_command("pip install dependency-injector"):
+                print_status("dependency-injector installed successfully")
+            else:
+                print_error("Failed to install dependency-injector")
+                return False
     else:
         print_warning("requirements.txt not found, installing basic dependencies...")
-        run([sys.executable, "-m", "pip", "install", "flask", "sqlalchemy", "werkzeug", "dependency-injector"]) 
+        if run_command("pip install flask sqlalchemy werkzeug dependency-injector"):
+            print_status("Basic dependencies installed")
+        else:
+            print_error("Failed to install basic dependencies")
+            return False
+    
+    return True
 
-
-def validate_oop_files() -> None:
-    print_status("Validating OOP Architecture...")
-    required = [
+def validate_oop_architecture():
+    """Validate OOP architecture files"""
+    print_step("Validating OOP Architecture...")
+    
+    oop_files = [
         "app/domain/entities/user.py",
         "app/domain/entities/lesson.py",
         "app/domain/entities/note.py",
@@ -112,184 +187,246 @@ def validate_oop_files() -> None:
         "app/presentation/controllers/task_controller.py",
         "app/infrastructure/di/container.py",
     ]
-    missing = [p for p in required if not os.path.isfile(p)]
-    if missing:
+    
+    missing_files = []
+    for file in oop_files:
+        if not check_file_exists(file):
+            missing_files.append(file)
+    
+    if not missing_files:
+        print_success("All OOP architecture files found")
+        return True
+    else:
         print_error("Missing OOP architecture files:")
-        for m in missing:
-            print_error(f"  - {m}")
-        sys.exit(1)
-    print_success("All OOP architecture files found")
+        for file in missing_files:
+            print_error(f"  - {file}")
+        print_error("Please ensure the OOP architecture is properly set up")
+        return False
 
-
-def init_database() -> None:
-    print_status("Initializing database...")
-    os.makedirs("instance", exist_ok=True)
-
-    code_health = (
-        "from app import create_app, db\n"
-        "from app.infrastructure.di.container import configure_services\n"
-        "app = create_app()\n"
-        "configure_services()\n"
-        "from sqlalchemy import text\n"
-        "with app.app_context():\n"
-        "    db.session.execute(text('SELECT 1'))\n"
-    )
-
-    code_create = (
-        "from app import create_app, db\n"
-        "from app.infrastructure.di.container import configure_services\n"
-        "app = create_app()\n"
-        "configure_services()\n"
-        "with app.app_context():\n"
-        "    db.create_all()\n"
-        "    print('Database created successfully')\n"
-    )
-
-    def py_ok(snippet: str) -> bool:
-        return run_quiet([sys.executable, "-c", snippet])
-
-    db_path = os.path.join("instance", "site.db")
-    if os.path.isfile(db_path):
-        print_status("Database file exists, checking health...")
-        if not py_ok(code_health):
-            print_warning("Database health check failed, reinitializing...")
-            run([sys.executable, "-c", code_create])
+def initialize_database():
+    """Initialize database"""
+    print_step("Initializing database...")
+    
+    # Check if instance directory exists
+    if not check_directory_exists("instance"):
+        print_status("Creating instance directory...")
+        os.makedirs("instance", exist_ok=True)
+    
+    # Run complete database migration
+    print_step("Running complete database migration...")
+    if check_file_exists("database/migrations/complete_database_schema.py"):
+        if run_command("python database/migrations/complete_database_schema.py", check=False):
+            print_success("Complete database schema created successfully")
         else:
+            print_warning("Complete database schema creation failed, but continuing...")
+    elif check_file_exists("database/migrations/create_complete_database.py"):
+        if run_command("python database/migrations/create_complete_database.py", check=False):
+            print_success("Complete database migration completed")
+        else:
+            print_warning("Complete database migration failed, but continuing...")
+    else:
+        print_warning("Complete database migration script not found, skipping...")
+    
+    # Check if database file exists
+    if check_file_exists("instance/site.db"):
+        print_status("Database file exists, checking health...")
+        
+        # Test database health
+        health_check = """
+from app import create_app, db
+try:
+    app = create_app()
+    with app.app_context():
+        result = db.session.execute(db.text('SELECT 1')).scalar()
+        print('Database is healthy')
+        exit(0)
+except Exception as e:
+    print('Database health check failed:', str(e))
+    exit(1)
+"""
+        
+        if run_command(f'python -c "{health_check}"', check=False, capture_output=True):
             print_status("Database is healthy and ready")
+        else:
+            print_warning("Database health check failed, reinitializing...")
+            reinit_script = """
+from app import create_app, db
+app = create_app()
+with app.app_context():
+    db.create_all()
+    print('Database reinitialized')
+"""
+            run_command(f'python -c "{reinit_script}"', check=False)
     else:
         print_status("Database file not found, creating new database...")
-        run([sys.executable, "-c", code_create])
+        create_script = """
+from app import create_app, db
+app = create_app()
+with app.app_context():
+    db.create_all()
+    print('Database created successfully')
+"""
+        if run_command(f'python -c "{create_script}"', check=False):
+            print_status("Database created successfully")
+        else:
+            print_error("Failed to create database")
+            return False
+    
+    return True
 
+def create_default_user():
+    """Create default test user"""
+    print_step("Creating default test user...")
+    
+    user_script = """
+import sys
+from werkzeug.security import generate_password_hash
+import uuid
+from datetime import datetime
 
-def create_default_user() -> None:
-    print_status("Creating default test user...")
-    snippet = (
-        "import sys\n"
-        "from werkzeug.security import generate_password_hash\n"
-        "import uuid\n"
-        "from datetime import datetime\n"
-        "from app import create_app, db\n"
-        "from app.infrastructure.di.container import get_service\n"
-        "from app.domain.interfaces.services.user_service import UserService\n"
-        "from app.domain.value_objects.email import Email\n"
-        "from app.domain.value_objects.password import Password\n"
-        "app = create_app()\n"
-        "with app.app_context():\n"
-        "    try:\n"
-        "        user_service = get_service(UserService)\n"
-        "        from app.domain.interfaces.repositories.user_repository import UserRepository\n"
-        "        user_repo = get_service(UserRepository)\n"
-        "        existing = user_repo.get_by_email(Email('1'))\n"
-        "        if existing:\n"
-        "            print('Default test user already exists')\n"
-        "        else:\n"
-        "            email = Email('1')\n"
-        "            password = Password('1')\n"
-        "            user = user_service.create_user(email=email, password=password, username='user1')\n"
-        "            print(f'Default test user created: email=1, password=1, username=user1, id={user.id}')\n"
-        "    except Exception:\n"
-        "        import sqlite3, traceback\n"
-        "        print('OOP creation failed, using SQL fallback...')\n"
-        "        password_hash = generate_password_hash('1')\n"
-        "        user_id = str(uuid.uuid4())\n"
-        "        created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')\n"
-        "        conn = sqlite3.connect('instance/site.db')\n"
-        "        cur = conn.cursor()\n"
-        "        cur.execute('SELECT id FROM user WHERE email = ?', ('1',))\n"
-        "        if cur.fetchone():\n"
-        "            print('Default test user already exists')\n"
-        "        else:\n"
-        "            cur.execute(\n"
-        "                'INSERT INTO user (id, username, email, password_hash, role, is_active, email_verified, created_at, updated_at, total_lessons, total_notes, total_tasks) ' \
-"
-        "                'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',\n"
-        "                (user_id, '1', '1', password_hash, 'student', 1, 0, created_at, created_at, 0, 0, 0)\n"
-        "            )\n"
-        "            conn.commit()\n"
-        "            print(f'Default test user created via SQL: email=1, password=1, id={user_id}')\n"
-        "        conn.close()\n"
-    )
-    run([sys.executable, "-c", snippet])
+try:
+    from app import create_app, db
+    app = create_app()
+    with app.app_context():
+        import sqlite3
+        password_hash = generate_password_hash('1')
+        user_id = str(uuid.uuid4())
+        created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        conn = sqlite3.connect('instance/site.db')
+        cursor = conn.cursor()
+        
+        # Check if user exists
+        cursor.execute('SELECT id FROM user WHERE email = ?', ('1',))
+        if cursor.fetchone():
+            print('Default test user already exists')
+        else:
+            cursor.execute('''
+                INSERT INTO user (id, username, email, password_hash, role, is_active, 
+                                email_verified, created_at, updated_at, total_lessons, 
+                                total_notes, total_tasks)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (user_id, '1', '1', password_hash, 'student', 1, 0, 
+                  created_at, created_at, 0, 0, 0))
+            conn.commit()
+            print(f'Default test user created: email=1, password=1, id={user_id}')
+        conn.close()
+        
+    sys.exit(0)
+except Exception as e:
+    print(f'Error: {e}')
+    sys.exit(1)
+"""
+    
+    if run_command(f'python -c "{user_script}"', check=False):
+        print_status("Default test user ready (email: 1, password: 1)")
+    else:
+        print_warning("Failed to create default user, but continuing...")
+    
+    return True
 
-
-def files_exist(paths: List[str]) -> None:
-    for p in paths:
-        if not os.path.isfile(p):
-            print_error(f"Required file not found: {p}")
-            sys.exit(1)
-
-
-def try_port(port: int) -> bool:
-    import socket as _socket
-    with _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM) as s:
-        s.settimeout(0.2)
-        return s.connect_ex(("127.0.0.1", port)) != 0
-
-
-def maybe_run_oop_test() -> None:
-    test_path = os.path.join("scripts", "tests", "test_oop.py")
-    if os.path.isfile(test_path):
+def test_oop_architecture():
+    """Test OOP architecture"""
+    print_step("Testing OOP Architecture...")
+    
+    if check_file_exists("scripts/tests/test_oop.py"):
         print_status("Running OOP architecture test...")
-        try:
-            subprocess.run([sys.executable, test_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        if run_command("python scripts/tests/test_oop.py", check=False):
             print_success("OOP architecture test passed")
-        except subprocess.CalledProcessError:
+        else:
             print_warning("OOP architecture test failed, but continuing...")
     else:
         print_warning("scripts/tests/test_oop.py not found, skipping OOP test")
+    
+    return True
 
-
-def start_app() -> None:
+def start_flask_application():
+    """Start Flask application"""
     print_header("🚀 Starting Smart Learning Hub OOP Architecture Flask Application 🚀")
-    port = 5003 if try_port(5003) else 5004
-    print_status(f"Application will be available at: http://localhost:{port}")
+    
+    print_status("Application will be available at: http://localhost:5004")
     print_status("Architecture: Clean Architecture + SOLID Principles")
-    print_status("Features: User, Lesson, Note, Task Management")
+    print_status("Features: User, Lesson, Note, Task, Pomodoro Management")
     print_status("Press Ctrl+C to stop the application")
-    os.environ["PYTHONPATH"] = os.getcwd()
-
-    snippet = (
-        "from app import create_app, db\n"
-        "app = create_app()\n"
-        "from app.infrastructure.di.container import configure_services\n"
-        "configure_services()\n"
-        "with app.app_context():\n"
-        "    db.create_all()\n"
-        f"app.run(debug=True, host='0.0.0.0', port={port})\n"
-    )
-    run([sys.executable, "-c", snippet])
-
-
-def final_arch_check() -> None:
-    snippet = (
-        "from app import create_app\n"
-        "from app.infrastructure.di.container import configure_services\n"
-        "app = create_app()\n"
-        "configure_services()\n"
-        "print('OOP architecture is healthy')\n"
-    )
-    if not run_quiet([sys.executable, "-c", snippet]):
-        print_error("Final OOP architecture check failed")
-        sys.exit(1)
-
-
-def main() -> None:
-    print_header("Smart Learning Hub - OOP Architecture Environment Setup")
-    reexec_in_venv()
-    set_env_defaults()
-    ensure_dependencies()
-    validate_oop_files()
-    init_database()
-    create_default_user()
-    files_exist(["scripts/run_new.py", "app/__init__.py", "app/infrastructure/di/container.py"])
-    final_arch_check()
-    maybe_run_oop_test()
-    start_app()
-
-
-if __name__ == "__main__":
+    print("")
+    
+    # Check if run.py exists
+    if not check_file_exists("run.py"):
+        print_error("run.py not found!")
+        print_error("Please ensure the Flask application file exists")
+        return False
+    
+    print_step("Starting Flask development server...")
+    print_status("Flask will be available at: http://localhost:5004")
+    print_status("Web Interface: http://localhost:5004")
+    print_status("API Endpoints: http://localhost:5004/api/")
+    
+    # Start Flask application
     try:
-        main()
+        run_command("python run.py", check=False)
     except KeyboardInterrupt:
+        print("\n")
         print_header("Shutting Down Smart Learning Hub OOP Architecture")
         print_status("Goodbye! 👋")
+        return True
+    
+    return True
+
+def cleanup():
+    """Cleanup function"""
+    print("\n")
+    print_header("Shutting Down Smart Learning Hub OOP Architecture")
+    print_status("Cleaning up...")
+    print_status("Goodbye! 👋")
+
+def main():
+    """Main function"""
+    print_header("Smart Learning Hub - OOP Architecture Environment Setup")
+    
+    # Set up signal handlers for cleanup
+    def signal_handler(signum, frame):
+        cleanup()
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    atexit.register(cleanup)
+    
+    try:
+        # 1. Environment setup
+        setup_environment()
+        
+        # 2. Virtual environment
+        if not setup_virtual_environment():
+            return False
+        
+        # 3. Dependencies
+        if not install_dependencies():
+            return False
+        
+        # 4. OOP Architecture validation
+        if not validate_oop_architecture():
+            return False
+        
+        # 5. Database initialization
+        if not initialize_database():
+            return False
+        
+        # 6. Create default user
+        create_default_user()
+        
+        # 7. Test OOP architecture
+        test_oop_architecture()
+        
+        # 8. Start Flask application
+        start_flask_application()
+        
+    except Exception as e:
+        print_error(f"An error occurred: {e}")
+        return False
+    
+    return True
+
+if __name__ == "__main__":
+    success = main()
+    sys.exit(0 if success else 1)

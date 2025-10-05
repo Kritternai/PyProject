@@ -47,10 +47,6 @@ def create_app(config_name=None):
     # Import models to ensure they are registered with SQLAlchemy
     import_models()
     
-    # Start rate limiter cleanup task
-    from .core.rate_limiter_cleanup import start_cleanup_task
-    start_cleanup_task()
-    
     return app
 
 
