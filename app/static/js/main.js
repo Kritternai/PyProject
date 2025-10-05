@@ -18,51 +18,6 @@ function loadPage(page) {
           setupSectionFilter(); // เรียก setupSectionFilter() หลัง loadPage
           setupLessonSearchAndFilter(); // เรียก setupLessonSearchAndFilter หลัง loadPage
           
-          // Initialize Pomodoro if on pomodoro page
-          if (page === 'pomodoro') {
-            console.log('🍅 Initializing Pomodoro for SPA...');
-            
-            // Multiple retry attempts for SPA
-            const initPomodoro = () => {
-              if (typeof initializePomodoro === 'function') {
-                initializePomodoro();
-              } else if (typeof SimplePomodoro !== 'undefined') {
-                if (!window.pomodoro) {
-                  window.pomodoro = new SimplePomodoro();
-                  console.log('🍅 Simple Pomodoro Timer loaded via loadPage!');
-                }
-                
-                // Multiple retry attempts for SPA
-                const retryBinding = (attempt = 1) => {
-                  if (window.pomodoro && window.pomodoro.bindEvents) {
-                    console.log(`🔄 Retrying Pomodoro event binding (attempt ${attempt})...`);
-                    window.pomodoro.bindEvents();
-                    
-                    // Check if elements are found, if not retry
-                    const startBtn = document.getElementById('start-btn');
-                    if (!startBtn && attempt < 5) {
-                      setTimeout(() => retryBinding(attempt + 1), 300);
-                    } else if (startBtn) {
-                      console.log('✅ Pomodoro elements found and bound!');
-                    }
-                  }
-                };
-                
-                // Start retry attempts
-                setTimeout(() => retryBinding(), 200);
-                setTimeout(() => retryBinding(), 500);
-                setTimeout(() => retryBinding(), 1000);
-              }
-            };
-            
-            // Initial attempt
-            setTimeout(initPomodoro, 100);
-            
-            // Backup attempts
-            setTimeout(initPomodoro, 300);
-            setTimeout(initPomodoro, 600);
-          }
-          
           // Auto show Lesson Content tab and scroll if on lesson detail
           if (page.startsWith('class/')) {
             // Activate Content tab

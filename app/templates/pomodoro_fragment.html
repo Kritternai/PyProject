@@ -1,172 +1,23 @@
-<!-- Simple Pomodoro Timer Fragment -->
-<script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0">
-                        <i class="fas fa-clock me-2"></i>🍅 Pomodoro Timer
+                        <i class="fas fa-clock me-2"></i>Pomodoro Timer
                     </h4>
                 </div>
-                <div class="card-body text-center">
-                    <!-- Timer Display -->
+                <div class="card-body text-center py-5">
                     <div class="mb-4">
-                        <div id="timer-display" class="display-1 fw-bold text-primary">25:00</div>
-                        <div id="session-type" class="h5 text-muted">Focus Time</div>
+                        <i class="fas fa-tools fa-3x text-muted"></i>
                     </div>
-                    
-                    <!-- Progress Circle -->
-                    <div class="mb-4">
-                        <div class="progress-circle mx-auto" style="width: 200px; height: 200px;">
-                            <svg class="progress-ring" width="200" height="200">
-                                <circle class="progress-ring-circle" 
-                                        stroke="#e9ecef" 
-                                        stroke-width="8" 
-                                        fill="transparent" 
-                                        r="90" 
-                                        cx="100" 
-                                        cy="100"/>
-                                <circle class="progress-ring-circle progress-ring-fill" 
-                                        stroke="#007bff" 
-                                        stroke-width="8" 
-                                        fill="transparent" 
-                                        r="90" 
-                                        cx="100" 
-                                        cy="100" 
-                                        style="stroke-dasharray: 565.48; stroke-dashoffset: 0;"/>
-                            </svg>
-                        </div>
-                    </div>
-                    
-                    <!-- Session Counter -->
-                    <div class="mb-4">
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="text-muted">Session</div>
-                                <div id="pomodoro-counter" class="h4">0/4</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="text-muted">Today</div>
-                                <div class="h4 text-success">0</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Control Buttons -->
-                    <div class="mb-4">
-                        <button id="start-btn" class="btn btn-success btn-lg me-2">
-                            <i class="fas fa-play me-1"></i>Start
-                        </button>
-                        <button id="pause-btn" class="btn btn-warning btn-lg me-2" style="display: none;">
-                            <i class="fas fa-pause me-1"></i>Pause
-                        </button>
-                        <button id="resume-btn" class="btn btn-info btn-lg me-2" style="display: none;">
-                            <i class="fas fa-play me-1"></i>Resume
-                        </button>
-                        <button id="reset-btn" class="btn btn-danger btn-lg" style="display: none;">
-                            <i class="fas fa-stop me-1"></i>Reset
-                        </button>
-                    </div>
-                    
-                    <!-- Quick Actions -->
-                    <div class="mb-3">
-                        <button class="btn btn-outline-primary btn-sm me-2" onclick="window.pomodoro.setSessionType('focus')">
-                            <i class="fas fa-brain me-1"></i>Focus (25min)
-                        </button>
-                        <button class="btn btn-outline-info btn-sm me-2" onclick="window.pomodoro.setSessionType('short_break')">
-                            <i class="fas fa-coffee me-1"></i>Short Break (5min)
-                        </button>
-                        <button class="btn btn-outline-success btn-sm" onclick="window.pomodoro.setSessionType('long_break')">
-                            <i class="fas fa-utensils me-1"></i>Long Break (15min)
-                        </button>
-                    </div>
-                    
-                    <!-- Session Info -->
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <div class="text-muted small">Focus</div>
-                            <div class="fw-bold">25 min</div>
-                        </div>
-                        <div class="col-4">
-                            <div class="text-muted small">Short Break</div>
-                            <div class="fw-bold">5 min</div>
-                        </div>
-                        <div class="col-4">
-                            <div class="text-muted small">Long Break</div>
-                            <div class="fw-bold">15 min</div>
-                        </div>
+                    <h3 class="text-muted">Coming Soon</h3>
+                    <p class="text-muted">Pomodoro Timer feature is under development</p>
+                    <div class="mt-4">
+                        <span class="badge bg-primary">In Development</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-.progress-circle {
-    position: relative;
-}
-
-.progress-ring {
-    transform: rotate(-90deg);
-}
-
-.progress-ring-circle {
-    transition: stroke-dashoffset 0.5s ease-in-out;
-}
-
-.progress-ring-fill {
-    stroke-dasharray: 565.48;
-    stroke-dashoffset: 0;
-}
-
-.display-1 {
-    font-size: 4rem;
-    font-weight: 700;
-}
-
-@media (max-width: 768px) {
-    .display-1 {
-        font-size: 3rem;
-    }
-    
-    .progress-circle {
-        width: 150px !important;
-        height: 150px !important;
-    }
-    
-    .progress-ring {
-        width: 150px;
-        height: 150px;
-    }
-    
-    .progress-ring-circle {
-        r: 65;
-        cx: 75;
-        cy: 75;
-    }
-}
-</style>
-
-<script>
-// Initialize Pomodoro when fragment is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof initializePomodoro === 'function') {
-        initializePomodoro();
-    } else {
-        // Fallback: initialize directly
-        if (!window.pomodoro) {
-            window.pomodoro = new SimplePomodoro();
-            console.log('🍅 Simple Pomodoro Timer loaded via fragment!');
-        }
-    }
-});
-
-// Also initialize immediately
-if (!window.pomodoro) {
-    window.pomodoro = new SimplePomodoro();
-    console.log('🍅 Simple Pomodoro Timer loaded via fragment!');
-}
-</script>
