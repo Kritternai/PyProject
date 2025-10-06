@@ -1,27 +1,65 @@
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                                <div class="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto">
-                                    <h2 class="text-2xl font-bold mb-4 text-center">Pomodoro Timer</h2>
-                                    <div id="timer-display" class="text-5xl font-mono text-center mb-6">25:00</div>
-                                    <div class="flex justify-center gap-4 mb-4">
-                                        <button id="start-btn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Start</button>
-                                        <button id="pause-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Pause</button>
-                                        <button id="reset-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Reset</button>
-                                    </div>
-                                    <div class="flex justify-center gap-2 mb-4">
-                                        <button class="mode-btn bg-blue-500 text-white px-2 py-1 rounded active" data-mode="pomodoro">Pomodoro</button>
-                                        <button class="mode-btn bg-blue-400 text-white px-2 py-1 rounded" data-mode="short">Short Break</button>
-                                        <button class="mode-btn bg-blue-300 text-white px-2 py-1 rounded" data-mode="long">Long Break</button>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                                        <div id="progress-bar" class="bg-blue-500 h-2.5 rounded-full" style="width: 0%"></div>
-                                    </div>
-                                    <div class="text-center text-gray-600">Completed: <span id="completed-sessions">0</span></div>
-                                </div>
-                                <script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center" 
+     style="background: linear-gradient(135deg,#e0e0e0, #fafafa, #D3D3D3);">
+  <div class="row w-100 justify-content-center">
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-lg border-0 rounded-4" style="backdrop-filter: blur(10px); background-color: rgba(255,255,255,0.85);">
+        <div class="card-body text-center p-5">
+
+          <!-- Title -->
+          <h2 class="fw-bold mb-4 text-danger">
+            🍅 Pomodoro Timer
+          </h2>
+
+          <!-- Timer Display -->
+          <div id="timer-display" class="display-3 fw-semibold text-dark mb-4">
+            25:00
+          </div>
+
+          <!-- Control Buttons -->
+          <div class="d-flex justify-content-center gap-3 mb-4">
+            <button id="start-btn" class="btn btn-success px-4 py-2 shadow-sm">
+              ▶ Start
+            </button>
+            <button id="pause-btn" class="btn btn-warning px-4 py-2 shadow-sm text-white">
+              ⏸ Pause
+            </button>
+            <button id="reset-btn" class="btn btn-danger px-4 py-2 shadow-sm">
+              🔄 Reset
+            </button>
+          </div>
+
+          <!-- Mode Buttons -->
+          <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
+            <button class="mode-btn btn btn-outline-danger active" data-mode="pomodoro">
+              Pomodoro
+            </button>
+            <button class="mode-btn btn btn-outline-primary" data-mode="short">
+              Short Break
+            </button>
+            <button class="mode-btn btn btn-outline-info" data-mode="long">
+              Long Break
+            </button>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress mb-4" style="height: 10px;">
+            <div id="progress-bar" 
+                 class="progress-bar bg-danger" 
+                 role="progressbar" 
+                 style="width: 0%;" 
+                 aria-valuemin="0" aria-valuemax="100">
             </div>
+          </div>
+
+          <!-- Completed Sessions -->
+          <div class="text-muted">
+            Completed Sessions: 
+            <span id="completed-sessions" class="fw-bold text-danger">0</span>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
 </div>

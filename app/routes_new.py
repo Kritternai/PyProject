@@ -1063,3 +1063,5 @@ def _save_note_uploads(note_id, image_file, other_file, user_id):
     _save(other_file, 'document')
     if saved_any:
         db.session.commit()
+
+
