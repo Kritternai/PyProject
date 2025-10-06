@@ -70,7 +70,7 @@ function updateDisplay() {
   };
   document.getElementById('statusText').textContent = statusTexts[state.mode];
   
-  document.getElementById('startBtn').textContent = state.isRunning ? 'หยุด' : 'เริ่ม';
+  document.getElementById('startBtn').textContent = state.isRunning ? 'Stop' : 'Start';
   document.title = `${formatTime(state.timeLeft)} - Focus Timer`;
 }
 

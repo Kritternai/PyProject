@@ -6,16 +6,16 @@
         <span>Focus Timer</span>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" id="statsBtn" title="สถิติ">📊</button>
-        <button class="icon-btn" id="settingsBtn" title="ตั้งค่า">⚙️</button>
+  <button class="icon-btn" id="statsBtn" title="Statistics">📊</button>
+  <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
       </div>
     </header>
 
     <div class="main-card">
       <div class="mode-tabs">
-        <button class="mode-tab active" data-mode="pomodoro">Pomodoro</button>
-        <button class="mode-tab" data-mode="short">Shot Break</button>
-        <button class="mode-tab" data-mode="long">Long Break</button>
+  <button class="mode-tab active" data-mode="pomodoro">Pomodoro</button>
+  <button class="mode-tab" data-mode="short">Short Break</button>
+  <button class="mode-tab" data-mode="long">Long Break</button>
       </div>
 
       <div class="timer-display">
@@ -26,19 +26,19 @@
       </div>
 
       <div class="controls">
-        <button class="btn btn-primary" id="startBtn">Start</button>
-        <button class="btn btn-secondary" id="resetBtn">Reset</button>
-        <button class="btn btn-secondary" id="skipBtn">Skip</button>
+  <button class="btn btn-primary" id="startBtn">Start</button>
+  <button class="btn btn-secondary" id="resetBtn">Reset</button>
+  <button class="btn btn-secondary" id="skipBtn">Skip</button>
       </div>
 
       <div class="status-info">
         <div class="badge">
           <span>🔥</span>
-          <span id="cycleInfo">รอบที่ #1</span>
+          <span id="cycleInfo">Cycle #1</span>
         </div>
         <div class="badge">
           <span>🎯</span>
-          <span id="statusText">เวลาที่จะมุ่งมั่น!</span>
+          <span id="statusText">Time to focus!</span>
         </div>
       </div>
     </div>
@@ -46,18 +46,18 @@
     <div class="grid-layout">
       <div class="section-card">
         <div class="section-title">
-          <span>📝 งานของคุณ</span>
-          <span style="font-size: 14px; color: var(--text-muted);" id="taskCount">0 งาน</span>
+          <span>📝 Your Tasks</span>
+          <span style="font-size: 14px; color: var(--text-muted);" id="taskCount">0 tasks</span>
         </div>
         <div class="task-input">
-          <input type="text" id="taskInput" placeholder="เพิ่มงานใหม่..." maxlength="100">
-          <button class="btn btn-primary" id="addTaskBtn">เพิ่ม</button>
+          <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="100">
+          <button class="btn btn-primary" id="addTaskBtn">Add</button>
         </div>
         <ul class="task-list" id="taskList"></ul>
       </div>
 
       <div class="section-card">
-        <div class="section-title">📈 สถิติวันนี้</div>
+  <div class="section-title">📈 Today's Stats</div>
         <div class="stats-grid">
           <div class="stat-box">
             <div class="stat-value" id="completedPomodoros">0</div>
@@ -65,15 +65,15 @@
           </div>
           <div class="stat-box">
             <div class="stat-value" id="focusTime">0h</div>
-            <div class="stat-label">เวลาโฟกัส</div>
+            <div class="stat-label">Focus Time</div>
           </div>
           <div class="stat-box">
             <div class="stat-value" id="completedTasks">0</div>
-            <div class="stat-label">งานเสร็จ</div>
+            <div class="stat-label">Tasks Done</div>
           </div>
           <div class="stat-box">
             <div class="stat-value" id="totalBreaks">0</div>
-            <div class="stat-label">พักทั้งหมด</div>
+            <div class="stat-label">Total Breaks</div>
           </div>
         </div>
       </div>
@@ -82,68 +82,68 @@
 
   <dialog id="settingsDialog">
     <div class="modal-header">
-      <h2 class="modal-title">⚙️ ตั้งค่า</h2>
+  <h2 class="modal-title">⚙️ Settings</h2>
       <button class="icon-btn" id="closeSettings" style="width: 36px; height: 36px;">✕</button>
     </div>
     <div class="modal-body">
       <div class="settings-group">
-        <label>Pomodoro (นาที)</label>
+  <label>Pomodoro (minutes)</label>
         <input type="number" id="pomodoroTime" min="1" max="60" value="25">
       </div>
       <div class="settings-group">
-        <label>พักสั้น (นาที)</label>
+  <label>Short Break (minutes)</label>
         <input type="number" id="shortBreakTime" min="1" max="30" value="5">
       </div>
       <div class="settings-group">
-        <label>พักยาว (นาที)</label>
+  <label>Long Break (minutes)</label>
         <input type="number" id="longBreakTime" min="1" max="60" value="15">
       </div>
       <div class="settings-group">
-        <label>พักยาวทุกๆ (Pomodoros)</label>
+  <label>Long Break every (Pomodoros)</label>
         <input type="number" id="longBreakInterval" min="2" max="10" value="4">
       </div>
       <div class="checkbox-group">
         <input type="checkbox" id="autoStartBreaks" class="checkbox">
-        <label for="autoStartBreaks">เริ่มพักอัตโนมัติ</label>
+  <label for="autoStartBreaks">Auto start breaks</label>
       </div>
       <div class="checkbox-group">
         <input type="checkbox" id="soundEnabled" class="checkbox" checked>
-        <label for="soundEnabled">เปิดเสียงแจ้งเตือน</label>
+  <label for="soundEnabled">Enable sound notification</label>
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" id="resetStatsBtn">รีเซ็ตสถิติ</button>
-      <button class="btn btn-primary" id="saveSettings">บันทึก</button>
+  <button class="btn btn-secondary" id="resetStatsBtn">Reset Stats</button>
+  <button class="btn btn-primary" id="saveSettings">Save</button>
     </div>
   </dialog>
 
   <dialog id="statsDialog">
     <div class="modal-header">
-      <h2 class="modal-title">📊 สถิติโดยละเอียด</h2>
+  <h2 class="modal-title">📊 Detailed Statistics</h2>
       <button class="icon-btn" id="closeStats" style="width: 36px; height: 36px;">✕</button>
     </div>
     <div class="modal-body">
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-value" id="totalPomodoros">0</div>
-          <div class="stat-label">Pomodoros ทั้งหมด</div>
+          <div class="stat-label">Total Pomodoros</div>
         </div>
         <div class="stat-box">
           <div class="stat-value" id="totalFocusTime">0h</div>
-          <div class="stat-label">เวลาโฟกัสทั้งหมด</div>
+          <div class="stat-label">Total Focus Time</div>
         </div>
         <div class="stat-box">
           <div class="stat-value" id="totalTasksCompleted">0</div>
-          <div class="stat-label">งานเสร็จทั้งหมด</div>
+          <div class="stat-label">Total Tasks Done</div>
         </div>
         <div class="stat-box">
           <div class="stat-value" id="streak">0</div>
-          <div class="stat-label">วันติดต่อกัน</div>
+          <div class="stat-label">Streak (days)</div>
         </div>
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" id="closeStatsBtn">ปิด</button>
+  <button class="btn btn-secondary" id="closeStatsBtn">Close</button>
     </div>
   </dialog>
 
