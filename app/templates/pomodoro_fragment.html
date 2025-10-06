@@ -1,65 +1,862 @@
-<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center" 
-     style="background: linear-gradient(135deg,#e0e0e0, #fafafa, #D3D3D3);">
-  <div class="row w-100 justify-content-center">
-    <div class="col-md-6 col-lg-4">
-      <div class="card shadow-lg border-0 rounded-4" style="backdrop-filter: blur(10px); background-color: rgba(255,255,255,0.85);">
-        <div class="card-body text-center p-5">
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Focus Timer — Professional Pomodoro</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍅</text></svg>">
+<style>
+  :root {
+    --pomodoro-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --short-bg: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --long-bg: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --text-dark: #2d3748;
+    --text-muted: #718096;
+    --border: #e2e8f0;
+    --success: #48bb78;
+    --danger: #f56565;
+    --warning: #ed8936;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    min-height: 100vh;
+    background: var(--pomodoro-bg);
+    color: var(--text-dark);
+    transition: background 0.6s ease;
+    padding: 20px;
+  }
+  
+  body.short-break { background: var(--short-bg); }
+  body.long-break { background: var(--long-bg); }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    color: white;
+  }
+  
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 24px;
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .icon-btn:hover {
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.5);
+    transform: translateY(-2px);
+  }
+  
+  .main-card {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    margin-top: 20px;
+  }
+  
+  .mode-tabs {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 40px;
+  }
+  
+  .mode-tab {
+    padding: 12px 28px;
+    border: 2px solid var(--border);
+    background: white;
+    border-radius: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .mode-tab:hover {
+    border-color: #cbd5e0;
+  }
+  
+  .mode-tab.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+    color: white;
+  }
+  
+  body.short-break .mode-tab.active {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+  
+  body.long-break .mode-tab.active {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+  
+  .timer-display {
+    text-align: center;
+    margin: 40px 0;
+  }
+  
+  .time {
+    font-size: clamp(72px, 15vw, 140px);
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -2px;
+  }
+  
+  body.short-break .time {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  body.long-break .time {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .progress-ring {
+    margin: 20px auto;
+    position: relative;
+    width: 200px;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 999px;
+    transition: width 1s linear;
+  }
+  
+  .controls {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+  
+  .btn {
+    padding: 18px 48px;
+    border: none;
+    border-radius: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(102, 126, 234, 0.5);
+  }
+  
+  .btn-secondary {
+    background: white;
+    color: var(--text-dark);
+    border: 2px solid var(--border);
+  }
+  
+  .btn-secondary:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+  }
+  
+  .status-info {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .badge {
+    padding: 6px 14px;
+    background: #edf2f7;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    margin-top: 24px;
+  }
+  
+  .section-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  }
+  
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .task-input {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .task-input input {
+    flex: 1;
+    padding: 14px 18px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 15px;
+    transition: all 0.2s;
+  }
+  
+  .task-input input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  
+  .task-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.2s;
+  }
+  
+  .task-item:hover {
+    border-color: #cbd5e0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+  
+  .task-item.completed {
+    opacity: 0.6;
+  }
+  
+  .task-item.completed .task-text {
+    text-decoration: line-through;
+  }
+  
+  .checkbox {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: #667eea;
+  }
+  
+  .task-text {
+    flex: 1;
+    font-size: 15px;
+  }
+  
+  .task-pomodoros {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 4px 10px;
+    background: #edf2f7;
+    border-radius: 6px;
+  }
+  
+  .delete-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--danger);
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 18px;
+    transition: all 0.2s;
+  }
+  
+  .delete-btn:hover {
+    background: #fff5f5;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  
+  .stat-box {
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    text-align: center;
+  }
+  
+  .stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #667eea;
+    margin-bottom: 4px;
+  }
+  
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  dialog {
+    border: none;
+    border-radius: 20px;
+    padding: 0;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+  }
+  
+  dialog::backdrop {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+  }
+  
+  .modal-header {
+    padding: 24px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .modal-title {
+    font-size: 22px;
+    font-weight: 700;
+  }
+  
+  .modal-body {
+    padding: 24px;
+  }
+  
+  .settings-group {
+    margin-bottom: 24px;
+  }
+  
+  .settings-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-dark);
+  }
+  
+  .settings-group input[type="number"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+  }
+  
+  .settings-group input[type="number"]:focus {
+    outline: none;
+    border-color: #667eea;
+  }
+  
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  
+  .modal-actions {
+    padding: 20px 24px;
+    border-top: 2px solid var(--border);
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+  
+  @media (max-width: 768px) {
+    .grid-layout {
+      grid-template-columns: 1fr;
+    }
+    
+    .main-card {
+      padding: 24px;
+    }
+    
+    .time {
+      font-size: 64px;
+    }
+    
+    .controls {
+      flex-direction: column;
+    }
+    
+    .btn {
+      width: 100%;
+    }
+  }
+  
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 24px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    display: none;
+    align-items: center;
+    gap: 12px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+  }
+  
+  .notification.show {
+    display: flex;
+  }
+  
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">🍅</div>
+        <span>Focus Timer</span>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="statsBtn" title="สถิติ">📊</button>
+        <button class="icon-btn" id="settingsBtn" title="ตั้งค่า">⚙️</button>
+      </div>
+    </header>
 
-          <!-- Title -->
-          <h2 class="fw-bold mb-4 text-danger">
-            🍅 Pomodoro Timer
-          </h2>
+    <div class="main-card">
+      <div class="mode-tabs">
+        <button class="mode-tab active" data-mode="pomodoro">Pomodoro</button>
+        <button class="mode-tab" data-mode="short">พักสั้น</button>
+        <button class="mode-tab" data-mode="long">พักยาว</button>
+      </div>
 
-          <!-- Timer Display -->
-          <div id="timer-display" class="display-3 fw-semibold text-dark mb-4">
-            25:00
+      <div class="timer-display">
+        <div class="time" id="timeDisplay">25:00</div>
+        <div class="progress-ring">
+          <div class="progress-fill" id="progressBar"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="startBtn">เริ่ม</button>
+        <button class="btn btn-secondary" id="resetBtn">รีเซ็ต</button>
+        <button class="btn btn-secondary" id="skipBtn">ข้าม</button>
+      </div>
+
+      <div class="status-info">
+        <div class="badge">
+          <span>🔥</span>
+          <span id="cycleInfo">รอบที่ #1</span>
+        </div>
+        <div class="badge">
+          <span>🎯</span>
+          <span id="statusText">เวลาที่จะมุ่งมั่น!</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-layout">
+      <div class="section-card">
+        <div class="section-title">
+          <span>📝 งานของคุณ</span>
+          <span style="font-size: 14px; color: var(--text-muted);" id="taskCount">0 งาน</span>
+        </div>
+        <div class="task-input">
+          <input type="text" id="taskInput" placeholder="เพิ่มงานใหม่..." maxlength="100">
+          <button class="btn btn-primary" id="addTaskBtn">เพิ่ม</button>
+        </div>
+        <ul class="task-list" id="taskList"></ul>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">📈 สถิติวันนี้</div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="completedPomodoros">0</div>
+            <div class="stat-label">Pomodoros</div>
           </div>
-
-          <!-- Control Buttons -->
-          <div class="d-flex justify-content-center gap-3 mb-4">
-            <button id="start-btn" class="btn btn-success px-4 py-2 shadow-sm">
-              ▶ Start
-            </button>
-            <button id="pause-btn" class="btn btn-warning px-4 py-2 shadow-sm text-white">
-              ⏸ Pause
-            </button>
-            <button id="reset-btn" class="btn btn-danger px-4 py-2 shadow-sm">
-              🔄 Reset
-            </button>
+          <div class="stat-box">
+            <div class="stat-value" id="focusTime">0h</div>
+            <div class="stat-label">เวลาโฟกัส</div>
           </div>
-
-          <!-- Mode Buttons -->
-          <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
-            <button class="mode-btn btn btn-outline-danger active" data-mode="pomodoro">
-              Pomodoro
-            </button>
-            <button class="mode-btn btn btn-outline-primary" data-mode="short">
-              Short Break
-            </button>
-            <button class="mode-btn btn btn-outline-info" data-mode="long">
-              Long Break
-            </button>
+          <div class="stat-box">
+            <div class="stat-value" id="completedTasks">0</div>
+            <div class="stat-label">งานเสร็จ</div>
           </div>
-
-          <!-- Progress Bar -->
-          <div class="progress mb-4" style="height: 10px;">
-            <div id="progress-bar" 
-                 class="progress-bar bg-danger" 
-                 role="progressbar" 
-                 style="width: 0%;" 
-                 aria-valuemin="0" aria-valuemax="100">
-            </div>
-          </div>
-
-          <!-- Completed Sessions -->
-          <div class="text-muted">
-            Completed Sessions: 
-            <span id="completed-sessions" class="fw-bold text-danger">0</span>
+          <div class="stat-box">
+            <div class="stat-value" id="totalBreaks">0</div>
+            <div class="stat-label">พักทั้งหมด</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
-</div>
+  <dialog id="settingsDialog">
+    <div class="modal-header">
+      <h2 class="modal-title">⚙️ ตั้งค่า</h2>
+      <button class="icon-btn" id="closeSettings" style="width: 36px; height: 36px;">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-group">
+        <label>Pomodoro (นาที)</label>
+        <input type="number" id="pomodoroTime" min="1" max="60" value="25">
+      </div>
+      <div class="settings-group">
+        <label>พักสั้น (นาที)</label>
+        <input type="number" id="shortBreakTime" min="1" max="30" value="5">
+      </div>
+      <div class="settings-group">
+        <label>พักยาว (นาที)</label>
+        <input type="number" id="longBreakTime" min="1" max="60" value="15">
+      </div>
+      <div class="settings-group">
+        <label>พักยาวทุกๆ (Pomodoros)</label>
+        <input type="number" id="longBreakInterval" min="2" max="10" value="4">
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="autoStartBreaks" class="checkbox">
+        <label for="autoStartBreaks">เริ่มพักอัตโนมัติ</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="soundEnabled" class="checkbox" checked>
+        <label for="soundEnabled">เปิดเสียงแจ้งเตือน</label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="resetStatsBtn">รีเซ็ตสถิติ</button>
+      <button class="btn btn-primary" id="saveSettings">บันทึก</button>
+    </div>
+  </dialog>
+
+  <dialog id="statsDialog">
+    <div class="modal-header">
+      <h2 class="modal-title">📊 สถิติโดยละเอียด</h2>
+      <button class="icon-btn" id="closeStats" style="width: 36px; height: 36px;">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="totalPomodoros">0</div>
+          <div class="stat-label">Pomodoros ทั้งหมด</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="totalFocusTime">0h</div>
+          <div class="stat-label">เวลาโฟกัสทั้งหมด</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="totalTasksCompleted">0</div>
+          <div class="stat-label">งานเสร็จทั้งหมด</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="streak">0</div>
+          <div class="stat-label">วันติดต่อกัน</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="closeStatsBtn">ปิด</button>
+    </div>
+  </dialog>
+
+  <div class="notification" id="notification">
+    <span id="notificationText"></span>
+  </div>
+
+  <script>
+    const state = {
+      mode: 'pomodoro',
+      isRunning: false,
+      timeLeft: 25 * 60,
+      totalTime: 25 * 60,
+      cycle: 1,
+      completedPomodoros: 0,
+      tasks: [],
+      settings: {
+        pomodoro: 25,
+        shortBreak: 5,
+        longBreak: 15,
+        longBreakInterval: 4,
+        autoStartBreaks: false,
+        soundEnabled: true
+      },
+      stats: {
+        todayPomodoros: 0,
+        todayFocusTime: 0,
+        todayTasks: 0,
+        todayBreaks: 0,
+        totalPomodoros: 0,
+        totalFocusTime: 0,
+        totalTasks: 0,
+        lastDate: new Date().toDateString()
+      }
+    };
+
+    let interval = null;
+
+    // Load data from memory
+    function loadData() {
+      const saved = {
+        settings: state.settings,
+        stats: state.stats,
+        tasks: state.tasks
+      };
+      Object.assign(state, saved);
+      checkNewDay();
+    }
+
+    function checkNewDay() {
+      const today = new Date().toDateString();
+      if (state.stats.lastDate !== today) {
+        state.stats.todayPomodoros = 0;
+        state.stats.todayFocusTime = 0;
+        state.stats.todayTasks = 0;
+        state.stats.todayBreaks = 0;
+        state.stats.lastDate = today;
+      }
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function formatHours(minutes) {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      if (hours > 0) {
+        return `${hours}h ${mins}m`;
+      }
+      return `${mins}m`;
+    }
+
+    function updateDisplay() {
+      document.getElementById('timeDisplay').textContent = formatTime(state.timeLeft);
+      const progress = ((state.totalTime - state.timeLeft) / state.totalTime) * 100;
+      document.getElementById('progressBar').style.width = `${progress}%`;
+      
+      document.getElementById('cycleInfo').textContent = `รอบที่ #${state.cycle}`;
+      
+      const statusTexts = {
+        pomodoro: 'เวลาที่จะมุ่งมั่น!',
+        short: 'พักสั้นๆ',
+        long: 'พักยาว ผ่อนคลาย'
+      };
+      document.getElementById('statusText').textContent = statusTexts[state.mode];
+      
+      // Update button
+      document.getElementById('startBtn').textContent = state.isRunning ? 'หยุด' : 'เริ่ม';
+      
+      // Update title
+      document.title = `${formatTime(state.timeLeft)} - Focus Timer`;
+    }
+
+    function updateStats() {
+      document.getElementById('completedPomodoros').textContent = state.stats.todayPomodoros;
+      document.getElementById('focusTime').textContent = formatHours(state.stats.todayFocusTime);
+      document.getElementById('completedTasks').textContent = state.stats.todayTasks;
+      document.getElementById('totalBreaks').textContent = state.stats.todayBreaks;
+      
+      document.getElementById('totalPomodoros').textContent = state.stats.totalPomodoros;
+      document.getElementById('totalFocusTime').textContent = formatHours(state.stats.totalFocusTime);
+      document.getElementById('totalTasksCompleted').textContent = state.stats.totalTasks;
+      document.getElementById('streak').textContent = calculateStreak();
+    }
+
+    function calculateStreak() {
+      return state.stats.todayPomodoros > 0 ? 1 : 0;
+    }
+
+    function switchMode(mode) {
+      state.mode = mode;
+      state.isRunning = false;
+      clearInterval(interval);
+      
+      const times = {
+        pomodoro: state.settings.pomodoro * 60,
+        short: state.settings.shortBreak * 60,
+        long: state.settings.longBreak * 60
+      };
+      
+      state.timeLeft = times[mode];
+      state.totalTime = times[mode];
+      
+      document.querySelectorAll('.mode-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.dataset.mode === mode) {
+          tab.classList.add('active');
+        }
+      });
+      
+      document.body.className = mode === 'pomodoro' ? '' : mode === 'short' ? 'short-break' : 'long-break';
+      updateDisplay();
+    }
+
+    function startTimer() {
+      if (state.isRunning) {
+        state.isRunning = false;
+        clearInterval(interval);
+        updateDisplay();
+        return;
+      }
+      
+      state.isRunning = true;
+      updateDisplay();
+      
+      interval = setInterval(() => {
+        if (state.timeLeft > 0) {
+          state.timeLeft--;
+          updateDisplay();
+        } else {
+          timerComplete();
+        }
+      }, 1000);
+    }
+
+    function timerComplete() {
+      state.isRunning = false;
+      clearInterval(interval);
+      
+      if (state.mode === 'pomodoro') {
+        state.completedPomodoros++;
+        state.stats.todayPomodoros++;
+        state.stats.totalPomodoros++;
+        state.stats.todayFocusTime += state.settings.pomodoro;
+        state.stats.totalFocusTime += state.settings.pomodoro;
+        
+        showNotification('🎉 Pomodoro สำเร็จ!');
+        
+        if (state.completedPomodoros % state.settings.longBreakInterval === 0) {
+          switchMode('long');
+        } else {
+          switchMode('short');
+        }
+        
+        if (state.settings.autoStartBreaks) {
+          startTimer();
+        }
+      } else {
+        state.cycle++;
+        state.stats.todayBreaks++;
+        showNotification('✨ พักเสร็จแล้ว!');
+        switchMode('pomodoro');
+        
+        if (state.settings.autoStartBreaks) {
+          startTimer();
+        }
+      }
+      
+      updateStats();
+      playSound();
+    }
+
+    function playSound() {
+      if (!state.settings.soundEnabled) return;
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
