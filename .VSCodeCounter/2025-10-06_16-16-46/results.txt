@@ -1,0 +1,457 @@
+Date : 2025-10-06 16:16:46
+Directory : /Users/kbbk/PyProject-5
+Total : 346 files,  399940 codes, 2317 comments, 15440 blanks, all 417697 lines
+
+Languages
++------------------+------------+------------+------------+------------+------------+
+| language         | files      | code       | comment    | blank      | total      |
++------------------+------------+------------+------------+------------+------------+
+| JSON             |          6 |    215,965 |          0 |          2 |    215,967 |
+| YAML             |          5 |    102,854 |          0 |          5 |    102,859 |
+| JavaScript       |         22 |     14,415 |        630 |      1,480 |     16,525 |
+| CSS              |         21 |     13,917 |        270 |      6,010 |     20,197 |
+| Markdown         |         80 |     13,607 |          0 |      3,304 |     16,911 |
+| Python           |        112 |     13,500 |      1,009 |      2,758 |     17,267 |
+| Django HTML      |         51 |     10,648 |          0 |        935 |     11,583 |
+| SCSS             |         19 |      6,988 |         99 |        107 |      7,194 |
+| Less             |         18 |      6,957 |         72 |        570 |      7,599 |
+| Shell Script     |          6 |        921 |        237 |        219 |      1,377 |
+| Django txt       |          5 |        135 |          0 |         49 |        184 |
+| pip requirements |          1 |         33 |          0 |          1 |         34 |
++------------------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                   | files      | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                      |        346 |    399,940 |      2,317 |     15,440 |    417,697 |
+| . (Files)                                                                                              |          7 |        580 |          9 |        163 |        752 |
+| app                                                                                                    |        188 |    376,934 |      1,521 |     10,531 |    388,986 |
+| app (Files)                                                                                            |          6 |      3,777 |        350 |        670 |      4,797 |
+| app/config                                                                                             |          3 |        176 |         28 |         62 |        266 |
+| app/controllers                                                                                        |          1 |          3 |          0 |          1 |          4 |
+| app/middleware                                                                                         |          2 |        132 |          5 |         24 |        161 |
+| app/models                                                                                             |          6 |        385 |         39 |         86 |        510 |
+| app/routes                                                                                             |          6 |        296 |         14 |        119 |        429 |
+| app/static                                                                                             |        100 |    359,277 |      1,048 |      8,203 |    368,528 |
+| app/static (Files)                                                                                     |          1 |          0 |          0 |          1 |          1 |
+| app/static/css                                                                                         |          4 |        838 |        176 |        196 |      1,210 |
+| app/static/fontawesome                                                                                 |         91 |    356,177 |        682 |      7,707 |    364,566 |
+| app/static/fontawesome (Files)                                                                         |          1 |          0 |          0 |          1 |          1 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web                                                      |         90 |    356,177 |        682 |      7,706 |    364,565 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web (Files)                                              |          2 |        124 |          0 |         43 |        167 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/css                                                  |         19 |     13,079 |         94 |      5,816 |     18,989 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/js                                                   |         15 |     11,939 |        417 |      1,156 |     13,512 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/less                                                 |         19 |      6,957 |         72 |        571 |      7,600 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/metadata                                             |          9 |    317,090 |          0 |          6 |    317,096 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/scss                                                 |         20 |      6,988 |         99 |        108 |      7,195 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/sprites                                              |          1 |          0 |          0 |          1 |          1 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/svgs                                                 |          4 |          0 |          0 |          4 |          4 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/svgs (Files)                                         |          1 |          0 |          0 |          1 |          1 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/svgs/brands                                          |          1 |          0 |          0 |          1 |          1 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/svgs/regular                                         |          1 |          0 |          0 |          1 |          1 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/svgs/solid                                           |          1 |          0 |          0 |          1 |          1 |
+| app/static/fontawesome/fontawesome-free-6.5.2-web/webfonts                                             |          1 |          0 |          0 |          1 |          1 |
+| app/static/js                                                                                          |          3 |      2,261 |        190 |        298 |      2,749 |
+| app/static/uploads                                                                                     |          1 |          1 |          0 |          1 |          2 |
+| app/static/uploads/classwork                                                                           |          1 |          1 |          0 |          1 |          2 |
+| app/templates                                                                                          |         54 |     10,586 |          0 |        937 |     11,523 |
+| app/templates (Files)                                                                                  |         22 |      5,246 |          0 |        515 |      5,761 |
+| app/templates/class_detail                                                                             |          6 |      2,445 |          0 |        269 |      2,714 |
+| app/templates/external_data                                                                            |          1 |        155 |          0 |          4 |        159 |
+| app/templates/google_classroom                                                                         |          5 |        360 |          0 |         23 |        383 |
+| app/templates/integrations                                                                             |          2 |         98 |          0 |          4 |        102 |
+| app/templates/lessons                                                                                  |         13 |      1,598 |          0 |        100 |      1,698 |
+| app/templates/notes                                                                                    |          5 |        684 |          0 |         22 |        706 |
+| app/utils                                                                                              |          4 |        111 |          0 |         32 |        143 |
+| app/utils (Files)                                                                                      |          1 |          3 |          0 |          1 |          4 |
+| app/utils/exceptions                                                                                   |          2 |        108 |          0 |         30 |        138 |
+| app/utils/helpers                                                                                      |          1 |          0 |          0 |          1 |          1 |
+| app/views                                                                                              |          6 |      2,191 |         37 |        397 |      2,625 |
+| archive                                                                                                |         17 |      2,824 |        141 |        244 |      3,209 |
+| archive/old_files                                                                                      |          7 |      1,711 |          1 |          8 |      1,720 |
+| archive/old_files (Files)                                                                              |          5 |      1,705 |          1 |          4 |      1,710 |
+| archive/old_files/data                                                                                 |          2 |          6 |          0 |          4 |         10 |
+| archive/scripts                                                                                        |          3 |        667 |         97 |        141 |        905 |
+| archive/test_files                                                                                     |          7 |        446 |         43 |         95 |        584 |
+| chrome_extension                                                                                       |          6 |        281 |         22 |         28 |        331 |
+| chrome_extension (Files)                                                                               |          4 |        151 |          3 |          4 |        158 |
+| chrome_extension/content_scripts                                                                       |          2 |        130 |         19 |         24 |        173 |
+| database                                                                                               |         27 |      2,829 |        250 |        538 |      3,617 |
+| database (Files)                                                                                       |          4 |        525 |         34 |         75 |        634 |
+| database/migrations                                                                                    |          7 |      1,335 |         78 |        207 |      1,620 |
+| database/models                                                                                        |         14 |        969 |        136 |        254 |      1,359 |
+| database/schemas                                                                                       |          1 |          0 |          1 |          1 |          2 |
+| database/utils                                                                                         |          1 |          0 |          1 |          1 |          2 |
+| docs                                                                                                   |         75 |     13,279 |          0 |      3,207 |     16,486 |
+| docs (Files)                                                                                           |         33 |      6,844 |          0 |      1,560 |      8,404 |
+| docs/DATA_GATHERING_FORM                                                                               |          3 |        240 |          0 |         77 |        317 |
+| docs/adr                                                                                               |          1 |         17 |          0 |         11 |         28 |
+| docs/architecture                                                                                      |          5 |      1,088 |          0 |        195 |      1,283 |
+| docs/database                                                                                          |          7 |      1,477 |          0 |        274 |      1,751 |
+| docs/fix_summaries                                                                                     |         11 |      1,740 |          0 |        514 |      2,254 |
+| docs/future_work                                                                                       |          4 |          0 |          0 |          4 |          4 |
+| docs/notes                                                                                             |          5 |      1,038 |          0 |        264 |      1,302 |
+| docs/retrospectives                                                                                    |          1 |         19 |          0 |         14 |         33 |
+| docs/security                                                                                          |          1 |        169 |          0 |         58 |        227 |
+| docs/setup                                                                                             |          4 |        647 |          0 |        236 |        883 |
+| scripts                                                                                                |         26 |      3,213 |        374 |        729 |      4,316 |
+| scripts (Files)                                                                                        |          7 |        974 |        190 |        233 |      1,397 |
+| scripts/debug                                                                                          |          3 |        106 |          8 |         30 |        144 |
+| scripts/migrations                                                                                     |          8 |      1,274 |        107 |        253 |      1,634 |
+| scripts/tests                                                                                          |          6 |        778 |         64 |        192 |      1,034 |
+| scripts/utils                                                                                          |          2 |         81 |          5 |         21 |        107 |
++--------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+
+| filename                                                                                               | language         | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+
+| /Users/kbbk/PyProject-5/CODE_OF_CONDUCT.md                                                             | Markdown         |         21 |          0 |         13 |         34 |
+| /Users/kbbk/PyProject-5/CONTRIBUTING.md                                                                | Markdown         |         23 |          0 |         13 |         36 |
+| /Users/kbbk/PyProject-5/MVC_ARCHITECTURE.md                                                            | Markdown         |        155 |          0 |         33 |        188 |
+| /Users/kbbk/PyProject-5/README.md                                                                      | Markdown         |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/README_START.md                                                                | Markdown         |        129 |          0 |         37 |        166 |
+| /Users/kbbk/PyProject-5/app/__init__.py                                                                | Python           |        121 |         15 |         32 |        168 |
+| /Users/kbbk/PyProject-5/app/config/__init__.py                                                         | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/config/google_classroom_config.py                                          | Python           |        125 |         19 |         33 |        177 |
+| /Users/kbbk/PyProject-5/app/config/settings.py                                                         | Python           |         51 |          9 |         28 |         88 |
+| /Users/kbbk/PyProject-5/app/controllers/__init__.py                                                    | Python           |          3 |          0 |          1 |          4 |
+| /Users/kbbk/PyProject-5/app/middleware/__init__.py                                                     | Python           |          4 |          0 |          1 |          5 |
+| /Users/kbbk/PyProject-5/app/middleware/auth_middleware.py                                              | Python           |        128 |          5 |         23 |        156 |
+| /Users/kbbk/PyProject-5/app/models/__init__.py                                                         | Python           |          3 |          0 |          1 |          4 |
+| /Users/kbbk/PyProject-5/app/models/lesson.py                                                           | Python           |         97 |          9 |         19 |        125 |
+| /Users/kbbk/PyProject-5/app/models/lesson_section.py                                                   | Python           |         23 |          3 |         10 |         36 |
+| /Users/kbbk/PyProject-5/app/models/note.py                                                             | Python           |         82 |          9 |         18 |        109 |
+| /Users/kbbk/PyProject-5/app/models/task.py                                                             | Python           |         99 |         10 |         20 |        129 |
+| /Users/kbbk/PyProject-5/app/models/user.py                                                             | Python           |         81 |          8 |         18 |        107 |
+| /Users/kbbk/PyProject-5/app/routes.py                                                                  | Python           |      2,281 |        223 |        388 |      2,892 |
+| /Users/kbbk/PyProject-5/app/routes/__init__.py                                                         | Python           |          3 |          0 |          1 |          4 |
+| /Users/kbbk/PyProject-5/app/routes/auth_routes.py                                                      | Python           |         19 |          2 |          6 |         27 |
+| /Users/kbbk/PyProject-5/app/routes/lesson_routes.py                                                    | Python           |         59 |          2 |         24 |         85 |
+| /Users/kbbk/PyProject-5/app/routes/note_routes.py                                                      | Python           |         93 |          6 |         38 |        137 |
+| /Users/kbbk/PyProject-5/app/routes/task_routes.py                                                      | Python           |         74 |          2 |         30 |        106 |
+| /Users/kbbk/PyProject-5/app/routes/user_routes.py                                                      | Python           |         48 |          2 |         20 |         70 |
+| /Users/kbbk/PyProject-5/app/routes_google_classroom.py                                                 | Python           |        140 |         11 |         29 |        180 |
+| /Users/kbbk/PyProject-5/app/routes_microsoft_teams.py                                                  | Python           |        245 |         10 |         28 |        283 |
+| /Users/kbbk/PyProject-5/app/routes_new.py                                                              | Python           |        832 |         88 |        146 |      1,066 |
+| /Users/kbbk/PyProject-5/app/services.py                                                                | Python           |        158 |          3 |         47 |        208 |
+| /Users/kbbk/PyProject-5/app/static/__init__.py                                                         | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/css/__init__.py                                                     | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/css/custom.css                                                      | CSS              |        145 |          9 |         19 |        173 |
+| /Users/kbbk/PyProject-5/app/static/css/input.css                                                       | CSS              |          3 |          0 |          1 |          4 |
+| /Users/kbbk/PyProject-5/app/static/css/tailwind.css                                                    | CSS              |        690 |        167 |        175 |      1,032 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/__init__.py                                             | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/LICENSE.txt                  | Django txt       |        124 |          0 |         42 |        166 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/__init__.py                  | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/__init__.py              | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/all.css                  | CSS              |      5,471 |          7 |      2,553 |      8,031 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/all.min.css              | CSS              |          3 |          5 |          1 |          9 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/brands.css               | CSS              |      1,062 |          5 |        528 |      1,595 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/brands.min.css           | CSS              |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/fontawesome.css          | CSS              |      4,352 |          7 |      2,017 |      6,376 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/fontawesome.min.css      | CSS              |          3 |          5 |          1 |          9 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/regular.css              | CSS              |         12 |          5 |          3 |         20 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/regular.min.css          | CSS              |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/solid.css                | CSS              |         12 |          5 |          3 |         20 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/solid.min.css            | CSS              |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/svg-with-js.css          | CSS              |        558 |          5 |         78 |        641 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/svg-with-js.min.css      | CSS              |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/v4-font-face.css         | CSS              |         18 |          5 |          4 |         27 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/v4-font-face.min.css     | CSS              |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/v4-shims.css             | CSS              |      1,566 |          5 |        624 |      2,195 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/v4-shims.min.css         | CSS              |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/v5-font-face.css         | CSS              |         15 |          5 |          3 |         23 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/css/v5-font-face.min.css     | CSS              |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/__init__.py               | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/all.js                    | JavaScript       |      5,458 |         90 |        487 |      6,035 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/all.min.js                | JavaScript       |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/brands.js                 | JavaScript       |        734 |         12 |         35 |        781 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/brands.min.js             | JavaScript       |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/conflict-detection.js     | JavaScript       |        812 |        181 |        154 |      1,147 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/conflict-detection.min.js | JavaScript       |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/fontawesome.js            | JavaScript       |      2,681 |         69 |        385 |      3,135 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/fontawesome.min.js        | JavaScript       |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/regular.js                | JavaScript       |        407 |         12 |         35 |        454 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/regular.min.js            | JavaScript       |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/solid.js                  | JavaScript       |      1,636 |         12 |         35 |      1,683 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/solid.min.js              | JavaScript       |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/v4-shims.js               | JavaScript       |        204 |          6 |         24 |        234 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/js/v4-shims.min.js           | JavaScript       |          1 |          5 |          0 |          6 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/__init__.py             | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_animated.less          | Less             |        130 |          5 |         18 |        153 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_bordered-pulled.less   | Less             |         15 |          2 |          4 |         21 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_core.less              | Less             |         31 |          2 |          6 |         39 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_fixed-width.less       | Less             |          4 |          2 |          2 |          8 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_icons.less             | Less             |          3 |          4 |          3 |         10 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_list.less              | Less             |         13 |          2 |          4 |         19 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_mixins.less            | Less             |         54 |         12 |         13 |         79 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_rotated-flipped.less   | Less             |         22 |          2 |          8 |         32 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_screen-reader.less     | Less             |          8 |          4 |          3 |         15 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_shims.less             | Less             |      1,578 |          0 |        465 |      2,043 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_sizing.less            | Less             |         12 |          4 |          4 |         20 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_stacked.less           | Less             |         24 |          2 |          6 |         32 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/_variables.less         | Less             |      4,995 |          2 |         16 |      5,013 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/brands.less             | Less             |         20 |          5 |          5 |         30 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/fontawesome.less        | Less             |         12 |          7 |          2 |         21 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/regular.less            | Less             |         17 |          5 |          4 |         26 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/solid.less              | Less             |         17 |          5 |          5 |         27 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/less/v4-shims.less           | Less             |          2 |          7 |          2 |         11 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/metadata/__init__.py         | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/metadata/categories.yml      | YAML             |      3,075 |          0 |          1 |      3,076 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/metadata/icon-families.json  | JSON             |    114,989 |          0 |          0 |    114,989 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/metadata/icon-families.yml   | YAML             |     53,789 |          0 |          1 |     53,790 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/metadata/icons.json          | JSON             |     95,195 |          0 |          0 |     95,195 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/metadata/icons.yml           | YAML             |     43,892 |          0 |          1 |     43,893 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/metadata/shims.json          | JSON             |      4,052 |          0 |          0 |      4,052 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/metadata/shims.yml           | YAML             |        646 |          0 |          1 |        647 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/metadata/sponsors.yml        | YAML             |      1,452 |          0 |          1 |      1,453 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/__init__.py             | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_animated.scss          | SCSS             |        130 |          5 |         18 |        153 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_bordered-pulled.scss   | SCSS             |         15 |          2 |          4 |         21 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_core.scss              | SCSS             |         35 |          2 |          7 |         44 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_fixed-width.scss       | SCSS             |          4 |          2 |          2 |          8 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_functions.scss         | SCSS             |         27 |         27 |          4 |         58 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_icons.scss             | SCSS             |          3 |          4 |          4 |         11 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_list.scss              | SCSS             |         13 |          2 |          4 |         19 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_mixins.scss            | SCSS             |         51 |         12 |         10 |         73 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_rotated-flipped.scss   | SCSS             |         22 |          2 |          8 |         32 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_screen-reader.scss     | SCSS             |          8 |          4 |          3 |         15 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_shims.scss             | SCSS             |      1,578 |          0 |          1 |      1,579 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_sizing.scss            | SCSS             |         10 |          4 |          3 |         17 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_stacked.scss           | SCSS             |         25 |          2 |          6 |         33 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/_variables.scss         | SCSS             |      4,994 |          2 |         16 |      5,012 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/brands.scss             | SCSS             |         21 |          5 |          5 |         31 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/fontawesome.scss        | SCSS             |         13 |          7 |          2 |         22 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/regular.scss            | SCSS             |         18 |          5 |          4 |         27 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/solid.scss              | SCSS             |         18 |          5 |          4 |         27 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/scss/v4-shims.scss           | SCSS             |          3 |          7 |          2 |         12 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/sprites/__init__.py          | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/svgs/__init__.py             | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/svgs/brands/__init__.py      | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/svgs/regular/__init__.py     | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/svgs/solid/__init__.py       | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/fontawesome/fontawesome-free-6.5.2-web/webfonts/__init__.py         | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/js/__init__.py                                                      | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/static/js/main.js                                                          | JavaScript       |      2,055 |        173 |        262 |      2,490 |
+| /Users/kbbk/PyProject-5/app/static/js/tracking.js                                                      | JavaScript       |        206 |         17 |         35 |        258 |
+| /Users/kbbk/PyProject-5/app/static/uploads/classwork/8145640f-2062-43de-9be9-68090543dcb5_test.txt     | Django txt       |          1 |          0 |          1 |          2 |
+| /Users/kbbk/PyProject-5/app/templates/__init__.py                                                      | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/templates/base.html                                                        | Django HTML      |         94 |          0 |          1 |         95 |
+| /Users/kbbk/PyProject-5/app/templates/change_password_fragment.html                                    | Django HTML      |         17 |          0 |          0 |         17 |
+| /Users/kbbk/PyProject-5/app/templates/class_detail.html                                                | Django HTML      |        256 |          0 |         22 |        278 |
+| /Users/kbbk/PyProject-5/app/templates/class_detail/_classwork.html                                     | Django HTML      |        857 |          0 |         88 |        945 |
+| /Users/kbbk/PyProject-5/app/templates/class_detail/_iphone_notes.html                                  | Django HTML      |        680 |          0 |        109 |        789 |
+| /Users/kbbk/PyProject-5/app/templates/class_detail/_notes_grid.html                                    | Django HTML      |        190 |          0 |         11 |        201 |
+| /Users/kbbk/PyProject-5/app/templates/class_detail/_notes_list.html                                    | Django HTML      |         18 |          0 |          1 |         19 |
+| /Users/kbbk/PyProject-5/app/templates/class_detail/_stream.html                                        | Django HTML      |        427 |          0 |         44 |        471 |
+| /Users/kbbk/PyProject-5/app/templates/class_detail/_stream_notes.html                                  | Django HTML      |        273 |          0 |         16 |        289 |
+| /Users/kbbk/PyProject-5/app/templates/class_fragment.html                                              | Django HTML      |      1,433 |          0 |        174 |      1,607 |
+| /Users/kbbk/PyProject-5/app/templates/class_fragment_backup.html                                       | Django HTML      |      1,506 |          0 |        207 |      1,713 |
+| /Users/kbbk/PyProject-5/app/templates/dashboard_fragment.html                                          | Django HTML      |         27 |          0 |          0 |         27 |
+| /Users/kbbk/PyProject-5/app/templates/dev.html                                                         | Django HTML      |         83 |          0 |          0 |         83 |
+| /Users/kbbk/PyProject-5/app/templates/dev_fragment.html                                                | Django HTML      |         79 |          0 |          0 |         79 |
+| /Users/kbbk/PyProject-5/app/templates/external_data/view.html                                          | Django HTML      |        155 |          0 |          4 |        159 |
+| /Users/kbbk/PyProject-5/app/templates/google_classroom/__init__.py                                     | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/templates/google_classroom/course_detail.html                              | Django HTML      |        167 |          0 |         10 |        177 |
+| /Users/kbbk/PyProject-5/app/templates/google_classroom/coursework_detail.html                          | Django HTML      |         81 |          0 |          7 |         88 |
+| /Users/kbbk/PyProject-5/app/templates/google_classroom/edit_course.html                                | Django HTML      |         54 |          0 |          1 |         55 |
+| /Users/kbbk/PyProject-5/app/templates/google_classroom/material_detail.html                            | Django HTML      |         58 |          0 |          4 |         62 |
+| /Users/kbbk/PyProject-5/app/templates/google_classroom_data.html                                       | Django HTML      |         68 |          0 |          2 |         70 |
+| /Users/kbbk/PyProject-5/app/templates/home.html                                                        | Django HTML      |         29 |          0 |          0 |         29 |
+| /Users/kbbk/PyProject-5/app/templates/index.html                                                       | Django HTML      |          0 |          0 |          2 |          2 |
+| /Users/kbbk/PyProject-5/app/templates/integrations/__init__.py                                         | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/templates/integrations/kmitl_classroom_link.html                           | Django HTML      |         98 |          0 |          3 |        101 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/__init__.py                                              | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/_add.html                                                | Django HTML      |        557 |          0 |         70 |        627 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/_detail.html                                             | Django HTML      |        383 |          0 |          5 |        388 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/_edit.html                                               | Django HTML      |         24 |          0 |          0 |         24 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/_google_classroom_import_modal.html                      | Django HTML      |        191 |          0 |         21 |        212 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/_lesson_card.html                                        | Django HTML      |         30 |          0 |          0 |         30 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/add.html                                                 | Django HTML      |         49 |          0 |          0 |         49 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/detail.html                                              | Django HTML      |          5 |          0 |          0 |          5 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/edit.html                                                | Django HTML      |         62 |          0 |          0 |         62 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/list.html                                                | Django HTML      |         29 |          0 |          0 |         29 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/section_add.html                                         | Django HTML      |        104 |          0 |          3 |        107 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/section_edit.html                                        | Django HTML      |        102 |          0 |          0 |        102 |
+| /Users/kbbk/PyProject-5/app/templates/lessons/section_list.html                                        | Django HTML      |         62 |          0 |          0 |         62 |
+| /Users/kbbk/PyProject-5/app/templates/login.html                                                       | Django HTML      |        110 |          0 |          4 |        114 |
+| /Users/kbbk/PyProject-5/app/templates/microsoft_teams_status.html                                      | Django HTML      |         62 |          0 |          3 |         65 |
+| /Users/kbbk/PyProject-5/app/templates/note_fragment.html                                               | Django HTML      |      1,037 |          0 |         65 |      1,102 |
+| /Users/kbbk/PyProject-5/app/templates/notes/__init__.py                                                | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/templates/notes/create.html                                                | Django HTML      |        214 |          0 |          7 |        221 |
+| /Users/kbbk/PyProject-5/app/templates/notes/edit.html                                                  | Django HTML      |        222 |          0 |          5 |        227 |
+| /Users/kbbk/PyProject-5/app/templates/notes/list.html                                                  | Django HTML      |        149 |          0 |          4 |        153 |
+| /Users/kbbk/PyProject-5/app/templates/notes/note.html                                                  | Django HTML      |         99 |          0 |          5 |        104 |
+| /Users/kbbk/PyProject-5/app/templates/notes_list_fragment.html                                         | Django HTML      |         93 |          0 |         14 |        107 |
+| /Users/kbbk/PyProject-5/app/templates/pomodoro_fragment.html                                           | Django HTML      |         23 |          0 |          1 |         24 |
+| /Users/kbbk/PyProject-5/app/templates/profile_fragment.html                                            | Django HTML      |          4 |          0 |          0 |          4 |
+| /Users/kbbk/PyProject-5/app/templates/register.html                                                    | Django HTML      |        110 |          0 |          4 |        114 |
+| /Users/kbbk/PyProject-5/app/templates/setting.html                                                     | Django HTML      |         27 |          0 |          0 |         27 |
+| /Users/kbbk/PyProject-5/app/templates/sidebar_auth_fragment.html                                       | Django HTML      |         18 |          0 |          1 |         19 |
+| /Users/kbbk/PyProject-5/app/templates/track_fragment.html                                              | Django HTML      |        170 |          0 |         14 |        184 |
+| /Users/kbbk/PyProject-5/app/utils/__init__.py                                                          | Python           |          3 |          0 |          1 |          4 |
+| /Users/kbbk/PyProject-5/app/utils/exceptions/__init__.py                                               | Python           |         22 |          0 |          3 |         25 |
+| /Users/kbbk/PyProject-5/app/utils/exceptions/base_exception.py                                         | Python           |         86 |          0 |         27 |        113 |
+| /Users/kbbk/PyProject-5/app/utils/helpers/__init__.py                                                  | Python           |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/app/views/__init__.py                                                          | Python           |          3 |          0 |          1 |          4 |
+| /Users/kbbk/PyProject-5/app/views/auth_views.py                                                        | Python           |        183 |          6 |         20 |        209 |
+| /Users/kbbk/PyProject-5/app/views/lesson_views.py                                                      | Python           |        452 |          6 |         84 |        542 |
+| /Users/kbbk/PyProject-5/app/views/note_views.py                                                        | Python           |        621 |          7 |        121 |        749 |
+| /Users/kbbk/PyProject-5/app/views/task_views.py                                                        | Python           |        574 |          8 |        105 |        687 |
+| /Users/kbbk/PyProject-5/app/views/user_views.py                                                        | Python           |        358 |         10 |         66 |        434 |
+| /Users/kbbk/PyProject-5/archive/old_files/cookies.txt                                                  | Django txt       |          4 |          0 |          2 |          6 |
+| /Users/kbbk/PyProject-5/archive/old_files/data/cookies.txt                                             | Django txt       |          3 |          0 |          2 |          5 |
+| /Users/kbbk/PyProject-5/archive/old_files/data/cookies_session.txt                                     | Django txt       |          3 |          0 |          2 |          5 |
+| /Users/kbbk/PyProject-5/archive/old_files/package-lock.json                                            | JSON             |      1,656 |          0 |          1 |      1,657 |
+| /Users/kbbk/PyProject-5/archive/old_files/package.json                                                 | JSON             |         29 |          0 |          1 |         30 |
+| /Users/kbbk/PyProject-5/archive/old_files/postcss.config.js                                            | JavaScript       |          6 |          0 |          0 |          6 |
+| /Users/kbbk/PyProject-5/archive/old_files/tailwind.config.js                                           | JavaScript       |         10 |          1 |          0 |         11 |
+| /Users/kbbk/PyProject-5/archive/scripts/run.py                                                         | Python           |          6 |          0 |          4 |         10 |
+| /Users/kbbk/PyProject-5/archive/scripts/start.py                                                       | Python           |        338 |         25 |         70 |        433 |
+| /Users/kbbk/PyProject-5/archive/scripts/start.sh                                                       | Shell Script     |        323 |         72 |         67 |        462 |
+| /Users/kbbk/PyProject-5/archive/test_files/test_pomodoro_api.py                                        | Python           |         46 |          4 |          9 |         59 |
+| /Users/kbbk/PyProject-5/archive/test_files/test_pomodoro_browser.html                                  | Django HTML      |         24 |          0 |          3 |         27 |
+| /Users/kbbk/PyProject-5/archive/test_files/test_pomodoro_complete.py                                   | Python           |         77 |          8 |         15 |        100 |
+| /Users/kbbk/PyProject-5/archive/test_files/test_pomodoro_frontend.py                                   | Python           |         59 |          8 |         11 |         78 |
+| /Users/kbbk/PyProject-5/archive/test_files/test_pomodoro_js.py                                         | Python           |         54 |          5 |         12 |         71 |
+| /Users/kbbk/PyProject-5/archive/test_files/test_pomodoro_login.py                                      | Python           |         57 |          7 |         13 |         77 |
+| /Users/kbbk/PyProject-5/archive/test_files/test_rate_limiting.py                                       | Python           |        129 |         11 |         32 |        172 |
+| /Users/kbbk/PyProject-5/chrome_extension/background.js                                                 | JavaScript       |         39 |          3 |          1 |         43 |
+| /Users/kbbk/PyProject-5/chrome_extension/content_scripts/kmitl_studytable.js                           | JavaScript       |        100 |         13 |         16 |        129 |
+| /Users/kbbk/PyProject-5/chrome_extension/content_scripts/ms_teams.js                                   | JavaScript       |         30 |          6 |          8 |         44 |
+| /Users/kbbk/PyProject-5/chrome_extension/manifest.json                                                 | JSON             |         44 |          0 |          0 |         44 |
+| /Users/kbbk/PyProject-5/chrome_extension/popup.html                                                    | Django HTML      |         38 |          0 |          0 |         38 |
+| /Users/kbbk/PyProject-5/chrome_extension/popup.js                                                      | JavaScript       |         30 |          0 |          3 |         33 |
+| /Users/kbbk/PyProject-5/database/__init__.py                                                           | Python           |         27 |          2 |          2 |         31 |
+| /Users/kbbk/PyProject-5/database/config.py                                                             | Python           |         28 |          5 |          9 |         42 |
+| /Users/kbbk/PyProject-5/database/manager.py                                                            | Python           |        175 |          8 |         26 |        209 |
+| /Users/kbbk/PyProject-5/database/migrations/__init__.py                                                | Python           |          0 |          1 |          1 |          2 |
+| /Users/kbbk/PyProject-5/database/migrations/complete_database_schema.py                                | Python           |        295 |         19 |         38 |        352 |
+| /Users/kbbk/PyProject-5/database/migrations/create_class_notes_tables.py                               | Python           |        106 |         10 |         19 |        135 |
+| /Users/kbbk/PyProject-5/database/migrations/create_class_system_tables.py                              | Python           |        409 |          7 |         78 |        494 |
+| /Users/kbbk/PyProject-5/database/migrations/create_classwork_tables.py                                 | Python           |        149 |         14 |         22 |        185 |
+| /Users/kbbk/PyProject-5/database/migrations/create_complete_database.py                                | Python           |        315 |         21 |         39 |        375 |
+| /Users/kbbk/PyProject-5/database/migrations/create_pomodoro_tables.py                                  | Python           |         61 |          6 |         10 |         77 |
+| /Users/kbbk/PyProject-5/database/models/__init__.py                                                    | Python           |         31 |          1 |          2 |         34 |
+| /Users/kbbk/PyProject-5/database/models/activity_log.py                                                | Python           |         74 |          9 |         20 |        103 |
+| /Users/kbbk/PyProject-5/database/models/base.py                                                        | Python           |         35 |          1 |          8 |         44 |
+| /Users/kbbk/PyProject-5/database/models/external_integration.py                                        | Python           |        107 |         17 |         29 |        153 |
+| /Users/kbbk/PyProject-5/database/models/files.py                                                       | Python           |         77 |         10 |         20 |        107 |
+| /Users/kbbk/PyProject-5/database/models/lesson.py                                                      | Python           |         90 |         15 |         25 |        130 |
+| /Users/kbbk/PyProject-5/database/models/note.py                                                        | Python           |         47 |          9 |         15 |         71 |
+| /Users/kbbk/PyProject-5/database/models/pomodoro_session.py                                            | Python           |         81 |         11 |         16 |        108 |
+| /Users/kbbk/PyProject-5/database/models/progress_tracking.py                                           | Python           |         57 |          7 |         13 |         77 |
+| /Users/kbbk/PyProject-5/database/models/reminder.py                                                    | Python           |        107 |         14 |         29 |        150 |
+| /Users/kbbk/PyProject-5/database/models/report.py                                                      | Python           |         81 |         10 |         20 |        111 |
+| /Users/kbbk/PyProject-5/database/models/tag.py                                                         | Python           |         67 |         15 |         26 |        108 |
+| /Users/kbbk/PyProject-5/database/models/task.py                                                        | Python           |         64 |         11 |         18 |         93 |
+| /Users/kbbk/PyProject-5/database/models/user.py                                                        | Python           |         51 |          6 |         13 |         70 |
+| /Users/kbbk/PyProject-5/database/schemas/__init__.py                                                   | Python           |          0 |          1 |          1 |          2 |
+| /Users/kbbk/PyProject-5/database/setup_database.py                                                     | Python           |        295 |         19 |         38 |        352 |
+| /Users/kbbk/PyProject-5/database/utils/__init__.py                                                     | Python           |          0 |          1 |          1 |          2 |
+| /Users/kbbk/PyProject-5/docs/AGILE_KANBAN_PRESENTATION.md                                              | Markdown         |        203 |          0 |         65 |        268 |
+| /Users/kbbk/PyProject-5/docs/API_DOCUMENTATION.md                                                      | Markdown         |        817 |          0 |        126 |        943 |
+| /Users/kbbk/PyProject-5/docs/BACKLOG.md                                                                | Markdown         |         70 |          0 |         13 |         83 |
+| /Users/kbbk/PyProject-5/docs/CLASS_SYSTEM_DESIGN.md                                                    | Markdown         |        354 |          0 |         82 |        436 |
+| /Users/kbbk/PyProject-5/docs/CLASS_SYSTEM_PROGRESS.md                                                  | Markdown         |        274 |          0 |         66 |        340 |
+| /Users/kbbk/PyProject-5/docs/COMPREHENSIVE_DEVELOPMENT_SUMMARY.md                                      | Markdown         |         50 |          0 |         23 |         73 |
+| /Users/kbbk/PyProject-5/docs/CROSS_PLATFORM_STARTUP.md                                                 | Markdown         |        129 |          0 |         37 |        166 |
+| /Users/kbbk/PyProject-5/docs/DATA_GATHERING_FORM/DATA_ANALYSIS_PLAN.md                                 | Markdown         |         92 |          0 |         18 |        110 |
+| /Users/kbbk/PyProject-5/docs/DATA_GATHERING_FORM/DATA_GATHERING_FORM.md                                | Markdown         |         61 |          0 |         25 |         86 |
+| /Users/kbbk/PyProject-5/docs/DATA_GATHERING_FORM/NURIN -120.md                                         | Markdown         |         87 |          0 |         34 |        121 |
+| /Users/kbbk/PyProject-5/docs/DEFINITION_OF_DONE.md                                                     | Markdown         |         26 |          0 |         10 |         36 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_CLEANUP_COMPLETE.md                                              | Markdown         |         87 |          0 |         19 |        106 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_DEBUG.md                                                         | Markdown         |         74 |          0 |         22 |         96 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_DEBUG_FINAL.md                                                   | Markdown         |         90 |          0 |         23 |        113 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_DEVELOPMENT_GUIDE.md                                             | Markdown         |        420 |          0 |         94 |        514 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_DUPLICATE_FIX.md                                                 | Markdown         |        116 |          0 |         28 |        144 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_ELEMENTS_FIX.md                                                  | Markdown         |        110 |          0 |         24 |        134 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_ELEMENTS_FIX_FINAL.md                                            | Markdown         |        171 |          0 |         35 |        206 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_FINAL_STATUS.md                                                  | Markdown         |        115 |          0 |         26 |        141 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_MAIN_JS_FIX.md                                                   | Markdown         |         84 |          0 |         22 |        106 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_OOP_ARCHITECTURE.md                                              | Markdown         |        205 |          0 |         34 |        239 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_SPA_FIX.md                                                       | Markdown         |        146 |          0 |         31 |        177 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_TIMER_DEBUG.md                                                   | Markdown         |        156 |          0 |         31 |        187 |
+| /Users/kbbk/PyProject-5/docs/POMODORO_WORKING.md                                                       | Markdown         |        148 |          0 |         34 |        182 |
+| /Users/kbbk/PyProject-5/docs/PRODUCT_ROADMAP.md                                                        | Markdown         |         29 |          0 |          9 |         38 |
+| /Users/kbbk/PyProject-5/docs/PROJECT_PROPOSAL.md                                                       | Markdown         |        222 |          0 |         70 |        292 |
+| /Users/kbbk/PyProject-5/docs/PROJECT_PROPOSAL_TH.md                                                    | Markdown         |        155 |          0 |         54 |        209 |
+| /Users/kbbk/PyProject-5/docs/SDLC_KANBAN_DIAGRAM.md                                                    | Markdown         |        373 |          0 |         68 |        441 |
+| /Users/kbbk/PyProject-5/docs/SIMPLE_POMODORO.md                                                        | Markdown         |        114 |          0 |         33 |        147 |
+| /Users/kbbk/PyProject-5/docs/SIMPLE_POMODORO_FINAL.md                                                  | Markdown         |        106 |          0 |         30 |        136 |
+| /Users/kbbk/PyProject-5/docs/SRS_SOFTWARE_REQUIREMENTS_SPECIFICATION.md                                | Markdown         |        367 |          0 |         98 |        465 |
+| /Users/kbbk/PyProject-5/docs/TECHNICAL_SPECIFICATION.md                                                | Markdown         |        324 |          0 |         66 |        390 |
+| /Users/kbbk/PyProject-5/docs/TECH_STACK_DIAGRAM.md                                                     | Markdown         |        385 |          0 |         65 |        450 |
+| /Users/kbbk/PyProject-5/docs/TECH_STACK_TH.md                                                          | Markdown         |        469 |          0 |        123 |        592 |
+| /Users/kbbk/PyProject-5/docs/adr/001-template-adr.md                                                   | Markdown         |         17 |          0 |         11 |         28 |
+| /Users/kbbk/PyProject-5/docs/architecture/PHASE2_COMPLETION_SUMMARY.md                                 | Markdown         |        283 |          0 |         55 |        338 |
+| /Users/kbbk/PyProject-5/docs/architecture/PHASE3_COMPLETION_SUMMARY.md                                 | Markdown         |        355 |          0 |         57 |        412 |
+| /Users/kbbk/PyProject-5/docs/architecture/PROJECT_STRUCTURE.md                                         | Markdown         |         37 |          0 |          9 |         46 |
+| /Users/kbbk/PyProject-5/docs/architecture/REFACTOR_ARCHITECTURE_DESIGN.md                              | Markdown         |        205 |          0 |         22 |        227 |
+| /Users/kbbk/PyProject-5/docs/architecture/REFACTOR_COMPLETION_SUMMARY.md                               | Markdown         |        208 |          0 |         52 |        260 |
+| /Users/kbbk/PyProject-5/docs/class_redesign.md                                                         | Markdown         |        294 |          0 |         63 |        357 |
+| /Users/kbbk/PyProject-5/docs/database/SCHEMA_OVERVIEW.md                                               | Markdown         |        164 |          0 |         47 |        211 |
+| /Users/kbbk/PyProject-5/docs/database/database_design.md                                               | Markdown         |        182 |          0 |         25 |        207 |
+| /Users/kbbk/PyProject-5/docs/database/database_er_diagram.md                                           | Markdown         |        166 |          0 |         33 |        199 |
+| /Users/kbbk/PyProject-5/docs/database/database_recommendations.md                                      | Markdown         |        228 |          0 |         41 |        269 |
+| /Users/kbbk/PyProject-5/docs/database/migration_success_report.md                                      | Markdown         |        155 |          0 |         35 |        190 |
+| /Users/kbbk/PyProject-5/docs/database/srs_database_design.md                                           | Markdown         |        409 |          0 |         46 |        455 |
+| /Users/kbbk/PyProject-5/docs/database/srs_database_summary.md                                          | Markdown         |        173 |          0 |         47 |        220 |
+| /Users/kbbk/PyProject-5/docs/fix_summaries/CREATE_LESSON_FIX_SUMMARY.md                                | Markdown         |        205 |          0 |         53 |        258 |
+| /Users/kbbk/PyProject-5/docs/fix_summaries/FIX_REDIRECT_URI_MISMATCH.md                                | Markdown         |        132 |          0 |         47 |        179 |
+| /Users/kbbk/PyProject-5/docs/fix_summaries/GITHUB_PUSH_PROTECTION_FIX_SUMMARY.md                       | Markdown         |        169 |          0 |         46 |        215 |
+| /Users/kbbk/PyProject-5/docs/fix_summaries/GIT_PUSH_FIX_SUMMARY.md                                     | Markdown         |        147 |          0 |         57 |        204 |
+| /Users/kbbk/PyProject-5/docs/fix_summaries/IMMEDIATE_FIX_REDIRECT_URI.md                               | Markdown         |         95 |          0 |         34 |        129 |
+| /Users/kbbk/PyProject-5/docs/fix_summaries/LESSON_MODEL_FINAL_FIX_SUMMARY.md                           | Markdown         |        225 |          0 |         51 |        276 |
+| /Users/kbbk/PyProject-5/docs/fix_summaries/LESSON_MODEL_FIX_SUMMARY.md                                 | Markdown         |        174 |          0 |         54 |        228 |
+| /Users/kbbk/PyProject-5/docs/fix_summaries/LESSON_SECTIONS_FIX_SUMMARY.md                              | Markdown         |        208 |          0 |         47 |        255 |
+| /Users/kbbk/PyProject-5/docs/fix_summaries/LOGIN_FIX_SUMMARY.md                                        | Markdown         |        120 |          0 |         41 |        161 |
+| /Users/kbbk/PyProject-5/docs/fix_summaries/PORT_FIX_SUMMARY.md                                         | Markdown         |         86 |          0 |         34 |        120 |
+| /Users/kbbk/PyProject-5/docs/fix_summaries/REGISTER_FIX_SUMMARY.md                                     | Markdown         |        179 |          0 |         50 |        229 |
+| /Users/kbbk/PyProject-5/docs/future_work/GLOSSARY.md                                                   | Markdown         |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/docs/future_work/INSTALLATION_GUIDE.md                                         | Markdown         |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/docs/future_work/REQUIREMENTS.md                                               | Markdown         |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/docs/future_work/TECHNICAL_DESIGN.md                                           | Markdown         |          0 |          0 |          1 |          1 |
+| /Users/kbbk/PyProject-5/docs/microsoft_teams_mockup.md                                                 | Markdown         |        161 |          0 |         36 |        197 |
+| /Users/kbbk/PyProject-5/docs/notes/READMETOSEEALL.md                                                   | Markdown         |        297 |          0 |         85 |        382 |
+| /Users/kbbk/PyProject-5/docs/notes/TESTING_SUMMARY.md                                                  | Markdown         |        197 |          0 |         37 |        234 |
+| /Users/kbbk/PyProject-5/docs/notes/migrationlessonnote.md                                              | Markdown         |         50 |          0 |         20 |         70 |
+| /Users/kbbk/PyProject-5/docs/notes/report_note.md                                                      | Markdown         |        163 |          0 |         35 |        198 |
+| /Users/kbbk/PyProject-5/docs/notes/report_note_refactor#3.md                                           | Markdown         |        331 |          0 |         87 |        418 |
+| /Users/kbbk/PyProject-5/docs/retrospectives/2025-Q3-retrospective.md                                   | Markdown         |         19 |          0 |         14 |         33 |
+| /Users/kbbk/PyProject-5/docs/security/rete_limiting.md                                                 | Markdown         |        169 |          0 |         58 |        227 |
+| /Users/kbbk/PyProject-5/docs/setup/GITHUB_SSH_SETUP.md                                                 | Markdown         |        122 |          0 |         51 |        173 |
+| /Users/kbbk/PyProject-5/docs/setup/GOOGLE_CLASSROOM_SETUP_SUMMARY.md                                   | Markdown         |        160 |          0 |         57 |        217 |
+| /Users/kbbk/PyProject-5/docs/setup/README_STARTUP.md                                                   | Markdown         |        223 |          0 |         85 |        308 |
+| /Users/kbbk/PyProject-5/docs/setup/google_oauth_setup.md                                               | Markdown         |        142 |          0 |         43 |        185 |
+| /Users/kbbk/PyProject-5/requirements.txt                                                               | pip requirements |         33 |          0 |          1 |         34 |
+| /Users/kbbk/PyProject-5/scripts/database_setup.sh                                                      | Shell Script     |        133 |         37 |         34 |        204 |
+| /Users/kbbk/PyProject-5/scripts/debug/debug_login.py                                                   | Python           |         31 |          1 |          8 |         40 |
+| /Users/kbbk/PyProject-5/scripts/debug/debug_password.py                                                | Python           |         44 |          6 |         14 |         64 |
+| /Users/kbbk/PyProject-5/scripts/debug/debug_register.py                                                | Python           |         31 |          1 |          8 |         40 |
+| /Users/kbbk/PyProject-5/scripts/fix_port_5000.sh                                                       | Shell Script     |          0 |          0 |          2 |          2 |
+| /Users/kbbk/PyProject-5/scripts/migrations/create_default_user.py                                      | Python           |         52 |          4 |         12 |         68 |
+| /Users/kbbk/PyProject-5/scripts/migrations/init_database.py                                            | Python           |         53 |          6 |         17 |         76 |
+| /Users/kbbk/PyProject-5/scripts/migrations/init_oop_database.py                                        | Python           |         28 |          4 |         10 |         42 |
+| /Users/kbbk/PyProject-5/scripts/migrations/migrate_existing_db.py                                      | Python           |        100 |         10 |         27 |        137 |
+| /Users/kbbk/PyProject-5/scripts/migrations/migrate_lesson_table.py                                     | Python           |        162 |         16 |         41 |        219 |
+| /Users/kbbk/PyProject-5/scripts/migrations/migration_script.py                                         | Python           |         57 |          5 |         13 |         75 |
+| /Users/kbbk/PyProject-5/scripts/migrations/new_database_migration.py                                   | Python           |        302 |         15 |         53 |        370 |
+| /Users/kbbk/PyProject-5/scripts/migrations/srs_migration_script.py                                     | Python           |        520 |         47 |         80 |        647 |
+| /Users/kbbk/PyProject-5/scripts/run_new.py                                                             | Python           |          9 |          2 |          4 |         15 |
+| /Users/kbbk/PyProject-5/scripts/start_flask.sh                                                         | Shell Script     |        172 |         56 |         50 |        278 |
+| /Users/kbbk/PyProject-5/scripts/start_flask_new.py                                                     | Python           |        367 |         23 |         77 |        467 |
+| /Users/kbbk/PyProject-5/scripts/start_flask_new.sh                                                     | Shell Script     |        253 |         61 |         55 |        369 |
+| /Users/kbbk/PyProject-5/scripts/start_flask_simple.sh                                                  | Shell Script     |         40 |         11 |         11 |         62 |
+| /Users/kbbk/PyProject-5/scripts/tests/test_api_usage.py                                                | Python           |        134 |         10 |         21 |        165 |
+| /Users/kbbk/PyProject-5/scripts/tests/test_database.py                                                 | Python           |        115 |         15 |         34 |        164 |
+| /Users/kbbk/PyProject-5/scripts/tests/test_google_classroom.py                                         | Python           |        183 |          8 |         53 |        244 |
+| /Users/kbbk/PyProject-5/scripts/tests/test_lesson_add.py                                               | Python           |        146 |         10 |         29 |        185 |
+| /Users/kbbk/PyProject-5/scripts/tests/test_oop.py                                                      | Python           |        147 |         18 |         40 |        205 |
+| /Users/kbbk/PyProject-5/scripts/tests/test_register_fix.py                                             | Python           |         53 |          3 |         15 |         71 |
+| /Users/kbbk/PyProject-5/scripts/utils/fix_imports.py                                                   | Python           |         58 |          3 |         12 |         73 |
+| /Users/kbbk/PyProject-5/scripts/utils/fix_routes.py                                                    | Python           |         23 |          2 |          9 |         34 |
+| /Users/kbbk/PyProject-5/start_server.py                                                                | Python           |        219 |          9 |         65 |        293 |
+| Total                                                                                                  |                  |    399,940 |      2,317 |     15,440 |    417,697 |
++--------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+

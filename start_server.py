@@ -12,8 +12,15 @@ import socket
 import sqlite3
 import uuid
 from datetime import datetime
-from werkzeug.security import generate_password_hash
 from typing import List
+
+# Import werkzeug with error handling
+try:
+    from werkzeug.security import generate_password_hash
+except ImportError:
+    print("[ERROR] Werkzeug not found. Installing...")
+    subprocess.run([sys.executable, "-m", "pip", "install", "werkzeug"], check=True)
+    from werkzeug.security import generate_password_hash
 
 
 def print_status(msg: str) -> None:
@@ -101,18 +108,33 @@ def ensure_dependencies() -> None:
     """Check and install Python dependencies"""
     print_status("Checking Python dependencies...")
     
-    if os.path.isfile("requirements.txt"):
-        if not run_quiet([sys.executable, "-c", "import flask"]):
-            print_warning("Flask not found, installing dependencies...")
+    # Check for key dependencies
+    key_deps = ["flask", "werkzeug", "sqlalchemy"]
+    missing_deps = []
+    
+    for dep in key_deps:
+        if not run_quiet([sys.executable, "-c", f"import {dep}"]):
+            missing_deps.append(dep)
+    
+    if missing_deps:
+        print_warning(f"Missing dependencies: {', '.join(missing_deps)}")
+        print_status("Installing dependencies...")
+        
+        if os.path.isfile("requirements.txt"):
+            print_status("Installing from requirements.txt...")
             run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-        if not run_quiet([sys.executable, "-c", "import dependency_injector"]):
-            print_warning("dependency-injector not found, installing...")
-            run([sys.executable, "-m", "pip", "install", "dependency-injector"])
-        print_success("Key dependencies already installed")
-        print_success("dependency-injector already installed")
+        else:
+            print_status("Installing basic dependencies...")
+            run([sys.executable, "-m", "pip", "install", "flask", "sqlalchemy", "werkzeug", "dependency-injector"])
+        
+        # Verify installation
+        for dep in missing_deps:
+            if run_quiet([sys.executable, "-c", f"import {dep}"]):
+                print_success(f"{dep} installed successfully")
+            else:
+                print_error(f"Failed to install {dep}")
     else:
-        print_warning("requirements.txt not found, installing basic dependencies...")
-        run([sys.executable, "-m", "pip", "install", "flask", "sqlalchemy", "werkzeug", "dependency-injector"])
+        print_success("All key dependencies are installed")
 
 
 def validate_oop_files() -> None:
