@@ -99,6 +99,8 @@ function switchMode(mode) {
   updateDisplay();
 }
 
+let lastTick = Date.now();
+
 function startTimer() {
   if (state.isRunning) {
     state.isRunning = false;
@@ -108,16 +110,25 @@ function startTimer() {
   }
   
   state.isRunning = true;
+  lastTick = Date.now();
   updateDisplay();
   
   interval = setInterval(() => {
-    if (state.timeLeft > 0) {
-      state.timeLeft--;
-      updateDisplay();
-    } else {
-      timerComplete();
+    const now = Date.now();
+    const delta = Math.floor((now - lastTick) / 1000);
+    
+    if (delta >= 1) {
+      if (state.timeLeft > 0) {
+        state.timeLeft = Math.max(0, state.timeLeft - delta);
+        lastTick = now;
+        updateDisplay();
+        
+        if (state.timeLeft === 0) {
+          timerComplete();
+        }
+      }
     }
-  }, 1000);
+  }, 100); // Run every 100ms for more accurate timing
 }
 
 function timerComplete() {
@@ -286,12 +297,16 @@ function playSound() {
 }
 
 // ---------- Initialize ----------
-document.addEventListener('DOMContentLoaded', () => {
+function initializeApp() {
+  console.log('Initializing Pomodoro Timer...');
+
   // Load saved data
   const savedState = localStorage.getItem('pomodoroState');
   if (savedState) {
     try {
-      Object.assign(state, JSON.parse(savedState));
+      const parsed = JSON.parse(savedState);
+      Object.assign(state, parsed);
+      console.log('Loaded saved state:', state);
     } catch (e) {
       console.error('Failed to load saved state:', e);
     }
@@ -300,6 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check if it's a new day
   const today = new Date().toDateString();
   if (state.stats.lastDate !== today) {
+    console.log('New day detected, resetting daily stats');
     state.stats.todayPomodoros = 0;
     state.stats.todayFocusTime = 0;
     state.stats.todayTasks = 0;
@@ -307,80 +323,238 @@ document.addEventListener('DOMContentLoaded', () => {
     state.stats.lastDate = today;
   }
 
-  // Initialize display
+  // Initialize displays
+  console.log('Initializing displays...');
   updateDisplay();
   updateStats();
   updateTaskList();
 
   // Timer Controls
-  document.getElementById('startBtn').addEventListener('click', startTimer);
-  document.getElementById('resetBtn').addEventListener('click', () => switchMode(state.mode));
-  document.getElementById('skipBtn').addEventListener('click', timerComplete);
+  console.log('Setting up timer controls...');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const skipBtn = document.getElementById('skipBtn');
+
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      console.log('Start/Pause button clicked');
+      startTimer();
+    });
+  } else {
+    console.error('Start button not found!');
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      console.log('Reset button clicked');
+      switchMode(state.mode);
+    });
+  } else {
+    console.error('Reset button not found!');
+  }
+
+  if (skipBtn) {
+    skipBtn.addEventListener('click', () => {
+      console.log('Skip button clicked');
+      timerComplete();
+    });
+  } else {
+    console.error('Skip button not found!');
+  }
 
   // Mode Tabs
-  document.querySelectorAll('.mode-tab').forEach(tab => {
-    tab.addEventListener('click', () => switchMode(tab.dataset.mode));
+  console.log('Setting up mode tabs...');
+  const modeTabs = document.querySelectorAll('.mode-tab');
+  modeTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      console.log('Mode changed to:', tab.dataset.mode);
+      switchMode(tab.dataset.mode);
+    });
   });
 
-  // Task Input
-  document.getElementById('taskInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      addTask(e.target.value);
-    }
-  });
-  document.getElementById('addTaskBtn').addEventListener('click', () => {
-    addTask(document.getElementById('taskInput').value);
-  });
+  // Task Management
+  console.log('Setting up task management...');
+  const taskInput = document.getElementById('taskInput');
+  const addTaskBtn = document.getElementById('addTaskBtn');
+
+  if (taskInput) {
+    taskInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        console.log('Adding task via Enter key');
+        addTask(e.target.value);
+      }
+    });
+  }
+
+  if (addTaskBtn) {
+    addTaskBtn.addEventListener('click', () => {
+      console.log('Adding task via button click');
+      const input = document.getElementById('taskInput');
+      if (input) {
+        addTask(input.value);
+      }
+    });
+  }
 
   // Settings Dialog
-  document.getElementById('settingsBtn').addEventListener('click', openSettings);
-  document.getElementById('closeSettings').addEventListener('click', () => {
-    document.getElementById('settingsDialog').close();
-  });
-  document.getElementById('saveSettings').addEventListener('click', saveSettings);
+  console.log('Setting up settings dialog...');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const closeSettings = document.getElementById('closeSettings');
+  const saveSettings = document.getElementById('saveSettings');
+  const settingsDialog = document.getElementById('settingsDialog');
+
+  if (settingsBtn && settingsDialog) {
+    settingsBtn.addEventListener('click', () => {
+      console.log('Opening settings dialog');
+      openSettings();
+    });
+  }
+
+  if (closeSettings) {
+    closeSettings.addEventListener('click', () => {
+      console.log('Closing settings dialog');
+      settingsDialog.close();
+    });
+  }
+
+  if (saveSettings) {
+    saveSettings.addEventListener('click', () => {
+      console.log('Saving settings');
+      saveSettings();
+    });
+  }
 
   // Stats Dialog
-  document.getElementById('statsBtn').addEventListener('click', () => {
-    document.getElementById('statsDialog').showModal();
-  });
-  document.getElementById('closeStats').addEventListener('click', () => {
-    document.getElementById('statsDialog').close();
-  });
-  document.getElementById('closeStatsBtn').addEventListener('click', () => {
-    document.getElementById('statsDialog').close();
-  });
+  console.log('Setting up stats dialog...');
+  const statsBtn = document.getElementById('statsBtn');
+  const closeStats = document.getElementById('closeStats');
+  const closeStatsBtn = document.getElementById('closeStatsBtn');
+  const statsDialog = document.getElementById('statsDialog');
+
+  if (statsBtn && statsDialog) {
+    statsBtn.addEventListener('click', () => {
+      console.log('Opening stats dialog');
+      statsDialog.showModal();
+    });
+  }
+
+  if (closeStats) {
+    closeStats.addEventListener('click', () => {
+      console.log('Closing stats dialog');
+      statsDialog.close();
+    });
+  }
+
+  if (closeStatsBtn) {
+    closeStatsBtn.addEventListener('click', () => {
+      console.log('Closing stats dialog via button');
+      statsDialog.close();
+    });
+  }
 
   // Reset Stats
-  document.getElementById('resetStatsBtn').addEventListener('click', () => {
-    if (confirm('รีเซ็ตสถิติทั้งหมด?')) {
-      state.stats = {
-        todayPomodoros: 0,
-        todayFocusTime: 0,
-        todayTasks: 0,
-        todayBreaks: 0,
-        totalPomodoros: 0,
-        totalFocusTime: 0,
-        totalTasks: 0,
-        lastDate: new Date().toDateString()
-      };
-      updateStats();
-    }
-  });
+  console.log('Setting up stats reset...');
+  const resetStatsBtn = document.getElementById('resetStatsBtn');
+  if (resetStatsBtn) {
+    resetStatsBtn.addEventListener('click', () => {
+      console.log('Reset stats button clicked');
+      if (confirm('รีเซ็ตสถิติทั้งหมด?')) {
+        state.stats = {
+          todayPomodoros: 0,
+          todayFocusTime: 0,
+          todayTasks: 0,
+          todayBreaks: 0,
+          totalPomodoros: 0,
+          totalFocusTime: 0,
+          totalTasks: 0,
+          lastDate: new Date().toDateString()
+        };
+        updateStats();
+      }
+    });
+  }
 
   // Keyboard Shortcuts
+  console.log('Setting up keyboard shortcuts...');
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return;
     
     if (e.code === 'Space') {
       e.preventDefault();
+      console.log('Space pressed - Start/Pause timer');
       startTimer();
     } else if (e.key.toLowerCase() === 'r') {
+      console.log('R pressed - Reset timer');
       switchMode(state.mode);
     }
   });
 
-  // Save state periodically
+  // Auto-save state
+  console.log('Setting up auto-save...');
   setInterval(() => {
-    localStorage.setItem('pomodoroState', JSON.stringify(state));
-  }, 1000);
-});
+    // Save only if state has changed
+    const currentState = JSON.stringify(state);
+    if (currentState !== localStorage.getItem('pomodoroState')) {
+      localStorage.setItem('pomodoroState', currentState);
+      console.log('State auto-saved');
+    }
+  }, 10000); // Save every 10 seconds instead
+
+  console.log('Initialization complete!');
+}
+
+// Cleanup function to stop timer and save state
+function cleanup() {
+  console.log('Cleaning up Pomodoro app...');
+  if (interval) {
+    clearInterval(interval);
+    interval = null;
+  }
+  state.isRunning = false;
+  localStorage.setItem('pomodoroState', JSON.stringify(state));
+}
+
+// Flag to track initialization status
+let isInitialized = false;
+
+// Make functions globally available for SPA
+window.onLoadPomodoro = function() {
+  console.log('🔄 onLoadPomodoro called');
+  
+  // If already initialized, cleanup first
+  if (isInitialized) {
+    console.log('🧹 Cleaning up previous instance...');
+    cleanup();
+  }
+  
+  console.log('🚀 Initializing Pomodoro app...');
+  initializeApp();
+  isInitialized = true;
+  console.log('✅ Initialization complete');
+  
+  // Notify main.js that initialization is complete
+  window.pomodoroInitialized = true;
+  
+  // Dispatch custom event
+  window.dispatchEvent(new CustomEvent('pomodoroReady'));
+}
+
+window.onUnloadPomodoro = function() {
+  console.log('👋 Unloading Pomodoro app...');
+  cleanup();
+  isInitialized = false;
+  window.pomodoroInitialized = false;
+}
+
+// Initialize on script load
+console.log('📥 pomodoro.js loaded');
+window.pomodoroLoaded = true;
+
+// Also initialize on direct page load if not in SPA mode
+if (!window.isInSpaMode) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.onLoadPomodoro);
+  } else {
+    window.onLoadPomodoro();
+  }
+}
