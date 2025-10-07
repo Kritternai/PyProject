@@ -112,7 +112,7 @@
         {% if notes %}
             {% for note in notes %}
                 <div class="mb-4 col-md-6 col-lg-4">
-                    <div class="card h-100 neo-card" data-status="{{ (note.status or 'pending') }}">
+                    <div class="card h-100 neo-card note-card" data-status="{{ (note.status or 'pending') }}" data-note-id="{{ note.id }}" style="cursor:pointer;">
                         {% set first_image = None %}
                         {% if note.files %}
                             {% set first_image = (note.files | selectattr('file_type', 'equalto', 'image') | list | first) %}
@@ -157,7 +157,7 @@
                             </div>
                         </div>
                         <div class="gap-2 pt-0 pb-3 bg-white border-0 card-footer d-flex justify-content-end">
-                            <button type="button" class="btn btn-sm btn-outline-primary btn-soft" data-bs-toggle="modal" data-bs-target="#editNoteModal"
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-soft" onclick="openNoteEditor('{{ note.id }}')"
                                 data-note-id="{{ note.id }}"
                                 data-note-title="{{ note.title }}"
                                 data-note-content="{{ note.content or '' }}"

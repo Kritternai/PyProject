@@ -83,7 +83,7 @@
 {% if notes %}
     <div class="notes-list">
         {% for note in notes %}
-        <div class="note-item" data-note-id="{{ note.id }}" onclick="loadNote('{{ note.id }}')">
+        <div class="note-item" data-note-id="{{ note.id }}" onclick="openNoteEditor('{{ note.id }}')">
             <div class="note-header">
                 <h4 class="note-title">{{ note.title }}</h4>
                 <small class="note-date">{{ note.created_at.strftime('%Y-%m-%d %H:%M') if note.created_at else 'No date' }}</small>
@@ -92,7 +92,7 @@
                 <p>{{ note.content|striptags|truncate(50) }}</p>
             </div>
             <div class="note-actions" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-primary" onclick="loadNote('{{ note.id }}')">Edit</button>
+                <button class="btn btn-sm btn-primary" onclick="openNoteEditor('{{ note.id }}')">Edit</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteNote('{{ note.id }}')">Delete</button>
             </div>
         </div>

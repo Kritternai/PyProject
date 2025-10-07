@@ -14,6 +14,8 @@ function loadPage(page) {
           setupSectionForms(); // เรียก setupSectionForms หลัง loadPage
           setupNoteForms(); // เรียก setupNoteForms หลัง loadPage
           setupNoteListFilters(); // ตั้งค่า search + status chips สำหรับหน้าโน้ต
+          setupNoteCardOpeners(); // เปิด editor เมื่อคลิกทั้งการ์ด
+          // If we are on the new editor route, ensure toolbar bindings exist
           setupLessonAddModal(); // เรียก setupLessonAddModal หลัง loadPage
           setupSectionFilter(); // เรียก setupSectionFilter() หลัง loadPage
           setupLessonSearchAndFilter(); // เรียก setupLessonSearchAndFilter หลัง loadPage
@@ -35,6 +37,27 @@ function loadPage(page) {
       }
     });
 }
+// Open full-page note editor (fragment) with optional selected note
+window.openNoteEditor = function(noteId) {
+  const target = noteId ? `note/editor/${noteId}` : 'note/editor';
+  loadPage(target);
+}
+
+// Attach click on whole note card to open editor (avoid when clicking action buttons/links)
+function setupNoteCardOpeners() {
+  const cards = document.querySelectorAll('.note-card[data-note-id]');
+  if (!cards || cards.length === 0) return;
+  cards.forEach(card => {
+    // prevent duplicate binding
+    if (card._openBound) return; card._openBound = true;
+    card.addEventListener('click', function(e){
+      if (e.target.closest('button, a, input, textarea, select')) return; // ignore interactions
+      const id = this.getAttribute('data-note-id');
+      if (id) openNoteEditor(id);
+    });
+  });
+}
+
 
 function updateSidebarAuth() {
   fetch('/partial/sidebar-auth')

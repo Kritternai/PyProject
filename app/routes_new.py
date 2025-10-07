@@ -497,6 +497,33 @@ def partial_note():
         return render_template('note_fragment.html', notes=[], user=g.user)
 
 
+@main_bp.route('/partial/note/editor')
+@main_bp.route('/partial/note/editor/<note_id>')
+def partial_note_editor(note_id=None):
+    """Full-page Note editor UX (list + editor pane) as a fragment.
+
+    - When loaded without note_id, selects the first note (if exists)
+    - Right pane will fetch content lazily via /partial/note/<id>/data
+    """
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    try:
+        note_service = NoteService()
+        notes = note_service.get_user_notes(g.user.id)
+        notes = _enrich_notes_with_status_and_files(notes)
+
+        # Choose default selected note id if not provided
+        selected_id = note_id
+        if not selected_id and notes:
+            first = notes[0]
+            selected_id = getattr(first, 'id', None)
+
+        return render_template('note_editor_fragment.html', notes=notes, selected_note_id=selected_id, user=g.user)
+    except Exception as e:
+        return render_template('note_editor_fragment.html', notes=[], selected_note_id=None, user=g.user)
+
+
 @main_bp.route('/notes')
 def notes_page():
     """Full page Notes view with CSS/JS via base layout."""
@@ -561,7 +588,7 @@ def partial_note_add():
             notes = note_service.get_user_notes(g.user.id)
             notes = _enrich_notes_with_status_and_files(notes)
             html = render_template('note_fragment.html', notes=notes, user=g.user)
-            return jsonify(success=True, html=html)
+            return jsonify(success=True, html=html, note_id=getattr(note, 'id', None))
 
         # Non-AJAX fallback: redirect to full notes page (with CSS/JS)
         return redirect(url_for('main.notes_page'))
