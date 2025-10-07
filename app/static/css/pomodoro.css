@@ -78,9 +78,10 @@ header {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 32px; /* เพิ่มขนาดฟอนต์ */
+  font-weight: 800; /* เพิ่มความหนา */
   animation: fadeInLeft 0.6s ease;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1); /* เพิ่มเงา */
 }
 
 @keyframes fadeInLeft {
@@ -95,20 +96,21 @@ header {
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px; /* เพิ่มขนาด */
+  height: 48px; /* เพิ่มขนาด */
   background: white;
-  border-radius: 12px;
+  border-radius: 14px; /* เพิ่มความโค้ง */
   display: grid;
   place-items: center;
-  font-size: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-size: 28px; /* เพิ่มขนาดไอคอน */
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2); /* เพิ่มเงา */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logo:hover .logo-icon {
-  transform: rotate(15deg) scale(1.1);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  transform: rotate(15deg) scale(1.15); /* เพิ่ม scale */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25); /* เพิ่มเงา */
+  filter: brightness(1.1); /* เพิ่มความสว่าง */
 }
 
 .header-actions {
