@@ -92,6 +92,10 @@ function loadPage(page) {
             }
           };
           
+          // Initialize variables for pomodoro loading
+          let attempts = 0;
+          const maxAttempts = 10;
+          
           // เริ่มโหลด pomodoro.js
           loadPomodoro();
           

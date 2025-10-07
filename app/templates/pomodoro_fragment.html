@@ -1,4 +1,5 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pomodoro.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dialog-polyfill.css') }}" />
   <div class="container">
     <header>
       <div class="logo">
@@ -6,8 +7,8 @@
         <span>Focus Timer</span>
       </div>
       <div class="header-actions">
-  <button class="icon-btn" id="statsBtn" title="Statistics">📊</button>
-  <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+        <button class="icon-btn" id="statsBtn" title="Statistics">📊</button>
+        <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
       </div>
     </header>
 
@@ -47,7 +48,7 @@
       <div class="section-card">
         <div class="section-title">
           <span>📝 Your Tasks</span>
-          <span style="font-size: 14px; color: var(--text-muted);" id="taskCount">0 tasks</span>
+          <span id="taskCount" style="font-size: 14px; color: var(--text-muted);">0 tasks</span>
         </div>
         <div class="task-input">
           <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="100">
@@ -78,6 +79,8 @@
         </div>
       </div>
     </div>
+  
+    <!-- User Profile Section ย้ายไปอยู่ด้านล่าง -->
   </div>
 
   <dialog id="settingsDialog">
@@ -153,6 +156,16 @@
 
   <script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
   <script>
+    // Polyfill for dialog
+    if (!('showModal' in document.createElement('dialog'))) {
+      dialogPolyfill.registerDialog(document.getElementById('settingsDialog'));
+      dialogPolyfill.registerDialog(document.getElementById('statsDialog'));
+    }
+    
+    // Make sure dialogs are closed by default
+    document.getElementById('settingsDialog').close();
+    document.getElementById('statsDialog').close();
+
     // Initialize when fragment is loaded in SPA
     if (window.onLoadPomodoro) {
       window.onLoadPomodoro();

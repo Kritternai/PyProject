@@ -21,7 +21,7 @@ class PomodoroController:
         try:
             if not g.user:
                 return render_template('login.html')
-            return render_template('pomodoro.html')
+            return render_template('pomodoro_fragment.html')
         except Exception as e:
             return render_template('error.html', error=str(e))
 

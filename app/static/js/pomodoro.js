@@ -400,7 +400,7 @@ function initializeApp() {
   console.log('Setting up settings dialog...');
   const settingsBtn = document.getElementById('settingsBtn');
   const closeSettings = document.getElementById('closeSettings');
-  const saveSettings = document.getElementById('saveSettings');
+  const saveSettingsBtn = document.getElementById('saveSettings');
   const settingsDialog = document.getElementById('settingsDialog');
 
   if (settingsBtn && settingsDialog) {
@@ -417,9 +417,10 @@ function initializeApp() {
     });
   }
 
-  if (saveSettings) {
-    saveSettings.addEventListener('click', () => {
+  if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener('click', () => {
       console.log('Saving settings');
+      // call the settings save function defined above
       saveSettings();
     });
   }
