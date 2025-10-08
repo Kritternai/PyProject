@@ -277,11 +277,7 @@ files/
 # TESTING & DEVELOPMENT
 # =============================================================================
 
-# Test files
-test_*.py
-*_test.py
-tests/
-test/
+
 
 # Coverage reports
 .coverage
