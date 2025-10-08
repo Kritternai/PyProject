@@ -16,6 +16,8 @@ import time
 import sqlite3
 from datetime import datetime
 
+DB_PATH = 'instance/site.db'  # กำหนด path ให้ถูกต้อง
+
 # Create main blueprint
 main_bp = Blueprint('main', __name__)
 
@@ -1231,5 +1233,3 @@ def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
-
-
