@@ -44,7 +44,7 @@ def login():
         flash('Google OAuth credentials are not configured.', 'danger')
         return redirect(url_for('main.index'))
 
-    port = current_app.config.get('PORT', 5004)
+    port = current_app.config.get('PORT', 5003)
     redirect_uri = f"http://localhost:{port}/auth/google/callback"
 
     flow = Flow.from_client_config(
@@ -81,7 +81,7 @@ def callback():
         flash('Google OAuth credentials are not configured.', 'danger')
         return redirect(url_for('main.index'))
 
-    port = current_app.config.get('PORT', 5004)
+    port = current_app.config.get('PORT', 5003)
     redirect_uri = f"http://localhost:{port}/auth/google/callback"
 
     flow = Flow.from_client_config(
