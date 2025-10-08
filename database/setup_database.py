@@ -299,55 +299,57 @@ def create_complete_database_schema():
         print("✅ Created uploads directories")
         
         # 12. Create pomodoro tables
+        # ตารางเก็บ session การทำงาน Pomodoro แต่ละรอบ
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS pomodoro_session ( #ตารางเก็บ session การทำงาน
-                id TEXT PRIMARY KEY, #UUID
-                user_id TEXT NOT NULL, #ลบ user แล้ว session หายด้วย
-                session_type TEXT NOT NULL, #focus, short_break, long_break
-                duration INTEGER NOT NULL,  #ระยะเวลาเริ่มกับจบลบกัน
-                actual_duration INTEGER, #ระยะเวลาที่ใช้จริง
-                start_time TIMESTAMP NOT NULL, #เวลาที่เริ่ม
-                end_time TIMESTAMP, #เวลาที่จบ
-                status TEXT DEFAULT 'active', #active, completed, interrupted(กดหยุด)
-                productivity_score INTEGER, #คะแนนความมีประสิทธิภาพ
-                task TEXT, #งานที่ทำ
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, #เวลาที่สร้าง
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, #เวลาที่อัพเดต
-                FOREIGN KEY (user_id) REFERENCES user(id) #ลบ user แล้ว session หายด้วย
+            CREATE TABLE IF NOT EXISTS pomodoro_session (
+                id TEXT PRIMARY KEY,                  -- UUID ของ session
+                user_id TEXT NOT NULL,                -- อ้างอิงผู้ใช้, ลบ user แล้ว session หายด้วย
+                session_type TEXT NOT NULL,           -- ประเภท session: focus, short_break, long_break
+                duration INTEGER NOT NULL,            -- ระยะเวลาที่ตั้งไว้ (นาที)
+                actual_duration INTEGER,              -- ระยะเวลาที่ใช้จริง (นาที)
+                start_time TIMESTAMP NOT NULL,        -- เวลาที่เริ่ม session
+                end_time TIMESTAMP,                   -- เวลาที่จบ session
+                status TEXT DEFAULT 'active',         -- สถานะ: active, completed, interrupted
+                productivity_score INTEGER,           -- คะแนนประสิทธิภาพของ session
+                task TEXT,                            -- งานที่ทำใน session นี้
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่สร้าง
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่อัพเดต
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE -- ลบ user แล้ว session หายด้วย
             )
         """)
-        
+
+        # ตารางเก็บสถิติการใช้งาน Pomodoro ของแต่ละวัน
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS pomodoro_statistics ( #ตารางเก็บสถิติการใช้งาน
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL, #ลบ user แล้วสถิติหายด้วย
-                date DATE NOT NULL, #วันที่เก็บสถิติ
-                total_sessions INTEGER DEFAULT 0, #จำนวน session ที่ทำในวันนั้น
-                total_focus_time INTEGER DEFAULT 0, #เวลาที่ใช้ไปกับการโฟกัส
-                total_break_time INTEGER DEFAULT 0, #เวลาที่ใช้ไปกับการพัก
-                total_long_break_time INTEGER DEFAULT 0, #เวลาที่ใช้ไปกับการพักยาว
-                total_interrupted_sessions INTEGER DEFAULT 0, #จำนวน session ที่ถูกขัดจังหวะ
-                total_completed_sessions INTEGER DEFAULT 0, #จำนวน session ที่ทำเสร็จ
-                total_productivity_score INTEGER DEFAULT 0, #คะแนนความมีประสิทธิภาพรวม
-                total_tasks_completed INTEGER DEFAULT 0, #จำนวนงานที่ทำเสร็จ
-                total_tasks INTEGER DEFAULT 0, #จำนวนงานทั้งหมด
-                total_focus_sessions INTEGER DEFAULT 0, #จำนวน session ที่โฟกัส
-                total_short_break_sessions INTEGER DEFAULT 0, #จำนวน session ที่พักสั้น
-                total_long_break_sessions INTEGER DEFAULT 0, #จำนวน session ที่พักยาว
-                total_time_spent INTEGER DEFAULT 0, #เวลาที่ใช้ไปทั้งหมด
-                total_effective_time INTEGER DEFAULT 0, #เวลาที่ใช้ไปอย่างมีประสิทธิภาพ
-                total_ineffective_time INTEGER DEFAULT 0, #เวลาที่ใช้ไปอย่างไม่มีประสิทธิภาพ
-                total_abandoned_sessions INTEGER DEFAULT 0, #จำนวน session ที่ถูกละทิ้ง
-                total_on_time_sessions INTEGER DEFAULT 0, #จำนวน session ที่ทำตรงเวลา
-                total_late_sessions INTEGER DEFAULT 0, #จำนวน session ที่ทำช้า
-                average_session_duration REAL DEFAULT 0.0, #ระยะเวลาเฉลี่ยต่อ session
-                productivity_score REAL DEFAULT 0.0, #คะแนนความมีประสิทธิภาพ
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, #เวลาที่สร้าง
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, #เวลาที่อัพเดต
-                FOREIGN KEY (user_id) REFERENCES user(id) #ลบ user แล้วสถิติหายด้วย
+            CREATE TABLE IF NOT EXISTS pomodoro_statistics (
+                id TEXT PRIMARY KEY,                  -- UUID ของสถิติ
+                user_id TEXT NOT NULL,                -- อ้างอิงผู้ใช้, ลบ user แล้วสถิติหายด้วย
+                date DATE NOT NULL,                   -- วันที่เก็บสถิติ
+                total_sessions INTEGER DEFAULT 0,     -- จำนวน session ทั้งหมดในวันนั้น
+                total_focus_time INTEGER DEFAULT 0,   -- เวลาที่ใช้โฟกัส (นาที)
+                total_break_time INTEGER DEFAULT 0,   -- เวลาที่ใช้พัก (นาที)
+                total_long_break_time INTEGER DEFAULT 0, -- เวลาที่ใช้พักยาว (นาที)
+                total_interrupted_sessions INTEGER DEFAULT 0, -- จำนวน session ที่ถูกขัดจังหวะ
+                total_completed_sessions INTEGER DEFAULT 0,   -- จำนวน session ที่ทำเสร็จ
+                total_productivity_score INTEGER DEFAULT 0,   -- คะแนนประสิทธิภาพรวม
+                total_tasks_completed INTEGER DEFAULT 0,      -- จำนวนงานที่ทำเสร็จ
+                total_tasks INTEGER DEFAULT 0,                -- จำนวนงานทั้งหมด
+                total_focus_sessions INTEGER DEFAULT 0,       -- จำนวน session ที่โฟกัส
+                total_short_break_sessions INTEGER DEFAULT 0, -- จำนวน session ที่พักสั้น
+                total_long_break_sessions INTEGER DEFAULT 0,  -- จำนวน session ที่พักยาว
+                total_time_spent INTEGER DEFAULT 0,           -- เวลาที่ใช้ทั้งหมด (นาที)
+                total_effective_time INTEGER DEFAULT 0,       -- เวลาที่ใช้แบบมีประสิทธิภาพ (นาที)
+                total_ineffective_time INTEGER DEFAULT 0,     -- เวลาที่ใช้แบบไม่มีประสิทธิภาพ (นาที)
+                total_abandoned_sessions INTEGER DEFAULT 0,   -- จำนวน session ที่ถูกละทิ้ง
+                total_on_time_sessions INTEGER DEFAULT 0,     -- จำนวน session ที่ทำตรงเวลา
+                total_late_sessions INTEGER DEFAULT 0,        -- จำนวน session ที่ทำช้า
+                average_session_duration REAL DEFAULT 0.0,    -- ระยะเวลาเฉลี่ยต่อ session
+                productivity_score REAL DEFAULT 0.0,          -- คะแนนประสิทธิภาพเฉลี่ย
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่สร้าง
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่อัพเดต
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE -- ลบ user แล้วสถิติหายด้วย
             )
         """)
-        
+
         print("✅ Created pomodoro tables")
         
         # Commit all changes
