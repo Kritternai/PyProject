@@ -50,6 +50,57 @@
             border-color: #667eea;
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
         }
+
+        /* ----- CSS ที่เพิ่มเข้ามาใหม่ ----- */
+        .divider-text {
+            position: relative;
+            text-align: center;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #adb5bd;
+            font-weight: 500;
+        }
+        .divider-text::before,
+        .divider-text::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 35%;
+            height: 1px;
+            background-color: #dee2e6;
+        }
+        .divider-text::before {
+            left: 0;
+        }
+        .divider-text::after {
+            right: 0;
+        }
+
+        .btn-google {
+            background-color: #ffffff;
+            color: #495057;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+        .btn-google:hover {
+            background-color: #f8f9fa;
+            border-color: #ced4da;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        .btn-google .fab.fa-google {
+            color: #DB4437; /* Google's red color */
+            font-size: 1.2rem;
+        }
+        /* ----- จบส่วน CSS ที่เพิ่มเข้ามาใหม่ ----- */
+
     </style>
 </head>
 <body>
@@ -95,6 +146,15 @@
                             </div>
                         </form>
                         
+                        <div class="divider-text">
+                            <span>OR</span>
+                        </div>
+
+                        <div class="d-grid">
+                            <a href="#" class="btn-google">
+                                <i class="fab fa-google me-2"></i> Continue with Google
+                            </a>
+                        </div>
                         <div class="text-center mt-4">
                             <p class="mb-0">Already have an account? 
                                 <a href="{{ url_for('auth.login') }}" class="text-decoration-none">
