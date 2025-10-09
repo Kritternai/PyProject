@@ -519,9 +519,9 @@ def partial_note_editor(note_id=None):
             first = notes[0]
             selected_id = getattr(first, 'id', None)
 
-        return render_template('note_editor_fragment.html', notes=notes, selected_note_id=selected_id, user=g.user)
+        return render_template('notes/note_editor_fragment.html', notes=notes, selected_note_id=selected_id, user=g.user)
     except Exception as e:
-        return render_template('note_editor_fragment.html', notes=[], selected_note_id=None, user=g.user)
+        return render_template('notes/note_editor_fragment.html', notes=[], selected_note_id=None, user=g.user)
 
 
 @main_bp.route('/notes')
@@ -857,9 +857,9 @@ def lesson_notes_list(lesson_id):
         notes = note_service.get_notes_by_user(g.user.id)  # Get all notes for user
         
         # Return HTML fragment instead of JSON
-        return render_template('notes_list_fragment.html', notes=notes, user=g.user)
+        return render_template('notes/notes_list_fragment.html', notes=notes, user=g.user)
     except Exception as e:
-        return render_template('notes_list_fragment.html', notes=[], user=g.user)
+        return render_template('notes/notes_list_fragment.html', notes=[], user=g.user)
 
 @main_bp.route('/class/<lesson_id>/notes/create', methods=['POST'])
 def lesson_notes_create(lesson_id):
