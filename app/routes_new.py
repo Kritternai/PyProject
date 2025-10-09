@@ -535,13 +535,18 @@ def notes_page():
     return render_template('base.html', user=g.user, initial_page='note')
 
 
-@main_bp.route('/partial/note/add', methods=['POST'])
+@main_bp.route('/partial/note/add', methods=['GET', 'POST'])
 def partial_note_add():
     """Create a new note from the partial UI."""
     # Simple check - if no user_id in session, return 401
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
+    # GET: Return the add note fragment
+    if request.method == 'GET':
+        return render_template('notes/note_add_fragment.html')
+    
+    # POST: Create the note
     try:
         title = request.form.get('title')
         content = request.form.get('content')
@@ -582,13 +587,9 @@ def partial_note_add():
         except Exception:
             db.session.rollback()
 
-        # If AJAX request, return JSON so client can refresh fragment
+        # If AJAX request, return JSON
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            # Return updated HTML so SPA can swap content immediately
-            notes = note_service.get_user_notes(g.user.id)
-            notes = _enrich_notes_with_status_and_files(notes)
-            html = render_template('note_fragment.html', notes=notes, user=g.user)
-            return jsonify(success=True, html=html, note_id=getattr(note, 'id', None))
+            return jsonify(success=True, note_id=getattr(note, 'id', None), message='Note created successfully')
 
         # Non-AJAX fallback: redirect to full notes page (with CSS/JS)
         return redirect(url_for('main.notes_page'))

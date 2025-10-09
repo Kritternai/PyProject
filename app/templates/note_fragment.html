@@ -9,7 +9,7 @@
                 <input id="noteSearch" type="text" class="form-control" placeholder="Search">
             </div>
         </div>
-        <a href="#" class="text-decoration-none add-link" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+        <a href="#" class="text-decoration-none add-link" onclick="loadPage('note/add'); return false;">
             <i class="bi bi-plus-circle me-1"></i>Add new note
         </a>
     </div>
@@ -179,7 +179,7 @@
             <div class="col">
                 <div class="py-5 text-center text-muted">
                     <p class="mb-2">You don't have any notes yet.</p>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addNoteModal"><i class="fas fa-plus me-1"></i>Create your first note</button>
+                    <button type="button" class="btn btn-primary" onclick="loadPage('note/add')"><i class="fas fa-plus me-1"></i>Create your first note</button>
                 </div>
             </div>
         {% endif %}

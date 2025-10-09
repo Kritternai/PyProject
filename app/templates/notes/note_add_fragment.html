@@ -1,0 +1,424 @@
+<div class="container-fluid px-0 ng-font" id="note-add-page">
+  <div class="note-header d-flex align-items-center justify-content-between px-4 pt-3 pb-2 border-bottom">
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-light btn-sm btn-soft ng-btn" onclick="loadPage('note')" aria-label="Back to notes"><i class="bi bi-arrow-left"></i></button>
+      <div class="d-flex align-items-center">
+        <div class="hero-icon me-2"><i class="bi bi-journal-plus"></i></div>
+        <div>
+          <h5 class="mb-0 ng-title">Create New Note</h5>
+          <div class="opacity-75 small ng-subtitle">Write and format your new note</div>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-light btn-sm" onclick="clearNote()" title="Clear all"><i class="bi bi-x-circle me-1"></i>Clear</button>
+      <button class="btn ng-btn-save" onclick="saveNewNote()"><i class="bi bi-save me-1"></i>Save Note</button>
+    </div>
+  </div>
+
+  <div class="note-add-container" id="addContainer">
+    <!-- Main editor -->
+    <section class="flex-grow-1 d-flex flex-column bg-white ng-space">
+      <div class="p-3 border-bottom d-flex align-items-center gap-3 ui-surface glass-panel">
+        <div class="w-100">
+          <label class="form-label section-title mb-1 ng-subtitle"><i class="bi bi-type me-1"></i>Title</label>
+          <input type="text" class="form-control form-control-lg ng-input" id="addTitle" placeholder="Enter note title..." aria-label="Note title" required>
+        </div>
+      </div>
+      <div class="editor-toolbar ui-toolbar glass-panel border-0 p-2 mt-2 mb-1 mx-2">
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+          <!-- Text Formatting -->
+          <button class="btn btn-sm ng-chip" onclick="formatText('bold')" title="Bold (Ctrl+B)">
+            <i class="bi bi-type-bold"></i>
+          </button>
+          <button class="btn btn-sm ng-chip" onclick="formatText('italic')" title="Italic (Ctrl+I)">
+            <i class="bi bi-type-italic"></i>
+          </button>
+          <button class="btn btn-sm ng-chip" onclick="formatText('underline')" title="Underline (Ctrl+U)">
+            <i class="bi bi-type-underline"></i>
+          </button>
+          <button class="btn btn-sm ng-chip" onclick="formatText('strikeThrough')" title="Strikethrough">
+            <i class="bi bi-type-strikethrough"></i>
+          </button>
+          <div class="vr"></div>
+          <!-- Lists -->
+          <button class="btn btn-sm ng-chip" onclick="insertList('ul')" title="Bullet List">
+            <i class="bi bi-list-ul"></i>
+          </button>
+          <button class="btn btn-sm ng-chip" onclick="insertList('ol')" title="Numbered List">
+            <i class="bi bi-list-ol"></i>
+          </button>
+          <div class="vr"></div>
+          <!-- Alignment -->
+          <button class="btn btn-sm ng-chip" onclick="alignText('justifyLeft')" title="Align Left">
+            <i class="bi bi-text-left"></i>
+          </button>
+          <button class="btn btn-sm ng-chip" onclick="alignText('justifyCenter')" title="Align Center">
+            <i class="bi bi-text-center"></i>
+          </button>
+          <button class="btn btn-sm ng-chip" onclick="alignText('justifyRight')" title="Align Right">
+            <i class="bi bi-text-right"></i>
+          </button>
+          <div class="vr"></div>
+          <!-- Media & Links -->
+          <button class="btn btn-sm ng-chip" onclick="insertImage()" title="Insert Image">
+            <i class="bi bi-image"></i>
+          </button>
+          <button class="btn btn-sm ng-chip" onclick="insertLink()" title="Insert Link">
+            <i class="bi bi-link"></i>
+          </button>
+          <button class="btn btn-sm ng-chip" onclick="insertTable()" title="Insert Table">
+            <i class="bi bi-table"></i>
+          </button>
+          <div class="vr"></div>
+          <!-- Undo/Redo -->
+          <button class="btn btn-sm ng-chip" onclick="undoAction()" title="Undo (Ctrl+Z)">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </button>
+          <button class="btn btn-sm ng-chip" onclick="redoAction()" title="Redo (Ctrl+Y)">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </div>
+      <div id="addContent" class="flex-grow-1 p-4 overflow-auto editor-card glass-panel" contenteditable="true" style="outline:none;"
+           aria-label="Note content editor" role="textbox" placeholder="Start writing your note here...">
+      </div>
+      <div class="p-2 border-top small text-muted d-flex justify-content-between glass-section ng-glass ng-rounded">
+        <span id="addStatus" aria-live="polite">Ready to create</span>
+        <span class="ng-body">Ctrl+S to save</span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  initializeNoteAdd();
+});
+
+function initializeNoteAdd() {
+  // Setup toolbar state tracking
+  const editor = getAddEditor();
+  if (editor) {
+    editor.addEventListener('mouseup', updateToolbarStates);
+    editor.addEventListener('keyup', updateToolbarStates);
+    editor.addEventListener('focus', updateToolbarStates);
+    editor.addEventListener('input', updateToolbarStates);
+    
+    // Focus on editor when loaded
+    setTimeout(() => {
+      const titleInput = document.getElementById('addTitle');
+      if (titleInput) titleInput.focus();
+    }, 100);
+  }
+
+  // Ctrl+S to save
+  document.addEventListener('keydown', function(e){
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+      saveNewNote();
+    }
+  });
+}
+
+function getAddEditor() { return document.getElementById('addContent'); }
+
+function execCommand(command, value = null) {
+  const editor = getAddEditor(); 
+  if (!editor) return false;
+  editor.focus();
+  const result = document.execCommand(command, false, value);
+  setTimeout(updateToolbarStates, 10);
+  return result;
+}
+
+function updateToolbarStates() {
+  const toolbar = document.querySelector('.editor-toolbar'); 
+  if (!toolbar) return;
+  const commandMap = { 
+    bold: "formatText('bold')", 
+    italic: "formatText('italic')", 
+    underline: "formatText('underline')", 
+    strikeThrough: "formatText('strikeThrough')" 
+  };
+  Object.keys(commandMap).forEach(cmd => {
+    try {
+      const isActive = document.queryCommandState(cmd);
+      const button = toolbar.querySelector(`[onclick="${commandMap[cmd]}"]`);
+      if (button) button.classList.toggle('active', isActive);
+    } catch(_) {}
+  });
+}
+
+function addClickFeedback(buttonSelector) {
+  const button = document.querySelector(buttonSelector);
+  if (button) {
+    button.style.transform = 'scale(0.96)';
+    button.style.transition = 'transform 0.12s ease';
+    setTimeout(() => { button.style.transform = ''; }, 100);
+  }
+}
+
+// Formatting functions
+function formatText(command) { 
+  addClickFeedback(`[onclick="formatText('${command}')"]`); 
+  execCommand(command); 
+}
+
+function insertList(type) { 
+  addClickFeedback(`[onclick="insertList('${type}')"]`); 
+  execCommand(type === 'ul' ? 'insertUnorderedList' : 'insertOrderedList'); 
+}
+
+function alignText(alignment) { 
+  addClickFeedback(`[onclick="alignText('${alignment}')"]`); 
+  execCommand(alignment); 
+}
+
+function insertImage() {
+  addClickFeedback('[onclick="insertImage()"]');
+  const fileInput = document.createElement('input'); 
+  fileInput.type = 'file'; 
+  fileInput.accept = 'image/*';
+  fileInput.onchange = function(){
+    const file = fileInput.files?.[0]; 
+    if (!file) return;
+    const status = document.getElementById('addStatus'); 
+    if (status) status.textContent = 'Processing image...';
+    
+    // Read as base64 for preview
+    const reader = new FileReader();
+    reader.onload = function(){ 
+      execCommand('insertHTML', `<img src="${reader.result}" style="max-width:100%;height:auto;border-radius:12px" alt="Image">`); 
+      if (status) status.textContent = 'Image inserted'; 
+    };
+    reader.readAsDataURL(file);
+  };
+  fileInput.click();
+}
+
+function insertLink() {
+  addClickFeedback('[onclick="insertLink()"]');
+  const selection = window.getSelection(); 
+  const selectedText = selection.toString();
+  let url = prompt('Enter link URL:', 'https://'); 
+  if (!url) return;
+  if (!/^https?:\/\//.test(url)) url = 'https://' + url;
+  if (selectedText) execCommand('createLink', url);
+  else { 
+    const linkText = prompt('Enter link text:', url); 
+    if (linkText) execCommand('insertHTML', `<a href="${url}" target="_blank">${linkText}</a>`); 
+  }
+}
+
+function insertTable() {
+  addClickFeedback('[onclick="insertTable()"]');
+  const rows = parseInt(prompt('Number of rows:', '3')) || 3;
+  const cols = parseInt(prompt('Number of columns:', '3')) || 3;
+  if (rows < 1 || cols < 1 || rows > 20 || cols > 10) { 
+    alert('Please enter valid dimensions (1-20 rows, 1-10 columns)'); 
+    return; 
+  }
+  let html = '<table class="table table-bordered" style="width:100%;margin:10px 0"><tbody>';
+  for (let r=0;r<rows;r++){ 
+    html += '<tr>'; 
+    for (let c=0;c<cols;c++){ 
+      html += '<td style="padding:10px;min-width:50px">&nbsp;</td>'; 
+    } 
+    html += '</tr>'; 
+  }
+  html += '</tbody></table><p>&nbsp;</p>';
+  execCommand('insertHTML', html);
+  setTimeout(()=>{ 
+    const table=getAddEditor()?.querySelector('table:last-of-type'); 
+    const firstCell=table?.querySelector('td'); 
+    if(firstCell){ 
+      const range=document.createRange(); 
+      range.selectNodeContents(firstCell); 
+      range.collapse(true); 
+      const sel=window.getSelection(); 
+      sel.removeAllRanges(); 
+      sel.addRange(range);
+    } 
+  },10);
+}
+
+function undoAction(){ 
+  addClickFeedback('[onclick="undoAction()"]'); 
+  execCommand('undo'); 
+}
+
+function redoAction(){ 
+  addClickFeedback('[onclick="redoAction()"]'); 
+  execCommand('redo'); 
+}
+
+// Clear note
+function clearNote(){
+  if (confirm('Are you sure you want to clear all content?')) {
+    document.getElementById('addTitle').value = '';
+    document.getElementById('addContent').innerHTML = '';
+    document.getElementById('addTitle').focus();
+    const status = document.getElementById('addStatus');
+    if (status) status.textContent = 'Cleared';
+  }
+}
+window.clearNote = clearNote;
+
+// Save new note
+window.saveNewNote = function(){
+  const title = document.getElementById('addTitle').value?.trim() || '';
+  const content = document.getElementById('addContent').innerHTML || '';
+  const status = document.getElementById('addStatus');
+  
+  if (!title) {
+    alert('Please enter a note title');
+    document.getElementById('addTitle').focus();
+    return;
+  }
+  
+  if (status) status.textContent = 'Saving...';
+  
+  const form = new FormData(); 
+  form.append('title', title); 
+  form.append('content', content);
+  
+  fetch('/partial/note/add', { 
+    method: 'POST', 
+    body: form, 
+    headers: { 'X-Requested-With':'XMLHttpRequest' }
+  })
+  .then(r=>r.json())
+  .then(j=>{ 
+    if (j && j.success){ 
+      if (status) status.textContent = 'Saved successfully!'; 
+      // Auto redirect back to note list after successful save
+      setTimeout(() => {
+        if (typeof loadPage === 'function') {
+          loadPage('note');
+        } else {
+          window.location.href = '/partial/note';
+        }
+      }, 800);
+    } else { 
+      if (status) status.textContent = j.message || 'Save failed'; 
+      alert(j.message || 'Failed to save note. Please try again.');
+    } 
+  })
+  .catch(err => { 
+    console.error('Save error:', err);
+    if (status) status.textContent = 'Save error'; 
+    alert('An error occurred while saving. Please try again.');
+  });
+}
+</script>
+
+<style>
+/* Base theme */
+:root {
+  --bg: radial-gradient(1200px 1200px at 10% 10%, rgba(255,255,255,0.5), rgba(255,255,255,0.35) 40%, rgba(255,255,255,0.25) 70%), linear-gradient(135deg, #8ec5fc 0%, #e0c3fc 100%);
+  --surface: #ffffff;         /* cards/panels */
+  --muted: #eef1f7;           /* subtle separators */
+  --text: #1f2937;            /* primary text */
+  --subtext: #6b7280;         /* secondary text */
+  --border: #e5e7eb;          /* borders */
+  --shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  --radius: 14px;
+  --accent1: #a78bfa;         /* lavender */
+  --accent2: #60a5fa;         /* blue */
+  --accent-gradient: linear-gradient(135deg, var(--accent1), var(--accent2));
+  --glass-blur: blur(24px);
+  --glass-bg: rgba(255,255,255,0.35);
+  --glass-border: rgba(255,255,255,0.6);
+  --glass-inner: inset 1px 1px 0 rgba(255,255,255,0.6);
+}
+
+/* App background */
+body { background: var(--bg); background-attachment: fixed; }
+.ng-font { font-family: 'Inter', 'SF Pro Text', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif; color: var(--text); }
+
+/* Header */
+.note-header { background: var(--surface); box-shadow: var(--shadow); border-bottom: 1px solid var(--border) !important; border-radius: 0 0 var(--radius) var(--radius); }
+.note-header { position: relative; background: rgba(255,255,255,0.28); border: 1px solid rgba(255,255,255,0.55) !important; backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: 0 0 20px 20px; box-shadow: 0 12px 28px rgba(15,23,42,.08), inset 0 1px 0 rgba(255,255,255,0.6); }
+.note-header:before { content: ""; position:absolute; inset:0; pointer-events:none; background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06)); border-radius: inherit; }
+.note-header .hero-icon { width:36px; height:36px; border-radius:12px; background: rgba(255,255,255,0.55); color: var(--text); display:flex; align-items:center; justify-content:center; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.ng-title { font-weight: 700; color: var(--text); }
+.ng-subtitle { color: var(--subtext); }
+.note-header .ng-title, .note-header .ng-subtitle { text-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+/* Container */
+.note-add-container { 
+  max-width: 1200px; 
+  margin: 20px auto; 
+  padding: 0 20px;
+  height: calc(100vh - 140px);
+}
+
+/* Surfaces */
+.ui-surface { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.glass-panel { background: var(--glass-bg); border-radius: 16px; border: 1px solid var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--shadow), var(--glass-inner); }
+
+/* Toolbar */
+.ui-toolbar { background: rgba(255,255,255,0.28); border: 1px solid rgba(255,255,255,0.5) !important; border-radius: 16px; backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--shadow), var(--glass-inner); transition: box-shadow .3s ease; }
+.ui-toolbar .btn { border-radius: 12px; padding: 6px 10px; border: 1px solid rgba(255,255,255,0.6); color: var(--text); background: rgba(255,255,255,0.5); backdrop-filter: blur(12px); }
+.ui-toolbar .btn i { font-size: 14px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08)); }
+.ui-toolbar .btn:hover { background: rgba(255,255,255,0.7); box-shadow: 0 0 0 3px rgba(255,255,255,0.35), 0 8px 22px rgba(15,23,42,.08); transform: translateY(-1px); }
+.ui-toolbar .btn.active { background: linear-gradient(135deg, rgba(167,139,250,0.25), rgba(96,165,250,0.25)); border-color: rgba(167,139,250,0.6); box-shadow: 0 0 0 3px rgba(167,139,250,0.25), 0 8px 22px rgba(96,165,250,.18); }
+.ui-toolbar .btn.active i { filter: drop-shadow(0 0 6px rgba(167,139,250,0.6)); }
+
+/* Inputs */
+.ng-input { border-radius: 14px; border: 1px solid var(--border); background: linear-gradient(180deg, #fff, #f8fafc); box-shadow: var(--shadow); }
+.ng-input:focus { box-shadow: 0 0 0 3px rgba(96,165,250,0.25), var(--shadow); }
+.section-title { font-weight: 600; color: var(--subtext); }
+
+/* Buttons */
+.ng-btn { border-radius: 14px; transition: all 0.2s ease; }
+.ng-btn-save { border: none; color: #fff; padding: 8px 14px; border-radius: 20px; background: linear-gradient(90deg, #8ec5fc, #e0c3fc); box-shadow: 0 12px 28px rgba(96,165,250,0.28), 0 0 0 1px rgba(255,255,255,0.6) inset; transition: transform .25s ease, filter .25s ease, box-shadow .3s ease; }
+.ng-btn-save:hover { filter: brightness(1.07); box-shadow: 0 14px 30px rgba(96,165,250,0.35), 0 0 0 2px rgba(255,255,255,0.8) inset; transform: translateY(-1px); }
+
+/* Editor */
+#addContent { 
+  background: rgba(255,255,255,0.45); 
+  border: 1px solid rgba(255,255,255,0.6); 
+  border-radius: 20px; 
+  box-shadow: var(--shadow), var(--glass-inner); 
+  backdrop-filter: var(--glass-blur); 
+  -webkit-backdrop-filter: var(--glass-blur); 
+  font-family: 'Inter', system-ui, sans-serif; 
+  font-size: 15px; 
+  line-height: 1.75; 
+  transition: box-shadow .3s ease; 
+  min-height: 400px;
+}
+#addContent:focus-within { box-shadow: 0 14px 34px rgba(15,23,42,.12), 0 0 0 3px rgba(167,139,250,0.18); }
+#addContent:empty:before {
+  content: attr(placeholder);
+  color: var(--subtext);
+  opacity: 0.6;
+}
+#addContent h1, #addContent h2, #addContent h3 { margin: 1.2em 0 .4em; font-weight: 700; }
+#addContent p { margin-bottom: 1em; color: var(--text); }
+#addContent img { max-width: 100%; height: auto; border-radius: 12px; margin: 10px 0; }
+#addContent table { border-collapse: collapse; margin: 15px 0; }
+#addContent table td { border: 1px solid var(--border); padding: 10px 12px; min-width: 60px; }
+#addContent a { color: var(--accent2); text-decoration: underline; }
+#addContent a:hover { color: #2563eb; }
+
+/* Glass effects */
+.glass-section { background: rgba(255,255,255,0.25); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+.ng-glass { border-top: 1px solid rgba(255,255,255,0.5) !important; }
+.ng-rounded { border-radius: 0 0 20px 20px; }
+
+/* Responsive */
+@media (max-width: 992px) {
+  .note-add-container { 
+    padding: 0 10px; 
+    height: auto;
+  }
+  #addContent {
+    min-height: 300px;
+  }
+}
+</style>
+
