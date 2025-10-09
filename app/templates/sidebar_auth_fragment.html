@@ -14,5 +14,9 @@
   <div class="d-grid gap-2">
     <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
     <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">Register</a>
+    <!-- Google Sign-In button -->
+    <a href="{{ url_for('google_auth.login') }}" class="btn btn-light border">
+      <img src="{{ url_for('static', filename='icons/google-logo.svg') }}" alt="Google" style="height:18px;vertical-align:middle;margin-right:8px;"> Sign in with Google
+    </a>
   </div>
 {% endif %}
