@@ -48,8 +48,8 @@
     background: var(--lessons-gradient-main);
     position: relative;
     overflow: hidden;
-    padding: 4rem 0 3rem;
-    margin-bottom: 2.5rem;
+    padding: 3rem 0 2rem;
+    margin-bottom: 3rem;
 }
 
 .lessons-hero::before {
@@ -108,10 +108,18 @@
     flex-wrap: wrap;
 }
 
+/* ===== Search Wrapper ===== */
+.lessons-search-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 600px;
+    width: 100%;
+}
+
 /* ===== Search Bar (Hero Style) ===== */
 .lessons-search-hero {
     position: relative;
-    max-width: 600px;
     width: 100%;
 }
 
@@ -139,6 +147,47 @@
     transform: translateY(-50%);
     color: var(--lessons-primary);
     font-size: 1.25rem;
+}
+
+/* ===== Compact Filter Pills ===== */
+.lessons-filter-compact {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.filter-compact-btn {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50px;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--lessons-transition);
+    backdrop-filter: blur(10px);
+}
+
+.filter-compact-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.filter-compact-btn.active {
+    background: white;
+    color: var(--lessons-primary);
+    border-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.filter-compact-btn i {
+    font-size: 1rem;
 }
 
 /* ===== Action Buttons ===== */
@@ -186,13 +235,9 @@
     padding: 0 2rem 4rem;
 }
 
-/* ===== Filter Pills ===== */
+/* ===== Filter Pills (Hidden - Removed) ===== */
 .lessons-filters {
-    display: flex;
-    gap: 0.75rem;
-    margin-bottom: 2.5rem;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: none;
 }
 
 .lessons-filter-pill {
@@ -235,12 +280,9 @@
     background: rgba(255, 255, 255, 0.3);
 }
 
-/* ===== Stats Dashboard ===== */
+/* ===== Stats Dashboard (Hidden - Removed) ===== */
 .lessons-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
+    display: none;
 }
 
 .lessons-stat {
@@ -325,6 +367,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
     gap: 2rem;
+    margin-top: 1rem;
 }
 
 /* ===== Lesson Card (New Design) ===== */
@@ -591,8 +634,24 @@
         width: 100%;
     }
     
+    .lessons-search-wrapper {
+        max-width: 100%;
+    }
+    
     .lessons-search-hero {
         max-width: 100%;
+    }
+    
+    .lessons-filter-compact {
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+    }
+    
+    .filter-compact-btn {
+        flex-shrink: 0;
+        font-size: 0.8125rem;
+        padding: 0.4rem 0.875rem;
     }
     
     .lessons-filters {

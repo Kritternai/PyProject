@@ -1878,6 +1878,163 @@ window.updateCharCount = function(input, counterId, maxLength) {
 
 console.log('✅ selectModalColor and updateCharCount functions loaded');
 
+// ============================================
+// ALL CLASSES PAGE FUNCTIONS
+// ============================================
+
+// Helper function to check filter match
+window.checkFilterMatch = function(card, filter) {
+    if (filter === 'all') return true;
+    if (filter === 'favorites') return card.dataset.isFavorite === 'true';
+    
+    const status = card.dataset.status || 'active';
+    
+    if (filter === 'active') {
+        // Active includes: active, not_started, in_progress, or empty
+        return status === 'active' || status === 'not_started' || status === 'in_progress' || status === '';
+    }
+    
+    if (filter === 'completed') {
+        return status === 'completed';
+    }
+    
+    if (filter === 'archived') {
+        return status === 'archived';
+    }
+    
+    return card.dataset.status === filter;
+};
+
+// Filter lessons function
+window.filterLessons = function(filter, buttonElement) {
+    console.log('🔍 Filtering by:', filter);
+    window.currentLessonFilter = filter;
+    
+    // Update button states
+    const filterButtons = document.querySelectorAll('.filter-compact-btn');
+    filterButtons.forEach(btn => btn.classList.remove('active'));
+    if (buttonElement) {
+        buttonElement.classList.add('active');
+    }
+    
+    // Apply filter
+    const lessonCards = document.querySelectorAll('.lesson-card-modern');
+    const searchTerm = document.getElementById('lessonSearch')?.value.toLowerCase() || '';
+    
+    let visibleCount = 0;
+    lessonCards.forEach(card => {
+        const title = card.querySelector('.lesson-card-title')?.textContent.toLowerCase() || '';
+        const description = card.querySelector('.lesson-card-description')?.textContent.toLowerCase() || '';
+        const matchesSearch = !searchTerm || title.includes(searchTerm) || description.includes(searchTerm);
+        const matchesFilter = window.checkFilterMatch(card, filter);
+        
+        const shouldShow = matchesSearch && matchesFilter;
+        card.style.display = shouldShow ? '' : 'none';
+        
+        if (shouldShow) visibleCount++;
+    });
+    
+    console.log(`✅ Filter applied: ${visibleCount}/${lessonCards.length} cards visible`);
+};
+
+// Navigate to class
+window.navigateToClass = function(lessonId, event) {
+    // Don't navigate if clicking on favorite button
+    if (event && event.target.closest('.lesson-card-favorite')) {
+        console.log('🚫 Ignoring click on favorite button');
+        return;
+    }
+    
+    console.log('🔗 Navigating to class:', lessonId);
+    
+    // Direct navigation to class detail page
+    window.location.href = '/class/' + lessonId;
+};
+
+// Sort lessons by favorites (favorites first)
+window.sortLessonsByFavorite = function() {
+    const grid = document.getElementById('lessons-grid');
+    if (!grid) return;
+    
+    const cards = Array.from(grid.querySelectorAll('.lesson-card-modern'));
+    
+    // Sort: favorites first, then by original order
+    cards.sort((a, b) => {
+        const aFav = a.dataset.isFavorite === 'true' ? 0 : 1;
+        const bFav = b.dataset.isFavorite === 'true' ? 0 : 1;
+        return aFav - bFav;
+    });
+    
+    // Re-append in sorted order with animation
+    cards.forEach((card, index) => {
+        card.style.animation = 'none';
+        setTimeout(() => {
+            grid.appendChild(card);
+            card.style.animation = 'fadeInUp 0.4s ease-out forwards';
+            card.style.animationDelay = `${index * 0.05}s`;
+        }, 10);
+    });
+};
+
+// Toggle favorite function
+window.toggleFavorite = function(lessonId, element) {
+    console.log('⭐ Toggling favorite for:', lessonId);
+    
+    fetch(`/partial/class/${lessonId}/favorite`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('✅ Favorite toggle response:', data);
+        
+        if (data.success) {
+            const isFavorite = data.is_favorite;
+            const icon = element.querySelector('i');
+            const card = element.closest('.lesson-card-modern');
+            
+            console.log(`  → isFavorite: ${isFavorite}`);
+            
+            if (isFavorite) {
+                element.classList.add('active');
+                icon.className = 'bi bi-star-fill';
+                if (card) {
+                    card.dataset.isFavorite = 'true';
+                    console.log('  → Card marked as favorite');
+                }
+            } else {
+                element.classList.remove('active');
+                icon.className = 'bi bi-star';
+                if (card) {
+                    card.dataset.isFavorite = 'false';
+                    console.log('  → Card unmarked as favorite');
+                }
+            }
+            
+            // Real-time sorting: Move favorites to top
+            setTimeout(() => {
+                console.log('🔄 Re-sorting cards...');
+                window.sortLessonsByFavorite();
+            }, 100);
+            
+            // Show notification
+            if (typeof window.showSuccess === 'function') {
+                window.showSuccess(isFavorite ? 'Added to favorites' : 'Removed from favorites');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error toggling favorite:', error);
+        if (typeof window.showError === 'function') {
+            window.showError('Failed to update favorite status');
+        }
+    });
+};
+
+console.log('✅ All Classes page functions loaded');
+
 // Class Notes System Functions
 window.openNoteModal = function() {
     const modal = new bootstrap.Modal(document.getElementById('createNoteModal'));
