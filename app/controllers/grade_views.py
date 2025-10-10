@@ -340,63 +340,76 @@ class GradeController:
     
     @staticmethod
     def get_student_grades(lesson_id: str, user_id: str):
-        """Get all grade entries for a student in a lesson"""
+        """
+        Get all grade items for a student in a lesson
+        Returns ALL grade items (both with and without grades)
+        """
         from app.models.grade import GradeEntry, GradeItem, GradeCategory
         from sqlalchemy import text
         
-        # Get grade entries with linked task info
-        entries = db.session.execute(
+        # Get ALL grade items with LEFT JOIN to grade entries
+        # This ensures we show all assignments, even those without grades yet
+        items = db.session.execute(
             text("""
                 SELECT 
-                    ge.id as entry_id,
                     gi.id as item_id,
                     gi.name as item_name,
+                    gi.points_possible as item_points,
+                    gi.due_date,
+                    gi.is_published,
                     gi.classwork_task_id,
+                    gc.id as category_id,
                     gc.name as category_name,
                     gc.color as category_color,
+                    ge.id as entry_id,
                     ge.score,
-                    ge.points_possible,
                     ge.status,
                     ge.is_late,
                     ge.comments,
                     ge.graded_at,
-                    gi.due_date,
                     ct.title as task_title,
                     ct.status as task_status
-                FROM grade_entry ge
-                JOIN grade_item gi ON ge.grade_item_id = gi.id
+                FROM grade_item gi
                 JOIN grade_category gc ON gi.category_id = gc.id
+                LEFT JOIN grade_entry ge ON ge.grade_item_id = gi.id AND ge.user_id = :user_id
                 LEFT JOIN classwork_task ct ON gi.classwork_task_id = ct.id
-                WHERE ge.lesson_id = :lesson_id 
-                AND ge.user_id = :user_id
-                ORDER BY gi.due_date
+                WHERE gi.lesson_id = :lesson_id
+                AND gi.is_published = 1
+                ORDER BY gi.due_date, gi.name
             """),
             {'lesson_id': lesson_id, 'user_id': user_id}
         ).fetchall()
         
         result = []
-        for row in entries:
+        for row in items:
             # Calculate percentage
             percentage = None
-            if row[6] is not None and row[7] is not None and row[7] > 0:
-                percentage = round((float(row[6]) / float(row[7])) * 100, 2)
+            score = row[10]
+            item_points = row[2]
+            
+            if score is not None and item_points is not None and item_points > 0:
+                percentage = round((float(score) / float(item_points)) * 100, 2)
+            
+            # Determine status
+            status = row[11] if row[11] else 'pending'  # If no entry, status is pending
             
             result.append({
-                'entry_id': row[0],
-                'item_id': row[1],
-                'item_name': row[2],
-                'category_name': row[4],
-                'category_color': row[5],
-                'score': float(row[6]) if row[6] else None,
-                'points_possible': float(row[7]) if row[7] else None,
+                'item_id': row[0],
+                'item_name': row[1],
+                'points_possible': float(item_points) if item_points else 0,
+                'due_date': row[3],
+                'category_id': row[6],
+                'category_name': row[7],
+                'category_color': row[8],
+                'entry_id': row[9],
+                'score': float(score) if score else None,
                 'percentage': percentage,
-                'status': row[8],
-                'is_late': row[9],
-                'comments': row[10],
-                'graded_at': row[11],
-                'due_date': row[12],
-                'linked_task_title': row[13],  # Task title
-                'linked_task_status': row[14]  # Task status
+                'status': status,
+                'is_late': row[12] if row[12] else False,
+                'comments': row[13],
+                'graded_at': row[14],
+                'linked_task_title': row[15],  # Task title
+                'linked_task_status': row[16]  # Task status
             })
         
         return result

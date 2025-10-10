@@ -691,6 +691,18 @@
                 createGradeItemModal.hide();
                 showSuccess('Assignment created successfully!');
                 
+                // Reload available tasks (to remove linked task from list)
+                try {
+                    const tasksResponse = await fetch(`/grades/lessons/${lessonId}/available-tasks`);
+                    const tasksData = await tasksResponse.json();
+                    if (tasksData.success) {
+                        availableTasks = tasksData.data;
+                        console.log('🔄 Available tasks updated:', availableTasks.length);
+                    }
+                } catch (e) {
+                    console.warn('Could not reload available tasks:', e);
+                }
+                
                 // Reload grades data
                 setTimeout(() => loadGradeData(), 500);
             } else {
@@ -938,6 +950,18 @@
             const statusText = grade.status === 'graded' ? 'Graded' :
                              grade.status === 'pending' ? 'Pending' : 'Missing';
             
+            // Format score and percentage display
+            let scoreDisplay, percentDisplay;
+            
+            if (grade.status === 'graded' && grade.score !== null) {
+                scoreDisplay = `${grade.score} / ${grade.points_possible}`;
+                percentDisplay = `<strong>${grade.percentage}%</strong>`;
+            } else {
+                // Pending - show empty score but total points
+                scoreDisplay = `-- / ${grade.points_possible}`;
+                percentDisplay = '--';
+            }
+            
             html += `
                 <tr class="grade-row" data-category="${grade.category_name}">
                     <td>
@@ -956,12 +980,8 @@
                         <span class="badge" style="background: ${grade.category_color}">${grade.category_name}</span>
                     </td>
                     <td>${formatDate(grade.due_date)}</td>
-                    <td>
-                        ${grade.score !== null ? `${grade.score} / ${grade.points_possible}` : '--'}
-                    </td>
-                    <td>
-                        ${grade.percentage !== null ? `<strong>${grade.percentage}%</strong>` : '--'}
-                    </td>
+                    <td>${scoreDisplay}</td>
+                    <td>${percentDisplay}</td>
                     <td>
                         <span class="status-badge ${statusClass}">${statusText}</span>
                     </td>
