@@ -9,7 +9,7 @@
                 <input id="noteSearch" type="text" class="form-control" placeholder="Search">
             </div>
         </div>
-        <a href="#" class="text-decoration-none add-link" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+        <a href="#" class="text-decoration-none add-link" onclick="loadPage('note/add'); return false;">
             <i class="bi bi-plus-circle me-1"></i>Add new note
         </a>
     </div>
@@ -112,7 +112,7 @@
         {% if notes %}
             {% for note in notes %}
                 <div class="mb-4 col-md-6 col-lg-4">
-                    <div class="card h-100 neo-card" data-status="{{ (note.status or 'pending') }}">
+                    <div class="card h-100 neo-card note-card" data-status="{{ (note.status or 'pending') }}" data-note-id="{{ note.id }}" style="cursor:pointer;">
                         {% set first_image = None %}
                         {% if note.files %}
                             {% set first_image = (note.files | selectattr('file_type', 'equalto', 'image') | list | first) %}
@@ -157,7 +157,7 @@
                             </div>
                         </div>
                         <div class="gap-2 pt-0 pb-3 bg-white border-0 card-footer d-flex justify-content-end">
-                            <button type="button" class="btn btn-sm btn-outline-primary btn-soft" data-bs-toggle="modal" data-bs-target="#editNoteModal"
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-soft" onclick="openNoteEditor('{{ note.id }}')"
                                 data-note-id="{{ note.id }}"
                                 data-note-title="{{ note.title }}"
                                 data-note-content="{{ note.content or '' }}"
@@ -179,7 +179,7 @@
             <div class="col">
                 <div class="py-5 text-center text-muted">
                     <p class="mb-2">You don't have any notes yet.</p>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addNoteModal"><i class="fas fa-plus me-1"></i>Create your first note</button>
+                    <button type="button" class="btn btn-primary" onclick="loadPage('note/add')"><i class="fas fa-plus me-1"></i>Create your first note</button>
                 </div>
             </div>
         {% endif %}

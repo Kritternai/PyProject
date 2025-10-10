@@ -141,6 +141,12 @@ function loadPage(page) {
           setupSectionForms(); // เรียก setupSectionForms หลัง loadPage
           setupNoteForms(); // เรียก setupNoteForms หลัง loadPage
           setupNoteListFilters(); // ตั้งค่า search + status chips สำหรับหน้าโน้ต
+          // setup note editor bindings if editor fragment exists
+          if (document.getElementById('note-editor-page')) {
+            setupNoteEditor();
+          }
+          setupNoteCardOpeners(); // เปิด editor เมื่อคลิกทั้งการ์ด
+          // If we are on the new editor route, ensure toolbar bindings exist
           setupLessonAddModal(); // เรียก setupLessonAddModal หลัง loadPage
           setupSectionFilter(); // เรียก setupSectionFilter() หลัง loadPage
           setupLessonSearchAndFilter(); // เรียก setupLessonSearchAndFilter หลัง loadPage
@@ -168,6 +174,27 @@ function loadPage(page) {
       mainContent.innerHTML = '<div class="text-center py-5"><div class="alert alert-danger">Error loading page. Please try again.</div></div>';
     });
 }
+// Open full-page note editor (fragment) with optional selected note
+window.openNoteEditor = function(noteId) {
+  const target = noteId ? `note/editor/${noteId}` : 'note/editor';
+  loadPage(target);
+}
+
+// Attach click on whole note card to open editor (avoid when clicking action buttons/links)
+function setupNoteCardOpeners() {
+  const cards = document.querySelectorAll('.note-card[data-note-id]');
+  if (!cards || cards.length === 0) return;
+  cards.forEach(card => {
+    // prevent duplicate binding
+    if (card._openBound) return; card._openBound = true;
+    card.addEventListener('click', function(e){
+      if (e.target.closest('button, a, input, textarea, select')) return; // ignore interactions
+      const id = this.getAttribute('data-note-id');
+      if (id) openNoteEditor(id);
+    });
+  });
+}
+
 
 function updateSidebarAuth() {
   fetch('/partial/sidebar-auth')
@@ -1146,6 +1173,14 @@ function setupNoteForms() {
   // Setup edit note form
   setupNoteEditForm();
   setupAddNotePreview();
+}
+
+// Note: setupNoteEditor is now handled by the inline script in note_editor_fragment.html
+// This function is kept for backward compatibility but does nothing
+function setupNoteEditor() {
+  console.log('setupNoteEditor called - note editor initialization is handled by fragment script');
+  // The note editor fragment now has its own initialization script
+  // that handles all toolbar functionality properly
 }
 
 // Initialize search + status chip filters on Note list page
@@ -2636,145 +2671,165 @@ window.initClasswork = function(lessonId) {
     loadClassworkMaterials();
 };
 
-// Open create task modal
-window.openCreateTaskModal = function() {
-    const modal = new bootstrap.Modal(document.getElementById('createTaskModal'));
-    // Reset form
-    document.getElementById('createTaskForm').reset();
-    modal.show();
+console.log('✅ Classwork functions loaded');
+
+// Note Editor Global Functions - ensure they're available globally
+window.formatText = function(command) {
+  try {
+    const timestamp = new Date().toISOString();
+    console.log(`[NOTE-EDITOR:${timestamp}] action=format`, { command });
+    document.execCommand(command, false, null);
+    const editor = document.getElementById('editorContent');
+    if (editor) editor.focus();
+  } catch(e) {
+    console.error('formatText error:', e);
+  }
 };
 
-// Open create material modal
-window.openCreateMaterialModal = function() {
-    const modal = new bootstrap.Modal(document.getElementById('createMaterialModal'));
-    // Reset form
-    document.getElementById('createMaterialForm').reset();
-    modal.show();
+window.insertList = function(type) {
+  try {
+    const timestamp = new Date().toISOString();
+    console.log(`[NOTE-EDITOR:${timestamp}] action=list`, { type });
+    const command = type === 'ul' ? 'insertUnorderedList' : 'insertOrderedList';
+    document.execCommand(command, false, null);
+    const editor = document.getElementById('editorContent');
+    if (editor) editor.focus();
+  } catch(e) {
+    console.error('insertList error:', e);
+  }
 };
 
-// Submit create task form
-window.submitCreateTask = function() {
-    console.log('🔧 Submitting create task form');
-    
-    const form = document.getElementById('createTaskForm');
-    const formData = new FormData(form);
-    
-    // Get lesson ID
-    const pathParts = window.location.pathname.split('/');
-    const lessonId = pathParts[pathParts.length - 1];
-    
-    // Convert form data to JSON
-    const taskData = {
-        title: formData.get('title'),
-        description: formData.get('description'),
-        subject: formData.get('subject'),
-        category: formData.get('category'),
-        priority: formData.get('priority'),
-        status: formData.get('status'),
-        due_date: formData.get('due_date'),
-        estimated_time: parseInt(formData.get('estimated_time')) || 0
+window.alignText = function(alignment) {
+  try {
+    const timestamp = new Date().toISOString();
+    console.log(`[NOTE-EDITOR:${timestamp}] action=align`, { alignment });
+    document.execCommand(alignment, false, null);
+    const editor = document.getElementById('editorContent');
+    if (editor) editor.focus();
+  } catch(e) {
+    console.error('alignText error:', e);
+  }
+};
+
+window.insertImage = function() {
+  try {
+    const timestamp = new Date().toISOString();
+    console.log(`[NOTE-EDITOR:${timestamp}] action=image`);
+    const input = document.getElementById('editorImageInput');
+    if (!input) return;
+    input.onchange = function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = `<img src="${e.target.result}" style="max-width: 100%; height: auto;" />`;
+          window.insertHTMLAtCursor(img);
+        };
+        reader.readAsDataURL(file);
+      }
     };
-    
-    fetch(`/classwork/lessons/${lessonId}/tasks`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(taskData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('🔧 Task created:', data);
-        if (data.success) {
-            // Close modal
-            bootstrap.Modal.getInstance(document.getElementById('createTaskModal')).hide();
-            // Reload tasks and dashboard
-            loadClassworkTasks();
-            loadClassworkDashboard();
-            // Show success message
-            showNotification('Task created successfully!', 'success');
-        } else {
-            showNotification('Error creating task: ' + (data.error || 'Unknown error'), 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Error creating task', 'danger');
-    });
+    input.click();
+  } catch(e) {
+    console.error('insertImage error:', e);
+  }
 };
 
-// Submit create material form
-window.submitCreateMaterial = function() {
-    console.log('🔧 Submitting create material form');
-    
-    const form = document.getElementById('createMaterialForm');
-    const formData = new FormData(form);
-    
-    // Get lesson ID
-    const pathParts = window.location.pathname.split('/');
-    const lessonId = pathParts[pathParts.length - 1];
-    
-    fetch(`/classwork/lessons/${lessonId}/materials`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('🔧 Material created:', data);
-        if (data.success) {
-            // Close modal
-            bootstrap.Modal.getInstance(document.getElementById('createMaterialModal')).hide();
-            // Reload materials
-            loadClassworkMaterials();
-            // Show success message
-            showNotification('Material uploaded successfully!', 'success');
-        } else {
-            showNotification('Error uploading material: ' + (data.error || 'Unknown error'), 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Error uploading material', 'danger');
-    });
-};
-
-// Show notification
-window.showNotification = function(message, type = 'info') {
-    // Create toast element if not exists
-    let toastContainer = document.getElementById('toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.id = 'toast-container';
-        toastContainer.className = 'position-fixed top-0 end-0 p-3';
-        toastContainer.style.zIndex = '9999';
-        document.body.appendChild(toastContainer);
+window.insertLink = function() {
+  try {
+    const timestamp = new Date().toISOString();
+    console.log(`[NOTE-EDITOR:${timestamp}] action=link`);
+    const url = prompt('Enter URL:');
+    if (url) {
+      const text = prompt('Enter link text:', url);
+      const link = `<a href="${url}" target="_blank">${text || url}</a>`;
+      window.insertHTMLAtCursor(link);
     }
-    
-    const toastId = 'toast-' + Date.now();
-    const toast = document.createElement('div');
-    toast.id = toastId;
-    toast.className = `toast align-items-center text-white bg-${type} border-0`;
-    toast.setAttribute('role', 'alert');
-    toast.setAttribute('aria-live', 'assertive');
-    toast.setAttribute('aria-atomic', 'true');
-    
-    toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">
-                ${message}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    `;
-    
-    toastContainer.appendChild(toast);
-    const bsToast = new bootstrap.Toast(toast);
-    bsToast.show();
-    
-    // Remove toast after hide
-    toast.addEventListener('hidden.bs.toast', function() {
-        toast.remove();
-    });
+  } catch(e) {
+    console.error('insertLink error:', e);
+  }
 };
 
-console.log('✅ Classwork functions loaded');// Cache busted at Fri Oct 10 15:06:08 +07 2025
+window.insertTable = function() {
+  try {
+    const timestamp = new Date().toISOString();
+    console.log(`[NOTE-EDITOR:${timestamp}] action=table`);
+    const table = `
+      <table border="1" style="border-collapse: collapse; width: 100%;">
+        <tr><td>Cell 1</td><td>Cell 2</td></tr>
+        <tr><td>Cell 3</td><td>Cell 4</td></tr>
+      </table>
+    `;
+    window.insertHTMLAtCursor(table);
+  } catch(e) {
+    console.error('insertTable error:', e);
+  }
+};
+
+window.undoAction = function() {
+  try {
+    const timestamp = new Date().toISOString();
+    console.log(`[NOTE-EDITOR:${timestamp}] action=undo`);
+    document.execCommand('undo', false, null);
+    const editor = document.getElementById('editorContent');
+    if (editor) editor.focus();
+  } catch(e) {
+    console.error('undoAction error:', e);
+  }
+};
+
+window.redoAction = function() {
+  try {
+    const timestamp = new Date().toISOString();
+    console.log(`[NOTE-EDITOR:${timestamp}] action=redo`);
+    document.execCommand('redo', false, null);
+    const editor = document.getElementById('editorContent');
+    if (editor) editor.focus();
+  } catch(e) {
+    console.error('redoAction error:', e);
+  }
+};
+
+window.insertHTMLAtCursor = function(html) {
+  try {
+    const editor = document.getElementById('editorContent');
+    if (!editor) return;
+    editor.focus();
+    
+    let sel, range;
+    if (window.getSelection) {
+      sel = window.getSelection();
+      if (sel.getRangeAt && sel.rangeCount) {
+        range = sel.getRangeAt(0);
+        // Check if selection is within editor
+        if (!editor.contains(range.commonAncestorContainer)) {
+          // Create new range at end of editor
+          range = document.createRange();
+          range.selectNodeContents(editor);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+        range.deleteContents();
+        const el = document.createElement("div");
+        el.innerHTML = html;
+        const frag = document.createDocumentFragment();
+        let node, lastNode;
+        while ((node = el.firstChild)) {
+          lastNode = frag.appendChild(node);
+        }
+        range.insertNode(frag);
+        if (lastNode) {
+          range = range.cloneRange();
+          range.setStartAfter(lastNode);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }
+    }
+  } catch(e) {
+    console.error('insertHTMLAtCursor error:', e);
+  }
+};
+
+console.log('✅ Note Editor global functions loaded');
