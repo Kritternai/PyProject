@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  {% block head %}{% endblock %}
   <style>
     body { background: #f5f7fa; }
     .sidebar {
@@ -57,7 +58,6 @@
     </div>
   </nav>
   <main class="flex-grow-1 p-4" id="main-content">
-    <div class="text-center py-5 text-secondary">Loading...</div>
     {% block content %}{% endblock %}
   </main>
 </div>

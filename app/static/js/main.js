@@ -1,4 +1,7 @@
 function loadPage(page) {
+  // Show loading indicator
+  const mainContent = document.getElementById('main-content');
+  mainContent.innerHTML = '<div class="text-center py-5 text-secondary" id="loading-indicator">Loading...</div>';
   console.log('🔄 Loading page:', page);
   
   fetch('/partial/' + page)
@@ -157,6 +160,12 @@ function loadPage(page) {
           }
         });
       }
+    })
+    .catch(error => {
+      console.error('Error loading page:', error);
+      // Show error message
+      const mainContent = document.getElementById('main-content');
+      mainContent.innerHTML = '<div class="text-center py-5"><div class="alert alert-danger">Error loading page. Please try again.</div></div>';
     });
 }
 
@@ -2322,17 +2331,29 @@ window.submitCreateMaterial = function() {
 window.loadClassworkDashboard = function(lessonId = null) {
     console.log('🔧 Loading classwork dashboard for lesson:', lessonId);
     
-    const url = lessonId ? `/classwork/lessons/${lessonId}/dashboard` : '/classwork/dashboard';
+    // Get lesson ID from current page if not provided
+    if (!lessonId) {
+        const pathParts = window.location.pathname.split('/');
+        lessonId = pathParts[pathParts.length - 1];
+    }
+    
+    const url = `/classwork/lessons/${lessonId}/dashboard`;
     
     fetch(url)
         .then(response => response.json())
         .then(data => {
             console.log('🔧 Dashboard data:', data);
             if (data.success) {
-                document.getElementById('total-tasks').textContent = data.dashboard.total_tasks;
-                document.getElementById('completed-tasks').textContent = data.dashboard.completed_tasks;
-                document.getElementById('in-progress-tasks').textContent = data.dashboard.in_progress_tasks;
-                document.getElementById('overdue-tasks').textContent = data.dashboard.overdue_tasks;
+                const dashboardData = data.data;
+                const totalEl = document.getElementById('total-tasks');
+                const completedEl = document.getElementById('completed-tasks');
+                const inProgressEl = document.getElementById('in-progress-tasks');
+                const overdueEl = document.getElementById('overdue-tasks');
+                
+                if (totalEl) totalEl.textContent = dashboardData.total_tasks || 0;
+                if (completedEl) completedEl.textContent = dashboardData.completed_tasks || 0;
+                if (inProgressEl) inProgressEl.textContent = dashboardData.in_progress_tasks || 0;
+                if (overdueEl) overdueEl.textContent = dashboardData.overdue_tasks || 0;
             }
         })
         .catch(error => console.error('Error loading dashboard:', error));
@@ -2347,9 +2368,11 @@ window.loadClassworkTasks = function() {
     fetch(`/classwork/lessons/${lessonId}/tasks`)
         .then(response => response.json())
         .then(data => {
+            console.log('🔧 Tasks data:', data);
             if (data.success) {
+                const tasks = data.data || [];
                 if (typeof renderClassworkTasks === 'function') {
-                    renderClassworkTasks(data.tasks);
+                    renderClassworkTasks(tasks);
                 }
             }
         })
@@ -2365,9 +2388,11 @@ window.loadClassworkMaterials = function() {
     fetch(`/classwork/lessons/${lessonId}/materials`)
         .then(response => response.json())
         .then(data => {
+            console.log('🔧 Materials data:', data);
             if (data.success) {
+                const materials = data.data || [];
                 if (typeof renderClassworkMaterials === 'function') {
-                    renderClassworkMaterials(data.materials);
+                    renderClassworkMaterials(materials);
                 }
             }
         })
@@ -2611,4 +2636,145 @@ window.initClasswork = function(lessonId) {
     loadClassworkMaterials();
 };
 
-console.log('✅ Classwork functions loaded');
+// Open create task modal
+window.openCreateTaskModal = function() {
+    const modal = new bootstrap.Modal(document.getElementById('createTaskModal'));
+    // Reset form
+    document.getElementById('createTaskForm').reset();
+    modal.show();
+};
+
+// Open create material modal
+window.openCreateMaterialModal = function() {
+    const modal = new bootstrap.Modal(document.getElementById('createMaterialModal'));
+    // Reset form
+    document.getElementById('createMaterialForm').reset();
+    modal.show();
+};
+
+// Submit create task form
+window.submitCreateTask = function() {
+    console.log('🔧 Submitting create task form');
+    
+    const form = document.getElementById('createTaskForm');
+    const formData = new FormData(form);
+    
+    // Get lesson ID
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    
+    // Convert form data to JSON
+    const taskData = {
+        title: formData.get('title'),
+        description: formData.get('description'),
+        subject: formData.get('subject'),
+        category: formData.get('category'),
+        priority: formData.get('priority'),
+        status: formData.get('status'),
+        due_date: formData.get('due_date'),
+        estimated_time: parseInt(formData.get('estimated_time')) || 0
+    };
+    
+    fetch(`/classwork/lessons/${lessonId}/tasks`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(taskData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('🔧 Task created:', data);
+        if (data.success) {
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('createTaskModal')).hide();
+            // Reload tasks and dashboard
+            loadClassworkTasks();
+            loadClassworkDashboard();
+            // Show success message
+            showNotification('Task created successfully!', 'success');
+        } else {
+            showNotification('Error creating task: ' + (data.error || 'Unknown error'), 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error creating task', 'danger');
+    });
+};
+
+// Submit create material form
+window.submitCreateMaterial = function() {
+    console.log('🔧 Submitting create material form');
+    
+    const form = document.getElementById('createMaterialForm');
+    const formData = new FormData(form);
+    
+    // Get lesson ID
+    const pathParts = window.location.pathname.split('/');
+    const lessonId = pathParts[pathParts.length - 1];
+    
+    fetch(`/classwork/lessons/${lessonId}/materials`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('🔧 Material created:', data);
+        if (data.success) {
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('createMaterialModal')).hide();
+            // Reload materials
+            loadClassworkMaterials();
+            // Show success message
+            showNotification('Material uploaded successfully!', 'success');
+        } else {
+            showNotification('Error uploading material: ' + (data.error || 'Unknown error'), 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error uploading material', 'danger');
+    });
+};
+
+// Show notification
+window.showNotification = function(message, type = 'info') {
+    // Create toast element if not exists
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toastId = 'toast-' + Date.now();
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    // Remove toast after hide
+    toast.addEventListener('hidden.bs.toast', function() {
+        toast.remove();
+    });
+};
+
+console.log('✅ Classwork functions loaded');// Cache busted at Fri Oct 10 15:06:08 +07 2025

@@ -2,27 +2,39 @@
 
 {% block title %}{{ lesson.title }} - Class{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/class-header.css') }}">
+{% endblock %}
+
 {% set skip_auto_load = true %}
 
 {% block content %}
 <!-- Class Detail Page with Tabs (Google Classroom Style) -->
 <div class="container-fluid" style="padding: 0;">
     <!-- Class Header -->
-    <div class="class-header" style="background: linear-gradient(135deg, {{ lesson.color_theme | lesson_color_primary }}, {{ lesson.color_theme | lesson_color_secondary }}); color: white; padding: 3rem 2rem 2rem 2rem; margin-bottom: 0;">
+    <div class="class-header">
         <div class="container">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <h1 class="display-5 fw-bold mb-2">{{ lesson.title }}</h1>
+            <div class="class-header-content">
+                <div class="class-header-info">
+                    <h1 class="class-header-title">{{ lesson.title }}</h1>
                     {% if lesson.description %}
-                    <p class="lead mb-0" style="opacity: 0.95;">{{ lesson.description }}</p>
+                    <p class="class-header-description">{{ lesson.description }}</p>
+                    {% endif %}
+                    {% if lesson.status %}
+                    <div class="class-header-status">
+                        <div class="class-header-status-dot"></div>
+                        <span>{{ lesson.status.replace('_', ' ').title() }}</span>
+                    </div>
                     {% endif %}
                 </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-light btn-sm" onclick="if(typeof loadPage === 'function') { loadPage('class'); } else { window.location.href='/class'; }">
-                        <i class="bi bi-arrow-left"></i> Back
+                <div class="class-header-actions">
+                    <button class="class-header-btn" onclick="if(typeof loadPage === 'function') { loadPage('class'); } else { window.location.href='/class'; }">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Back</span>
                     </button>
-                    <button class="btn btn-light btn-sm" onclick="alert('Settings coming soon!')">
+                    <button class="class-header-btn primary" onclick="alert('Settings coming soon!')">
                         <i class="bi bi-gear"></i>
+                        <span>Settings</span>
                     </button>
                 </div>
             </div>
@@ -30,7 +42,7 @@
     </div>
     
     <!-- Navigation Tabs -->
-    <div class="bg-white border-bottom sticky-top" style="top: 0; z-index: 100;">
+    <div class="class-nav-tabs">
         <div class="container">
             <ul class="nav nav-tabs border-0" id="classDetailTabs" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -137,31 +149,6 @@
     </div>
 </div>
 
-<style>
-.nav-tabs .nav-link {
-    border: none;
-    border-bottom: 3px solid transparent;
-    color: #5f6368;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.nav-tabs .nav-link:hover {
-    border-bottom-color: #e0e0e0;
-    background: transparent;
-}
-
-.nav-tabs .nav-link.active {
-    color: {{ lesson.color_theme | lesson_color_primary }};
-    border-bottom-color: {{ lesson.color_theme | lesson_color_primary }};
-    background: transparent;
-}
-
-.class-header {
-    border-radius: 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-</style>
 
 <script>
 // Lesson ID
@@ -226,17 +213,39 @@ function loadTabContent(tabName) {
             </div>
         `;
         
-        // Load the classwork template
-        fetch(`/class/${lessonId}/classwork`)
-            .then(response => response.text())
+        // Load the classwork template from partial
+        fetch(`/partial/class/${lessonId}/classwork`)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load classwork');
+                return response.text();
+            })
             .then(html => {
                 contentDiv.innerHTML = html;
-                // Initialize classwork after template is loaded
-                setTimeout(() => {
-                    if (typeof initClasswork === 'function') {
-                        initClasswork(lessonId);
+                console.log('✅ Classwork template loaded');
+                
+                // Extract and execute scripts manually (innerHTML doesn't execute scripts)
+                const scripts = contentDiv.querySelectorAll('script');
+                console.log(`🔍 Found ${scripts.length} script(s) to execute`);
+                
+                scripts.forEach((oldScript, index) => {
+                    console.log(`⚙️ Executing script ${index + 1}/${scripts.length}`);
+                    const newScript = document.createElement('script');
+                    
+                    // Copy attributes (src, type, etc.)
+                    Array.from(oldScript.attributes).forEach(attr => {
+                        newScript.setAttribute(attr.name, attr.value);
+                    });
+                    
+                    // Copy inline code
+                    if (oldScript.textContent) {
+                        newScript.textContent = oldScript.textContent;
                     }
-                }, 500);
+                    
+                    // Replace old script with new one (triggers execution)
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+                
+                console.log('✅ All classwork scripts executed');
             })
             .catch(err => {
                 console.error('Error loading classwork:', err);
@@ -244,7 +253,7 @@ function loadTabContent(tabName) {
                     <div class="container py-5 text-center">
                         <div class="alert alert-danger">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            Error loading classwork content.
+                            Error loading classwork content. Please try again.
                         </div>
                     </div>
                 `;

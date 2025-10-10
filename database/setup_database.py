@@ -352,6 +352,146 @@ def create_complete_database_schema():
 
         print("✅ Created pomodoro tables")
         
+        # 13. Create classwork tables
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_task (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                subject TEXT,
+                category TEXT,
+                priority TEXT DEFAULT 'medium',
+                status TEXT DEFAULT 'todo',
+                due_date TIMESTAMP,
+                estimated_time INTEGER DEFAULT 0,
+                actual_time INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id)
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_material (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                title TEXT NOT NULL,
+                description TEXT,
+                file_path TEXT,
+                file_type TEXT,
+                file_size INTEGER,
+                subject TEXT,
+                category TEXT,
+                tags TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_note (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                title TEXT NOT NULL,
+                content TEXT,
+                subject TEXT,
+                category TEXT,
+                tags TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_session (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                session_name TEXT,
+                start_time TIMESTAMP,
+                end_time TIMESTAMP,
+                duration INTEGER DEFAULT 0,
+                break_duration INTEGER DEFAULT 0,
+                productivity_score INTEGER DEFAULT 0,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_progress (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                progress_percentage INTEGER DEFAULT 0,
+                completed_at TIMESTAMP,
+                time_spent INTEGER DEFAULT 0,
+                achievement_badges TEXT,
+                streak_count INTEGER DEFAULT 0,
+                last_activity TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
+            )
+        """)
+        
+        print("✅ Created classwork tables")
+        
+        # 14. Create classwork indexes
+        classwork_indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_classwork_task_user_id ON classwork_task(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_task_lesson_id ON classwork_task(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_task_status ON classwork_task(status)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_task_priority ON classwork_task(priority)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_task_due_date ON classwork_task(due_date)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_material_user_id ON classwork_material(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_material_lesson_id ON classwork_material(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_material_task_id ON classwork_material(task_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_material_subject ON classwork_material(subject)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_note_user_id ON classwork_note(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_note_lesson_id ON classwork_note(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_note_task_id ON classwork_note(task_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_session_user_id ON classwork_session(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_session_lesson_id ON classwork_session(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_session_task_id ON classwork_session(task_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_progress_user_id ON classwork_progress(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_progress_lesson_id ON classwork_progress(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_progress_task_id ON classwork_progress(task_id)"
+        ]
+        
+        for index_sql in classwork_indexes:
+            try:
+                cursor.execute(index_sql)
+            except sqlite3.OperationalError as e:
+                print(f"   Warning: {e}")
+        
+        print("✅ Created classwork indexes")
+        
+        # 15. Create classwork uploads directory
+        classwork_upload_dir = 'uploads/classwork'
+        os.makedirs(classwork_upload_dir, exist_ok=True)
+        print("✅ Created classwork uploads directory")
+        
         # Commit all changes
         conn.commit()
         print("🎉 Complete database schema created successfully!")
