@@ -1,13 +1,36 @@
 {% if user %}
-  <div class="dropdown">
-    <button class="btn btn-secondary dropdown-toggle w-100" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-      <i class="bi bi-person-circle me-2"></i>{{ user.username }}
+  <!-- Logged In User -->
+  <div class="enchat-sidebar__user dropdown">
+    <button class="enchat-sidebar__user-btn dropdown-toggle" type="button" id="enchantProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      <div class="enchat-sidebar__user-avatar">
+        <i class="bi bi-person-circle"></i>
+      </div>
+      <div class="enchat-sidebar__user-info">
+        <span class="enchat-sidebar__user-name">{{ user.username }}</span>
+        <span class="enchat-sidebar__user-role">{{ user.role|default('Student') }}</span>
+      </div>
+      <i class="enchat-sidebar__user-dropdown-icon bi bi-chevron-down"></i>
     </button>
-    <ul class="dropdown-menu" aria-labelledby="profileDropdown">
-      <li><a class="dropdown-item" href="#" onclick="loadPage('profile');return false;"><i class="bi bi-person-circle me-2"></i>Profile</a></li>
-      <li><a class="dropdown-item" href="#" onclick="loadPage('change_password');return false;"><i class="bi bi-key-fill me-2"></i>Change Password</a></li>
-      <li><hr class="dropdown-divider"></li>
-      <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+    <ul class="dropdown-menu enchat-sidebar__dropdown-menu" aria-labelledby="enchantProfileDropdown">
+      <li>
+        <a class="dropdown-item enchat-sidebar__dropdown-item" href="#" onclick="loadPage('profile');return false;">
+          <i class="bi bi-person-circle"></i>
+          <span>Profile</span>
+        </a>
+      </li>
+      <li>
+        <a class="dropdown-item enchat-sidebar__dropdown-item" href="#" onclick="loadPage('change_password');return false;">
+          <i class="bi bi-key-fill"></i>
+          <span>Change Password</span>
+        </a>
+      </li>
+      <li><hr class="enchat-sidebar__dropdown-divider"></li>
+      <li>
+        <a class="dropdown-item enchat-sidebar__dropdown-item enchat-sidebar__dropdown-item--danger" href="{{ url_for('auth.logout') }}">
+          <i class="bi bi-box-arrow-right"></i>
+          <span>Logout</span>
+        </a>
+      </li>
     </ul>
   </div>
 {% else %}

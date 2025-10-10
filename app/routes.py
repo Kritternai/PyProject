@@ -102,7 +102,7 @@ def partial_dashboard():
 @main_bp.route('/partial/note')
 @login_required
 def partial_note_list():
-    from app.core.note import Note
+    from database.models.note import Note
     from app.core.integration_service import IntegrationService
     
     # Get all notes with lesson information
@@ -117,92 +117,8 @@ def partial_note_list():
                          notes=notes, 
                          user_data=user_data)
 
-@main_bp.route('/partial/note/add', methods=['GET', 'POST'])
-@login_required
-def partial_note_add_standalone():
-    if request.method == 'POST':
-        from app.core.note import Note
-        import uuid
-        
-        title = request.form.get('title')
-        content = request.form.get('content')  # Changed from 'body' to 'content'
-        tags = request.form.get('tags')
-        status = request.form.get('status', 'active')
-        external_link = request.form.get('external_link')
-
-        if not title or not content:
-            return jsonify(success=False, message='Title and content are required.')
-
-        try:
-            # Create new note using Note table
-            new_note = Note(
-                id=str(uuid.uuid4()),
-                user_id=g.user.id,
-                title=title,
-                content=content,
-                tags=tags,
-                status=status,
-                external_link=external_link
-            )
-            
-            db.session.add(new_note)
-            db.session.flush()  # Get the note ID
-            
-            # Handle file uploads
-            from app.core.files import Files
-            
-            # Handle image upload
-            image_file = request.files.get('image')
-            if image_file and image_file.filename != '' and allowed_file(image_file.filename, 'image'):
-                filename = secure_filename(image_file.filename)
-                file_path = os.path.join('uploads', 'image', filename).replace('\\', '/')
-                image_file.save(os.path.join(app.config['IMAGE_FOLDER'], filename))
-                
-                # Create file record
-                image_file_record = Files(
-                    id=str(uuid.uuid4()),
-                    user_id=g.user.id,
-                    note_id=new_note.id,
-                    file_name=filename,
-                    file_path=file_path,
-                    file_type='image',
-                    mime_type=image_file.content_type
-                )
-                db.session.add(image_file_record)
-            
-            # Handle file upload
-            file_file = request.files.get('file')
-            if file_file and file_file.filename != '' and allowed_file(file_file.filename, 'document'):
-                filename = secure_filename(file_file.filename)
-                file_path = os.path.join('uploads', 'files', filename).replace('\\', '/')
-                file_file.save(os.path.join(app.config['FILE_FOLDER'], filename))
-                
-                # Create file record
-                file_record = Files(
-                    id=str(uuid.uuid4()),
-                    user_id=g.user.id,
-                    note_id=new_note.id,
-                    file_name=filename,
-                    file_path=file_path,
-                    file_type='document',
-                    mime_type=file_file.content_type
-                )
-                db.session.add(file_record)
-            
-            db.session.commit()
-            
-            # After adding, redirect to the main note list to see the new note
-            notes = db.session.query(Note).filter(
-                Note.user_id == g.user.id
-            ).order_by(Note.created_at.desc()).all()
-            html = render_template('note_fragment.html', notes=notes)
-            return jsonify(success=True, html=html)
-            
-        except Exception as e:
-            db.session.rollback()
-            return jsonify(success=False, message=f'Error creating note: {str(e)}')
-
-    return render_template('notes/create.html', lesson=None)
+# NOTE: /partial/note/add route moved to routes_new.py
+# This legacy blueprint is not registered, so this route is inactive
 
 
 @main_bp.route('/partial/dev')
@@ -378,7 +294,7 @@ def partial_class_detail(lesson_id):
     lesson_summary = IntegrationService.get_lesson_summary(lesson_id, g.user.id)
     
     # Get notes for this lesson
-    from app.core.note import Note
+    from database.models.note import Note
     notes = db.session.query(Note).filter(
         Note.lesson_id == lesson_id,
         Note.user_id == g.user.id
@@ -498,8 +414,8 @@ def partial_section_add(lesson_id):
         # If type is 'note', create both note and section
         if type_ == 'note':
             # Create note in Note table
-            from app.core.note import Note
-            from app.core.files import Files
+            from database.models.note import Note
+            from database.models.files import Files
             
             new_note = Note(
                 id=str(uuid.uuid4()),
@@ -694,7 +610,7 @@ def partial_note_add(lesson_id):
 
         try:
             # Create note using Note table
-            from app.core.note import Note
+            from database.models.note import Note
             new_note = Note(
                 id=str(uuid.uuid4()),
                 user_id=g.user.id,
@@ -710,7 +626,7 @@ def partial_note_add(lesson_id):
             db.session.flush()  # Get the note ID
             
             # Handle file uploads
-            from app.core.files import Files
+            from database.models.files import Files
             
             # Handle image upload
             image_file = request.files.get('image')
@@ -868,7 +784,7 @@ def partial_note_edit(lesson_id, section_id):
 @main_bp.route('/partial/note/<note_id>/delete', methods=['POST'])
 @login_required
 def partial_note_delete_standalone(note_id):
-    from app.core.note import Note
+    from database.models.note import Note
     
     note = db.session.query(Note).filter(
         Note.id == note_id,
@@ -894,7 +810,7 @@ def partial_note_delete_standalone(note_id):
 @main_bp.route('/partial/note/<note_id>/edit', methods=['GET', 'POST'])
 @login_required
 def partial_note_edit_standalone(note_id):
-    from app.core.note import Note
+    from database.models.note import Note
     
     note = db.session.query(Note).filter(
         Note.id == note_id,
@@ -923,7 +839,7 @@ def partial_note_edit_standalone(note_id):
             note.updated_at = datetime.utcnow()
             
             # Handle file uploads
-            from app.core.files import Files
+            from database.models.files import Files
             
             # Handle image upload
             image_file = request.files.get('image')
