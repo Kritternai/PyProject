@@ -10,8 +10,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/fontawesome-free-6.5.2-web/css/all.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/enchat-sidebar.css') }}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  {% block head %}{% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/neo_glass_theme.css') }}">
   <style>
     body { background: var(--ng-bg, #f5f7fa); }
@@ -45,49 +47,105 @@
 </head>
 <body class="ng-font">
 <div class="d-flex">
-  <nav class="sidebar">
-    <div class="sidebar-logo">Smart Learning Hub</div>
-    <ul class="nav flex-column sidebar-menu">
-      <li class="nav-item"><a class="nav-link" href="#" data-page="dashboard" onclick="setActiveNav(this);loadPage('dashboard')"><i class="bi bi-grid-1x2-fill me-2"></i>Dashboard</a></li>
-      <li class="nav-item"><a class="nav-link" href="#" data-page="class" onclick="setActiveNav(this);loadPage('class')"><i class="bi bi-book-fill me-2"></i>Class</a></li>
-      <li class="nav-item"><a class="nav-link" href="#" data-page="note" onclick="setActiveNav(this);loadPage('note')"><i class="bi bi-journal-text me-2"></i>Note</a></li>
-      <li class="nav-item"><a class="nav-link" href="#" data-page="track" onclick="setActiveNav(this);loadPage('track')"><i class="bi bi-graph-up me-2"></i>Track</a></li>
-      <li class="nav-item"><a class="nav-link" href="#" data-page="pomodoro" onclick="setActiveNav(this);loadPage('pomodoro')"><i class="bi bi-clock-fill me-2"></i>Pomodoro</a></li>
-      <li class="nav-item"><a class="nav-link" href="#" data-page="setting" onclick="setActiveNav(this);loadPage('setting')"><i class="bi bi-gear-fill me-2"></i>Setting</a></li>
-      <li class="nav-item"><a class="nav-link" href="#" data-page="dev" onclick="setActiveNav(this);loadPage('dev')"><i class="bi bi-code-slash me-2"></i>Dev</a></li>
-    </ul>
-    <div class="sidebar-auth mt-auto">
+  <!-- Enhanced Sidebar with Enchat Design System -->
+  <nav class="enchat-sidebar">
+    <!-- Sidebar Header -->
+    <div class="enchat-sidebar__header">
+      <a href="#" class="enchat-sidebar__logo" onclick="loadPage('dashboard');return false;">
+        <span class="enchat-sidebar__logo-icon">
+          <i class="bi bi-mortarboard-fill"></i>
+        </span>
+        <div class="enchat-sidebar__logo-text">
+          Smart Learning
+          <span class="enchat-sidebar__logo-subtitle">Hub</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Sidebar Menu -->
+    <div class="enchat-sidebar__menu">
+      <ul class="enchat-sidebar__nav">
+        <li class="enchat-sidebar__nav-item">
+          <a href="#" class="enchat-sidebar__nav-link" data-page="dashboard" onclick="setActiveNav(this);loadPage('dashboard');return false;">
+            <i class="enchat-sidebar__nav-icon bi bi-grid-1x2-fill"></i>
+            <span class="enchat-sidebar__nav-text">Dashboard</span>
+          </a>
+        </li>
+        <li class="enchat-sidebar__nav-item">
+          <a href="#" class="enchat-sidebar__nav-link" data-page="class" onclick="setActiveNav(this);loadPage('class');return false;">
+            <i class="enchat-sidebar__nav-icon bi bi-book-fill"></i>
+            <span class="enchat-sidebar__nav-text">Class</span>
+          </a>
+        </li>
+        <li class="enchat-sidebar__nav-item">
+          <a href="#" class="enchat-sidebar__nav-link" data-page="note" onclick="setActiveNav(this);loadPage('note');return false;">
+            <i class="enchat-sidebar__nav-icon bi bi-journal-text"></i>
+            <span class="enchat-sidebar__nav-text">Note</span>
+          </a>
+        </li>
+        <li class="enchat-sidebar__nav-item">
+          <a href="#" class="enchat-sidebar__nav-link" data-page="track" onclick="setActiveNav(this);loadPage('track');return false;">
+            <i class="enchat-sidebar__nav-icon bi bi-graph-up"></i>
+            <span class="enchat-sidebar__nav-text">Track</span>
+          </a>
+        </li>
+        <li class="enchat-sidebar__nav-item">
+          <a href="#" class="enchat-sidebar__nav-link" data-page="pomodoro" onclick="setActiveNav(this);loadPage('pomodoro');return false;">
+            <i class="enchat-sidebar__nav-icon bi bi-clock-fill"></i>
+            <span class="enchat-sidebar__nav-text">Pomodoro</span>
+          </a>
+        </li>
+        <li class="enchat-sidebar__nav-item">
+          <a href="#" class="enchat-sidebar__nav-link" data-page="setting" onclick="setActiveNav(this);loadPage('setting');return false;">
+            <i class="enchat-sidebar__nav-icon bi bi-gear-fill"></i>
+            <span class="enchat-sidebar__nav-text">Setting</span>
+          </a>
+        </li>
+        <li class="enchat-sidebar__nav-item">
+          <a href="#" class="enchat-sidebar__nav-link" data-page="dev" onclick="setActiveNav(this);loadPage('dev');return false;">
+            <i class="enchat-sidebar__nav-icon bi bi-code-slash"></i>
+            <span class="enchat-sidebar__nav-text">Dev</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Sidebar Footer / Auth -->
+    <div class="enchat-sidebar__footer">
       {% include 'sidebar_auth_fragment.html' %}
     </div>
   </nav>
-  <main class="flex-grow-1 p-4" id="main-content">
+
+  <!-- Main Content -->
+  <main class="enchat-main-content" id="main-content">
     {% block content %}{% endblock %}
   </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/enchat-sidebar.js') }}"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tracking.js') }}"></script>
 <script>
 function setActiveNav(el) {
-  document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
+  document.querySelectorAll('.enchat-sidebar__nav-link').forEach(link => link.classList.remove('active'));
   el.classList.add('active');
 }
 window.addEventListener('DOMContentLoaded', function() {
   {% if not skip_auto_load %}
     {% if initial_page %}
       const initial = '{{ initial_page }}';
-      const navInit = document.querySelector(`.sidebar .nav-link[data-page=\"${initial}\"]`);
+      const navInit = document.querySelector(`.enchat-sidebar__nav-link[data-page=\"${initial}\"]`);
       if (navInit) navInit.classList.add('active');
       loadPage(initial);
     {% elif google_connected %}
       // If user just connected Google Classroom, load class page
-      const navClass = document.querySelector('.sidebar .nav-link[data-page=\"class\"]');
+      const navClass = document.querySelector('.enchat-sidebar__nav-link[data-page=\"class\"]');
       if (navClass) navClass.classList.add('active');
       loadPage('class');
     {% else %}
       // Default: load dashboard
-      const navDash = document.querySelector('.sidebar .nav-link[data-page=\"dashboard\"]');
+      const navDash = document.querySelector('.enchat-sidebar__nav-link[data-page=\"dashboard\"]');
       if (navDash) navDash.classList.add('active');
       loadPage('dashboard');
     {% endif %}
