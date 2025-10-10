@@ -485,6 +485,267 @@
 }
 
 /* ==========================================
+ * Create Grade Item Modal - Custom Combobox
+ * ========================================== */
+
+.custom-combobox {
+    position: relative;
+}
+
+.custom-combobox .form-control {
+    padding-right: 2.5rem;
+    font-weight: 500;
+}
+
+.custom-combobox .dropdown-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 1rem;
+    cursor: pointer;
+    pointer-events: all;
+    z-index: 5;
+    transition: transform 0.2s;
+}
+
+.custom-combobox .dropdown-icon:hover {
+    color: #495057;
+    transform: translateY(-50%) scale(1.2);
+}
+
+.custom-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1050;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-search {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 10;
+}
+
+.dropdown-search i {
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.dropdown-search-input {
+    flex: 1;
+    border: none;
+    background: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.dropdown-search-input:focus {
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+}
+
+.dropdown-section {
+    padding: 0.5rem 0;
+}
+
+.dropdown-section-header {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dropdown-items {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+}
+
+.dropdown-item:hover {
+    background: #f8f9fa;
+    border-left-color: #0d6efd;
+}
+
+.dropdown-item.task-item {
+    flex-wrap: wrap;
+}
+
+.dropdown-item.empty {
+    color: #6c757d;
+    cursor: default;
+    justify-content: center;
+}
+
+.dropdown-item.empty:hover {
+    background: transparent;
+    border-left-color: transparent;
+}
+
+.dropdown-item.create-new-hint {
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.task-icon {
+    font-size: 1.25rem;
+    min-width: 24px;
+    text-align: center;
+}
+
+.task-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.task-title {
+    font-weight: 500;
+    color: #212529;
+    margin-bottom: 0.15rem;
+}
+
+.task-desc {
+    font-size: 0.85rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.task-due {
+    font-size: 0.8rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+
+.dropdown-item.task-item.completed {
+    opacity: 0.7;
+}
+
+.dropdown-item.task-item.completed .task-title {
+    text-decoration: line-through;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #dee2e6;
+    margin: 0.5rem 0;
+}
+
+.task-link-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+    background: #f8f9fa;
+    font-size: 0.9rem;
+    border-left: 3px solid #6c757d;
+    transition: all 0.3s;
+}
+
+.task-link-status i {
+    font-size: 1rem;
+}
+
+.task-link-status.linked {
+    background: #d4edda;
+    border-left-color: #28a745;
+    color: #155724;
+}
+
+.task-link-status.linked i {
+    color: #28a745;
+}
+
+.task-link-status.new {
+    background: #cce5ff;
+    border-left-color: #0d6efd;
+    color: #004085;
+}
+
+.task-link-status.new i {
+    color: #0d6efd;
+}
+
+.task-link-status.suggestion {
+    background: #fff3cd;
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+.task-link-status.suggestion i {
+    color: #ffc107;
+}
+
+/* Scrollbar styling for dropdown */
+.custom-dropdown-menu::-webkit-scrollbar,
+.dropdown-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-dropdown-menu::-webkit-scrollbar-track,
+.dropdown-items::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.custom-dropdown-menu::-webkit-scrollbar-thumb,
+.dropdown-items::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.custom-dropdown-menu::-webkit-scrollbar-thumb:hover,
+.dropdown-items::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* ==========================================
  * Goal Calculator Modal
  * ========================================== */
 

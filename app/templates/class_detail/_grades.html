@@ -51,7 +51,10 @@
     <div class="grades-table-section">
         <div class="grades-table-header">
             <h3 class="section-title">📋 All Assignments</h3>
-            <div class="table-filters">
+            <div class="d-flex gap-2 align-items-center">
+                <button class="btn btn-primary btn-sm" onclick="openCreateGradeItemModal()">
+                    <i class="bi bi-plus-circle"></i> Add Assignment
+                </button>
                 <select class="form-select form-select-sm" id="category-filter" onchange="filterGrades()">
                     <option value="all">All Categories</option>
                 </select>
@@ -76,6 +79,119 @@
                     <!-- Dynamically loaded -->
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Grade Item Modal -->
+<div class="modal fade" id="createGradeItemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📝 Add Assignment/Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="gradeItemForm">
+                    <!-- Combined Assignment Name + Task Selector -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Assignment Name *
+                            <i class="bi bi-info-circle text-muted" 
+                               title="Select from existing tasks or type a new name"></i>
+                        </label>
+                        
+                        <!-- Custom Dropdown Container -->
+                        <div class="custom-combobox">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="item-name" 
+                                   placeholder="Type name or select from tasks..."
+                                   oninput="handleAssignmentNameInput()"
+                                   onfocus="showTaskDropdown()"
+                                   autocomplete="off"
+                                   required>
+                            <i class="bi bi-chevron-down dropdown-icon" onclick="toggleTaskDropdown()"></i>
+                            
+                            <!-- Custom Dropdown Menu -->
+                            <div class="custom-dropdown-menu" id="task-dropdown" style="display: none;">
+                                <div class="dropdown-search">
+                                    <i class="bi bi-search"></i>
+                                    <input type="text" 
+                                           id="task-search" 
+                                           class="dropdown-search-input" 
+                                           placeholder="Search tasks..."
+                                           oninput="filterTaskDropdown()">
+                                </div>
+                                
+                                <div class="dropdown-section">
+                                    <div class="dropdown-section-header">
+                                        <i class="bi bi-link-45deg"></i> Link to Existing Task
+                                    </div>
+                                    <div id="task-list" class="dropdown-items">
+                                        <!-- Populated by JS -->
+                                    </div>
+                                </div>
+                                
+                                <div class="dropdown-divider"></div>
+                                
+                                <div class="dropdown-section">
+                                    <div class="dropdown-section-header">
+                                        <i class="bi bi-plus-circle"></i> Or Create New
+                                    </div>
+                                    <div class="dropdown-item create-new-hint" onclick="focusNameInput()">
+                                        <i class="bi bi-pencil-fill"></i>
+                                        <span>Type a new assignment name above</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" id="item-linked-task-id">
+                        <div class="task-link-status" id="task-link-hint">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Type to create new, or select from existing tasks</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Category *</label>
+                            <select class="form-select" id="item-category" required>
+                                <option value="">-- Select Category --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Points *</label>
+                            <input type="number" class="form-control" id="item-points" min="0" step="0.5" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="item-description" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="item-due-date">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check mt-4">
+                                <input type="checkbox" class="form-check-input" id="item-published" checked>
+                                <label class="form-check-label">Publish immediately</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveGradeItem()">
+                    <i class="bi bi-check-circle"></i> Create Assignment
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -228,11 +344,12 @@
     console.log('🎓 Grades system loaded');
     
     const lessonId = '{{ lesson_id }}';
-    let goalCalculatorModal, setupGradingModal;
+    let goalCalculatorModal, setupGradingModal, createGradeItemModal;
     let categoriesData = [];
     let currentSummary = null;
     let currentGradingScale = null;
     let isEditMode = false;
+    let availableTasks = [];
     
     // Initialize
     initializeGradesSystem();
@@ -244,12 +361,16 @@
         try {
             const goalModalEl = document.getElementById('goalCalculatorModal');
             const setupModalEl = document.getElementById('setupGradingModal');
+            const createItemModalEl = document.getElementById('createGradeItemModal');
             
             if (goalModalEl && typeof bootstrap !== 'undefined') {
                 goalCalculatorModal = new bootstrap.Modal(goalModalEl);
             }
             if (setupModalEl && typeof bootstrap !== 'undefined') {
                 setupGradingModal = new bootstrap.Modal(setupModalEl);
+            }
+            if (createItemModalEl && typeof bootstrap !== 'undefined') {
+                createGradeItemModal = new bootstrap.Modal(createItemModalEl);
             }
         } catch (error) {
             console.error('Error initializing modals:', error);
@@ -287,11 +408,26 @@
             }
             
             // Load grades table
+            console.log('📋 Loading grades table...');
             const gradesResponse = await fetch(`/grades/lessons/${lessonId}/my-grades`);
             const gradesData = await gradesResponse.json();
             
+            console.log('📊 Grades response:', gradesData);
+            
             if (gradesData.success) {
+                console.log('📝 Rendering grades table with', gradesData.data.length, 'items');
                 renderGradesTable(gradesData.data);
+            } else {
+                console.error('❌ Failed to load grades:', gradesData);
+                // Show error message in table
+                const tbody = document.getElementById('grades-table-body');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger py-4">
+                            Error loading grades: ${gradesData.error || 'Unknown error'}
+                        </td>
+                    </tr>
+                `;
             }
             
             // Load categories for filter
@@ -303,9 +439,267 @@
                 populateCategoryFilter(categoriesResult.data);
             }
             
+            // Load available tasks for linking
+            const tasksResponse = await fetch(`/grades/lessons/${lessonId}/available-tasks`);
+            const tasksData = await tasksResponse.json();
+            
+            if (tasksData.success) {
+                availableTasks = tasksData.data;
+                console.log('📋 Available tasks for linking:', availableTasks.length);
+            }
+            
         } catch (error) {
             console.error('Error loading grades:', error);
             showError('Failed to load grades');
+        }
+    }
+    
+    // Open Create Grade Item Modal
+    async function openCreateGradeItemModal() {
+        if (!createGradeItemModal) {
+            showError('Modal not initialized');
+            return;
+        }
+        
+        // Reset form
+        document.getElementById('gradeItemForm').reset();
+        document.getElementById('item-linked-task-id').value = '';
+        document.getElementById('task-link-hint').innerHTML = '💡 Type to create new, or select from existing tasks below';
+        
+        // Populate category dropdown
+        const categorySelect = document.getElementById('item-category');
+        categorySelect.innerHTML = '<option value="">-- Select Category --</option>';
+        
+        for (const category of categoriesData) {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = `${category.name} (${category.weight}%)`;
+            categorySelect.appendChild(option);
+        }
+        
+        // Populate task dropdown (will be done when dropdown opens)
+        filterTaskDropdown();
+        
+        createGradeItemModal.show();
+    }
+    
+    // Show/Hide task dropdown
+    function showTaskDropdown() {
+        const dropdown = document.getElementById('task-dropdown');
+        dropdown.style.display = 'block';
+        filterTaskDropdown(); // Filter based on current input
+    }
+    
+    function hideTaskDropdown() {
+        setTimeout(() => {
+            const dropdown = document.getElementById('task-dropdown');
+            dropdown.style.display = 'none';
+        }, 200);
+    }
+    
+    function toggleTaskDropdown() {
+        const dropdown = document.getElementById('task-dropdown');
+        if (dropdown.style.display === 'none') {
+            showTaskDropdown();
+        } else {
+            dropdown.style.display = 'none';
+        }
+    }
+    
+    function focusNameInput() {
+        document.getElementById('item-name').focus();
+    }
+    
+    // Filter task dropdown based on search
+    function filterTaskDropdown() {
+        const searchInput = document.getElementById('task-search');
+        const nameInput = document.getElementById('item-name');
+        const searchTerm = (searchInput?.value || nameInput.value || '').toLowerCase();
+        
+        const taskList = document.getElementById('task-list');
+        const filteredTasks = availableTasks.filter(task => 
+            task.title.toLowerCase().includes(searchTerm) ||
+            (task.description && task.description.toLowerCase().includes(searchTerm))
+        );
+        
+        if (filteredTasks.length === 0) {
+            taskList.innerHTML = `
+                <div class="dropdown-item empty">
+                    <i class="bi bi-inbox"></i>
+                    <span>No tasks found</span>
+                </div>
+            `;
+        } else {
+            taskList.innerHTML = filteredTasks.map(task => {
+                const statusIcon = task.status === 'completed' ? '✅' :
+                                 task.status === 'in-progress' ? '🔄' : '📋';
+                const statusClass = task.status === 'completed' ? 'completed' :
+                                  task.status === 'in-progress' ? 'in-progress' : 'pending';
+                
+                return `
+                    <div class="dropdown-item task-item ${statusClass}" 
+                         onclick="selectTask('${escapeHtml(task.id)}', '${escapeHtml(task.title)}')">
+                        <div class="task-icon">${statusIcon}</div>
+                        <div class="task-info">
+                            <div class="task-title">${escapeHtml(task.title)}</div>
+                            ${task.description ? `<div class="task-desc">${escapeHtml(task.description.substring(0, 50))}${task.description.length > 50 ? '...' : ''}</div>` : ''}
+                        </div>
+                        ${task.due_date ? `<div class="task-due"><i class="bi bi-calendar"></i> ${formatDate(task.due_date)}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+    
+    // Select a task from dropdown
+    function selectTask(taskId, taskTitle) {
+        const task = availableTasks.find(t => t.id === taskId);
+        if (!task) return;
+        
+        const nameInput = document.getElementById('item-name');
+        const taskIdInput = document.getElementById('item-linked-task-id');
+        const hint = document.getElementById('task-link-hint');
+        const descInput = document.getElementById('item-description');
+        const dueDateInput = document.getElementById('item-due-date');
+        
+        // Set values
+        nameInput.value = task.title;
+        taskIdInput.value = task.id;
+        
+        // Update hint
+        hint.innerHTML = `
+            <i class="bi bi-check-circle-fill"></i>
+            <span><strong>Linked to task:</strong> ${escapeHtml(task.title)}</span>
+        `;
+        hint.className = 'task-link-status linked';
+        
+        // Auto-fill description and due date
+        if (task.description && !descInput.value) {
+            descInput.value = task.description;
+        }
+        if (task.due_date && !dueDateInput.value) {
+            const dueDate = new Date(task.due_date);
+            dueDateInput.value = dueDate.toISOString().split('T')[0];
+        }
+        
+        // Hide dropdown
+        document.getElementById('task-dropdown').style.display = 'none';
+        
+        console.log('🔗 Task selected:', task.title);
+    }
+    
+    // Handle assignment name input
+    function handleAssignmentNameInput() {
+        const nameInput = document.getElementById('item-name');
+        const taskIdInput = document.getElementById('item-linked-task-id');
+        const hint = document.getElementById('task-link-hint');
+        
+        const inputValue = nameInput.value.trim();
+        
+        // Filter dropdown
+        filterTaskDropdown();
+        
+        // Check if input matches a task exactly
+        const matchedTask = availableTasks.find(task => task.title === inputValue);
+        
+        if (matchedTask && taskIdInput.value === matchedTask.id) {
+            // Already linked - keep hint
+            return;
+        } else if (matchedTask) {
+            // Matches a task but not linked yet - suggest linking
+            hint.innerHTML = `
+                <i class="bi bi-link-45deg"></i>
+                <span>Press Enter or click to link to existing task</span>
+            `;
+            hint.className = 'task-link-status suggestion';
+        } else if (inputValue) {
+            // Custom name - creating new
+            taskIdInput.value = '';
+            hint.innerHTML = `
+                <i class="bi bi-pencil-fill"></i>
+                <span><strong>Creating new assignment:</strong> ${escapeHtml(inputValue)}</span>
+            `;
+            hint.className = 'task-link-status new';
+        } else {
+            // Empty input
+            taskIdInput.value = '';
+            hint.innerHTML = `
+                <i class="bi bi-info-circle"></i>
+                <span>Type to create new, or select from existing tasks</span>
+            `;
+            hint.className = 'task-link-status';
+        }
+    }
+    
+    // Format date helper
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const today = new Date();
+        const diffTime = date - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) return 'Overdue';
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Tomorrow';
+        if (diffDays <= 7) return `${diffDays}d`;
+        
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+    
+    // Save Grade Item
+    async function saveGradeItem() {
+        try {
+            const name = document.getElementById('item-name').value.trim();
+            const points = parseFloat(document.getElementById('item-points').value);
+            const categoryId = document.getElementById('item-category').value;
+            const linkedTaskId = document.getElementById('item-linked-task-id').value; // From hidden input
+            const description = document.getElementById('item-description').value.trim();
+            const dueDate = document.getElementById('item-due-date').value;
+            const isPublished = document.getElementById('item-published').checked;
+            
+            if (!name || !points || !categoryId) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            const itemData = {
+                name: name,
+                category_id: categoryId,
+                points_possible: points,
+                description: description,
+                due_date: dueDate || null,
+                is_published: isPublished
+            };
+            
+            // Add linked task if auto-detected
+            if (linkedTaskId) {
+                itemData.classwork_task_id = linkedTaskId;
+                console.log('🔗 Linking to task:', linkedTaskId);
+            } else {
+                console.log('✏️ Creating new assignment without task link');
+            }
+            
+            const response = await fetch(`/grades/lessons/${lessonId}/items`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(itemData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                createGradeItemModal.hide();
+                showSuccess('Assignment created successfully!');
+                
+                // Reload grades data
+                setTimeout(() => loadGradeData(), 500);
+            } else {
+                showError(result.error || 'Failed to create assignment');
+            }
+            
+        } catch (error) {
+            console.error('Error saving grade item:', error);
+            showError('Failed to create assignment');
         }
     }
     
@@ -509,19 +903,32 @@
     }
     
     function renderGradesTable(grades) {
+        console.log('🎨 renderGradesTable called with:', grades);
+        
         const tbody = document.getElementById('grades-table-body');
         
-        if (grades.length === 0) {
+        if (!tbody) {
+            console.error('❌ grades-table-body element not found!');
+            return;
+        }
+        
+        if (!grades || grades.length === 0) {
+            console.log('📭 No grades to display');
             tbody.innerHTML = `
                 <tr>
                     <td colspan="6" class="text-center text-muted py-4">
-                        No grades recorded yet
+                        <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.3;"></i>
+                        <p class="mb-2">No assignments added yet</p>
+                        <button class="btn btn-sm btn-primary" onclick="openCreateGradeItemModal()">
+                            <i class="bi bi-plus-circle"></i> Add First Assignment
+                        </button>
                     </td>
                 </tr>
             `;
             return;
         }
         
+        console.log(`📝 Rendering ${grades.length} grade items...`);
         let html = '';
         
         for (const grade of grades) {
@@ -536,6 +943,12 @@
                     <td>
                         <div class="assignment-cell">
                             <span class="assignment-name">${escapeHtml(grade.item_name)}</span>
+                            ${grade.linked_task_title ? `
+                                <small class="text-muted ms-2">
+                                    <i class="bi bi-link-45deg"></i>
+                                    ${escapeHtml(grade.linked_task_title)}
+                                </small>
+                            ` : ''}
                             ${grade.is_late ? '<span class="badge bg-warning ms-2">Late</span>' : ''}
                         </div>
                     </td>
@@ -556,7 +969,9 @@
             `;
         }
         
+        console.log('✅ Setting table HTML...');
         tbody.innerHTML = html;
+        console.log('✅ Grades table rendered successfully');
     }
     
     function populateCategoryFilter(categories) {
@@ -1091,9 +1506,27 @@
         }
     }
     
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('task-dropdown');
+        const combobox = event.target.closest('.custom-combobox');
+        
+        if (dropdown && !combobox) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
     // Expose functions globally
     window.openGoalCalculator = openGoalCalculator;
     window.openSetupModal = openSetupModal;
+    window.openCreateGradeItemModal = openCreateGradeItemModal;
+    window.saveGradeItem = saveGradeItem;
+    window.handleAssignmentNameInput = handleAssignmentNameInput;
+    window.selectTask = selectTask;
+    window.showTaskDropdown = showTaskDropdown;
+    window.toggleTaskDropdown = toggleTaskDropdown;
+    window.focusNameInput = focusNameInput;
+    window.filterTaskDropdown = filterTaskDropdown;
     window.calculateGoal = calculateGoal;
     window.addCategoryRow = addCategoryRow;
     window.removeCategoryRow = removeCategoryRow;

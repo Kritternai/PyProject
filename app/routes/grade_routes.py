@@ -281,7 +281,8 @@ def create_grade_item(lesson_id):
             points_possible=float(data['points_possible']),
             description=data.get('description', ''),
             due_date=data.get('due_date'),
-            is_published=data.get('is_published', False)
+            is_published=data.get('is_published', False),
+            classwork_task_id=data.get('classwork_task_id')  # Link to task
         )
         
         return jsonify({
@@ -290,12 +291,30 @@ def create_grade_item(lesson_id):
             'data': {
                 'id': item.id,
                 'name': item.name,
-                'points_possible': float(item.points_possible)
+                'points_possible': float(item.points_possible),
+                'classwork_task_id': item.classwork_task_id
             }
         }), 201
         
     except NotFoundException as e:
         return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@grade_bp.route('/lessons/<lesson_id>/available-tasks', methods=['GET'])
+def get_available_tasks(lesson_id):
+    """Get classwork tasks that can be linked to grade items"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        tasks = GradeController.get_available_tasks(lesson_id)
+        
+        return jsonify({
+            'success': True,
+            'data': tasks
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -461,4 +480,10 @@ def partial_grades(lesson_id):
                              user=g.user)
     except Exception as e:
         return f'<div class="alert alert-danger">Error loading grades: {str(e)}</div>', 500
+
+
+@grade_bp.route('/test-api')
+def test_api():
+    """Test page for debugging grades API"""
+    return render_template('test_grades_api.html')
 

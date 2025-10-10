@@ -100,6 +100,9 @@ class GradeItem(db.Model):
     is_extra_credit = db.Column(db.Boolean, default=False)
     is_muted = db.Column(db.Boolean, default=False)
     
+    # Link to Classwork Task
+    classwork_task_id = db.Column(db.String(36), nullable=True)
+    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

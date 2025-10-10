@@ -225,13 +225,50 @@ class GradeController:
             published_date=kwargs.get('published_date'),
             is_published=kwargs.get('is_published', False),
             is_extra_credit=kwargs.get('is_extra_credit', False),
-            is_muted=kwargs.get('is_muted', False)
+            is_muted=kwargs.get('is_muted', False),
+            classwork_task_id=kwargs.get('classwork_task_id')  # Link to task
         )
         
         db.session.add(item)
         db.session.commit()
         
         return item
+    
+    @staticmethod
+    def get_available_tasks(lesson_id: str):
+        """Get classwork tasks that haven't been linked to grade items yet"""
+        from app import db
+        from sqlalchemy import text
+        
+        # Get all tasks for this lesson
+        tasks = db.session.execute(
+            text("""
+                SELECT id, title, description, status, priority, due_date
+                FROM classwork_task
+                WHERE lesson_id = :lesson_id
+                AND id NOT IN (
+                    SELECT classwork_task_id 
+                    FROM grade_item 
+                    WHERE classwork_task_id IS NOT NULL 
+                    AND lesson_id = :lesson_id
+                )
+                ORDER BY created_at DESC
+            """),
+            {'lesson_id': lesson_id}
+        ).fetchall()
+        
+        result = []
+        for task in tasks:
+            result.append({
+                'id': task[0],
+                'title': task[1],
+                'description': task[2],
+                'status': task[3],
+                'priority': task[4],
+                'due_date': task[5]
+            })
+        
+        return result
     
     @staticmethod
     def get_grade_items(lesson_id: str, include_unpublished=False):
@@ -305,34 +342,61 @@ class GradeController:
     def get_student_grades(lesson_id: str, user_id: str):
         """Get all grade entries for a student in a lesson"""
         from app.models.grade import GradeEntry, GradeItem, GradeCategory
+        from sqlalchemy import text
         
-        entries = db.session.query(
-            GradeEntry, GradeItem, GradeCategory
-        ).join(
-            GradeItem, GradeEntry.grade_item_id == GradeItem.id
-        ).join(
-            GradeCategory, GradeItem.category_id == GradeCategory.id
-        ).filter(
-            GradeEntry.lesson_id == lesson_id,
-            GradeEntry.user_id == user_id
-        ).order_by(GradeItem.due_date).all()
+        # Get grade entries with linked task info
+        entries = db.session.execute(
+            text("""
+                SELECT 
+                    ge.id as entry_id,
+                    gi.id as item_id,
+                    gi.name as item_name,
+                    gi.classwork_task_id,
+                    gc.name as category_name,
+                    gc.color as category_color,
+                    ge.score,
+                    ge.points_possible,
+                    ge.status,
+                    ge.is_late,
+                    ge.comments,
+                    ge.graded_at,
+                    gi.due_date,
+                    ct.title as task_title,
+                    ct.status as task_status
+                FROM grade_entry ge
+                JOIN grade_item gi ON ge.grade_item_id = gi.id
+                JOIN grade_category gc ON gi.category_id = gc.id
+                LEFT JOIN classwork_task ct ON gi.classwork_task_id = ct.id
+                WHERE ge.lesson_id = :lesson_id 
+                AND ge.user_id = :user_id
+                ORDER BY gi.due_date
+            """),
+            {'lesson_id': lesson_id, 'user_id': user_id}
+        ).fetchall()
         
         result = []
-        for entry, item, category in entries:
+        for row in entries:
+            # Calculate percentage
+            percentage = None
+            if row[6] is not None and row[7] is not None and row[7] > 0:
+                percentage = round((float(row[6]) / float(row[7])) * 100, 2)
+            
             result.append({
-                'entry_id': entry.id,
-                'item_id': item.id,
-                'item_name': item.name,
-                'category_name': category.name,
-                'category_color': category.color,
-                'score': float(entry.score) if entry.score else None,
-                'points_possible': float(entry.points_possible) if entry.points_possible else float(item.points_possible),
-                'percentage': entry.percentage,
-                'status': entry.status,
-                'is_late': entry.is_late,
-                'comments': entry.comments,
-                'graded_at': entry.graded_at.isoformat() if entry.graded_at else None,
-                'due_date': item.due_date.isoformat() if item.due_date else None
+                'entry_id': row[0],
+                'item_id': row[1],
+                'item_name': row[2],
+                'category_name': row[4],
+                'category_color': row[5],
+                'score': float(row[6]) if row[6] else None,
+                'points_possible': float(row[7]) if row[7] else None,
+                'percentage': percentage,
+                'status': row[8],
+                'is_late': row[9],
+                'comments': row[10],
+                'graded_at': row[11],
+                'due_date': row[12],
+                'linked_task_title': row[13],  # Task title
+                'linked_task_status': row[14]  # Task status
             })
         
         return result

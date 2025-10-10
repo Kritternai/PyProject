@@ -552,13 +552,23 @@ def create_complete_database_schema():
                 is_published BOOLEAN DEFAULT 0,
                 is_extra_credit BOOLEAN DEFAULT 0,
                 is_muted BOOLEAN DEFAULT 0,
+                classwork_task_id TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (lesson_id) REFERENCES lesson(id) ON DELETE CASCADE,
-                FOREIGN KEY (category_id) REFERENCES grade_category(id) ON DELETE CASCADE
+                FOREIGN KEY (category_id) REFERENCES grade_category(id) ON DELETE CASCADE,
+                FOREIGN KEY (classwork_task_id) REFERENCES classwork_task(id) ON DELETE SET NULL
             )
         """)
         print("✅ Created grade_item table")
+        
+        # Add classwork_task_id column if table already exists
+        try:
+            cursor.execute("ALTER TABLE grade_item ADD COLUMN classwork_task_id TEXT")
+            print("✅ Added classwork_task_id column to grade_item")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" not in str(e):
+                print(f"   Note: {e}")
         
         # 16.4 Grade Entry Table
         cursor.execute("""
