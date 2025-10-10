@@ -4,7 +4,7 @@ Defines HTTP endpoints for task operations.
 """
 
 from flask import Blueprint
-from ..views.task_views import TaskController
+from ..controllers.task_views import TaskController
 from ..middleware.auth_middleware import login_required
 
 # Create blueprint

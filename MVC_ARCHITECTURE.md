@@ -21,34 +21,42 @@ PyProject-5/
 
 ## 🎯 **โครงสร้าง MVC ใน app/**
 
-### **📁 Models (ข้อมูล)**
+### **📊 Models (ข้อมูล)**
 ```
 app/models/
 ├── user.py                 # 👤 User Model
 ├── lesson.py               # 📚 Lesson Model  
 ├── note.py                 # 📝 Note Model
 ├── task.py                 # ✅ Task Model
-└── lesson_section.py       # 📖 Lesson Section Model
+├── lesson_section.py       # 📖 Lesson Section Model
+└── pomodoro.py            # ⏱️ Pomodoro Model
 ```
 
-### **🎮 Controllers (Views)**
+### **🎮 Controllers (Logic)**
 ```
-app/views/
+app/controllers/
 ├── auth_views.py           # 🔐 Authentication Controller
 ├── user_views.py          # 👤 User Controller
 ├── lesson_views.py        # 📚 Lesson Controller
 ├── note_views.py          # 📝 Note Controller
-└── task_views.py          # ✅ Task Controller
+├── task_views.py          # ✅ Task Controller
+└── pomodoro_views.py      # ⏱️ Pomodoro Controller
 ```
 
-### **🛣️ Routes (HTTP Routes)**
+### **🛣️ Routes (HTTP Endpoints)**
 ```
 app/routes/
-├── auth_routes.py         # 🔐 Auth Routes
-├── user_routes.py         # 👤 User Routes
-├── lesson_routes.py       # 📚 Lesson Routes
-├── note_routes.py         # 📝 Note Routes
-└── task_routes.py         # ✅ Task Routes
+├── main_routes.py         # 🏠 Main Pages & General
+├── class_routes.py        # 📚 Class Management
+├── classwork_routes.py    # 📋 Classwork Tasks & Materials
+├── note_web_routes.py     # 📝 Note Pages & Fragments
+├── api_routes.py          # 🔌 General Data APIs
+├── auth_routes.py         # 🔐 Authentication Routes
+├── user_routes.py         # 👤 User API Routes
+├── lesson_routes.py       # 📚 Lesson API Routes
+├── note_routes.py         # 📝 Note API Routes
+├── task_routes.py         # ✅ Task API Routes
+└── pomodoro_routes.py     # ⏱️ Pomodoro API Routes
 ```
 
 ### **⚙️ Services (Business Logic)**
@@ -57,7 +65,8 @@ app/services.py            # 🏢 Business Logic Layer
 ├── UserService            # 👤 User Business Logic
 ├── LessonService          # 📚 Lesson Business Logic
 ├── NoteService            # 📝 Note Business Logic
-└── TaskService            # ✅ Task Business Logic
+├── TaskService            # ✅ Task Business Logic
+└── PomodoroService        # ⏱️ Pomodoro Business Logic (if exists)
 ```
 
 ### **🔧 Middleware**

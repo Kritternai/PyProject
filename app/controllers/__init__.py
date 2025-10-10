@@ -1,3 +1,3 @@
 """
-Controllers package for complex business logic.
+Views package for API endpoints and business logic.
 """

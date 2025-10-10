@@ -45,9 +45,9 @@ def load_logged_in_user():
     user_id = session.get('user_id')
     if user_id:
         try:
-            from app.infrastructure.di.container import get_service
-            from app.domain.interfaces.services.user_service import UserService
-            user_service = get_service(UserService)
+            # Use MVC Service pattern
+            from app.services import UserService
+            user_service = UserService()
             g.user = user_service.get_user_by_id(user_id)
         except:
             g.user = None
@@ -134,12 +134,12 @@ def oauth2callback():
     print(f"DEBUG: Saving Google Classroom credentials for user {user_id}")
 
     try:
-        # Use OOP architecture to store credentials
-        from app.infrastructure.di.container import get_service
-        from app.domain.interfaces.repositories.user_repository import UserRepository
+        # Use MVC to get user
+        from app.models.user import UserModel
+        from app import db
         
-        user_repo = get_service(UserRepository)
-        user = user_repo.get_by_id(user_id)
+        user_model = UserModel.query.filter_by(id=user_id).first()
+        user = user_model
         
         if not user:
             flash('User not found.', 'danger')
@@ -147,7 +147,8 @@ def oauth2callback():
         
         # Store credentials in user metadata (you may want to create a separate table for this)
         # For now, we'll use a simple approach
-        from app.infrastructure.persistence.models.user_model import UserModel
+        # from app.infrastructure.persistence.models.user_model import UserModel
+        from app.models.user import UserModel
         user_model = UserModel.query.filter_by(id=user_id).first()
         
         if user_model:

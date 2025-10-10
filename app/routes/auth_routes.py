@@ -2,7 +2,7 @@
 Authentication routes for MVC architecture.
 """
 from flask import Blueprint
-from ..views.auth_views import AuthController
+from ..controllers.auth_views import AuthController
 
 # Create auth blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')

@@ -1,12 +1,11 @@
 """
-Task controller following Clean Architecture principles.
-Handles HTTP requests and responses for task operations.
+Note controller following Clean Architecture principles.
+Handles HTTP requests and responses for note operations.
 """
 
 from flask import request, jsonify, g
 from typing import Dict, Any, Optional
-from datetime import datetime
-from app.services import TaskService
+from app.services import NoteService
 from app.utils.exceptions import (
     ValidationException,
     NotFoundException,
@@ -16,22 +15,22 @@ from app.utils.exceptions import (
 from ..middleware import login_required
 
 
-class TaskController:
+class NoteController:
     """
-    Controller for task-related HTTP operations.
+    Controller for note-related HTTP operations.
     Handles request/response logic and delegates business logic to services.
     """
     
     def __init__(self):
         """Initialize controller with service dependencies."""
-        self._task_service = TaskService()
+        self._note_service = NoteService()
     
-    def create_task(self) -> Dict[str, Any]:
+    def create_note(self) -> Dict[str, Any]:
         """
-        Create a new task.
+        Create a new note.
         
         Returns:
-            JSON response with created task data
+            JSON response with created note data
         """
         try:
             current_user = g.user
@@ -49,47 +48,33 @@ class TaskController:
                 }), 400
             
             # Validate required fields
-            if 'title' not in data or not data['title']:
-                return jsonify({
-                    'success': False,
-                    'message': 'Title is required'
-                }), 400
-            
-            # Parse enums
-            task_type = TaskType(data.get('task_type', 'other'))
-            priority = TaskPriority(data.get('priority', 'medium'))
-            
-            # Parse due date
-            due_date = None
-            if 'due_date' in data and data['due_date']:
-                try:
-                    due_date = datetime.fromisoformat(data['due_date'].replace('Z', '+00:00'))
-                except ValueError:
+            required_fields = ['title', 'content']
+            for field in required_fields:
+                if field not in data or not data[field]:
                     return jsonify({
                         'success': False,
-                        'message': 'Invalid due date format'
+                        'message': f'{field} is required'
                     }), 400
             
-            # Create task
-            task = self._task_service.create_task(
+            # Parse note type (MVC - use string directly)
+            note_type = data.get('note_type', 'text')
+            
+            # Create note
+            note = self._note_service.create_note(
                 user_id=current_user.id,
                 title=data['title'],
-                description=data.get('description'),
-                task_type=task_type,
-                priority=priority,
-                due_date=due_date,
-                estimated_duration=data.get('estimated_duration'),
+                content=data['content'],
+                note_type=note_type,
                 lesson_id=data.get('lesson_id'),
                 section_id=data.get('section_id'),
                 tags=data.get('tags'),
-                is_reminder_enabled=data.get('is_reminder_enabled', True),
-                reminder_time=data.get('reminder_time')
+                is_public=data.get('is_public', False)
             )
             
             return jsonify({
                 'success': True,
-                'message': 'Task created successfully',
-                'data': task.to_dict()
+                'message': 'Note created successfully',
+                'data': note.to_dict()
             }), 201
             
         except ValidationException as e:
@@ -115,15 +100,15 @@ class TaskController:
                 'error': str(e)
             }), 500
     
-    def get_task(self, task_id: str) -> Dict[str, Any]:
+    def get_note(self, note_id: str) -> Dict[str, Any]:
         """
-        Get task by ID.
+        Get note by ID.
         
         Args:
-            task_id: Task ID
+            note_id: Note ID
             
         Returns:
-            JSON response with task data
+            JSON response with note data
         """
         try:
             current_user = g.user
@@ -133,16 +118,19 @@ class TaskController:
                     'message': 'User not authenticated'
                 }), 401
             
-            task = self._task_service.get_task_by_id(task_id, current_user.id)
-            if not task:
+            note = self._note_service.get_note_by_id(note_id, current_user.id)
+            if not note:
                 return jsonify({
                     'success': False,
-                    'message': f'Task with ID {task_id} not found'
+                    'message': f'Note with ID {note_id} not found'
                 }), 404
+            
+            # Increment view count
+            self._note_service.increment_view_count(note_id)
             
             return jsonify({
                 'success': True,
-                'data': task.to_dict()
+                'data': note.to_dict()
             }), 200
             
         except Exception as e:
@@ -152,12 +140,12 @@ class TaskController:
                 'error': str(e)
             }), 500
     
-    def get_user_tasks(self) -> Dict[str, Any]:
+    def get_user_notes(self) -> Dict[str, Any]:
         """
-        Get tasks for current user.
+        Get notes for current user.
         
         Returns:
-            JSON response with tasks list
+            JSON response with notes list
         """
         try:
             current_user = g.user
@@ -171,7 +159,7 @@ class TaskController:
             limit = request.args.get('limit', type=int)
             offset = request.args.get('offset', type=int)
             
-            tasks = self._task_service.get_user_tasks(
+            notes = self._note_service.get_user_notes(
                 user_id=current_user.id,
                 limit=limit,
                 offset=offset
@@ -179,7 +167,7 @@ class TaskController:
             
             return jsonify({
                 'success': True,
-                'data': [task.to_dict() for task in tasks]
+                'data': [note.to_dict() for note in notes]
             }), 200
             
         except Exception as e:
@@ -189,15 +177,15 @@ class TaskController:
                 'error': str(e)
             }), 500
     
-    def update_task(self, task_id: str) -> Dict[str, Any]:
+    def update_note(self, note_id: str) -> Dict[str, Any]:
         """
-        Update task.
+        Update note.
         
         Args:
-            task_id: Task ID to update
+            note_id: Note ID to update
             
         Returns:
-            JSON response with updated task data
+            JSON response with updated note data
         """
         try:
             current_user = g.user
@@ -214,47 +202,29 @@ class TaskController:
                     'message': 'Request body is required'
                 }), 400
             
-            # Parse enums if provided
-            task_type = None
-            if 'task_type' in data:
-                task_type = TaskType(data['task_type'])
+            # Parse enum if provided
+            # Note type (MVC - use string directly)
+            note_type = None
+            if 'note_type' in data:
+                note_type = data['note_type']
             
-            priority = None
-            if 'priority' in data:
-                priority = TaskPriority(data['priority'])
-            
-            # Parse due date
-            due_date = None
-            if 'due_date' in data and data['due_date']:
-                try:
-                    due_date = datetime.fromisoformat(data['due_date'].replace('Z', '+00:00'))
-                except ValueError:
-                    return jsonify({
-                        'success': False,
-                        'message': 'Invalid due date format'
-                    }), 400
-            
-            # Update task
-            task = self._task_service.update_task(
-                task_id=task_id,
+            # Update note
+            note = self._note_service.update_note(
+                note_id=note_id,
                 user_id=current_user.id,
                 title=data.get('title'),
-                description=data.get('description'),
-                task_type=task_type,
-                priority=priority,
-                due_date=due_date,
-                estimated_duration=data.get('estimated_duration'),
+                content=data.get('content'),
+                note_type=note_type,
                 lesson_id=data.get('lesson_id'),
                 section_id=data.get('section_id'),
                 tags=data.get('tags'),
-                is_reminder_enabled=data.get('is_reminder_enabled'),
-                reminder_time=data.get('reminder_time')
+                is_public=data.get('is_public')
             )
             
             return jsonify({
                 'success': True,
-                'message': 'Task updated successfully',
-                'data': task.to_dict()
+                'message': 'Note updated successfully',
+                'data': note.to_dict()
             }), 200
             
         except ValidationException as e:
@@ -279,14 +249,6 @@ class TaskController:
                 'error_code': e.error_code
             }), 403
             
-        except BusinessLogicException as e:
-            return jsonify({
-                'success': False,
-                'message': e.message,
-                'error_code': e.error_code,
-                'details': e.details
-            }), 409
-            
         except Exception as e:
             return jsonify({
                 'success': False,
@@ -294,12 +256,12 @@ class TaskController:
                 'error': str(e)
             }), 500
     
-    def delete_task(self, task_id: str) -> Dict[str, Any]:
+    def delete_note(self, note_id: str) -> Dict[str, Any]:
         """
-        Delete task.
+        Delete note.
         
         Args:
-            task_id: Task ID to delete
+            note_id: Note ID to delete
             
         Returns:
             JSON response
@@ -312,17 +274,17 @@ class TaskController:
                     'message': 'User not authenticated'
                 }), 401
             
-            success = self._task_service.delete_task(task_id, current_user.id)
+            success = self._note_service.delete_note(note_id, current_user.id)
             
             if success:
                 return jsonify({
                     'success': True,
-                    'message': 'Task deleted successfully'
+                    'message': 'Note deleted successfully'
                 }), 200
             else:
                 return jsonify({
                     'success': False,
-                    'message': 'Task not found'
+                    'message': 'Note not found'
                 }), 404
             
         except AuthorizationException as e:
@@ -339,201 +301,15 @@ class TaskController:
                 'error': str(e)
             }), 500
     
-    def change_task_status(self, task_id: str) -> Dict[str, Any]:
+    def get_notes_by_lesson(self, lesson_id: str) -> Dict[str, Any]:
         """
-        Change task status.
+        Get notes for a specific lesson.
         
         Args:
-            task_id: Task ID
+            lesson_id: Lesson ID
             
         Returns:
-            JSON response with updated task data
-        """
-        try:
-            current_user = g.user
-            if not current_user:
-                return jsonify({
-                    'success': False,
-                    'message': 'User not authenticated'
-                }), 401
-            
-            data = request.get_json()
-            if not data or 'status' not in data:
-                return jsonify({
-                    'success': False,
-                    'message': 'Status is required'
-                }), 400
-            
-            status = TaskStatus(data['status'])
-            task = self._task_service.change_task_status(task_id, current_user.id, status)
-            
-            return jsonify({
-                'success': True,
-                'message': 'Task status updated successfully',
-                'data': task.to_dict()
-            }), 200
-            
-        except ValidationException as e:
-            return jsonify({
-                'success': False,
-                'message': e.message,
-                'error_code': e.error_code,
-                'details': e.details
-            }), 400
-            
-        except NotFoundException as e:
-            return jsonify({
-                'success': False,
-                'message': e.message,
-                'error_code': e.error_code
-            }), 404
-            
-        except AuthorizationException as e:
-            return jsonify({
-                'success': False,
-                'message': e.message,
-                'error_code': e.error_code
-            }), 403
-            
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'message': 'Internal server error',
-                'error': str(e)
-            }), 500
-    
-    def update_task_progress(self, task_id: str) -> Dict[str, Any]:
-        """
-        Update task progress.
-        
-        Args:
-            task_id: Task ID
-            
-        Returns:
-            JSON response with updated task data
-        """
-        try:
-            current_user = g.user
-            if not current_user:
-                return jsonify({
-                    'success': False,
-                    'message': 'User not authenticated'
-                }), 401
-            
-            data = request.get_json()
-            if not data or 'percentage' not in data:
-                return jsonify({
-                    'success': False,
-                    'message': 'Percentage is required'
-                }), 400
-            
-            percentage = data['percentage']
-            task = self._task_service.update_task_progress(task_id, current_user.id, percentage)
-            
-            return jsonify({
-                'success': True,
-                'message': 'Task progress updated successfully',
-                'data': task.to_dict()
-            }), 200
-            
-        except ValidationException as e:
-            return jsonify({
-                'success': False,
-                'message': e.message,
-                'error_code': e.error_code,
-                'details': e.details
-            }), 400
-            
-        except NotFoundException as e:
-            return jsonify({
-                'success': False,
-                'message': e.message,
-                'error_code': e.error_code
-            }), 404
-            
-        except AuthorizationException as e:
-            return jsonify({
-                'success': False,
-                'message': e.message,
-                'error_code': e.error_code
-            }), 403
-            
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'message': 'Internal server error',
-                'error': str(e)
-            }), 500
-    
-    def add_time_spent(self, task_id: str) -> Dict[str, Any]:
-        """
-        Add time spent on task.
-        
-        Args:
-            task_id: Task ID
-            
-        Returns:
-            JSON response with updated task data
-        """
-        try:
-            current_user = g.user
-            if not current_user:
-                return jsonify({
-                    'success': False,
-                    'message': 'User not authenticated'
-                }), 401
-            
-            data = request.get_json()
-            if not data or 'minutes' not in data:
-                return jsonify({
-                    'success': False,
-                    'message': 'Minutes is required'
-                }), 400
-            
-            minutes = data['minutes']
-            task = self._task_service.add_time_spent(task_id, current_user.id, minutes)
-            
-            return jsonify({
-                'success': True,
-                'message': 'Time spent updated successfully',
-                'data': task.to_dict()
-            }), 200
-            
-        except ValidationException as e:
-            return jsonify({
-                'success': False,
-                'message': e.message,
-                'error_code': e.error_code,
-                'details': e.details
-            }), 400
-            
-        except NotFoundException as e:
-            return jsonify({
-                'success': False,
-                'message': e.message,
-                'error_code': e.error_code
-            }), 404
-            
-        except AuthorizationException as e:
-            return jsonify({
-                'success': False,
-                'message': e.message,
-                'error_code': e.error_code
-            }), 403
-            
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'message': 'Internal server error',
-                'error': str(e)
-            }), 500
-    
-    def get_overdue_tasks(self) -> Dict[str, Any]:
-        """
-        Get overdue tasks.
-        
-        Returns:
-            JSON response with overdue tasks
+            JSON response with notes list
         """
         try:
             current_user = g.user
@@ -544,11 +320,11 @@ class TaskController:
                 }), 401
             
             limit = request.args.get('limit', type=int)
-            tasks = self._task_service.get_overdue_tasks(current_user.id, limit=limit)
+            notes = self._note_service.get_notes_by_lesson(lesson_id, current_user.id, limit=limit)
             
             return jsonify({
                 'success': True,
-                'data': [task.to_dict() for task in tasks]
+                'data': [note.to_dict() for note in notes]
             }), 200
             
         except Exception as e:
@@ -558,43 +334,15 @@ class TaskController:
                 'error': str(e)
             }), 500
     
-    def get_due_soon_tasks(self) -> Dict[str, Any]:
+    def get_notes_by_section(self, section_id: str) -> Dict[str, Any]:
         """
-        Get tasks due soon.
+        Get notes for a specific section.
         
+        Args:
+            section_id: Section ID
+            
         Returns:
-            JSON response with tasks due soon
-        """
-        try:
-            current_user = g.user
-            if not current_user:
-                return jsonify({
-                    'success': False,
-                    'message': 'User not authenticated'
-                }), 401
-            
-            hours = request.args.get('hours', 24, type=int)
-            limit = request.args.get('limit', type=int)
-            tasks = self._task_service.get_due_soon_tasks(current_user.id, hours=hours, limit=limit)
-            
-            return jsonify({
-                'success': True,
-                'data': [task.to_dict() for task in tasks]
-            }), 200
-            
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'message': 'Internal server error',
-                'error': str(e)
-            }), 500
-    
-    def get_high_priority_tasks(self) -> Dict[str, Any]:
-        """
-        Get high priority tasks.
-        
-        Returns:
-            JSON response with high priority tasks
+            JSON response with notes list
         """
         try:
             current_user = g.user
@@ -605,11 +353,11 @@ class TaskController:
                 }), 401
             
             limit = request.args.get('limit', type=int)
-            tasks = self._task_service.get_high_priority_tasks(current_user.id, limit=limit)
+            notes = self._note_service.get_notes_by_section(section_id, current_user.id, limit=limit)
             
             return jsonify({
                 'success': True,
-                'data': [task.to_dict() for task in tasks]
+                'data': [note.to_dict() for note in notes]
             }), 200
             
         except Exception as e:
@@ -619,12 +367,12 @@ class TaskController:
                 'error': str(e)
             }), 500
     
-    def search_tasks(self) -> Dict[str, Any]:
+    def search_notes(self) -> Dict[str, Any]:
         """
-        Search tasks.
+        Search notes.
         
         Returns:
-            JSON response with matching tasks
+            JSON response with matching notes
         """
         try:
             current_user = g.user
@@ -642,11 +390,11 @@ class TaskController:
                 }), 400
             
             limit = request.args.get('limit', type=int)
-            tasks = self._task_service.search_tasks(current_user.id, query, limit=limit)
+            notes = self._note_service.search_notes(current_user.id, query, limit=limit)
             
             return jsonify({
                 'success': True,
-                'data': [task.to_dict() for task in tasks]
+                'data': [note.to_dict() for note in notes]
             }), 200
             
         except Exception as e:
@@ -656,12 +404,12 @@ class TaskController:
                 'error': str(e)
             }), 500
     
-    def get_task_statistics(self) -> Dict[str, Any]:
+    def search_notes_by_tags(self) -> Dict[str, Any]:
         """
-        Get task statistics for current user.
+        Search notes by tags.
         
         Returns:
-            JSON response with task statistics
+            JSON response with matching notes
         """
         try:
             current_user = g.user
@@ -671,11 +419,326 @@ class TaskController:
                     'message': 'User not authenticated'
                 }), 401
             
-            statistics = self._task_service.get_task_statistics(current_user.id)
+            tags = request.args.getlist('tags')
+            if not tags:
+                return jsonify({
+                    'success': False,
+                    'message': 'Tags are required'
+                }), 400
+            
+            limit = request.args.get('limit', type=int)
+            notes = self._note_service.search_notes_by_tags(current_user.id, tags, limit=limit)
+            
+            return jsonify({
+                'success': True,
+                'data': [note.to_dict() for note in notes]
+            }), 200
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': 'Internal server error',
+                'error': str(e)
+            }), 500
+    
+    def get_public_notes(self) -> Dict[str, Any]:
+        """
+        Get public notes.
+        
+        Returns:
+            JSON response with public notes
+        """
+        try:
+            limit = request.args.get('limit', type=int)
+            offset = request.args.get('offset', type=int)
+            notes = self._note_service.get_public_notes(limit=limit, offset=offset)
+            
+            return jsonify({
+                'success': True,
+                'data': [note.to_dict() for note in notes]
+            }), 200
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': 'Internal server error',
+                'error': str(e)
+            }), 500
+    
+    def toggle_public_status(self, note_id: str) -> Dict[str, Any]:
+        """
+        Toggle note public status.
+        
+        Args:
+            note_id: Note ID
+            
+        Returns:
+            JSON response with updated note data
+        """
+        try:
+            current_user = g.user
+            if not current_user:
+                return jsonify({
+                    'success': False,
+                    'message': 'User not authenticated'
+                }), 401
+            
+            note = self._note_service.toggle_public_status(note_id, current_user.id)
+            
+            return jsonify({
+                'success': True,
+                'message': 'Note public status updated successfully',
+                'data': note.to_dict()
+            }), 200
+            
+        except NotFoundException as e:
+            return jsonify({
+                'success': False,
+                'message': e.message,
+                'error_code': e.error_code
+            }), 404
+            
+        except AuthorizationException as e:
+            return jsonify({
+                'success': False,
+                'message': e.message,
+                'error_code': e.error_code
+            }), 403
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': 'Internal server error',
+                'error': str(e)
+            }), 500
+    
+    def add_tag(self, note_id: str) -> Dict[str, Any]:
+        """
+        Add tag to note.
+        
+        Args:
+            note_id: Note ID
+            
+        Returns:
+            JSON response with updated note data
+        """
+        try:
+            current_user = g.user
+            if not current_user:
+                return jsonify({
+                    'success': False,
+                    'message': 'User not authenticated'
+                }), 401
+            
+            data = request.get_json()
+            if not data or 'tag' not in data:
+                return jsonify({
+                    'success': False,
+                    'message': 'Tag is required'
+                }), 400
+            
+            tag = data['tag']
+            note = self._note_service.add_tag(note_id, current_user.id, tag)
+            
+            return jsonify({
+                'success': True,
+                'message': 'Tag added successfully',
+                'data': note.to_dict()
+            }), 200
+            
+        except ValidationException as e:
+            return jsonify({
+                'success': False,
+                'message': e.message,
+                'error_code': e.error_code,
+                'details': e.details
+            }), 400
+            
+        except NotFoundException as e:
+            return jsonify({
+                'success': False,
+                'message': e.message,
+                'error_code': e.error_code
+            }), 404
+            
+        except AuthorizationException as e:
+            return jsonify({
+                'success': False,
+                'message': e.message,
+                'error_code': e.error_code
+            }), 403
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': 'Internal server error',
+                'error': str(e)
+            }), 500
+    
+    def remove_tag(self, note_id: str) -> Dict[str, Any]:
+        """
+        Remove tag from note.
+        
+        Args:
+            note_id: Note ID
+            
+        Returns:
+            JSON response with updated note data
+        """
+        try:
+            current_user = g.user
+            if not current_user:
+                return jsonify({
+                    'success': False,
+                    'message': 'User not authenticated'
+                }), 401
+            
+            data = request.get_json()
+            if not data or 'tag' not in data:
+                return jsonify({
+                    'success': False,
+                    'message': 'Tag is required'
+                }), 400
+            
+            tag = data['tag']
+            note = self._note_service.remove_tag(note_id, current_user.id, tag)
+            
+            return jsonify({
+                'success': True,
+                'message': 'Tag removed successfully',
+                'data': note.to_dict()
+            }), 200
+            
+        except NotFoundException as e:
+            return jsonify({
+                'success': False,
+                'message': e.message,
+                'error_code': e.error_code
+            }), 404
+            
+        except AuthorizationException as e:
+            return jsonify({
+                'success': False,
+                'message': e.message,
+                'error_code': e.error_code
+            }), 403
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': 'Internal server error',
+                'error': str(e)
+            }), 500
+    
+    def get_note_statistics(self) -> Dict[str, Any]:
+        """
+        Get note statistics for current user.
+        
+        Returns:
+            JSON response with note statistics
+        """
+        try:
+            current_user = g.user
+            if not current_user:
+                return jsonify({
+                    'success': False,
+                    'message': 'User not authenticated'
+                }), 401
+            
+            statistics = self._note_service.get_note_statistics(current_user.id)
             
             return jsonify({
                 'success': True,
                 'data': statistics
+            }), 200
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': 'Internal server error',
+                'error': str(e)
+            }), 500
+    
+    def get_recent_notes(self) -> Dict[str, Any]:
+        """
+        Get recent notes for current user.
+        
+        Returns:
+            JSON response with recent notes
+        """
+        try:
+            current_user = g.user
+            if not current_user:
+                return jsonify({
+                    'success': False,
+                    'message': 'User not authenticated'
+                }), 401
+            
+            limit = request.args.get('limit', 10, type=int)
+            notes = self._note_service.get_recent_notes(current_user.id, limit=limit)
+            
+            return jsonify({
+                'success': True,
+                'data': [note.to_dict() for note in notes]
+            }), 200
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': 'Internal server error',
+                'error': str(e)
+            }), 500
+    
+    def get_most_viewed_notes(self) -> Dict[str, Any]:
+        """
+        Get most viewed notes for current user.
+        
+        Returns:
+            JSON response with most viewed notes
+        """
+        try:
+            current_user = g.user
+            if not current_user:
+                return jsonify({
+                    'success': False,
+                    'message': 'User not authenticated'
+                }), 401
+            
+            limit = request.args.get('limit', 10, type=int)
+            notes = self._note_service.get_most_viewed_notes(current_user.id, limit=limit)
+            
+            return jsonify({
+                'success': True,
+                'data': [note.to_dict() for note in notes]
+            }), 200
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': 'Internal server error',
+                'error': str(e)
+            }), 500
+    
+    def get_all_user_tags(self) -> Dict[str, Any]:
+        """
+        Get all unique tags for current user.
+        
+        Returns:
+            JSON response with tags list
+        """
+        try:
+            current_user = g.user
+            if not current_user:
+                return jsonify({
+                    'success': False,
+                    'message': 'User not authenticated'
+                }), 401
+            
+            tags = self._note_service.get_all_user_tags(current_user.id)
+            
+            return jsonify({
+                'success': True,
+                'data': tags
             }), 200
             
         except Exception as e:

@@ -52,77 +52,39 @@ class TaskModel(db.Model):
     def __repr__(self):
         return f'<TaskModel {self.title}>'
     
-    def to_domain_entity(self):
+    def to_dict(self):
         """
-        Convert SQLAlchemy model to domain entity.
+        Convert model to dictionary (MVC pattern).
         
         Returns:
-            Task domain entity
+            Dictionary representation of task
         """
-        from app.domain.entities.task import Task, TaskStatus, TaskPriority, TaskType
-        
         # Parse tags from JSON
         tags = []
         if self.tags:
             try:
-                tags = json.loads(self.tags)
+                tags = json.loads(self.tags) if isinstance(self.tags, str) else self.tags
             except (json.JSONDecodeError, TypeError):
                 tags = []
         
-        # Convert string values to enums
-        task_type = TaskType(self.task_type)
-        status = TaskStatus(self.status)
-        priority = TaskPriority(self.priority)
-        
-        # Create domain entity
-        return Task(
-            user_id=self.user_id,
-            title=self.title,
-            description=self.description,
-            task_type=task_type,
-            status=status,
-            priority=priority,
-            due_date=self.due_date,
-            estimated_duration=self.estimated_duration,
-            lesson_id=self.lesson_id,
-            section_id=self.section_id,
-            tags=tags,
-            is_reminder_enabled=self.is_reminder_enabled,
-            reminder_time=self.reminder_time,
-            task_id=self.id,
-            created_at=self.created_at,
-            updated_at=self.updated_at
-        )
-    
-    @classmethod
-    def from_domain_entity(cls, task):
-        """
-        Create SQLAlchemy model from domain entity.
-        
-        Args:
-            task: Task domain entity
-            
-        Returns:
-            TaskModel instance
-        """
-        return cls(
-            id=task.id,
-            user_id=task.user_id,
-            title=task.title,
-            description=task.description,
-            task_type=task.task_type.value,
-            status=task.status.value,
-            priority=task.priority.value,
-            due_date=task.due_date,
-            estimated_duration=task.estimated_duration,
-            lesson_id=task.lesson_id,
-            section_id=task.section_id,
-            tags=json.dumps(task.tags) if task.tags else None,
-            is_reminder_enabled=task.is_reminder_enabled,
-            reminder_time=task.reminder_time,
-            progress_percentage=task.progress_percentage,
-            time_spent=task.time_spent,
-            completed_at=task.completed_at,
-            created_at=task.created_at,
-            updated_at=task.updated_at
-        )
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'title': self.title,
+            'description': self.description,
+            'task_type': self.task_type,
+            'status': self.status,
+            'priority': self.priority,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'estimated_duration': self.estimated_duration,
+            'lesson_id': self.lesson_id,
+            'section_id': self.section_id,
+            'tags': tags,
+            'is_reminder_enabled': self.is_reminder_enabled,
+            'reminder_time': self.reminder_time,
+            'progress_percentage': self.progress_percentage,
+            'time_spent': self.time_spent,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

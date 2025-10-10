@@ -45,64 +45,35 @@ class NoteModel(db.Model):
     def __repr__(self):
         return f'<NoteModel {self.title}>'
     
-    def to_domain_entity(self):
+    def to_dict(self):
         """
-        Convert SQLAlchemy model to domain entity.
+        Convert model to dictionary (MVC pattern).
         
         Returns:
-            Note domain entity
+            Dictionary representation of note
         """
-        from app.domain.entities.note import Note, NoteType
-        
         # Parse tags from JSON
         tags = []
         if self.tags:
             try:
-                tags = json.loads(self.tags)
+                tags = json.loads(self.tags) if isinstance(self.tags, str) else self.tags
             except (json.JSONDecodeError, TypeError):
                 tags = []
         
-        # Convert string to enum
-        note_type = NoteType(self.note_type)
-        
-        # Create domain entity
-        return Note(
-            user_id=self.user_id,
-            title=self.title,
-            content=self.content,
-            note_type=note_type,
-            lesson_id=self.lesson_id,
-            section_id=self.section_id,
-            tags=tags,
-            is_public=self.is_public,
-            note_id=self.id,
-            created_at=self.created_at,
-            updated_at=self.updated_at
-        )
-    
-    @classmethod
-    def from_domain_entity(cls, note):
-        """
-        Create SQLAlchemy model from domain entity.
-        
-        Args:
-            note: Note domain entity
-            
-        Returns:
-            NoteModel instance
-        """
-        return cls(
-            id=note.id,
-            user_id=note.user_id,
-            title=note.title,
-            content=note.content,
-            note_type=note.note_type.value,
-            lesson_id=note.lesson_id,
-            section_id=note.section_id,
-            tags=json.dumps(note.tags) if note.tags else None,
-            is_public=note.is_public,
-            view_count=note.view_count,
-            word_count=note.word_count,
-            created_at=note.created_at,
-            updated_at=note.updated_at
-        )
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'title': self.title,
+            'content': self.content,
+            'note_type': self.note_type,
+            'lesson_id': self.lesson_id,
+            'section_id': self.section_id,
+            'tags': tags,
+            'is_public': self.is_public,
+            'status': self.status,
+            'external_link': self.external_link,
+            'view_count': self.view_count,
+            'word_count': self.word_count,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

@@ -4,7 +4,7 @@ Defines HTTP endpoints for lesson operations.
 """
 
 from flask import Blueprint
-from ..views.lesson_views import LessonController
+from ..controllers.lesson_views import LessonController
 from ..middleware.auth_middleware import login_required
 
 # Create blueprint

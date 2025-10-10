@@ -5,7 +5,8 @@ Legacy routes that will be gradually migrated to new architecture.
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, g
 from functools import wraps
-from .presentation.middleware.auth_middleware import login_required, get_current_user
+# from .presentation.middleware.auth_middleware import login_required, get_current_user
+from .middleware.auth_middleware import login_required
 
 # Create legacy blueprint for backward compatibility
 main_bp = Blueprint('legacy', __name__)

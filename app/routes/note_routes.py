@@ -4,7 +4,7 @@ Defines HTTP endpoints for note operations.
 """
 
 from flask import Blueprint
-from ..views.note_views import NoteController
+from ..controllers.note_views import NoteController
 from ..middleware.auth_middleware import login_required
 # from ..middleware.rate_limiter import rate_limit, strict_rate_limit
 

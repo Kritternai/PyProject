@@ -48,59 +48,28 @@ class UserModel(db.Model):
     def __repr__(self):
         return f'<UserModel {self.username}>'
     
-    def to_domain_entity(self):
+    def to_dict(self):
         """
-        Convert SQLAlchemy model to domain entity.
+        Convert model to dictionary (MVC pattern).
         
         Returns:
-            User domain entity
+            Dictionary representation of user
         """
-        from app.domain.entities.user import User
-        from app.domain.value_objects.email import Email
-        from app.domain.value_objects.password import Password
-        
-        # Create value objects
-        email = Email(self.email)
-        password = Password(self.password_hash, is_hashed=True)
-        
-        # Create domain entity
-        return User(
-            username=self.username,
-            email=email,
-            password=password,
-            first_name=self.first_name,
-            last_name=self.last_name,
-            role=self.role,
-            user_id=self.id,
-            created_at=self.created_at,
-            updated_at=self.updated_at
-        )
-    
-    @classmethod
-    def from_domain_entity(cls, user):
-        """
-        Create SQLAlchemy model from domain entity.
-        
-        Args:
-            user: User domain entity
-            
-        Returns:
-            UserModel instance
-        """
-        return cls(
-            id=user.id,
-            username=user.username,
-            email=str(user.email),
-            password_hash=user.password.value,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            role=user.role,
-            is_active=user.is_active,
-            email_verified=user.email_verified,
-            last_login=user.last_login,
-            total_lessons=user.total_lessons,
-            total_notes=user.total_notes,
-            total_tasks=user.total_tasks,
-            created_at=user.created_at,
-            updated_at=user.updated_at
-        )
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'profile_image': self.profile_image,
+            'bio': self.bio,
+            'role': self.role,
+            'is_active': self.is_active,
+            'email_verified': self.email_verified,
+            'last_login': self.last_login.isoformat() if self.last_login else None,
+            'total_lessons': self.total_lessons,
+            'total_notes': self.total_notes,
+            'total_tasks': self.total_tasks,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

@@ -168,9 +168,9 @@ def load_logged_in_user():
     user_id = session.get('user_id')
     if user_id:
         try:
-            from app.infrastructure.di.container import get_service
-            from app.domain.interfaces.services.user_service import UserService
-            user_service = get_service(UserService)
+            # Use MVC Service pattern
+            from app.services import UserService
+            user_service = UserService()
             g.user = user_service.get_user_by_id(user_id)
         except:
             g.user = None

@@ -4,7 +4,7 @@ Defines HTTP endpoints for user operations.
 """
 
 from flask import Blueprint
-from ..views.user_views import UserController
+from ..controllers.user_views import UserController
 from ..middleware import login_required
 
 # Create blueprint

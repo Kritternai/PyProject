@@ -54,9 +54,9 @@ class LessonController:
                     'message': 'Title is required'
                 }), 400
             
-            # Parse enums
-            difficulty_level = DifficultyLevel(data.get('difficulty_level', 'beginner'))
-            source_platform = SourcePlatform(data.get('source_platform', 'manual'))
+            # Parse enums (MVC - use strings directly)
+            difficulty_level = data.get('difficulty_level', 'beginner')
+            source_platform = data.get('source_platform', 'manual')
             
             # Create lesson
             lesson = self._lesson_service.create_lesson(
