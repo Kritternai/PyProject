@@ -80,6 +80,54 @@ class GradeController:
             'show_class_average': config.show_class_average
         }
     
+    @staticmethod
+    def update_grade_config(lesson_id: str, grading_scale: Dict, **kwargs):
+        """Update existing grade configuration"""
+        from app.models.grade import GradeConfig
+        
+        config = GradeConfig.query.filter_by(lesson_id=lesson_id).first()
+        if not config:
+            raise NotFoundException("Grade configuration not found")
+        
+        # Update fields
+        config.grading_scale = json.dumps(grading_scale)
+        
+        if kwargs.get('grading_type'):
+            config.grading_type = kwargs.get('grading_type')
+        if kwargs.get('total_points'):
+            config.total_points = kwargs.get('total_points')
+        if kwargs.get('passing_grade'):
+            config.passing_grade = kwargs.get('passing_grade')
+        if kwargs.get('passing_percentage'):
+            config.passing_percentage = kwargs.get('passing_percentage')
+        
+        config.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return config
+    
+    @staticmethod
+    def delete_grade_config(lesson_id: str):
+        """Delete grade configuration and all related data"""
+        from app.models.grade import GradeConfig, GradeCategory, GradeItem, GradeEntry, GradeSummary
+        
+        # Delete config (will cascade delete categories, items, entries due to FK constraints)
+        config = GradeConfig.query.filter_by(lesson_id=lesson_id).first()
+        if not config:
+            raise NotFoundException("Grade configuration not found")
+        
+        # Manually delete related data
+        GradeSummary.query.filter_by(lesson_id=lesson_id).delete()
+        GradeEntry.query.filter_by(lesson_id=lesson_id).delete()
+        GradeItem.query.filter_by(lesson_id=lesson_id).delete()
+        GradeCategory.query.filter_by(lesson_id=lesson_id).delete()
+        
+        db.session.delete(config)
+        db.session.commit()
+        
+        return True
+    
     # ==========================================
     # CATEGORIES
     # ==========================================
@@ -137,6 +185,20 @@ class GradeController:
         ).order_by(GradeCategory.order_index).all()
         
         return categories
+    
+    @staticmethod
+    def delete_category(category_id: str):
+        """Delete a grade category"""
+        from app.models.grade import GradeCategory
+        
+        category = GradeCategory.query.get(category_id)
+        if not category:
+            raise NotFoundException("Category not found")
+        
+        db.session.delete(category)
+        db.session.commit()
+        
+        return True
     
     # ==========================================
     # GRADE ITEMS

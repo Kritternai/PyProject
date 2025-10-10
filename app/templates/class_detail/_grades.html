@@ -119,7 +119,7 @@
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">⚙️ Setup Grading System</h5>
+                <h5 class="modal-title" id="setupModalTitle">⚙️ Setup Grading System</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -130,17 +130,57 @@
                 
                 <!-- Step 1: Grading Scale -->
                 <div class="setup-section">
-                    <h6>Step 1: Grading Scale</h6>
-                    <p class="text-muted">Default scale is set. You can customize it later.</p>
-                    <div class="grading-scale-preview">
-                        <span class="badge bg-success">A (80-100%)</span>
-                        <span class="badge bg-primary">B+ (75-79%)</span>
-                        <span class="badge bg-info">B (70-74%)</span>
-                        <span class="badge bg-warning">C+ (65-69%)</span>
-                        <span class="badge bg-secondary">C (60-64%)</span>
-                        <span class="badge bg-secondary">D+ (55-59%)</span>
-                        <span class="badge bg-secondary">D (50-54%)</span>
-                        <span class="badge bg-danger">F (0-49%)</span>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">Step 1: Grading Scale</h6>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleGradingScaleEdit()">
+                            <i class="bi bi-pencil" id="edit-scale-icon"></i>
+                            <span id="edit-scale-text">Edit Scale</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Grading Scale Display (Read-only) -->
+                    <div id="grading-scale-display">
+                        <div class="grading-scale-preview" id="grading-scale-preview">
+                            <span class="badge bg-success">A (80-100%)</span>
+                            <span class="badge bg-primary">B+ (75-79%)</span>
+                            <span class="badge bg-info">B (70-74%)</span>
+                            <span class="badge bg-warning">C+ (65-69%)</span>
+                            <span class="badge bg-secondary">C (60-64%)</span>
+                            <span class="badge bg-secondary">D+ (55-59%)</span>
+                            <span class="badge bg-secondary">D (50-54%)</span>
+                            <span class="badge bg-danger">F (0-49%)</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Grading Scale Editor (Editable) -->
+                    <div id="grading-scale-editor" style="display: none;">
+                        <p class="text-muted small">Edit the percentage ranges for each grade level</p>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Grade</th>
+                                        <th>Min %</th>
+                                        <th>Max %</th>
+                                        <th>GPA</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="grading-scale-table">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-success" onclick="saveGradingScale()">
+                                <i class="bi bi-check"></i> Save Scale
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="cancelGradingScaleEdit()">
+                                <i class="bi bi-x"></i> Cancel
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="resetGradingScale()">
+                                <i class="bi bi-arrow-counterclockwise"></i> Reset to Default
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -166,9 +206,14 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <div class="me-auto">
+                    <button type="button" class="btn btn-danger" id="clearConfigBtn" onclick="clearGradingConfig()" style="display: none;">
+                        <i class="bi bi-trash"></i> Clear All Configuration
+                    </button>
+                </div>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="saveGradingSetup()">
-                    <i class="bi bi-check-circle"></i> Save Configuration
+                    <i class="bi bi-check-circle"></i> <span id="saveSetupBtnText">Save Configuration</span>
                 </button>
             </div>
         </div>
@@ -186,6 +231,8 @@
     let goalCalculatorModal, setupGradingModal;
     let categoriesData = [];
     let currentSummary = null;
+    let currentGradingScale = null;
+    let isEditMode = false;
     
     // Initialize
     initializeGradesSystem();
@@ -477,40 +524,225 @@
         }
     }
     
-    function openSetupModal() {
+    async function openSetupModal() {
         if (setupGradingModal) {
-            setupGradingModal.show();
-            initializeSetupForm();
+            // Check if config exists
+            try {
+                const configResponse = await fetch(`/grades/lessons/${lessonId}/config`);
+                
+                if (configResponse.ok) {
+                    // Config exists - Load for editing
+                    const configData = await configResponse.json();
+                    if (configData.success) {
+                        isEditMode = true;
+                        currentGradingScale = configData.data.grading_scale;
+                        await loadExistingConfig(configData.data);
+                    }
+                } else {
+                    // No config - Create mode
+                    isEditMode = false;
+                    currentGradingScale = getDefaultGradingScale();
+                    initializeSetupForm();
+                }
+                
+                setupGradingModal.show();
+                
+            } catch (error) {
+                console.error('Error opening setup modal:', error);
+                isEditMode = false;
+                currentGradingScale = getDefaultGradingScale();
+                initializeSetupForm();
+                setupGradingModal.show();
+            }
+        }
+    }
+    
+    function getDefaultGradingScale() {
+        return {
+            "A": {"min": 80, "max": 100, "gpa": 4.0},
+            "B+": {"min": 75, "max": 79, "gpa": 3.5},
+            "B": {"min": 70, "max": 74, "gpa": 3.0},
+            "C+": {"min": 65, "max": 69, "gpa": 2.5},
+            "C": {"min": 60, "max": 64, "gpa": 2.0},
+            "D+": {"min": 55, "max": 59, "gpa": 1.5},
+            "D": {"min": 50, "max": 54, "gpa": 1.0},
+            "F": {"min": 0, "max": 49, "gpa": 0.0}
+        };
+    }
+    
+    async function loadExistingConfig(config) {
+        // Update modal title
+        document.getElementById('setupModalTitle').textContent = '⚙️ Edit Grading System';
+        document.getElementById('saveSetupBtnText').textContent = 'Update Configuration';
+        document.getElementById('clearConfigBtn').style.display = 'inline-block';
+        
+        // Load grading scale
+        currentGradingScale = config.grading_scale;
+        updateGradingScalePreview(currentGradingScale);
+        
+        // Load categories
+        try {
+            const categoriesResponse = await fetch(`/grades/lessons/${lessonId}/categories`);
+            const categoriesData = await categoriesResponse.json();
+            
+            if (categoriesData.success) {
+                document.getElementById('categories-list').innerHTML = '';
+                
+                for (const category of categoriesData.data) {
+                    addCategoryRow(category);
+                }
+                
+                updateTotalWeight();
+            }
+        } catch (error) {
+            console.error('Error loading categories:', error);
         }
     }
     
     function initializeSetupForm() {
+        // Update modal title
+        document.getElementById('setupModalTitle').textContent = '⚙️ Setup Grading System';
+        document.getElementById('saveSetupBtnText').textContent = 'Save Configuration';
+        document.getElementById('clearConfigBtn').style.display = 'none';
+        
+        // Initialize grading scale preview
+        updateGradingScalePreview(currentGradingScale);
+        
         // Initialize with one empty category row
         document.getElementById('categories-list').innerHTML = '';
         addCategoryRow();
     }
     
+    function updateGradingScalePreview(scale) {
+        const container = document.getElementById('grading-scale-preview');
+        let html = '';
+        
+        const gradeColors = {
+            'A': 'bg-success',
+            'B+': 'bg-primary',
+            'B': 'bg-info',
+            'C+': 'bg-warning',
+            'C': 'bg-secondary',
+            'D+': 'bg-secondary',
+            'D': 'bg-secondary',
+            'F': 'bg-danger'
+        };
+        
+        for (const [grade, data] of Object.entries(scale)) {
+            const color = gradeColors[grade] || 'bg-secondary';
+            html += `<span class="badge ${color}">${grade} (${data.min}-${data.max}%)</span> `;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+    function toggleGradingScaleEdit() {
+        const display = document.getElementById('grading-scale-display');
+        const editor = document.getElementById('grading-scale-editor');
+        
+        if (editor.style.display === 'none') {
+            // Show editor
+            display.style.display = 'none';
+            editor.style.display = 'block';
+            populateGradingScaleTable();
+            document.getElementById('edit-scale-icon').className = 'bi bi-x';
+            document.getElementById('edit-scale-text').textContent = 'Cancel';
+        } else {
+            // Hide editor
+            display.style.display = 'block';
+            editor.style.display = 'none';
+            document.getElementById('edit-scale-icon').className = 'bi bi-pencil';
+            document.getElementById('edit-scale-text').textContent = 'Edit Scale';
+        }
+    }
+    
+    function populateGradingScaleTable() {
+        const tbody = document.getElementById('grading-scale-table');
+        tbody.innerHTML = '';
+        
+        const gradeOrder = ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F'];
+        
+        for (const grade of gradeOrder) {
+            if (currentGradingScale[grade]) {
+                const data = currentGradingScale[grade];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${grade}</strong></td>
+                    <td><input type="number" class="form-control form-control-sm" 
+                               value="${data.min}" min="0" max="100" 
+                               data-grade="${grade}" data-field="min"></td>
+                    <td><input type="number" class="form-control form-control-sm" 
+                               value="${data.max}" min="0" max="100" 
+                               data-grade="${grade}" data-field="max"></td>
+                    <td><input type="number" class="form-control form-control-sm" 
+                               value="${data.gpa}" min="0" max="4" step="0.5" 
+                               data-grade="${grade}" data-field="gpa"></td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+    }
+    
+    function saveGradingScale() {
+        const rows = document.querySelectorAll('#grading-scale-table tr');
+        const newScale = {};
+        
+        rows.forEach(row => {
+            const grade = row.querySelector('[data-field="min"]').dataset.grade;
+            const min = parseFloat(row.querySelector('[data-field="min"]').value);
+            const max = parseFloat(row.querySelector('[data-field="max"]').value);
+            const gpa = parseFloat(row.querySelector('[data-field="gpa"]').value);
+            
+            newScale[grade] = {min, max, gpa};
+        });
+        
+        currentGradingScale = newScale;
+        updateGradingScalePreview(newScale);
+        toggleGradingScaleEdit();
+        
+        showSuccess('Grading scale updated');
+    }
+    
+    function cancelGradingScaleEdit() {
+        toggleGradingScaleEdit();
+    }
+    
+    function resetGradingScale() {
+        if (confirm('Reset to default Thai university grading scale?')) {
+            currentGradingScale = getDefaultGradingScale();
+            populateGradingScaleTable();
+            showSuccess('Reset to default scale');
+        }
+    }
+    
     let categoryRowIndex = 0;
     
-    function addCategoryRow() {
+    function addCategoryRow(categoryData = null) {
         const container = document.getElementById('categories-list');
         const rowId = `category-row-${categoryRowIndex++}`;
         
         const row = document.createElement('div');
         row.className = 'category-row mb-3';
         row.id = rowId;
+        
+        if (categoryData) {
+            row.dataset.categoryId = categoryData.id;
+        }
+        
         row.innerHTML = `
             <div class="row g-2">
                 <div class="col-md-4">
                     <input type="text" class="form-control" placeholder="Category name (e.g., Assignments)" 
-                           data-field="name">
+                           data-field="name" value="${categoryData ? categoryData.name : ''}">
                 </div>
                 <div class="col-md-3">
                     <input type="number" class="form-control" placeholder="Weight %" min="0" max="100" 
-                           data-field="weight" oninput="updateTotalWeight()">
+                           data-field="weight" value="${categoryData ? categoryData.weight : ''}" 
+                           oninput="updateTotalWeight()">
                 </div>
                 <div class="col-md-3">
-                    <input type="color" class="form-control form-control-color" value="#3B82F6" 
+                    <input type="color" class="form-control form-control-color" 
+                           value="${categoryData ? categoryData.color : '#3B82F6'}" 
                            data-field="color">
                 </div>
                 <div class="col-md-2">
@@ -563,21 +795,13 @@
                 return;
             }
             
-            // Default grading scale (Thai university standard)
-            const gradingScale = {
-                "A": {"min": 80, "max": 100, "gpa": 4.0},
-                "B+": {"min": 75, "max": 79, "gpa": 3.5},
-                "B": {"min": 70, "max": 74, "gpa": 3.0},
-                "C+": {"min": 65, "max": 69, "gpa": 2.5},
-                "C": {"min": 60, "max": 64, "gpa": 2.0},
-                "D+": {"min": 55, "max": 59, "gpa": 1.5},
-                "D": {"min": 50, "max": 54, "gpa": 1.0},
-                "F": {"min": 0, "max": 49, "gpa": 0.0}
-            };
+            // Use current grading scale
+            const gradingScale = currentGradingScale;
             
-            // Save config
+            // Save/Update config
+            const method = isEditMode ? 'PUT' : 'POST';
             const configResponse = await fetch(`/grades/lessons/${lessonId}/config`, {
-                method: 'POST',
+                method: method,
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     grading_scale: gradingScale,
@@ -588,11 +812,25 @@
                 })
             });
             
-            if (!configResponse.ok) {
+            if (!configResponse.ok && !isEditMode) {
                 throw new Error('Failed to save configuration');
             }
             
-            // Save categories
+            // Delete old categories if in edit mode
+            if (isEditMode) {
+                const existingCategoriesResponse = await fetch(`/grades/lessons/${lessonId}/categories`);
+                const existingCategoriesData = await existingCategoriesResponse.json();
+                
+                if (existingCategoriesData.success) {
+                    for (const cat of existingCategoriesData.data) {
+                        await fetch(`/grades/categories/${cat.id}`, {
+                            method: 'DELETE'
+                        });
+                    }
+                }
+            }
+            
+            // Save new categories
             const rows = document.querySelectorAll('.category-row');
             let categoryIndex = 0;
             
@@ -617,12 +855,42 @@
             
             // Close modal and reload
             setupGradingModal.hide();
-            showSuccess('Grading system configured successfully!');
-            setTimeout(() => loadGradeData(), 500);
+            showSuccess(isEditMode ? 'Grading system updated successfully!' : 'Grading system configured successfully!');
+            setTimeout(() => {
+                isEditMode = false;
+                loadGradeData();
+            }, 500);
             
         } catch (error) {
             console.error('Error saving setup:', error);
             showError('Failed to save grading configuration');
+        }
+    }
+    
+    async function clearGradingConfig() {
+        if (!confirm('Are you sure you want to clear all grading configuration? This will delete all grades and cannot be undone!')) {
+            return;
+        }
+        
+        try {
+            // Delete config
+            const response = await fetch(`/grades/lessons/${lessonId}/config`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                setupGradingModal.hide();
+                showSuccess('Grading configuration cleared');
+                setTimeout(() => {
+                    isEditMode = false;
+                    loadGradeData();
+                }, 500);
+            } else {
+                throw new Error('Failed to delete configuration');
+            }
+        } catch (error) {
+            console.error('Error clearing config:', error);
+            showError('Failed to clear configuration');
         }
     }
     
@@ -778,6 +1046,11 @@
     window.removeCategoryRow = removeCategoryRow;
     window.updateTotalWeight = updateTotalWeight;
     window.saveGradingSetup = saveGradingSetup;
+    window.clearGradingConfig = clearGradingConfig;
+    window.toggleGradingScaleEdit = toggleGradingScaleEdit;
+    window.saveGradingScale = saveGradingScale;
+    window.cancelGradingScaleEdit = cancelGradingScaleEdit;
+    window.resetGradingScale = resetGradingScale;
     window.filterGrades = filterGrades;
     window.searchGrades = searchGrades;
     

@@ -54,9 +54,9 @@ def get_grade_config(lesson_id):
         return jsonify({'error': str(e)}), 500
 
 
-@grade_bp.route('/lessons/<lesson_id>/config', methods=['POST', 'PUT'])
-def save_grade_config(lesson_id):
-    """Create or update grade configuration"""
+@grade_bp.route('/lessons/<lesson_id>/config', methods=['POST'])
+def create_grade_config(lesson_id):
+    """Create grade configuration"""
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
@@ -86,6 +86,58 @@ def save_grade_config(lesson_id):
         
     except BusinessLogicException as e:
         return jsonify({'error': str(e)}), 409
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@grade_bp.route('/lessons/<lesson_id>/config', methods=['PUT'])
+def update_grade_config(lesson_id):
+    """Update grade configuration"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        
+        if not data or 'grading_scale' not in data:
+            return jsonify({'error': 'Grading scale is required'}), 400
+        
+        config = GradeController.update_grade_config(
+            lesson_id=lesson_id,
+            grading_scale=data['grading_scale'],
+            grading_type=data.get('grading_type'),
+            total_points=data.get('total_points'),
+            passing_grade=data.get('passing_grade'),
+            passing_percentage=data.get('passing_percentage')
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'Grade configuration updated successfully'
+        })
+        
+    except NotFoundException as e:
+        return jsonify({'error': str(e)}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@grade_bp.route('/lessons/<lesson_id>/config', methods=['DELETE'])
+def delete_grade_config(lesson_id):
+    """Delete grade configuration and all related data"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        GradeController.delete_grade_config(lesson_id)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Grade configuration deleted successfully'
+        })
+        
+    except NotFoundException as e:
+        return jsonify({'error': str(e)}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -139,7 +191,8 @@ def create_category(lesson_id):
             weight=float(data['weight']),
             description=data.get('description', ''),
             color=data.get('color', '#3B82F6'),
-            icon=data.get('icon', 'bi-clipboard')
+            icon=data.get('icon', 'bi-clipboard'),
+            order_index=data.get('order_index', 0)
         )
         
         return jsonify({
@@ -154,6 +207,26 @@ def create_category(lesson_id):
         
     except ValidationException as e:
         return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@grade_bp.route('/categories/<category_id>', methods=['DELETE'])
+def delete_category(category_id):
+    """Delete a grade category"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        GradeController.delete_category(category_id)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Category deleted successfully'
+        })
+        
+    except NotFoundException as e:
+        return jsonify({'error': str(e)}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
