@@ -2189,30 +2189,122 @@ window.navigateToClass = function(lessonId, event) {
     window.location.href = '/class/' + lessonId;
 };
 
-// Sort lessons by favorites (favorites first)
+// Sort lessons by favorites (favorites first) - REAL-TIME
 window.sortLessonsByFavorite = function() {
     const grid = document.getElementById('lessons-grid');
-    if (!grid) return;
+    if (!grid) {
+        console.warn('⚠️ Grid not found for sorting');
+        return;
+    }
     
     const cards = Array.from(grid.querySelectorAll('.lesson-card-modern'));
     
-    // Sort: favorites first, then by original order
+    if (cards.length === 0) {
+        console.warn('⚠️ No cards to sort');
+        return;
+    }
+    
+    console.log('🔄 REAL-TIME Sorting by favorites...');
+    console.log(`  → Total cards: ${cards.length}`);
+    
+    // Count favorites before sort
+    const favoritesBefore = cards.filter(c => c.dataset.isFavorite === 'true').length;
+    console.log(`  → Favorites: ${favoritesBefore}`);
+    
+    // Sort: favorites first (0), non-favorites last (1)
     cards.sort((a, b) => {
         const aFav = a.dataset.isFavorite === 'true' ? 0 : 1;
         const bFav = b.dataset.isFavorite === 'true' ? 0 : 1;
-        return aFav - bFav;
+        const result = aFav - bFav;
+        
+        // Debug first few
+        if (cards.indexOf(a) < 3 || cards.indexOf(b) < 3) {
+            const aTitle = a.querySelector('.lesson-card-title')?.textContent.substring(0, 20);
+            const bTitle = b.querySelector('.lesson-card-title')?.textContent.substring(0, 20);
+            console.log(`  → Compare: "${aTitle}" (${aFav}) vs "${bTitle}" (${bFav}) = ${result}`);
+        }
+        
+        return result;
     });
     
-    // Re-append in sorted order (no animation for performance)
-    cards.forEach((card) => {
-        grid.appendChild(card);
+    // Clear grid first
+    while (grid.firstChild) {
+        // Keep empty state if exists
+        if (grid.firstChild.classList?.contains('lessons-empty') || 
+            grid.firstChild.classList?.contains('lessons-search-empty')) {
+            break;
+        }
+        grid.removeChild(grid.firstChild);
+    }
+    
+    // Re-append in sorted order
+    cards.forEach((card, index) => {
+        grid.insertBefore(card, grid.firstChild?.classList?.contains('lessons-empty') ? grid.firstChild : null);
+        
+        // Log first 3 cards
+        if (index < 3) {
+            const title = card.querySelector('.lesson-card-title')?.textContent.substring(0, 30);
+            const isFav = card.dataset.isFavorite === 'true';
+            console.log(`  → Card ${index + 1}: ${isFav ? '⭐' : '☆'} "${title}"`);
+        }
     });
+    
+    console.log('✅ Sorting complete!');
 };
 
-// Toggle favorite function
+// Toggle favorite function - REAL-TIME with immediate sorting
 window.toggleFavorite = function(lessonId, element) {
-    console.log('⭐ Toggling favorite for:', lessonId);
+    console.log('='.repeat(60));
+    console.log('⭐ REAL-TIME FAVORITE TOGGLE');
+    console.log('='.repeat(60));
+    console.log(`Lesson ID: ${lessonId}`);
     
+    const icon = element.querySelector('i');
+    const card = element.closest('.lesson-card-modern');
+    
+    if (!card) {
+        console.error('❌ Card not found!');
+        return;
+    }
+    
+    // Get current state
+    const currentFavorite = card.dataset.isFavorite === 'true';
+    const newFavorite = !currentFavorite;
+    
+    console.log(`Current state: ${currentFavorite} → New state: ${newFavorite}`);
+    
+    // Step 1: Update UI immediately (Optimistic Update)
+    console.log('📝 Step 1: Updating UI...');
+    if (newFavorite) {
+        element.classList.add('active');
+        icon.className = 'bi bi-star-fill';
+        card.dataset.isFavorite = 'true';
+        console.log('  ✓ Set to favorite');
+    } else {
+        element.classList.remove('active');
+        icon.className = 'bi bi-star';
+        card.dataset.isFavorite = 'false';
+        console.log('  ✓ Removed from favorites');
+    }
+    
+    // Step 2: Force a delay to ensure DOM is updated
+    setTimeout(() => {
+        console.log('📝 Step 2: Sorting cards...');
+        
+        // Verify the dataset was updated
+        const verifyFavorite = card.dataset.isFavorite === 'true';
+        console.log(`  → Verified dataset: ${verifyFavorite}`);
+        
+        // Sort immediately
+        if (typeof window.sortLessonsByFavorite === 'function') {
+            window.sortLessonsByFavorite();
+        } else {
+            console.error('❌ sortLessonsByFavorite function not found!');
+        }
+    }, 50); // Small delay to ensure DOM update
+    
+    // Step 3: Send to server
+    console.log('📝 Step 3: Sending to server...');
     fetch(`/partial/class/${lessonId}/favorite`, {
         method: 'POST',
         headers: {
@@ -2221,49 +2313,82 @@ window.toggleFavorite = function(lessonId, element) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('✅ Favorite toggle response:', data);
+        console.log('✅ Server response:', data);
         
         if (data.success) {
-            const isFavorite = data.is_favorite;
-            const icon = element.querySelector('i');
-            const card = element.closest('.lesson-card-modern');
+            const serverFavorite = data.is_favorite;
+            console.log(`  → Server state: ${serverFavorite}`);
             
-            console.log(`  → isFavorite: ${isFavorite}`);
-            
-            if (isFavorite) {
-                element.classList.add('active');
-                icon.className = 'bi bi-star-fill';
-                if (card) {
+            // Verify server state matches our optimistic update
+            if (serverFavorite !== newFavorite) {
+                console.warn('⚠️ Server state mismatch! Correcting...');
+                // Update to match server
+                if (serverFavorite) {
+                    element.classList.add('active');
+                    icon.className = 'bi bi-star-fill';
                     card.dataset.isFavorite = 'true';
-                    console.log('  → Card marked as favorite');
-                }
-            } else {
-                element.classList.remove('active');
-                icon.className = 'bi bi-star';
-                if (card) {
+                } else {
+                    element.classList.remove('active');
+                    icon.className = 'bi bi-star';
                     card.dataset.isFavorite = 'false';
-                    console.log('  → Card unmarked as favorite');
                 }
+                
+                // Re-sort with corrected state
+                setTimeout(() => {
+                    window.sortLessonsByFavorite();
+                }, 50);
             }
-            
-            // Real-time sorting: Move favorites to top
-            setTimeout(() => {
-                console.log('🔄 Re-sorting cards...');
-                window.sortLessonsByFavorite();
-            }, 100);
             
             // Show notification
             if (typeof window.showSuccess === 'function') {
-                window.showSuccess(isFavorite ? 'Added to favorites' : 'Removed from favorites');
+                window.showSuccess(serverFavorite ? '⭐ Added to favorites' : 'Removed from favorites');
+            }
+        } else {
+            // Rollback on error
+            console.error('❌ Server error! Rolling back...');
+            if (currentFavorite) {
+                element.classList.add('active');
+                icon.className = 'bi bi-star-fill';
+                card.dataset.isFavorite = 'true';
+            } else {
+                element.classList.remove('active');
+                icon.className = 'bi bi-star';
+                card.dataset.isFavorite = 'false';
+            }
+            
+            setTimeout(() => {
+                window.sortLessonsByFavorite();
+            }, 50);
+            
+            if (typeof window.showError === 'function') {
+                window.showError('Failed to update favorite');
             }
         }
     })
     .catch(error => {
-        console.error('❌ Error toggling favorite:', error);
+        console.error('❌ Network error! Rolling back...', error);
+        
+        // Rollback on network error
+        if (currentFavorite) {
+            element.classList.add('active');
+            icon.className = 'bi bi-star-fill';
+            card.dataset.isFavorite = 'true';
+        } else {
+            element.classList.remove('active');
+            icon.className = 'bi bi-star';
+            card.dataset.isFavorite = 'false';
+        }
+        
+        setTimeout(() => {
+            window.sortLessonsByFavorite();
+        }, 50);
+        
         if (typeof window.showError === 'function') {
-            window.showError('Failed to update favorite status');
+            window.showError('Network error. Please try again.');
         }
     });
+    
+    console.log('='.repeat(60));
 };
 
 console.log('✅ All Classes page functions loaded');
