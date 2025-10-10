@@ -226,17 +226,24 @@ function loadTabContent(tabName) {
             </div>
         `;
         
-        // Load the classwork template
-        fetch(`/class/${lessonId}/classwork`)
-            .then(response => response.text())
+        // Load the classwork template from partial
+        fetch(`/partial/class/${lessonId}/classwork`)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load classwork');
+                return response.text();
+            })
             .then(html => {
                 contentDiv.innerHTML = html;
+                console.log('✅ Classwork template loaded');
                 // Initialize classwork after template is loaded
                 setTimeout(() => {
                     if (typeof initClasswork === 'function') {
+                        console.log('🚀 Initializing classwork...');
                         initClasswork(lessonId);
+                    } else {
+                        console.error('❌ initClasswork function not found');
                     }
-                }, 500);
+                }, 300);
             })
             .catch(err => {
                 console.error('Error loading classwork:', err);
@@ -244,7 +251,7 @@ function loadTabContent(tabName) {
                     <div class="container py-5 text-center">
                         <div class="alert alert-danger">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            Error loading classwork content.
+                            Error loading classwork content. Please try again.
                         </div>
                     </div>
                 `;

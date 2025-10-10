@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
-<div class="container-fluid">
+<div class="text-center py-5 text-secondary" id="loading-indicator">Loading...</div>
+<div class="container-fluid" style="display: none;" id="main-content-area">
   <h1 class="h3 text-primary mb-4">My Lessons</h1>
   <div class="row g-4">
     <!-- Card เพิ่มวิชา -->
@@ -26,4 +27,17 @@
     {% endfor %}
   </div>
 </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Hide loading indicator and show main content
+  const loadingIndicator = document.getElementById('loading-indicator');
+  const mainContentArea = document.getElementById('main-content-area');
+  
+  if (loadingIndicator && mainContentArea) {
+    loadingIndicator.style.display = 'none';
+    mainContentArea.style.display = 'block';
+  }
+});
+</script>
 {% endblock %} 
