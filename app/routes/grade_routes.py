@@ -319,6 +319,36 @@ def get_available_tasks(lesson_id):
         return jsonify({'error': str(e)}), 500
 
 
+@grade_bp.route('/items/<item_id>', methods=['PUT'])
+def update_grade_item(item_id):
+    """Update a grade item"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        data = request.get_json()
+        user_id = session['user_id']
+        
+        # Add user_id for score updates
+        data['user_id'] = user_id
+        
+        item = GradeController.update_grade_item(item_id, **data)
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Grade item updated successfully',
+            'data': {
+                'id': item.id,
+                'name': item.name,
+                'points_possible': float(item.points_possible),
+                'due_date': item.due_date.isoformat() if item.due_date else None
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # ==========================================
 # STUDENT GRADES
 # ==========================================

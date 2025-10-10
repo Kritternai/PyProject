@@ -963,10 +963,15 @@
             }
             
             html += `
-                <tr class="grade-row" data-category="${grade.category_name}">
+                <tr class="grade-row" data-category="${grade.category_name}" data-item-id="${grade.item_id}">
                     <td>
                         <div class="assignment-cell">
-                            <span class="assignment-name">${escapeHtml(grade.item_name)}</span>
+                            <div class="assignment-name-cell">
+                                <span class="assignment-name" onclick="editAssignmentName('${grade.item_id}', '${escapeHtml(grade.item_name)}')" title="Click to edit">
+                                    ${escapeHtml(grade.item_name)}
+                                </span>
+                                <i class="bi bi-pencil-fill edit-icon" onclick="editAssignmentName('${grade.item_id}', '${escapeHtml(grade.item_name)}')" title="Edit assignment name"></i>
+                            </div>
                             ${grade.linked_task_title ? `
                                 <small class="text-muted ms-2">
                                     <i class="bi bi-link-45deg"></i>
@@ -977,13 +982,38 @@
                         </div>
                     </td>
                     <td>
-                        <span class="badge" style="background: ${grade.category_color}">${grade.category_name}</span>
+                        <div class="category-cell">
+                            <span class="badge category-badge" style="background: ${grade.category_color}" onclick="editCategory('${grade.item_id}', '${grade.category_id}', '${escapeHtml(grade.category_name)}')" title="Click to change category">
+                                ${escapeHtml(grade.category_name)}
+                                <i class="bi bi-pencil-fill ms-1"></i>
+                            </span>
+                        </div>
                     </td>
-                    <td>${formatDate(grade.due_date)}</td>
-                    <td>${scoreDisplay}</td>
-                    <td>${percentDisplay}</td>
                     <td>
-                        <span class="status-badge ${statusClass}">${statusText}</span>
+                        <div class="due-date-cell">
+                            <span class="due-date" onclick="editDueDate('${grade.item_id}', '${grade.due_date || ''}')" title="Click to edit due date">
+                                ${formatDate(grade.due_date)}
+                                <i class="bi bi-pencil-fill edit-icon"></i>
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="score-cell">
+                            <span class="score-display" onclick="editScore('${grade.item_id}', '${grade.score || ''}', '${grade.points_possible}')" title="Click to edit score">
+                                ${scoreDisplay}
+                                <i class="bi bi-pencil-fill edit-icon"></i>
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="percentage-cell">
+                            <span class="percentage-display">${percentDisplay}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="status-cell">
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -1536,6 +1566,301 @@
         }
     });
     
+    // ==========================================
+    // INLINE EDITING FUNCTIONS
+    // ==========================================
+    
+    // Edit assignment name
+    function editAssignmentName(itemId, currentName) {
+        const cell = document.querySelector(`tr[data-item-id="${itemId}"] .assignment-name-cell`);
+        const originalContent = cell.innerHTML;
+        
+        cell.innerHTML = `
+            <div class="edit-form">
+                <input type="text" 
+                       class="form-control form-control-sm" 
+                       id="edit-name-${itemId}" 
+                       value="${escapeHtml(currentName)}"
+                       maxlength="200">
+                <div class="edit-buttons">
+                    <button class="btn btn-success btn-sm" onclick="saveAssignmentName('${itemId}')" title="Save">
+                        <i class="bi bi-check"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="cancelEdit('${itemId}', 'name')" title="Cancel">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Focus and select text
+        const input = document.getElementById(`edit-name-${itemId}`);
+        input.focus();
+        input.select();
+        
+        // Save original content for cancel
+        cell.dataset.originalContent = originalContent;
+        
+        // Enter to save, Escape to cancel
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                saveAssignmentName(itemId);
+            } else if (e.key === 'Escape') {
+                cancelEdit(itemId, 'name');
+            }
+        });
+    }
+    
+    // Edit category
+    function editCategory(itemId, currentCategoryId, currentCategoryName) {
+        const cell = document.querySelector(`tr[data-item-id="${itemId}"] .category-cell`);
+        const originalContent = cell.innerHTML;
+        
+        // Build category options
+        let categoryOptions = '';
+        for (const category of categoriesData) {
+            const selected = category.id === currentCategoryId ? 'selected' : '';
+            categoryOptions += `<option value="${category.id}" ${selected}>${category.name} (${category.weight}%)</option>`;
+        }
+        
+        cell.innerHTML = `
+            <div class="edit-form">
+                <select class="form-select form-select-sm" id="edit-category-${itemId}">
+                    ${categoryOptions}
+                </select>
+                <div class="edit-buttons">
+                    <button class="btn btn-success btn-sm" onclick="saveCategory('${itemId}')" title="Save">
+                        <i class="bi bi-check"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="cancelEdit('${itemId}', 'category')" title="Cancel">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Focus dropdown
+        const select = document.getElementById(`edit-category-${itemId}`);
+        select.focus();
+        
+        // Save original content for cancel
+        cell.dataset.originalContent = originalContent;
+    }
+    
+    // Edit due date
+    function editDueDate(itemId, currentDate) {
+        const cell = document.querySelector(`tr[data-item-id="${itemId}"] .due-date-cell`);
+        const originalContent = cell.innerHTML;
+        
+        // Format date for input (YYYY-MM-DD)
+        const formattedDate = currentDate ? currentDate.split('T')[0] : '';
+        
+        cell.innerHTML = `
+            <div class="edit-form">
+                <input type="date" 
+                       class="form-control form-control-sm" 
+                       id="edit-due-date-${itemId}" 
+                       value="${formattedDate}">
+                <div class="edit-buttons">
+                    <button class="btn btn-success btn-sm" onclick="saveDueDate('${itemId}')" title="Save">
+                        <i class="bi bi-check"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="cancelEdit('${itemId}', 'due-date')" title="Cancel">
+                        <i class="bi bi-x"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="clearDueDate('${itemId}')" title="Clear date">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Focus input
+        const input = document.getElementById(`edit-due-date-${itemId}`);
+        input.focus();
+        
+        // Save original content for cancel
+        cell.dataset.originalContent = originalContent;
+    }
+    
+    // Edit score
+    function editScore(itemId, currentScore, totalPoints) {
+        const cell = document.querySelector(`tr[data-item-id="${itemId}"] .score-cell`);
+        const originalContent = cell.innerHTML;
+        
+        cell.innerHTML = `
+            <div class="edit-form">
+                <div class="score-edit-container">
+                    <input type="number" 
+                           class="form-control form-control-sm" 
+                           id="edit-score-${itemId}" 
+                           value="${currentScore}"
+                           step="0.1"
+                           min="0"
+                           max="${totalPoints}"
+                           placeholder="Score">
+                    <span class="score-separator">/</span>
+                    <input type="number" 
+                           class="form-control form-control-sm" 
+                           id="edit-points-${itemId}" 
+                           value="${totalPoints}"
+                           step="0.1"
+                           min="0"
+                           placeholder="Points">
+                </div>
+                <div class="edit-buttons">
+                    <button class="btn btn-success btn-sm" onclick="saveScore('${itemId}')" title="Save">
+                        <i class="bi bi-check"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="cancelEdit('${itemId}', 'score')" title="Cancel">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Focus score input
+        const scoreInput = document.getElementById(`edit-score-${itemId}`);
+        scoreInput.focus();
+        scoreInput.select();
+        
+        // Save original content for cancel
+        cell.dataset.originalContent = originalContent;
+    }
+    
+    // Save functions
+    async function saveAssignmentName(itemId) {
+        const newName = document.getElementById(`edit-name-${itemId}`).value.trim();
+        if (!newName) {
+            showError('Assignment name cannot be empty');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/grades/items/${itemId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name: newName })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showSuccess('Assignment name updated!');
+                loadGradeData(); // Reload table
+            } else {
+                showError(result.error || 'Failed to update assignment name');
+            }
+        } catch (error) {
+            console.error('Error updating assignment name:', error);
+            showError('Failed to update assignment name');
+        }
+    }
+    
+    async function saveCategory(itemId) {
+        const newCategoryId = document.getElementById(`edit-category-${itemId}`).value;
+        if (!newCategoryId) {
+            showError('Please select a category');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/grades/items/${itemId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ category_id: newCategoryId })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showSuccess('Category updated!');
+                loadGradeData(); // Reload table
+            } else {
+                showError(result.error || 'Failed to update category');
+            }
+        } catch (error) {
+            console.error('Error updating category:', error);
+            showError('Failed to update category');
+        }
+    }
+    
+    async function saveDueDate(itemId) {
+        const newDate = document.getElementById(`edit-due-date-${itemId}`).value;
+        
+        try {
+            const response = await fetch(`/grades/items/${itemId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ due_date: newDate || null })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showSuccess('Due date updated!');
+                loadGradeData(); // Reload table
+            } else {
+                showError(result.error || 'Failed to update due date');
+            }
+        } catch (error) {
+            console.error('Error updating due date:', error);
+            showError('Failed to update due date');
+        }
+    }
+    
+    async function saveScore(itemId) {
+        const score = parseFloat(document.getElementById(`edit-score-${itemId}`).value);
+        const points = parseFloat(document.getElementById(`edit-points-${itemId}`).value);
+        
+        if (isNaN(points) || points <= 0) {
+            showError('Points must be a positive number');
+            return;
+        }
+        
+        if (isNaN(score) || score < 0) {
+            showError('Score must be a non-negative number');
+            return;
+        }
+        
+        if (score > points) {
+            showError('Score cannot be greater than total points');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/grades/items/${itemId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    points_possible: points,
+                    score: score // This will create/update grade entry
+                })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showSuccess('Score updated!');
+                loadGradeData(); // Reload table
+            } else {
+                showError(result.error || 'Failed to update score');
+            }
+        } catch (error) {
+            console.error('Error updating score:', error);
+            showError('Failed to update score');
+        }
+    }
+    
+    function clearDueDate(itemId) {
+        document.getElementById(`edit-due-date-${itemId}`).value = '';
+        saveDueDate(itemId);
+    }
+    
+    // Cancel edit (restore original content)
+    function cancelEdit(itemId, field) {
+        const cell = document.querySelector(`tr[data-item-id="${itemId}"] .${field}-cell`);
+        if (cell && cell.dataset.originalContent) {
+            cell.innerHTML = cell.dataset.originalContent;
+        }
+    }
+    
     // Expose functions globally
     window.openGoalCalculator = openGoalCalculator;
     window.openSetupModal = openSetupModal;
@@ -1559,6 +1884,18 @@
     window.resetGradingScale = resetGradingScale;
     window.filterGrades = filterGrades;
     window.searchGrades = searchGrades;
+    
+    // Inline editing functions
+    window.editAssignmentName = editAssignmentName;
+    window.editCategory = editCategory;
+    window.editDueDate = editDueDate;
+    window.editScore = editScore;
+    window.saveAssignmentName = saveAssignmentName;
+    window.saveCategory = saveCategory;
+    window.saveDueDate = saveDueDate;
+    window.saveScore = saveScore;
+    window.clearDueDate = clearDueDate;
+    window.cancelEdit = cancelEdit;
     
     console.log('✅ Grades system initialized');
     

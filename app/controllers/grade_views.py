@@ -246,6 +246,67 @@ class GradeController:
         return item
     
     @staticmethod
+    def update_grade_item(item_id: str, **kwargs):
+        """Update an existing grade item"""
+        from app.models.grade import GradeItem, GradeCategory
+        
+        # Get grade item
+        item = GradeItem.query.get(item_id)
+        if not item:
+            raise NotFoundException("Grade item", item_id)
+        
+        # Update fields if provided
+        if 'name' in kwargs:
+            item.name = kwargs['name']
+        
+        if 'category_id' in kwargs:
+            # Validate new category exists
+            category = GradeCategory.query.get(kwargs['category_id'])
+            if not category:
+                raise NotFoundException("Category", kwargs['category_id'])
+            item.category_id = kwargs['category_id']
+        
+        if 'points_possible' in kwargs:
+            item.points_possible = kwargs['points_possible']
+        
+        if 'description' in kwargs:
+            item.description = kwargs['description']
+        
+        if 'due_date' in kwargs:
+            due_date = kwargs['due_date']
+            if due_date:
+                try:
+                    if isinstance(due_date, str):
+                        item.due_date = datetime.fromisoformat(due_date)
+                    else:
+                        item.due_date = due_date
+                except ValueError:
+                    raise ValidationException("Invalid due_date format. Use YYYY-MM-DD")
+            else:
+                item.due_date = None
+        
+        if 'is_published' in kwargs:
+            item.is_published = kwargs['is_published']
+        
+        # Update timestamp
+        item.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        # If score is provided, also update/create grade entry
+        if 'score' in kwargs:
+            user_id = kwargs.get('user_id')
+            if user_id:
+                GradeController.submit_grade(
+                    grade_item_id=item_id,
+                    user_id=user_id,
+                    score=kwargs['score'],
+                    comments=kwargs.get('comments')
+                )
+        
+        return item
+    
+    @staticmethod
     def get_available_tasks(lesson_id: str):
         """Get classwork tasks that haven't been linked to grade items yet"""
         from app import db
