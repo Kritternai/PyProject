@@ -7,6 +7,7 @@ Following MVC pattern: Controller handles business logic
 import json
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+from app import db
 from app.utils.exceptions import (
     ValidationException,
     NotFoundException,
@@ -28,21 +29,18 @@ class GradeController:
         
         Args:
             lesson_id: Lesson ID
-            grading_scale: Dictionary of grade scale (e.g., {"A": {"min": 80, "max": 100, "gpa": 4.0}})
+            grading_scale: Dictionary of grade scale
             **kwargs: Additional config options
         """
-        from database.models.grade import GradeConfig
-        from app import db
-        import uuid
+        from app.models.grade import GradeConfig
         
         # Check if config already exists
-        existing = db.session.query(GradeConfig).filter_by(lesson_id=lesson_id).first()
+        existing = GradeConfig.query.filter_by(lesson_id=lesson_id).first()
         if existing:
             raise BusinessLogicException("Grade configuration already exists for this lesson")
         
         # Create config
         config = GradeConfig(
-            id=str(uuid.uuid4()),
             lesson_id=lesson_id,
             grading_scale=json.dumps(grading_scale),
             grading_type=kwargs.get('grading_type', 'percentage'),
@@ -51,9 +49,7 @@ class GradeController:
             passing_percentage=kwargs.get('passing_percentage', 50.0),
             show_total_grade=kwargs.get('show_total_grade', True),
             allow_what_if=kwargs.get('allow_what_if', True),
-            show_class_average=kwargs.get('show_class_average', False),
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            show_class_average=kwargs.get('show_class_average', False)
         )
         
         db.session.add(config)
@@ -64,15 +60,14 @@ class GradeController:
     @staticmethod
     def get_grade_config(lesson_id: str):
         """Get grade configuration for a lesson"""
-        from database.models.grade import GradeConfig
-        from app import db
+        from app.models.grade import GradeConfig
         
-        config = db.session.query(GradeConfig).filter_by(lesson_id=lesson_id).first()
+        config = GradeConfig.query.filter_by(lesson_id=lesson_id).first()
         if not config:
             raise NotFoundException("Grade configuration not found")
         
-        # Parse JSON grading scale
-        config_dict = {
+        # Parse JSON and return dict
+        return {
             'id': config.id,
             'lesson_id': config.lesson_id,
             'grading_scale': json.loads(config.grading_scale),
@@ -84,8 +79,6 @@ class GradeController:
             'allow_what_if': config.allow_what_if,
             'show_class_average': config.show_class_average
         }
-        
-        return config_dict
     
     # ==========================================
     # CATEGORIES
@@ -102,16 +95,14 @@ class GradeController:
             weight: Percentage weight (0-100)
             **kwargs: Additional options
         """
-        from database.models.grade import GradeCategory
-        from app import db
-        import uuid
+        from app.models.grade import GradeCategory
         
         # Validate weight
         if weight < 0 or weight > 100:
             raise ValidationException("Weight must be between 0 and 100")
         
         # Check total weight
-        existing_categories = db.session.query(GradeCategory).filter_by(lesson_id=lesson_id).all()
+        existing_categories = GradeCategory.query.filter_by(lesson_id=lesson_id).all()
         total_weight = sum(float(cat.weight) for cat in existing_categories) + weight
         
         if total_weight > 100:
@@ -119,7 +110,6 @@ class GradeController:
         
         # Create category
         category = GradeCategory(
-            id=str(uuid.uuid4()),
             lesson_id=lesson_id,
             name=name,
             description=kwargs.get('description', ''),
@@ -129,9 +119,7 @@ class GradeController:
             drop_highest=kwargs.get('drop_highest', 0),
             color=kwargs.get('color', '#3B82F6'),
             icon=kwargs.get('icon', 'bi-clipboard'),
-            order_index=kwargs.get('order_index', 0),
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            order_index=kwargs.get('order_index', 0)
         )
         
         db.session.add(category)
@@ -142,10 +130,9 @@ class GradeController:
     @staticmethod
     def get_categories(lesson_id: str):
         """Get all categories for a lesson"""
-        from database.models.grade import GradeCategory
-        from app import db
+        from app.models.grade import GradeCategory
         
-        categories = db.session.query(GradeCategory).filter_by(
+        categories = GradeCategory.query.filter_by(
             lesson_id=lesson_id
         ).order_by(GradeCategory.order_index).all()
         
@@ -158,18 +145,15 @@ class GradeController:
     @staticmethod
     def create_grade_item(lesson_id: str, category_id: str, name: str, points_possible: float, **kwargs):
         """Create a grade item (assignment, quiz, etc.)"""
-        from database.models.grade import GradeItem, GradeCategory
-        from app import db
-        import uuid
+        from app.models.grade import GradeItem, GradeCategory
         
         # Validate category exists
-        category = db.session.query(GradeCategory).get(category_id)
+        category = GradeCategory.query.get(category_id)
         if not category:
             raise NotFoundException("Category not found")
         
         # Create grade item
         item = GradeItem(
-            id=str(uuid.uuid4()),
             lesson_id=lesson_id,
             category_id=category_id,
             name=name,
@@ -179,9 +163,7 @@ class GradeController:
             published_date=kwargs.get('published_date'),
             is_published=kwargs.get('is_published', False),
             is_extra_credit=kwargs.get('is_extra_credit', False),
-            is_muted=kwargs.get('is_muted', False),
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            is_muted=kwargs.get('is_muted', False)
         )
         
         db.session.add(item)
@@ -192,10 +174,9 @@ class GradeController:
     @staticmethod
     def get_grade_items(lesson_id: str, include_unpublished=False):
         """Get all grade items for a lesson"""
-        from database.models.grade import GradeItem
-        from app import db
+        from app.models.grade import GradeItem
         
-        query = db.session.query(GradeItem).filter_by(lesson_id=lesson_id)
+        query = GradeItem.query.filter_by(lesson_id=lesson_id)
         
         if not include_unpublished:
             query = query.filter_by(is_published=True)
@@ -211,17 +192,15 @@ class GradeController:
     @staticmethod
     def submit_grade(grade_item_id: str, user_id: str, score: float, **kwargs):
         """Submit/update a grade entry"""
-        from database.models.grade import GradeEntry, GradeItem
-        from app import db
-        import uuid
+        from app.models.grade import GradeEntry, GradeItem
         
         # Get grade item
-        item = db.session.query(GradeItem).get(grade_item_id)
+        item = GradeItem.query.get(grade_item_id)
         if not item:
             raise NotFoundException("Grade item not found")
         
         # Check if entry exists
-        entry = db.session.query(GradeEntry).filter_by(
+        entry = GradeEntry.query.filter_by(
             grade_item_id=grade_item_id,
             user_id=user_id
         ).first()
@@ -236,11 +215,9 @@ class GradeController:
             entry.graded_by = kwargs.get('graded_by')
             entry.is_late = kwargs.get('is_late', False)
             entry.late_penalty = kwargs.get('late_penalty', 0)
-            entry.updated_at = datetime.utcnow()
         else:
             # Create new
             entry = GradeEntry(
-                id=str(uuid.uuid4()),
                 user_id=user_id,
                 lesson_id=item.lesson_id,
                 grade_item_id=grade_item_id,
@@ -251,9 +228,7 @@ class GradeController:
                 comments=kwargs.get('comments'),
                 graded_by=kwargs.get('graded_by'),
                 is_late=kwargs.get('is_late', False),
-                late_penalty=kwargs.get('late_penalty', 0),
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                late_penalty=kwargs.get('late_penalty', 0)
             )
             db.session.add(entry)
         
@@ -267,8 +242,7 @@ class GradeController:
     @staticmethod
     def get_student_grades(lesson_id: str, user_id: str):
         """Get all grade entries for a student in a lesson"""
-        from database.models.grade import GradeEntry, GradeItem, GradeCategory
-        from app import db
+        from app.models.grade import GradeEntry, GradeItem, GradeCategory
         
         entries = db.session.query(
             GradeEntry, GradeItem, GradeCategory
@@ -311,26 +285,24 @@ class GradeController:
         Calculate complete grade summary for a student
         Returns summary with current grade, goals, and what-if data
         """
-        from database.models.grade import GradeConfig, GradeCategory, GradeItem, GradeEntry, GradeSummary
-        from app import db
-        import uuid
+        from app.models.grade import GradeConfig, GradeCategory, GradeItem, GradeEntry, GradeSummary
         
         # Get config
-        config = db.session.query(GradeConfig).filter_by(lesson_id=lesson_id).first()
+        config = GradeConfig.query.filter_by(lesson_id=lesson_id).first()
         if not config:
             return {'error': 'Grade configuration not set'}
         
         grading_scale = json.loads(config.grading_scale)
         
         # Get categories
-        categories = db.session.query(GradeCategory).filter_by(lesson_id=lesson_id).all()
+        categories = GradeCategory.query.filter_by(lesson_id=lesson_id).all()
         
         total_weighted_score = 0
         category_breakdown = {}
         
         for category in categories:
             # Get all items in this category
-            items = db.session.query(GradeItem).filter_by(
+            items = GradeItem.query.filter_by(
                 category_id=category.id,
                 is_published=True
             ).all()
@@ -343,7 +315,7 @@ class GradeController:
             total_possible = 0
             
             for item in items:
-                entry = db.session.query(GradeEntry).filter_by(
+                entry = GradeEntry.query.filter_by(
                     grade_item_id=item.id,
                     user_id=user_id,
                     status='graded'
@@ -386,7 +358,7 @@ class GradeController:
         )
         
         # Save/update summary
-        summary = db.session.query(GradeSummary).filter_by(
+        summary = GradeSummary.query.filter_by(
             user_id=user_id,
             lesson_id=lesson_id
         ).first()
@@ -399,10 +371,8 @@ class GradeController:
             summary.is_passing = total_weighted_score >= float(config.passing_percentage)
             summary.points_to_next_grade = json.dumps(goals.get('points_to_grades', {}))
             summary.last_calculated = datetime.utcnow()
-            summary.updated_at = datetime.utcnow()
         else:
             summary = GradeSummary(
-                id=str(uuid.uuid4()),
                 user_id=user_id,
                 lesson_id=lesson_id,
                 current_score=total_weighted_score,
@@ -411,9 +381,7 @@ class GradeController:
                 gpa=gpa,
                 is_passing=total_weighted_score >= float(config.passing_percentage),
                 points_to_next_grade=json.dumps(goals.get('points_to_grades', {})),
-                last_calculated=datetime.utcnow(),
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                last_calculated=datetime.utcnow()
             )
             db.session.add(summary)
         
@@ -439,16 +407,15 @@ class GradeController:
     @staticmethod
     def _calculate_goals(lesson_id: str, user_id: str, current_percentage: float, grading_scale: Dict) -> Dict:
         """Calculate points needed for each grade"""
-        from database.models.grade import GradeItem, GradeEntry
-        from app import db
+        from app.models.grade import GradeItem, GradeEntry
         
         # Get remaining items (not yet graded)
-        all_items = db.session.query(GradeItem).filter_by(
+        all_items = GradeItem.query.filter_by(
             lesson_id=lesson_id,
             is_published=True
         ).all()
         
-        graded_items = db.session.query(GradeEntry).filter_by(
+        graded_items = GradeEntry.query.filter_by(
             lesson_id=lesson_id,
             user_id=user_id,
             status='graded'
@@ -543,8 +510,7 @@ class GradeController:
             user_id: User ID
             hypothetical_scores: Dict of {grade_item_id: hypothetical_score}
         """
-        from database.models.grade import GradeConfig, GradeCategory, GradeItem, GradeEntry
-        from app import db
+        from app.models.grade import GradeConfig, GradeCategory, GradeItem, GradeEntry
         
         # Get current summary first
         current_summary = GradeController.calculate_grade_summary(lesson_id, user_id)
@@ -553,16 +519,16 @@ class GradeController:
             return current_summary
         
         # Get config
-        config = db.session.query(GradeConfig).filter_by(lesson_id=lesson_id).first()
+        config = GradeConfig.query.filter_by(lesson_id=lesson_id).first()
         grading_scale = json.loads(config.grading_scale)
         
         # Get categories
-        categories = db.session.query(GradeCategory).filter_by(lesson_id=lesson_id).all()
+        categories = GradeCategory.query.filter_by(lesson_id=lesson_id).all()
         
         total_weighted_score = 0
         
         for category in categories:
-            items = db.session.query(GradeItem).filter_by(
+            items = GradeItem.query.filter_by(
                 category_id=category.id,
                 is_published=True
             ).all()
@@ -581,7 +547,7 @@ class GradeController:
                     total_possible += float(item.points_possible)
                 else:
                     # Use actual grade
-                    entry = db.session.query(GradeEntry).filter_by(
+                    entry = GradeEntry.query.filter_by(
                         grade_item_id=item.id,
                         user_id=user_id,
                         status='graded'

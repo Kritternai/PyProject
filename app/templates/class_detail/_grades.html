@@ -244,11 +244,11 @@
             
             // Load categories for filter
             const categoriesResponse = await fetch(`/grades/lessons/${lessonId}/categories`);
-            const categoriesData = await categoriesResponse.json();
+            const categoriesResult = await categoriesResponse.json();
             
-            if (categoriesData.success) {
-                categoriesData = categoriesData.data;
-                populateCategoryFilter(categoriesData.data);
+            if (categoriesResult.success) {
+                categoriesData = categoriesResult.data;
+                populateCategoryFilter(categoriesResult.data);
             }
             
         } catch (error) {

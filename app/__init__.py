@@ -238,6 +238,6 @@ def import_models():
     
     # Import Grade models
     try:
-        from database.models.grade import GradeConfig, GradeCategory, GradeItem, GradeEntry, GradeSummary
+        from .models.grade import GradeConfig, GradeCategory, GradeItem, GradeEntry, GradeSummary
     except ImportError:
         pass  # Grade models may not exist yet
