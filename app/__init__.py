@@ -42,6 +42,9 @@ def create_app(config_name=None):
     # Register template filters
     register_template_filters(app)
     
+    # Register template context processors
+    register_template_context_processors(app)
+    
     # Import models to ensure they are registered with SQLAlchemy
     import_models()
     
@@ -153,6 +156,23 @@ def register_template_filters(app):
             except:
                 return '[]'
         return '[]'
+
+
+def register_template_context_processors(app):
+    """
+    Register template context processors.
+    
+    Args:
+        app: Flask application instance
+    """
+    @app.context_processor
+    def inject_user():
+        """
+        Inject user object into all templates.
+        This makes the user object available in all templates.
+        """
+        from flask import g
+        return dict(user=getattr(g, 'user', None))
 
 
 def import_models():

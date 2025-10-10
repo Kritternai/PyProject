@@ -1,467 +1,675 @@
-<!-- Modern Classwork Tab Content -->
+<!-- Classwork Tab - Professional Design (Inspired by Note System) -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/classwork.css') }}">
+
 <div class="classwork-container">
-    <!-- Modern Header with Gradient -->
+    <!-- Header -->
     <div class="classwork-header">
-        <div class="container-fluid px-4">
-            <div class="d-flex justify-content-between align-items-center py-4">
-                <div class="d-flex align-items-center">
-                    <div class="header-icon-wrapper me-4">
-                        <div class="header-icon">
-                            <i class="bi bi-journal-text"></i>
-                        </div>
-                        <div class="icon-glow"></div>
+        <div class="classwork-header-content">
+            <div>
+                <h2 class="classwork-title">Classwork</h2>
+                <p class="classwork-subtitle">Manage assignments, materials, and track progress</p>
+            </div>
+            <div class="classwork-actions">
+                <button class="btn-icon" onclick="toggleSidebar()" id="sidebar-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <button class="btn-classwork" onclick="openCreateModal()">
+                    <i class="bi bi-plus-lg"></i>
+                    Create
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="classwork-main">
+        <!-- Sidebar -->
+        <div class="classwork-sidebar" id="classwork-sidebar">
+            <!-- Sidebar Header -->
+            <div class="classwork-sidebar-header">
+                <h3 class="classwork-sidebar-title">Navigation</h3>
+            </div>
+
+            <!-- Search Section -->
+            <div class="classwork-search-section">
+                <div class="search-container">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Search tasks and materials..." 
+                           id="search-input">
+                </div>
+            </div>
+
+            <!-- Navigation Section -->
+            <div class="classwork-nav-section">
+                <a href="#" class="classwork-nav-item active" data-tab="all" onclick="switchTab('all')">
+                    <i class="bi bi-grid-3x3 classwork-nav-item-icon"></i>
+                    All
+                </a>
+                <a href="#" class="classwork-nav-item" data-tab="tasks" onclick="switchTab('tasks')">
+                    <i class="bi bi-list-task classwork-nav-item-icon"></i>
+                    Tasks
+                </a>
+                <a href="#" class="classwork-nav-item" data-tab="materials" onclick="switchTab('materials')">
+                    <i class="bi bi-file-earmark classwork-nav-item-icon"></i>
+                    Materials
+                </a>
+            </div>
+
+            <!-- Stats Section -->
+            <div class="classwork-stats-section">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="total-tasks">0</div>
+                        <div class="stat-label">Total</div>
                     </div>
-                    <div>
-                        <h2 class="header-title mb-1">Classwork</h2>
-                        <p class="header-subtitle mb-0">Organize and track your learning progress</p>
+                    <div class="stat-item">
+                        <div class="stat-number" id="pending-tasks">0</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="completed-tasks">0</div>
+                        <div class="stat-label">Done</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="overdue-tasks">0</div>
+                        <div class="stat-label">Overdue</div>
                     </div>
                 </div>
-                <div class="d-flex gap-3">
-                    <button class="btn btn-gradient-primary" onclick="openCreateTaskModal()">
-                        <i class="bi bi-plus-circle me-2"></i>
-                        <span>New Task</span>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="classwork-filter-section">
+                <h4 class="filter-title">Filter by Status</h4>
+                <div class="filter-options">
+                    <button class="filter-option active" data-filter="all" onclick="setFilter('all')">
+                        <span class="priority-dot primary"></span>
+                        <span>All</span>
                     </button>
-                    <button class="btn btn-gradient-secondary" onclick="openCreateMaterialModal()">
-                        <i class="bi bi-cloud-upload me-2"></i>
-                        <span>Upload Material</span>
+                    <button class="filter-option" data-filter="todo" onclick="setFilter('todo')">
+                        <span class="priority-dot medium"></span>
+                        <span>To Do</span>
                     </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modern Dashboard with Glassmorphism -->
-    <div class="dashboard-section">
-        <div class="container-fluid px-4">
-            <div class="row g-4">
-                <div class="col-lg-3 col-md-6">
-                    <div class="stats-card modern-card">
-                        <div class="card-glow bg-primary"></div>
-                        <div class="stats-icon-wrapper">
-                            <div class="stats-icon bg-primary">
-                                <i class="bi bi-list-task"></i>
-                            </div>
-                            <div class="icon-pulse"></div>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-number" id="total-tasks">0</div>
-                            <div class="stats-label">Total Tasks</div>
-                            <div class="stats-trend">
-                                <i class="bi bi-graph-up text-success"></i>
-                                <span class="text-success">+12%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="stats-card modern-card">
-                        <div class="card-glow bg-success"></div>
-                        <div class="stats-icon-wrapper">
-                            <div class="stats-icon bg-success">
-                                <i class="bi bi-check-circle-fill"></i>
-                            </div>
-                            <div class="icon-pulse"></div>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-number" id="completed-tasks">0</div>
-                            <div class="stats-label">Completed</div>
-                            <div class="stats-trend">
-                                <i class="bi bi-graph-up text-success"></i>
-                                <span class="text-success">+8%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="stats-card modern-card">
-                        <div class="card-glow bg-warning"></div>
-                        <div class="stats-icon-wrapper">
-                            <div class="stats-icon bg-warning">
-                                <i class="bi bi-clock-fill"></i>
-                            </div>
-                            <div class="icon-pulse"></div>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-number" id="in-progress-tasks">0</div>
-                            <div class="stats-label">In Progress</div>
-                            <div class="stats-trend">
-                                <i class="bi bi-dash text-warning"></i>
-                                <span class="text-warning">0%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="stats-card modern-card">
-                        <div class="card-glow bg-danger"></div>
-                        <div class="stats-icon-wrapper">
-                            <div class="stats-icon bg-danger">
-                                <i class="bi bi-exclamation-triangle-fill"></i>
-                            </div>
-                            <div class="icon-pulse"></div>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-number" id="overdue-tasks">0</div>
-                            <div class="stats-label">Overdue</div>
-                            <div class="stats-trend">
-                                <i class="bi bi-graph-down text-danger"></i>
-                                <span class="text-danger">-5%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modern Kanban Board -->
-    <div class="kanban-section">
-        <div class="container-fluid px-4">
-            <div class="kanban-board modern-kanban">
-                <div class="row g-4">
-                    <!-- To Do Column -->
-                    <div class="col-lg-4">
-                        <div class="kanban-column modern-column">
-                            <div class="column-header">
-                                <div class="header-content">
-                                    <div class="status-indicator bg-warning">
-                                        <div class="status-dot"></div>
-                                        <div class="status-glow"></div>
-                                    </div>
-                                    <div class="header-text">
-                                        <h6 class="column-title">To Do</h6>
-                                        <p class="column-subtitle">Ready to start</p>
-                                    </div>
-                                </div>
-                                <div class="task-count-badge" id="todo-count">0</div>
-                            </div>
-                            <div class="column-body" id="todo-tasks">
-                                <div class="empty-state modern-empty">
-                                    <div class="empty-icon">
-                                        <i class="bi bi-list-task"></i>
-                                    </div>
-                                    <h6 class="empty-title">No tasks yet</h6>
-                                    <p class="empty-subtitle">Create your first task to get started</p>
-                                </div>
-                            </div>
-                            <div class="column-footer">
-                                <button class="btn btn-gradient-outline w-100" onclick="openCreateTaskModal()">
-                                    <i class="bi bi-plus-circle me-2"></i>
-                                    <span>Add new task</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- In Progress Column -->
-                    <div class="col-lg-4">
-                        <div class="kanban-column modern-column">
-                            <div class="column-header">
-                                <div class="header-content">
-                                    <div class="status-indicator bg-primary">
-                                        <div class="status-dot"></div>
-                                        <div class="status-glow"></div>
-                                    </div>
-                                    <div class="header-text">
-                                        <h6 class="column-title">In Progress</h6>
-                                        <p class="column-subtitle">Currently working</p>
-                                    </div>
-                                </div>
-                                <div class="task-count-badge" id="inprogress-count">0</div>
-                            </div>
-                            <div class="column-body" id="inprogress-tasks">
-                                <div class="empty-state modern-empty">
-                                    <div class="empty-icon">
-                                        <i class="bi bi-clock"></i>
-                                    </div>
-                                    <h6 class="empty-title">No tasks in progress</h6>
-                                    <p class="empty-subtitle">Move tasks here when you start working</p>
-                                </div>
-                            </div>
-                            <div class="column-footer">
-                                <button class="btn btn-gradient-outline w-100" onclick="openCreateTaskModal()">
-                                    <i class="bi bi-plus-circle me-2"></i>
-                                    <span>Add new task</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Done Column -->
-                    <div class="col-lg-4">
-                        <div class="kanban-column modern-column">
-                            <div class="column-header">
-                                <div class="header-content">
-                                    <div class="status-indicator bg-success">
-                                        <div class="status-dot"></div>
-                                        <div class="status-glow"></div>
-                                    </div>
-                                    <div class="header-text">
-                                        <h6 class="column-title">Done</h6>
-                                        <p class="column-subtitle">Completed tasks</p>
-                                    </div>
-                                </div>
-                                <div class="task-count-badge" id="done-count">0</div>
-                            </div>
-                            <div class="column-body" id="done-tasks">
-                                <div class="empty-state modern-empty">
-                                    <div class="empty-icon">
-                                        <i class="bi bi-check-circle"></i>
-                                    </div>
-                                    <h6 class="empty-title">No completed tasks</h6>
-                                    <p class="empty-subtitle">Move completed tasks here</p>
-                                </div>
-                            </div>
-                            <div class="column-footer">
-                                <button class="btn btn-gradient-outline w-100" onclick="openCreateTaskModal()">
-                                    <i class="bi bi-plus-circle me-2"></i>
-                                    <span>Add new task</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modern Materials Section -->
-    <div class="materials-section">
-        <div class="container-fluid px-4">
-            <div class="materials-header">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="d-flex align-items-center">
-                        <div class="materials-icon-wrapper me-4">
-                            <div class="materials-icon">
-                                <i class="bi bi-folder2-open"></i>
-                            </div>
-                            <div class="icon-glow materials-glow"></div>
-                        </div>
-                        <div>
-                            <h3 class="materials-title mb-1">Learning Materials</h3>
-                            <p class="materials-subtitle mb-0">Upload and organize your study materials</p>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="materials-stats">
-                            <span class="stats-number" id="material-count">0</span>
-                            <span class="stats-label">files</span>
-                        </div>
-                        <button class="btn btn-gradient-primary" onclick="openCreateMaterialModal()">
-                            <i class="bi bi-cloud-upload me-2"></i>
-                            <span>Upload Material</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="materials-grid modern-grid" id="classwork-materials">
-                <div class="empty-materials modern-empty">
-                    <div class="empty-icon">
-                        <i class="bi bi-folder2-open"></i>
-                    </div>
-                    <h4 class="empty-title">No materials yet</h4>
-                    <p class="empty-subtitle">Upload your first material to get started with your learning journey</p>
-                    <button class="btn btn-gradient-primary" onclick="openCreateMaterialModal()">
-                        <i class="bi bi-cloud-upload me-2"></i>
-                        <span>Upload Material</span>
+                    <button class="filter-option" data-filter="in-progress" onclick="setFilter('in-progress')">
+                        <span class="priority-dot primary"></span>
+                        <span>In Progress</span>
+                    </button>
+                    <button class="filter-option" data-filter="completed" onclick="setFilter('completed')">
+                        <span class="priority-dot low"></span>
+                        <span>Completed</span>
+                    </button>
+                    <button class="filter-option" data-filter="overdue" onclick="setFilter('overdue')">
+                        <span class="priority-dot high"></span>
+                        <span>Overdue</span>
                     </button>
                 </div>
             </div>
         </div>
+
+        <!-- Content Area -->
+        <div class="classwork-content">
+            <!-- All Tab Content -->
+            <div class="content-tab" id="all-content">
+                <div class="content-header">
+                    <h3 class="content-title">All Items</h3>
+                    <p class="content-subtitle">Tasks and materials in one place</p>
+                </div>
+                <div class="content-body">
+                    <div class="tasks-grid" id="all-tasks-grid">
+                        <!-- Tasks will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Tab Content -->
+            <div class="content-tab" id="tasks-content" style="display: none;">
+                <div class="content-header">
+                    <h3 class="content-title">Task Board</h3>
+                    <p class="content-subtitle">Organize your tasks in a kanban board</p>
+                </div>
+                <div class="content-body">
+                    <div class="kanban-container">
+                        <!-- To Do Column -->
+                        <div class="kanban-column">
+                            <div class="kanban-header">
+                                <div class="kanban-title">
+                                    <span class="priority-dot medium"></span>
+                                    <span>To Do</span>
+                                </div>
+                                <div class="kanban-count" id="todo-count">0</div>
+                            </div>
+                            <div class="kanban-body" id="todo-column">
+                                <!-- Tasks will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- In Progress Column -->
+                        <div class="kanban-column">
+                            <div class="kanban-header">
+                                <div class="kanban-title">
+                                    <span class="priority-dot primary"></span>
+                                    <span>In Progress</span>
+                                </div>
+                                <div class="kanban-count" id="inprogress-count">0</div>
+                            </div>
+                            <div class="kanban-body" id="inprogress-column">
+                                <!-- Tasks will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Completed Column -->
+                        <div class="kanban-column">
+                            <div class="kanban-header">
+                                <div class="kanban-title">
+                                    <span class="priority-dot low"></span>
+                                    <span>Completed</span>
+                                </div>
+                                <div class="kanban-count" id="completed-count">0</div>
+                            </div>
+                            <div class="kanban-body" id="completed-column">
+                                <!-- Tasks will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materials Tab Content -->
+            <div class="content-tab" id="materials-content" style="display: none;">
+                <div class="content-header">
+                    <h3 class="content-title">Materials</h3>
+                    <p class="content-subtitle">Uploaded files and resources</p>
+                </div>
+                <div class="content-body">
+                    <div class="materials-grid" id="materials-grid">
+                        <!-- Materials will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="classwork-sidebar-overlay" id="classwork-sidebar-overlay" onclick="closeSidebar()"></div>
 </div>
 
-<!-- Professional Modals -->
 <!-- Create Task Modal -->
-<div class="modal fade" id="createTaskModal" tabindex="-1" aria-labelledby="createTaskModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade modal-classwork" id="createTaskModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="createTaskModalLabel">
-                    <i class="bi bi-plus-circle me-2"></i>
-                    Create New Task
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Create New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="createTaskForm">
+                    <div class="mb-3">
+                        <label class="form-label">Task Title *</label>
+                        <input type="text" class="form-control" id="task-title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="task-description" rows="3"></textarea>
+                    </div>
                     <div class="row">
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label for="taskTitle" class="form-label fw-semibold">
-                                    <i class="bi bi-pencil-square me-1"></i>
-                                    Task Title
-                                </label>
-                                <input type="text" class="form-control form-control-lg" id="taskTitle" name="title" 
-                                       placeholder="Enter task title..." required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="taskDescription" class="form-label fw-semibold">
-                                    <i class="bi bi-text-paragraph me-1"></i>
-                                    Description
-                                </label>
-                                <textarea class="form-control" id="taskDescription" name="description" 
-                                          rows="4" placeholder="Describe your task..."></textarea>
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="task-status">
+                                <option value="todo">To Do</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
                         </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="taskSubject" class="form-label fw-semibold">
-                                    <i class="bi bi-book me-1"></i>
-                                    Subject
-                                </label>
-                                <input type="text" class="form-control" id="taskSubject" name="subject"
-                                       placeholder="e.g., Mathematics">
-                            </div>
-                            <div class="mb-3">
-                                <label for="taskCategory" class="form-label fw-semibold">
-                                    <i class="bi bi-tag me-1"></i>
-                                    Category
-                                </label>
-                                <input type="text" class="form-control" id="taskCategory" name="category"
-                                       placeholder="e.g., Assignment">
-                            </div>
-                            <div class="mb-3">
-                                <label for="taskPriority" class="form-label fw-semibold">
-                                    <i class="bi bi-flag me-1"></i>
-                                    Priority
-                                </label>
-                                <select class="form-control" id="taskPriority" name="priority">
-                                    <option value="low">Low</option>
-                                    <option value="medium" selected>Medium</option>
-                                    <option value="high">High</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="taskDueDate" class="form-label fw-semibold">
-                                    <i class="bi bi-calendar me-1"></i>
-                                    Due Date
-                                </label>
-                                <input type="datetime-local" class="form-control" id="taskDueDate" name="due_date">
-                            </div>
-                            <div class="mb-3">
-                                <label for="taskEstimatedTime" class="form-label fw-semibold">
-                                    <i class="bi bi-clock me-1"></i>
-                                    Estimated Time (minutes)
-                                </label>
-                                <input type="number" class="form-control" id="taskEstimatedTime" name="estimated_time"
-                                       placeholder="e.g., 60" min="0">
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Priority</label>
+                            <select class="form-select" id="task-priority">
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </select>
                         </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="task-due-date">
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i>
-                    Cancel
-                </button>
-                <button type="button" class="btn btn-primary" onclick="submitCreateTask()">
-                    <i class="bi bi-check-circle me-1"></i>
-                    Create Task
-                </button>
+                <button type="button" class="btn-classwork-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-classwork" onclick="createTask()">Create Task</button>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Create Material Modal -->
-<div class="modal fade" id="createMaterialModal" tabindex="-1" aria-labelledby="createMaterialModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade modal-classwork" id="createMaterialModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="createMaterialModalLabel">
-                    <i class="bi bi-cloud-upload me-2"></i>
-                    Upload New Material
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Upload Material</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="createMaterialForm" enctype="multipart/form-data">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label for="materialFile" class="form-label fw-semibold">
-                                    <i class="bi bi-cloud-upload me-1"></i>
-                                    Select File
-                                </label>
-                                <input type="file" class="form-control form-control-lg" id="materialFile" name="file" 
-                                       accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mp3,.zip" required>
-                                <div class="form-text">Supported formats: PDF, DOC, DOCX, TXT, Images, Videos, Audio, ZIP</div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="materialTitle" class="form-label fw-semibold">
-                                    <i class="bi bi-pencil-square me-1"></i>
-                                    Title
-                                </label>
-                                <input type="text" class="form-control form-control-lg" id="materialTitle" name="title" 
-                                       placeholder="Enter material title..." required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="materialDescription" class="form-label fw-semibold">
-                                    <i class="bi bi-text-paragraph me-1"></i>
-                                    Description
-                                </label>
-                                <textarea class="form-control" id="materialDescription" name="description" 
-                                          rows="3" placeholder="Describe your material..."></textarea>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="materialSubject" class="form-label fw-semibold">
-                                    <i class="bi bi-book me-1"></i>
-                                    Subject
-                                </label>
-                                <input type="text" class="form-control" id="materialSubject" name="subject"
-                                       placeholder="e.g., Mathematics">
-                            </div>
-                            <div class="mb-3">
-                                <label for="materialCategory" class="form-label fw-semibold">
-                                    <i class="bi bi-tag me-1"></i>
-                                    Category
-                                </label>
-                                <input type="text" class="form-control" id="materialCategory" name="category"
-                                       placeholder="e.g., Lecture Notes">
-                            </div>
-                            <div class="mb-3">
-                                <label for="materialTags" class="form-label fw-semibold">
-                                    <i class="bi bi-hash me-1"></i>
-                                    Tags
-                                </label>
-                                <input type="text" class="form-control" id="materialTags" name="tags"
-                                       placeholder="e.g., important, review, exam">
-                                <div class="form-text">Separate tags with commas</div>
-                            </div>
-                        </div>
+                <form id="createMaterialForm">
+                    <div class="mb-3">
+                        <label class="form-label">Material Title *</label>
+                        <input type="text" class="form-control" id="material-title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="material-description" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">File *</label>
+                        <input type="file" class="form-control" id="material-file" required>
+                        <div class="form-text">Maximum file size: 10MB</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" id="material-type">
+                            <option value="document">Document</option>
+                            <option value="presentation">Presentation</option>
+                            <option value="spreadsheet">Spreadsheet</option>
+                            <option value="video">Video</option>
+                            <option value="other">Other</option>
+                        </select>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i>
-                    Cancel
-                </button>
-                <button type="button" class="btn btn-primary" onclick="submitCreateMaterial()">
-                    <i class="bi bi-cloud-upload me-1"></i>
-                    Upload Material
-                </button>
+                <button type="button" class="btn-classwork-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-classwork" onclick="createMaterial()">Upload</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// Functions moved to main.js
+// Global variables
+const lessonId = window.location.pathname.split('/')[2];
+let currentTab = 'all';
+let currentFilter = 'all';
 
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadClassworkData();
+    initializeEventListeners();
+});
 
-// Render functions moved to main.js
+// Initialize event listeners
+function initializeEventListeners() {
+    // Search functionality
+    document.getElementById('search-input')?.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        filterContent(searchTerm);
+    });
 
+    // Close sidebar when clicking outside on mobile
+    document.getElementById('classwork-sidebar-overlay')?.addEventListener('click', closeSidebar);
+}
 
-// Modal and submit functions are now in main.js
+// Load classwork data from API
+async function loadClassworkData() {
+    try {
+        const response = await fetch(`/class/${lessonId}/classwork`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const classwork = data.data.classwork;
+            updateStats(classwork);
+            renderAllContent(classwork);
+            renderKanbanBoard(classwork);
+            renderMaterials(data.data.materials || []);
+        }
+    } catch (error) {
+        console.error('Error loading classwork:', error);
+        showEmptyState('all-tasks-grid', 'No tasks available', 'Create your first task to get started');
+    }
+}
 
-// All functions moved to main.js
+// Update statistics
+function updateStats(classwork) {
+    const stats = {
+        total: classwork.length,
+        pending: classwork.filter(t => t.status === 'todo' || t.status === 'in-progress').length,
+        completed: classwork.filter(t => t.status === 'completed').length,
+        overdue: classwork.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length
+    };
+    
+    document.getElementById('total-tasks').textContent = stats.total;
+    document.getElementById('pending-tasks').textContent = stats.pending;
+    document.getElementById('completed-tasks').textContent = stats.completed;
+    document.getElementById('overdue-tasks').textContent = stats.overdue;
+}
 
+// Switch tabs
+function switchTab(tabName) {
+    // Update navigation
+    document.querySelectorAll('.classwork-nav-item').forEach(item => item.classList.remove('active'));
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    
+    // Update content
+    document.querySelectorAll('.content-tab').forEach(tab => tab.style.display = 'none');
+    document.getElementById(`${tabName}-content`).style.display = 'flex';
+    
+    currentTab = tabName;
+    
+    // Close sidebar on mobile
+    if (window.innerWidth <= 768) {
+        closeSidebar();
+    }
+}
 
-// All functions are now in main.js
+// Set filter
+function setFilter(filterName) {
+    document.querySelectorAll('.filter-option').forEach(option => option.classList.remove('active'));
+    document.querySelector(`[data-filter="${filterName}"]`).classList.add('active');
+    
+    currentFilter = filterName;
+    
+    // Apply filter to current content
+    applyFilter();
+}
+
+// Apply filter to current content
+function applyFilter() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    filterContent(searchTerm);
+}
+
+// Filter content based on search and filter
+function filterContent(searchTerm) {
+    const tasks = document.querySelectorAll('.task-card, .kanban-task');
+    
+    tasks.forEach(task => {
+        const title = task.querySelector('.task-title, .kanban-task-title')?.textContent.toLowerCase() || '';
+        const description = task.querySelector('.task-description')?.textContent.toLowerCase() || '';
+        const status = task.dataset.status || '';
+        
+        const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
+        const matchesFilter = currentFilter === 'all' || status === currentFilter;
+        
+        task.style.display = matchesSearch && matchesFilter ? 'block' : 'none';
+    });
+}
+
+// Render all content (All tab)
+function renderAllContent(tasks) {
+    const container = document.getElementById('all-tasks-grid');
+    
+    if (tasks.length === 0) {
+        showEmptyState('all-tasks-grid', 'No tasks yet', 'Create your first task to get started');
+        return;
+    }
+    
+    container.innerHTML = tasks.slice(0, 12).map(task => createTaskCard(task)).join('');
+}
+
+// Render kanban board
+function renderKanbanBoard(tasks) {
+    const columns = {
+        'todo': document.getElementById('todo-column'),
+        'in-progress': document.getElementById('inprogress-column'),
+        'completed': document.getElementById('completed-column')
+    };
+    
+    // Clear columns
+    Object.values(columns).forEach(col => col.innerHTML = '');
+    
+    // Group tasks by status
+    const grouped = {
+        'todo': tasks.filter(t => t.status === 'todo'),
+        'in-progress': tasks.filter(t => t.status === 'in-progress'),
+        'completed': tasks.filter(t => t.status === 'completed')
+    };
+    
+    // Update counts
+    document.getElementById('todo-count').textContent = grouped['todo'].length;
+    document.getElementById('inprogress-count').textContent = grouped['in-progress'].length;
+    document.getElementById('completed-count').textContent = grouped['completed'].length;
+    
+    // Render tasks in each column
+    Object.keys(grouped).forEach(status => {
+        if (grouped[status].length === 0) {
+            columns[status].innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="bi bi-inbox"></i>
+                    </div>
+                    <div class="empty-title">No tasks</div>
+                    <div class="empty-description">Tasks will appear here when created</div>
+                </div>
+            `;
+            return;
+        }
+        
+        columns[status].innerHTML = grouped[status].map(task => createKanbanTask(task)).join('');
+    });
+}
+
+// Render materials
+function renderMaterials(materials) {
+    const container = document.getElementById('materials-grid');
+    
+    if (materials.length === 0) {
+        showEmptyState('materials-grid', 'No materials yet', 'Upload materials to share resources');
+        return;
+    }
+    
+    container.innerHTML = materials.map(material => createMaterialCard(material)).join('');
+}
+
+// Create task card HTML
+function createTaskCard(task) {
+    return `
+        <div class="task-card fade-in" data-status="${task.status}" onclick="editTask(${task.id})">
+            <div class="task-header">
+                <div class="task-icon">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+                <div class="task-info">
+                    <div class="task-title">${task.title}</div>
+                    ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+                </div>
+            </div>
+            <div class="task-meta">
+                ${task.due_date ? `
+                <div class="task-meta-item">
+                    <i class="bi bi-calendar"></i>
+                    <span>${formatDate(task.due_date)}</span>
+                </div>` : ''}
+                ${task.priority ? `
+                <div class="task-meta-item">
+                    <span class="priority-dot ${task.priority}"></span>
+                    <span>${task.priority}</span>
+                </div>` : ''}
+                <div class="task-meta-item">
+                    <span class="status-badge ${task.status}">${formatStatus(task.status)}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Create kanban task HTML
+function createKanbanTask(task) {
+    return `
+        <div class="kanban-task fade-in" data-status="${task.status}" onclick="editTask(${task.id})">
+            <div class="kanban-task-title">${task.title}</div>
+            <div class="kanban-task-meta">
+                ${task.due_date ? `
+                <span>
+                    <i class="bi bi-calendar"></i>
+                    ${formatDate(task.due_date)}
+                </span>` : ''}
+                ${task.priority ? `
+                <span class="priority-dot ${task.priority}"></span>` : ''}
+            </div>
+        </div>
+    `;
+}
+
+// Create material card HTML
+function createMaterialCard(material) {
+    return `
+        <div class="material-card fade-in" onclick="viewMaterial(${material.id})">
+            <div class="material-preview">
+                <i class="bi ${getMaterialIcon(material.type)}"></i>
+                <div class="material-type-badge">${material.type || 'FILE'}</div>
+            </div>
+            <div class="material-content">
+                <div class="material-title">${material.title}</div>
+                <div class="material-meta">
+                    <span><i class="bi bi-clock"></i> ${formatDate(material.created_at)}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Show empty state
+function showEmptyState(containerId, title, description) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <div class="empty-title">${title}</div>
+            <div class="empty-description">${description}</div>
+            <button class="btn-classwork" onclick="openCreateModal()">
+                <i class="bi bi-plus-lg"></i>
+                Create Task
+            </button>
+        </div>
+    `;
+}
+
+// Helper functions
+function formatStatus(status) {
+    const statusMap = {
+        'todo': 'To Do',
+        'in-progress': 'In Progress',
+        'completed': 'Completed'
+    };
+    return statusMap[status] || status;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const today = new Date();
+    const diffDays = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Tomorrow';
+    if (diffDays === -1) return 'Yesterday';
+    if (diffDays > 0 && diffDays < 7) return `In ${diffDays} days`;
+    if (diffDays < 0 && diffDays > -7) return `${Math.abs(diffDays)} days ago`;
+    
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function getMaterialIcon(type) {
+    const icons = {
+        'document': 'bi-file-earmark-text',
+        'presentation': 'bi-file-earmark-slides',
+        'spreadsheet': 'bi-file-earmark-spreadsheet',
+        'video': 'bi-camera-video',
+        'image': 'bi-image',
+        'pdf': 'bi-file-earmark-pdf'
+    };
+    return icons[type] || 'bi-file-earmark';
+}
+
+// Sidebar functions
+function toggleSidebar() {
+    const sidebar = document.getElementById('classwork-sidebar');
+    const overlay = document.getElementById('classwork-sidebar-overlay');
+    
+    if (window.innerWidth <= 768) {
+        sidebar.classList.toggle('show');
+        overlay.classList.toggle('show');
+    }
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('classwork-sidebar');
+    const overlay = document.getElementById('classwork-sidebar-overlay');
+    
+    sidebar.classList.remove('show');
+    overlay.classList.remove('show');
+}
+
+// Modal functions
+function openCreateModal() {
+    const createTaskModal = new bootstrap.Modal(document.getElementById('createTaskModal'));
+    createTaskModal.show();
+}
+
+function openCreateMaterialModal() {
+    const createMaterialModal = new bootstrap.Modal(document.getElementById('createMaterialModal'));
+    createMaterialModal.show();
+}
+
+// Create task
+async function createTask() {
+    const taskData = {
+        title: document.getElementById('task-title').value,
+        description: document.getElementById('task-description').value,
+        status: document.getElementById('task-status').value,
+        priority: document.getElementById('task-priority').value,
+        due_date: document.getElementById('task-due-date').value
+    };
+    
+    try {
+        const response = await fetch(`/class/${lessonId}/classwork/task`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(taskData)
+        });
+        
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('createTaskModal')).hide();
+            loadClassworkData();
+        }
+    } catch (error) {
+        console.error('Error creating task:', error);
+    }
+}
+
+// Create material
+async function createMaterial() {
+    const formData = new FormData();
+    formData.append('title', document.getElementById('material-title').value);
+    formData.append('description', document.getElementById('material-description').value);
+    formData.append('type', document.getElementById('material-type').value);
+    formData.append('file', document.getElementById('material-file').files[0]);
+    
+    try {
+        const response = await fetch(`/class/${lessonId}/classwork/material`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('createMaterialModal')).hide();
+            loadClassworkData();
+        }
+    } catch (error) {
+        console.error('Error creating material:', error);
+    }
+}
+
+// Edit task (placeholder)
+function editTask(taskId) {
+    console.log('Edit task:', taskId);
+    // Implement edit functionality
+}
+
+// View material (placeholder)
+function viewMaterial(materialId) {
+    console.log('View material:', materialId);
+    // Implement view functionality
+}
 </script>
