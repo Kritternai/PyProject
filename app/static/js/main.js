@@ -2654,4 +2654,4 @@ window.showNotification = function(message, type = 'info') {
     });
 };
 
-console.log('✅ Classwork functions loaded');
+console.log('✅ Classwork functions loaded');// Cache busted at Fri Oct 10 15:06:08 +07 2025

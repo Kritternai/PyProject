@@ -222,15 +222,30 @@ function loadTabContent(tabName) {
             .then(html => {
                 contentDiv.innerHTML = html;
                 console.log('✅ Classwork template loaded');
-                // Initialize classwork after template is loaded
-                setTimeout(() => {
-                    if (typeof initClasswork === 'function') {
-                        console.log('🚀 Initializing classwork...');
-                        initClasswork(lessonId);
-                    } else {
-                        console.error('❌ initClasswork function not found');
+                
+                // Extract and execute scripts manually (innerHTML doesn't execute scripts)
+                const scripts = contentDiv.querySelectorAll('script');
+                console.log(`🔍 Found ${scripts.length} script(s) to execute`);
+                
+                scripts.forEach((oldScript, index) => {
+                    console.log(`⚙️ Executing script ${index + 1}/${scripts.length}`);
+                    const newScript = document.createElement('script');
+                    
+                    // Copy attributes (src, type, etc.)
+                    Array.from(oldScript.attributes).forEach(attr => {
+                        newScript.setAttribute(attr.name, attr.value);
+                    });
+                    
+                    // Copy inline code
+                    if (oldScript.textContent) {
+                        newScript.textContent = oldScript.textContent;
                     }
-                }, 300);
+                    
+                    // Replace old script with new one (triggers execution)
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+                
+                console.log('✅ All classwork scripts executed');
             })
             .catch(err => {
                 console.error('Error loading classwork:', err);

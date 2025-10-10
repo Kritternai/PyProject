@@ -49,8 +49,18 @@
 .classwork-main {
     display: flex;
     height: calc(100vh - 80px);
-    max-width: 1400px;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
+    max-width: none;
+}
+
+/* Content Layout */
+.classwork-content-layout {
+    display: flex;
+    gap: 0;
+    padding: 0;
+    flex: 1;
+    width: 100%;
 }
 
 /* ===== Sidebar ===== */
@@ -61,6 +71,8 @@
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    height: 100%;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
 }
 
 .classwork-sidebar-header {
@@ -78,8 +90,9 @@
 
 /* ===== Navigation ===== */
 .classwork-nav-section {
-    padding: 16px 0;
+    padding: 20px 0;
     border-bottom: 1px solid #e5e5ea;
+    margin-bottom: 20px;
 }
 
 .classwork-nav-item {
@@ -265,19 +278,43 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    height: 100%;
 }
 
 .content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     padding: 24px 32px;
     border-bottom: 1px solid #e5e5ea;
-    background: #f8f9fa;
+    background: linear-gradient(135deg, #f8f9ff, #ffffff);
+    border-radius: 16px 16px 0 0;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.header-left {
+    flex: 1;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 .content-title {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 600;
     color: #1d1d1f;
     margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.content-title i {
+    color: #003B8E;
+    margin-right: 8px;
 }
 
 .content-subtitle {
@@ -422,22 +459,52 @@
 
 /* ===== Kanban Board ===== */
 .kanban-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 24px;
+    display: flex;
+    gap: 20px;
     height: 100%;
+    overflow-x: auto;
+    padding: 0 0 20px 0;
+}
+
+.kanban-container::-webkit-scrollbar {
+    height: 6px;
+}
+
+.kanban-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.kanban-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.kanban-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 .kanban-column {
     background: #f8f9fa;
     border-radius: 16px;
     padding: 20px;
+    min-width: 320px;
     min-height: 600px;
+    display: flex;
+    flex-direction: column;
     transition: all 0.2s;
+    flex-shrink: 0;
 }
 
 .kanban-column:hover {
     background: #f0f0f0;
+}
+
+/* Drag over highlight */
+.kanban-body.drag-over {
+    background: rgba(0, 59, 142, 0.08);
+    border: 2px dashed #003B8E;
+    border-radius: 8px;
 }
 
 .kanban-header {
@@ -493,6 +560,12 @@
 
 .kanban-task:active {
     cursor: grabbing;
+}
+
+.kanban-task.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+    box-shadow: 0 8px 24px rgba(0, 59, 142, 0.3);
 }
 
 .kanban-task-title {
@@ -581,10 +654,17 @@
 /* ===== Empty State ===== */
 .empty-state {
     text-align: center;
-    padding: 80px 40px;
-    background: white;
+    padding: 60px 40px;
+    background: linear-gradient(135deg, #f8f9ff, #ffffff);
     border-radius: 20px;
-    border: 1px solid #e5e5ea;
+    border: 2px dashed #e5e5ea;
+    margin: 20px 0;
+    transition: all 0.3s ease;
+}
+
+.empty-state:hover {
+    border-color: #003B8E;
+    background: linear-gradient(135deg, #f0f4ff, #ffffff);
 }
 
 .empty-icon {
@@ -759,6 +839,7 @@
         z-index: 1000;
         transition: left 0.3s ease;
         width: 320px;
+        border-radius: 0;
     }
     
     .classwork-sidebar.show {
@@ -782,7 +863,13 @@
     }
     
     .kanban-container {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        overflow-x: visible;
+    }
+    
+    .kanban-column {
+        min-width: 100%;
+        margin-bottom: 16px;
     }
     
     .materials-grid {
@@ -870,6 +957,17 @@
     background: #d1d1d6;
 }
 
+/* Enhanced empty state buttons */
+.empty-state .btn {
+    box-shadow: 0 2px 8px rgba(0, 59, 142, 0.15);
+    transition: all 0.2s ease;
+}
+
+.empty-state .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 59, 142, 0.25);
+}
+
 /* ===== Utilities ===== */
 .text-primary-classwork {
     color: #003B8E;
@@ -890,3 +988,5 @@
 .text-muted-classwork {
     color: #8e8e93;
 }
+
+/* Cache busted at Fri Oct 10 15:38:40 +07 2025 */

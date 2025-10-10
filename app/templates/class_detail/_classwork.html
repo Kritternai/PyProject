@@ -1,21 +1,22 @@
-<!-- Classwork Tab - Professional Design (Inspired by Note System) -->
+<!-- Classwork Tab - Professional Design (Full Functionality) -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/classwork.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
 
 <div class="classwork-container">
     <!-- Header -->
     <div class="classwork-header">
         <div class="classwork-header-content">
-            <div>
+                <div>
                 <h2 class="classwork-title">Classwork</h2>
                 <p class="classwork-subtitle">Manage assignments, materials, and track progress</p>
-            </div>
+                </div>
             <div class="classwork-actions">
                 <button class="btn-icon" onclick="toggleSidebar()" id="sidebar-toggle">
                     <i class="bi bi-list"></i>
                 </button>
-                <button class="btn-classwork" onclick="openCreateModal()">
+                <button class="btn-classwork" onclick="openCreateTaskModal()">
                     <i class="bi bi-plus-lg"></i>
-                    Create
+                    Create Task
                 </button>
             </div>
         </div>
@@ -23,37 +24,34 @@
 
     <!-- Main Content Area -->
     <div class="classwork-main">
-        <!-- Sidebar -->
-        <div class="classwork-sidebar" id="classwork-sidebar">
-            <!-- Sidebar Header -->
-            <div class="classwork-sidebar-header">
-                <h3 class="classwork-sidebar-title">Navigation</h3>
-            </div>
+        <!-- Content Layout -->
+        <div class="classwork-content-layout">
+            <!-- Sidebar -->
+            <div class="classwork-sidebar" id="classwork-sidebar">
+                <!-- Navigation Section -->
+                <div class="classwork-nav-section">
+                    <a href="#" class="classwork-nav-item active" data-tab="all" onclick="switchTab('all'); return false;">
+                        <i class="bi bi-grid-3x3 classwork-nav-item-icon"></i>
+                        All
+                    </a>
+                    <a href="#" class="classwork-nav-item" data-tab="tasks" onclick="switchTab('tasks'); return false;">
+                        <i class="bi bi-list-task classwork-nav-item-icon"></i>
+                        Tasks
+                    </a>
+                    <a href="#" class="classwork-nav-item" data-tab="materials" onclick="switchTab('materials'); return false;">
+                        <i class="bi bi-file-earmark classwork-nav-item-icon"></i>
+                        Materials
+                    </a>
+                    </div>
 
-            <!-- Search Section -->
-            <div class="classwork-search-section">
-                <div class="search-container">
-                    <i class="bi bi-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Search tasks and materials..." 
-                           id="search-input">
+                <!-- Search Section -->
+                <div class="classwork-search-section">
+                    <div class="search-container">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="Search tasks and materials..." 
+                               id="search-input">
+                    </div>
                 </div>
-            </div>
-
-            <!-- Navigation Section -->
-            <div class="classwork-nav-section">
-                <a href="#" class="classwork-nav-item active" data-tab="all" onclick="switchTab('all')">
-                    <i class="bi bi-grid-3x3 classwork-nav-item-icon"></i>
-                    All
-                </a>
-                <a href="#" class="classwork-nav-item" data-tab="tasks" onclick="switchTab('tasks')">
-                    <i class="bi bi-list-task classwork-nav-item-icon"></i>
-                    Tasks
-                </a>
-                <a href="#" class="classwork-nav-item" data-tab="materials" onclick="switchTab('materials')">
-                    <i class="bi bi-file-earmark classwork-nav-item-icon"></i>
-                    Materials
-                </a>
-            </div>
 
             <!-- Stats Section -->
             <div class="classwork-stats-section">
@@ -61,7 +59,7 @@
                     <div class="stat-item">
                         <div class="stat-number" id="total-tasks">0</div>
                         <div class="stat-label">Total</div>
-                    </div>
+            </div>
                     <div class="stat-item">
                         <div class="stat-number" id="pending-tasks">0</div>
                         <div class="stat-label">Pending</div>
@@ -73,9 +71,9 @@
                     <div class="stat-item">
                         <div class="stat-number" id="overdue-tasks">0</div>
                         <div class="stat-label">Overdue</div>
-                    </div>
                 </div>
             </div>
+                    </div>
 
             <!-- Filter Section -->
             <div class="classwork-filter-section">
@@ -101,50 +99,42 @@
                         <span class="priority-dot high"></span>
                         <span>Overdue</span>
                     </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Content Area -->
-        <div class="classwork-content">
-            <!-- All Tab Content -->
-            <div class="content-tab" id="all-content">
-                <div class="content-header">
-                    <h3 class="content-title">All Items</h3>
-                    <p class="content-subtitle">Tasks and materials in one place</p>
-                </div>
-                <div class="content-body">
-                    <div class="tasks-grid" id="all-tasks-grid">
-                        <!-- Tasks will be loaded here -->
                     </div>
                 </div>
             </div>
 
+            <!-- Content Area -->
+            <div class="classwork-content">
+            <!-- All Tab Content -->
+            <div class="content-tab" id="all-content">
+                <div class="content-body">
+                    <div class="tasks-grid" id="all-tasks-grid">
+                        <!-- Tasks will be loaded here -->
+                    </div>
+                    </div>
+                </div>
+
             <!-- Tasks Tab Content -->
             <div class="content-tab" id="tasks-content" style="display: none;">
-                <div class="content-header">
-                    <h3 class="content-title">Task Board</h3>
-                    <p class="content-subtitle">Organize your tasks in a kanban board</p>
-                </div>
                 <div class="content-body">
                     <div class="kanban-container">
-                        <!-- To Do Column -->
-                        <div class="kanban-column">
-                            <div class="kanban-header">
+                <!-- To Do Column -->
+                    <div class="kanban-column">
+                        <div class="kanban-header">
                                 <div class="kanban-title">
                                     <span class="priority-dot medium"></span>
                                     <span>To Do</span>
-                                </div>
+            </div>
                                 <div class="kanban-count" id="todo-count">0</div>
                             </div>
                             <div class="kanban-body" id="todo-column">
                                 <!-- Tasks will be loaded here -->
-                            </div>
-                        </div>
+        </div>
+    </div>
 
                         <!-- In Progress Column -->
-                        <div class="kanban-column">
-                            <div class="kanban-header">
+                    <div class="kanban-column">
+                        <div class="kanban-header">
                                 <div class="kanban-title">
                                     <span class="priority-dot primary"></span>
                                     <span>In Progress</span>
@@ -153,118 +143,122 @@
                             </div>
                             <div class="kanban-body" id="inprogress-column">
                                 <!-- Tasks will be loaded here -->
-                            </div>
                         </div>
+                                </div>
 
                         <!-- Completed Column -->
-                        <div class="kanban-column">
-                            <div class="kanban-header">
+                    <div class="kanban-column">
+                        <div class="kanban-header">
                                 <div class="kanban-title">
                                     <span class="priority-dot low"></span>
                                     <span>Completed</span>
-                                </div>
-                                <div class="kanban-count" id="completed-count">0</div>
                             </div>
+                                <div class="kanban-count" id="completed-count">0</div>
+                        </div>
                             <div class="kanban-body" id="completed-column">
                                 <!-- Tasks will be loaded here -->
-                            </div>
+                        </div>
+                                </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
             <!-- Materials Tab Content -->
             <div class="content-tab" id="materials-content" style="display: none;">
-                <div class="content-header">
-                    <h3 class="content-title">Materials</h3>
-                    <p class="content-subtitle">Uploaded files and resources</p>
-                </div>
                 <div class="content-body">
                     <div class="materials-grid" id="materials-grid">
                         <!-- Materials will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Mobile Sidebar Overlay -->
     <div class="classwork-sidebar-overlay" id="classwork-sidebar-overlay" onclick="closeSidebar()"></div>
-</div>
+                </div>
 
-<!-- Create Task Modal -->
-<div class="modal fade modal-classwork" id="createTaskModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+<!-- Create/Edit Task Modal -->
+<div class="modal fade modal-classwork" id="taskModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Create New Task</h5>
+                <h5 class="modal-title" id="taskModalTitle">Create New Task</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+                                </div>
             <div class="modal-body">
-                <form id="createTaskForm">
-                    <div class="mb-3">
-                        <label class="form-label">Task Title *</label>
-                        <input type="text" class="form-control" id="task-title" required>
-                    </div>
+                <form id="taskForm">
+                    <input type="hidden" id="task-id">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Task Title *</label>
+                            <input type="text" class="form-control" id="task-title" required>
+                            </div>
+                        </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
                         <textarea class="form-control" id="task-description" rows="3"></textarea>
-                    </div>
+                                </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Status</label>
                             <select class="form-select" id="task-status">
                                 <option value="todo">To Do</option>
                                 <option value="in-progress">In Progress</option>
                                 <option value="completed">Completed</option>
                             </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
+                            </div>
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Priority</label>
                             <select class="form-select" id="task-priority">
                                 <option value="low">Low</option>
-                                <option value="medium">Medium</option>
+                                <option value="medium" selected>Medium</option>
                                 <option value="high">High</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Due Date</label>
-                        <input type="date" class="form-control" id="task-due-date">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="task-due-date">
+                        </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-classwork-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn-classwork" onclick="createTask()">Create Task</button>
+                <button type="button" class="btn-classwork" onclick="saveTask()">
+                    <span id="task-save-btn-text">Create Task</span>
+                </button>
+            </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
 
 <!-- Create Material Modal -->
-<div class="modal fade modal-classwork" id="createMaterialModal" tabindex="-1">
+<div class="modal fade modal-classwork" id="materialModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Upload Material</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+                            </div>
             <div class="modal-body">
-                <form id="createMaterialForm">
+                <form id="materialForm">
                     <div class="mb-3">
                         <label class="form-label">Material Title *</label>
                         <input type="text" class="form-control" id="material-title" required>
-                    </div>
+                            </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
                         <textarea class="form-control" id="material-description" rows="2"></textarea>
-                    </div>
+                        </div>
                     <div class="mb-3">
                         <label class="form-label">File *</label>
                         <input type="file" class="form-control" id="material-file" required>
                         <div class="form-text">Maximum file size: 10MB</div>
-                    </div>
+                        </div>
                     <div class="mb-3">
                         <label class="form-label">Type</label>
                         <select class="form-select" id="material-type">
@@ -276,26 +270,96 @@
                         </select>
                     </div>
                 </form>
-            </div>
+                            </div>
             <div class="modal-footer">
                 <button type="button" class="btn-classwork-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn-classwork" onclick="createMaterial()">Upload</button>
+                <button type="button" class="btn-classwork" onclick="saveMaterial()">Upload</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+<!-- Task Detail Modal -->
+<div class="modal fade modal-classwork" id="taskDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="task-detail-title">Task Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="task-detail-content">
+                    <!-- Task details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-classwork-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn-classwork-secondary" onclick="editTaskFromDetail()">
+                    <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button type="button" class="btn-classwork" onclick="markTaskComplete()">
+                    <i class="bi bi-check-circle"></i> Mark Complete
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-// Global variables
-const lessonId = window.location.pathname.split('/')[2];
-let currentTab = 'all';
-let currentFilter = 'all';
+<!-- Load notifications.js first -->
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    loadClassworkData();
-    initializeEventListeners();
-});
+<script>
+// Immediately execute when script loads (works with AJAX/HTMX)
+(function() {
+    'use strict';
+    
+    console.log('🎯 Classwork script loaded!');
+    
+    // Global variables for classwork
+    const lessonId = window.location.pathname.split('/')[2];
+    let currentTab = 'all';
+    let currentFilter = 'all';
+    let allTasks = [];
+    let allMaterials = [];
+    let currentTaskId = null;
+    let taskModal, materialModal, taskDetailModal;
+    
+    console.log('🚀 Initializing Classwork System for lesson:', lessonId);
+
+    // Initialize immediately - script runs after DOM is ready
+    initializeClassworkSystem();
+    
+    function initializeClassworkSystem() {
+        console.log('📋 Setting up Classwork System...');
+        
+        // Initialize Bootstrap modals with error handling
+        try {
+            const taskModalEl = document.getElementById('taskModal');
+            const materialModalEl = document.getElementById('materialModal');
+            const taskDetailModalEl = document.getElementById('taskDetailModal');
+            
+            if (taskModalEl && typeof bootstrap !== 'undefined') {
+                taskModal = new bootstrap.Modal(taskModalEl);
+                console.log('✅ Task modal initialized');
+            }
+            if (materialModalEl && typeof bootstrap !== 'undefined') {
+                materialModal = new bootstrap.Modal(materialModalEl);
+                console.log('✅ Material modal initialized');
+            }
+            if (taskDetailModalEl && typeof bootstrap !== 'undefined') {
+                taskDetailModal = new bootstrap.Modal(taskDetailModalEl);
+                console.log('✅ Task detail modal initialized');
+            }
+        } catch (error) {
+            console.error('⚠️ Modal initialization error:', error);
+        }
+        
+        loadClassworkData();
+        initializeEventListeners();
+        initializeDragAndDrop();
+        
+        console.log('✅ Classwork System initialized');
+    }
 
 // Initialize event listeners
 function initializeEventListeners() {
@@ -312,29 +376,58 @@ function initializeEventListeners() {
 // Load classwork data from API
 async function loadClassworkData() {
     try {
+        // Check if loading functions exist
+        if (typeof window.showLoading === 'function') {
+            window.showLoading();
+        }
+        
         const response = await fetch(`/class/${lessonId}/classwork`);
         const data = await response.json();
         
         if (data.success) {
-            const classwork = data.data.classwork;
-            updateStats(classwork);
-            renderAllContent(classwork);
-            renderKanbanBoard(classwork);
-            renderMaterials(data.data.materials || []);
+            allTasks = data.data.classwork.tasks || [];
+            allMaterials = data.data.classwork.materials || [];
+            
+            console.log('📊 Loaded tasks:', allTasks.length, allTasks);
+            console.log('📁 Loaded materials:', allMaterials.length, allMaterials);
+            
+            // Debug: Check first task structure
+            if (allTasks.length > 0) {
+                console.log('🔍 First task structure:', allTasks[0]);
+                console.log('🔍 First task status:', allTasks[0].status, 'Type:', typeof allTasks[0].status);
+            }
+            
+            updateStats(allTasks);
+            renderAllContent(allTasks);
+            renderKanbanBoard(allTasks);
+            renderMaterials(allMaterials);
+        } else {
+            if (typeof window.showError === 'function') {
+                window.showError('Failed to load classwork data');
+            } else {
+                console.error('Failed to load classwork data');
+            }
         }
     } catch (error) {
         console.error('Error loading classwork:', error);
-        showEmptyState('all-tasks-grid', 'No tasks available', 'Create your first task to get started');
+        if (typeof window.showError === 'function') {
+            window.showError('Error loading classwork data');
+        }
+    } finally {
+        // Check if loading functions exist
+        if (typeof window.hideLoading === 'function') {
+            window.hideLoading();
+        }
     }
 }
 
 // Update statistics
-function updateStats(classwork) {
+function updateStats(tasks) {
     const stats = {
-        total: classwork.length,
-        pending: classwork.filter(t => t.status === 'todo' || t.status === 'in-progress').length,
-        completed: classwork.filter(t => t.status === 'completed').length,
-        overdue: classwork.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length
+        total: tasks.length,
+        pending: tasks.filter(t => t.status === 'todo' || t.status === 'in-progress').length,
+        completed: tasks.filter(t => t.status === 'completed').length,
+        overdue: tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length
     };
     
     document.getElementById('total-tasks').textContent = stats.total;
@@ -408,6 +501,8 @@ function renderAllContent(tasks) {
 
 // Render kanban board
 function renderKanbanBoard(tasks) {
+    console.log('🎯 Rendering kanban board with tasks:', tasks);
+    
     const columns = {
         'todo': document.getElementById('todo-column'),
         'in-progress': document.getElementById('inprogress-column'),
@@ -417,12 +512,16 @@ function renderKanbanBoard(tasks) {
     // Clear columns
     Object.values(columns).forEach(col => col.innerHTML = '');
     
-    // Group tasks by status
+    // Group tasks by status - check actual status values
+    console.log('🔍 Task statuses:', tasks.map(t => ({ id: t.id, title: t.title, status: t.status })));
+    
     const grouped = {
         'todo': tasks.filter(t => t.status === 'todo'),
-        'in-progress': tasks.filter(t => t.status === 'in-progress'),
+        'in-progress': tasks.filter(t => t.status === 'in-progress' || t.status === 'inprogress'),
         'completed': tasks.filter(t => t.status === 'completed')
     };
+    
+    console.log('📋 Grouped tasks:', grouped);
     
     // Update counts
     document.getElementById('todo-count').textContent = grouped['todo'].length;
@@ -435,25 +534,40 @@ function renderKanbanBoard(tasks) {
             columns[status].innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">
-                        <i class="bi bi-inbox"></i>
+                        <i class="bi bi-check-circle"></i>
                     </div>
-                    <div class="empty-title">No tasks</div>
-                    <div class="empty-description">Tasks will appear here when created</div>
+                    <div class="empty-title">Ready for tasks</div>
+                    <div class="empty-description">Drag tasks here or create new ones</div>
+                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="openCreateTaskModal()">
+                        <i class="bi bi-plus me-1"></i>Create Task
+                    </button>
                 </div>
             `;
-            return;
+        } else {
+            columns[status].innerHTML = grouped[status].map(task => createKanbanTask(task)).join('');
         }
-        
-        columns[status].innerHTML = grouped[status].map(task => createKanbanTask(task)).join('');
     });
 }
 
 // Render materials
 function renderMaterials(materials) {
+    console.log('📁 Rendering materials:', materials);
+    
     const container = document.getElementById('materials-grid');
     
     if (materials.length === 0) {
-        showEmptyState('materials-grid', 'No materials yet', 'Upload materials to share resources');
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-folder-x"></i>
+                </div>
+                <div class="empty-title">No materials yet</div>
+                <div class="empty-description">Upload files and documents to share with your class</div>
+                <button class="btn btn-primary btn-sm mt-3" onclick="openCreateMaterialModal()">
+                    <i class="bi bi-cloud-upload me-1"></i>Upload Material
+                </button>
+            </div>
+        `;
         return;
     }
     
@@ -462,30 +576,33 @@ function renderMaterials(materials) {
 
 // Create task card HTML
 function createTaskCard(task) {
+    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+    const displayStatus = isOverdue ? 'overdue' : task.status;
+    
     return `
-        <div class="task-card fade-in" data-status="${task.status}" onclick="editTask(${task.id})">
+        <div class="task-card fade-in" data-status="${task.status}" data-task-id="${task.id}" onclick="viewTaskDetail('${task.id}')">
             <div class="task-header">
                 <div class="task-icon">
                     <i class="bi bi-clipboard-check"></i>
                 </div>
                 <div class="task-info">
-                    <div class="task-title">${task.title}</div>
-                    ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+                    <div class="task-title">${escapeHtml(task.title)}</div>
+                    ${task.description ? `<div class="task-description">${escapeHtml(task.description)}</div>` : ''}
                 </div>
             </div>
             <div class="task-meta">
                 ${task.due_date ? `
                 <div class="task-meta-item">
                     <i class="bi bi-calendar"></i>
-                    <span>${formatDate(task.due_date)}</span>
+                    <span class="${isOverdue ? 'text-danger' : ''}">${formatDate(task.due_date)}</span>
                 </div>` : ''}
                 ${task.priority ? `
                 <div class="task-meta-item">
                     <span class="priority-dot ${task.priority}"></span>
-                    <span>${task.priority}</span>
+                    <span>${capitalizeFirst(task.priority)}</span>
                 </div>` : ''}
                 <div class="task-meta-item">
-                    <span class="status-badge ${task.status}">${formatStatus(task.status)}</span>
+                    <span class="status-badge ${displayStatus}">${formatStatus(displayStatus)}</span>
                 </div>
             </div>
         </div>
@@ -494,12 +611,20 @@ function createTaskCard(task) {
 
 // Create kanban task HTML
 function createKanbanTask(task) {
+    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+    
     return `
-        <div class="kanban-task fade-in" data-status="${task.status}" onclick="editTask(${task.id})">
-            <div class="kanban-task-title">${task.title}</div>
+        <div class="kanban-task fade-in" 
+             data-status="${task.status}" 
+             data-task-id="${task.id}"
+             draggable="true"
+             ondragstart="handleDragStart(event)"
+             ondragend="handleDragEnd(event)"
+             onclick="viewTaskDetail('${task.id}')">
+            <div class="kanban-task-title">${escapeHtml(task.title)}</div>
             <div class="kanban-task-meta">
                 ${task.due_date ? `
-                <span>
+                <span class="${isOverdue ? 'text-danger' : ''}">
                     <i class="bi bi-calendar"></i>
                     ${formatDate(task.due_date)}
                 </span>` : ''}
@@ -513,13 +638,13 @@ function createKanbanTask(task) {
 // Create material card HTML
 function createMaterialCard(material) {
     return `
-        <div class="material-card fade-in" onclick="viewMaterial(${material.id})">
+        <div class="material-card fade-in" onclick="viewMaterial('${material.id}')">
             <div class="material-preview">
-                <i class="bi ${getMaterialIcon(material.type)}"></i>
-                <div class="material-type-badge">${material.type || 'FILE'}</div>
+                <i class="bi ${getMaterialIcon(material.file_type)}"></i>
+                <div class="material-type-badge">${material.file_type || 'FILE'}</div>
             </div>
             <div class="material-content">
-                <div class="material-title">${material.title}</div>
+                <div class="material-title" title="${escapeHtml(material.title)}">${escapeHtml(material.title)}</div>
                 <div class="material-meta">
                     <span><i class="bi bi-clock"></i> ${formatDate(material.created_at)}</span>
                 </div>
@@ -538,7 +663,7 @@ function showEmptyState(containerId, title, description) {
             </div>
             <div class="empty-title">${title}</div>
             <div class="empty-description">${description}</div>
-            <button class="btn-classwork" onclick="openCreateModal()">
+            <button class="btn-classwork" onclick="openCreateTaskModal()">
                 <i class="bi bi-plus-lg"></i>
                 Create Task
             </button>
@@ -551,15 +676,22 @@ function formatStatus(status) {
     const statusMap = {
         'todo': 'To Do',
         'in-progress': 'In Progress',
-        'completed': 'Completed'
+        'completed': 'Completed',
+        'overdue': 'Overdue'
     };
     return statusMap[status] || status;
 }
 
 function formatDate(dateString) {
+    if (!dateString) return '';
+    
     const date = new Date(dateString);
     const today = new Date();
-    const diffDays = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+    today.setHours(0, 0, 0, 0);
+    const taskDate = new Date(date);
+    taskDate.setHours(0, 0, 0, 0);
+    
+    const diffDays = Math.ceil((taskDate - today) / (1000 * 60 * 60 * 24));
     
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Tomorrow';
@@ -567,7 +699,7 @@ function formatDate(dateString) {
     if (diffDays > 0 && diffDays < 7) return `In ${diffDays} days`;
     if (diffDays < 0 && diffDays > -7) return `${Math.abs(diffDays)} days ago`;
     
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function getMaterialIcon(type) {
@@ -579,7 +711,394 @@ function getMaterialIcon(type) {
         'image': 'bi-image',
         'pdf': 'bi-file-earmark-pdf'
     };
-    return icons[type] || 'bi-file-earmark';
+    return icons[type?.toLowerCase()] || 'bi-file-earmark';
+}
+
+function capitalizeFirst(str) {
+    return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Loading functions use notifications.js (already defined globally)
+
+// Use notifications.js functions (already defined globally)
+
+// Modal functions
+function openCreateTaskModal() {
+    currentTaskId = null;
+    document.getElementById('taskModalTitle').textContent = 'Create New Task';
+    document.getElementById('task-save-btn-text').textContent = 'Create Task';
+    document.getElementById('taskForm').reset();
+    document.getElementById('task-id').value = '';
+    taskModal.show();
+}
+
+function openEditTaskModal(taskId) {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    currentTaskId = taskId;
+    document.getElementById('taskModalTitle').textContent = 'Edit Task';
+    document.getElementById('task-save-btn-text').textContent = 'Save Changes';
+    document.getElementById('task-id').value = task.id;
+    document.getElementById('task-title').value = task.title;
+    document.getElementById('task-description').value = task.description || '';
+    document.getElementById('task-status').value = task.status;
+    document.getElementById('task-priority').value = task.priority || 'medium';
+    document.getElementById('task-due-date').value = task.due_date || '';
+    
+    taskModal.show();
+}
+
+function openCreateMaterialModal() {
+    document.getElementById('materialForm').reset();
+    materialModal.show();
+}
+
+// Save task (Create or Update)
+async function saveTask() {
+    const title = document.getElementById('task-title').value.trim();
+    if (!title) {
+        showError('Please enter a task title');
+        return;
+    }
+    
+    const taskData = {
+        title: title,
+        description: document.getElementById('task-description').value,
+        status: document.getElementById('task-status').value,
+        priority: document.getElementById('task-priority').value,
+        due_date: document.getElementById('task-due-date').value || null
+    };
+    
+    try {
+        let response;
+        if (currentTaskId) {
+            // Update existing task
+            response = await fetch(`/classwork/tasks/${currentTaskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(taskData)
+            });
+        } else {
+            // Create new task
+            response = await fetch(`/classwork/lessons/${lessonId}/tasks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(taskData)
+            });
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            taskModal.hide();
+            showSuccess(currentTaskId ? 'Task updated successfully' : 'Task created successfully');
+            loadClassworkData(); // Reload data
+        } else {
+            showError(result.error || 'Failed to save task');
+        }
+    } catch (error) {
+        console.error('Error saving task:', error);
+        showError('Error saving task');
+    }
+}
+
+// Save material
+async function saveMaterial() {
+    const title = document.getElementById('material-title').value.trim();
+    const fileInput = document.getElementById('material-file');
+    
+    if (!title || !fileInput.files[0]) {
+        showError('Please enter title and select a file');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('description', document.getElementById('material-description').value);
+    formData.append('type', document.getElementById('material-type').value);
+    formData.append('file', fileInput.files[0]);
+    
+    try {
+        const response = await fetch(`/classwork/lessons/${lessonId}/materials`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            materialModal.hide();
+            showSuccess('Material uploaded successfully');
+            loadClassworkData(); // Reload data
+        } else {
+            showError(result.error || 'Failed to upload material');
+        }
+    } catch (error) {
+        console.error('Error uploading material:', error);
+        showError('Error uploading material');
+    }
+}
+
+// View task detail
+function viewTaskDetail(taskId) {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    currentTaskId = taskId;
+    document.getElementById('task-detail-title').textContent = task.title;
+    
+    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+    
+    document.getElementById('task-detail-content').innerHTML = `
+        <div class="row">
+            <div class="col-md-8">
+                <h6 class="text-muted mb-2">Description</h6>
+                <p>${task.description || '<em>No description provided</em>'}</p>
+                
+                <div class="mt-4">
+                    <h6 class="text-muted mb-2">Details</h6>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td width="30%"><strong>Status:</strong></td>
+                                <td><span class="status-badge ${task.status}">${formatStatus(task.status)}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Priority:</strong></td>
+                                <td><span class="priority-dot ${task.priority}"></span> ${capitalizeFirst(task.priority)}</td>
+                            </tr>
+                            ${task.due_date ? `
+                            <tr>
+                                <td><strong>Due Date:</strong></td>
+                                <td class="${isOverdue ? 'text-danger' : ''}">${formatDate(task.due_date)}</td>
+                            </tr>` : ''}
+                            <tr>
+                                <td><strong>Created:</strong></td>
+                                <td>${formatDate(task.created_at)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted mb-3">Actions</h6>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="openEditTaskModal('${task.id}')">
+                        <i class="bi bi-pencil"></i> Edit Task
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteTask('${task.id}')">
+                        <i class="bi bi-trash"></i> Delete Task
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    taskDetailModal.show();
+}
+
+// Edit task from detail modal
+function editTaskFromDetail() {
+    taskDetailModal.hide();
+    setTimeout(() => openEditTaskModal(currentTaskId), 300);
+}
+
+// Mark task complete
+async function markTaskComplete() {
+    if (!currentTaskId) return;
+    
+    try {
+        const response = await fetch(`/classwork/tasks/${currentTaskId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'completed' })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            taskDetailModal.hide();
+            showSuccess('Task marked as complete');
+            loadClassworkData();
+        } else {
+            showError(result.error || 'Failed to update task');
+        }
+    } catch (error) {
+        console.error('Error updating task:', error);
+        showError('Error updating task');
+    }
+}
+
+// Delete task
+async function confirmDeleteTask(taskId) {
+    const confirmed = await confirmDelete(
+        'This action cannot be undone. All data associated with this task will be permanently deleted.',
+        'Delete Task'
+    );
+    if (!confirmed) return;
+    
+    try {
+        const response = await fetch(`/classwork/tasks/${taskId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            taskDetailModal.hide();
+            showSuccess('Task deleted successfully');
+            loadClassworkData();
+        } else {
+            showError(result.error || 'Failed to delete task');
+        }
+    } catch (error) {
+        console.error('Error deleting task:', error);
+        showError('Error deleting task');
+    }
+}
+
+// View material
+function viewMaterial(materialId) {
+    const material = allMaterials.find(m => m.id === materialId);
+    if (!material) return;
+    
+    // Open material file in new tab
+    if (material.file_path) {
+        window.open(material.file_path, '_blank');
+    }
+}
+
+// Drag and drop functions
+let draggedElement = null;
+
+function initializeDragAndDrop() {
+    // Add drag over handlers to kanban columns
+    document.querySelectorAll('.kanban-body').forEach(column => {
+        column.addEventListener('dragover', handleDragOver);
+        column.addEventListener('drop', handleDrop);
+    });
+}
+
+function handleDragStart(event) {
+    draggedElement = event.target;
+    event.target.classList.add('dragging');
+    console.log('🎯 Drag started:', event.target.querySelector('.kanban-task-title')?.textContent);
+}
+
+function handleDragEnd(event) {
+    event.target.classList.remove('dragging');
+    
+    // Remove all drag-over highlights
+    document.querySelectorAll('.kanban-body').forEach(col => {
+        col.classList.remove('drag-over');
+    });
+    
+    draggedElement = null;
+    console.log('🎯 Drag ended');
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    
+    // Highlight drop zone
+    const column = event.target.closest('.kanban-body');
+    if (column && !column.classList.contains('drag-over')) {
+        // Remove highlight from all columns
+        document.querySelectorAll('.kanban-body').forEach(col => {
+            col.classList.remove('drag-over');
+        });
+        // Add highlight to current column
+        column.classList.add('drag-over');
+    }
+}
+
+async function handleDrop(event) {
+    event.preventDefault();
+    
+    // Remove all drag-over highlights
+    document.querySelectorAll('.kanban-body').forEach(col => {
+        col.classList.remove('drag-over');
+    });
+    
+    if (!draggedElement) return;
+    
+    const column = event.target.closest('.kanban-body');
+    if (!column) return;
+    
+    const taskId = draggedElement.dataset.taskId;
+    const oldStatus = draggedElement.dataset.status;
+    const newStatus = column.id.replace('-column', '');
+    
+    // If dropped in same column, do nothing
+    if (oldStatus === newStatus) {
+        console.log('Task dropped in same column');
+        return;
+    }
+    
+    // Get task title for notification
+    const taskTitle = draggedElement.querySelector('.kanban-task-title')?.textContent || 'Task';
+    
+    // Status labels for notification
+    const statusLabels = {
+        'todo': 'To Do',
+        'in-progress': 'In Progress',
+        'completed': 'Completed'
+    };
+    
+    // Show immediate feedback
+    console.log(`Moving task from ${oldStatus} to ${newStatus}`);
+    
+    // Update task status
+    try {
+        const response = await fetch(`/classwork/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Show success notification with details
+            if (typeof window.showSuccess === 'function') {
+                window.showSuccess(`"${taskTitle}" moved to ${statusLabels[newStatus]}`);
+            } else {
+                console.log(`✅ Task moved to ${statusLabels[newStatus]}`);
+            }
+            
+            // Reload data to reflect changes
+            loadClassworkData();
+        } else {
+            if (typeof window.showError === 'function') {
+                window.showError(result.error || 'Failed to update task status');
+            } else {
+                console.error('Failed to update task status');
+            }
+            
+            // Reload to revert visual change
+            loadClassworkData();
+        }
+    } catch (error) {
+        console.error('Error updating task:', error);
+        
+        if (typeof window.showError === 'function') {
+            window.showError('Error updating task status');
+        } else {
+            console.error('Error updating task status');
+        }
+        
+        // Reload to revert visual change
+        loadClassworkData();
+    }
 }
 
 // Sidebar functions
@@ -601,75 +1120,50 @@ function closeSidebar() {
     overlay.classList.remove('show');
 }
 
-// Modal functions
-function openCreateModal() {
-    const createTaskModal = new bootstrap.Modal(document.getElementById('createTaskModal'));
-    createTaskModal.show();
-}
+// Expose functions to global scope for onclick handlers
+window.classwork = {
+    switchTab: switchTab,
+    setFilter: setFilter,
+    toggleSidebar: toggleSidebar,
+    closeSidebar: closeSidebar,
+    openCreateTaskModal: openCreateTaskModal,
+    openEditTaskModal: openEditTaskModal,
+    openCreateMaterialModal: openCreateMaterialModal,
+    saveTask: saveTask,
+    saveMaterial: saveMaterial,
+    viewTaskDetail: viewTaskDetail,
+    editTaskFromDetail: editTaskFromDetail,
+    markTaskComplete: markTaskComplete,
+    confirmDeleteTask: confirmDeleteTask,
+    viewMaterial: viewMaterial,
+    handleDragStart: handleDragStart,
+    handleDragEnd: handleDragEnd,
+    handleDragOver: handleDragOver,
+    handleDrop: handleDrop
+};
 
-function openCreateMaterialModal() {
-    const createMaterialModal = new bootstrap.Modal(document.getElementById('createMaterialModal'));
-    createMaterialModal.show();
-}
+// Also expose directly for backward compatibility
+window.switchTab = switchTab;
+window.setFilter = setFilter;
+window.toggleSidebar = toggleSidebar;
+window.closeSidebar = closeSidebar;
+window.openCreateTaskModal = openCreateTaskModal;
+window.openEditTaskModal = openEditTaskModal;
+window.openCreateMaterialModal = openCreateMaterialModal;
+window.saveTask = saveTask;
+window.saveMaterial = saveMaterial;
+window.viewTaskDetail = viewTaskDetail;
+window.editTaskFromDetail = editTaskFromDetail;
+window.markTaskComplete = markTaskComplete;
+window.confirmDeleteTask = confirmDeleteTask;
+window.viewMaterial = viewMaterial;
+window.handleDragStart = handleDragStart;
+window.handleDragEnd = handleDragEnd;
+window.handleDragOver = handleDragOver;
+window.handleDrop = handleDrop;
 
-// Create task
-async function createTask() {
-    const taskData = {
-        title: document.getElementById('task-title').value,
-        description: document.getElementById('task-description').value,
-        status: document.getElementById('task-status').value,
-        priority: document.getElementById('task-priority').value,
-        due_date: document.getElementById('task-due-date').value
-    };
-    
-    try {
-        const response = await fetch(`/class/${lessonId}/classwork/task`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(taskData)
-        });
-        
-        if (response.ok) {
-            bootstrap.Modal.getInstance(document.getElementById('createTaskModal')).hide();
-            loadClassworkData();
-        }
-    } catch (error) {
-        console.error('Error creating task:', error);
-    }
-}
+console.log('✅ Classwork functions exposed to global scope');
 
-// Create material
-async function createMaterial() {
-    const formData = new FormData();
-    formData.append('title', document.getElementById('material-title').value);
-    formData.append('description', document.getElementById('material-description').value);
-    formData.append('type', document.getElementById('material-type').value);
-    formData.append('file', document.getElementById('material-file').files[0]);
-    
-    try {
-        const response = await fetch(`/class/${lessonId}/classwork/material`, {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (response.ok) {
-            bootstrap.Modal.getInstance(document.getElementById('createMaterialModal')).hide();
-            loadClassworkData();
-        }
-    } catch (error) {
-        console.error('Error creating material:', error);
-    }
-}
-
-// Edit task (placeholder)
-function editTask(taskId) {
-    console.log('Edit task:', taskId);
-    // Implement edit functionality
-}
-
-// View material (placeholder)
-function viewMaterial(materialId) {
-    console.log('View material:', materialId);
-    // Implement view functionality
-}
+})(); // End IIFE
 </script>
+
