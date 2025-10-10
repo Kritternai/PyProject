@@ -26,7 +26,8 @@ class Config:
     
     # File upload settings
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'static', 'uploads')
+    # Use root-level uploads folder (not in static)
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'uploads')
     
     # Pagination settings
     DEFAULT_PAGE_SIZE = 20

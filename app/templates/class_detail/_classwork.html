@@ -14,9 +14,9 @@
                 <button class="btn-icon" onclick="toggleSidebar()" id="sidebar-toggle">
                     <i class="bi bi-list"></i>
                 </button>
-                <button class="btn-classwork" onclick="openCreateTaskModal()">
+                <button class="btn-classwork" id="header-create-btn" onclick="handleHeaderCreate()">
                     <i class="bi bi-plus-lg"></i>
-                    Create Task
+                    <span id="header-create-text">Create Task</span>
                 </button>
             </div>
         </div>
@@ -446,6 +446,9 @@ function switchTab(tabName) {
     document.querySelectorAll('.content-tab').forEach(tab => tab.style.display = 'none');
     document.getElementById(`${tabName}-content`).style.display = 'flex';
     
+    // Update header button
+    updateHeaderButton(tabName);
+    
     currentTab = tabName;
     
     // Close sidebar on mobile
@@ -485,6 +488,29 @@ function filterContent(searchTerm) {
         
         task.style.display = matchesSearch && matchesFilter ? 'block' : 'none';
     });
+}
+
+// Update header button based on current tab
+function updateHeaderButton(tabName) {
+    const headerBtn = document.getElementById('header-create-btn');
+    const headerText = document.getElementById('header-create-text');
+    
+    if (tabName === 'materials') {
+        headerText.textContent = 'Create Material';
+        headerBtn.setAttribute('onclick', 'openCreateMaterialModal()');
+    } else {
+        headerText.textContent = 'Create Task';
+        headerBtn.setAttribute('onclick', 'openCreateTaskModal()');
+    }
+}
+
+// Handle header create button click
+function handleHeaderCreate() {
+    if (currentTab === 'materials') {
+        openCreateMaterialModal();
+    } else {
+        openCreateTaskModal();
+    }
 }
 
 // Render all content (All tab)
@@ -635,13 +661,18 @@ function createKanbanTask(task) {
     `;
 }
 
-// Create material card HTML
+// Create material card HTML with preview
 function createMaterialCard(material) {
+    console.log('🎨 Creating material card for:', material);
+    const previewContent = generatePreviewContent(material);
+    const fileName = material.file_name || material.file_path?.split('/').pop() || '';
+    const fileExt = fileName.split('.').pop().toUpperCase() || material.file_type || 'FILE';
+    
     return `
         <div class="material-card fade-in" onclick="viewMaterial('${material.id}')">
             <div class="material-preview">
-                <i class="bi ${getMaterialIcon(material.file_type)}"></i>
-                <div class="material-type-badge">${material.file_type || 'FILE'}</div>
+                ${previewContent}
+                <div class="material-type-badge">${fileExt}</div>
             </div>
             <div class="material-content">
                 <div class="material-title" title="${escapeHtml(material.title)}">${escapeHtml(material.title)}</div>
@@ -649,6 +680,159 @@ function createMaterialCard(material) {
                     <span><i class="bi bi-clock"></i> ${formatDate(material.created_at)}</span>
                 </div>
             </div>
+        </div>
+    `;
+}
+
+// Convert absolute file path to web-accessible URL
+function getWebPath(filePath) {
+    console.log('🔍 Original filePath:', filePath);
+    
+    if (!filePath) return '';
+    
+    // If it's already a web path (starts with /), return as is
+    if (filePath.startsWith('/uploads/')) {
+        console.log('✅ Already web path:', filePath);
+        return filePath;
+    }
+    
+    // If it's an absolute path, convert to web path
+    if (filePath.includes('/uploads/')) {
+        const parts = filePath.split('/uploads/');
+        const webPath = '/uploads/' + parts[1];
+        console.log('🔄 Converted to web path:', webPath);
+        return webPath;
+    }
+    
+    // Default fallback
+    console.log('⚠️ Using fallback path:', filePath);
+    return filePath;
+}
+
+// Generate preview content based on file type
+function generatePreviewContent(material) {
+    const fileType = material.file_type?.toLowerCase() || '';
+    const fileName = material.file_name || material.file_path?.split('/').pop() || '';
+    
+    console.log('🎨 Preview generation:', {
+        fileType,
+        fileName,
+        file_path: material.file_path,
+        material
+    });
+    
+    // Image preview
+    if (fileType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(fileName)) {
+        const imagePath = getWebPath(material.file_path) || `/uploads/classwork/${fileName}`;
+        console.log('🖼️ Generating image preview:', imagePath);
+        return `
+            <div class="material-preview-image">
+                <img src="${imagePath}" 
+                     alt="${escapeHtml(material.title)}" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="material-preview-fallback" style="display: none;">
+                    <i class="bi bi-image"></i>
+                </div>
+            </div>
+        `;
+    }
+    
+    // PDF preview
+    if (fileType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf')) {
+        return `
+            <div class="material-preview-pdf">
+                <div class="pdf-icon">
+                    <i class="bi bi-file-pdf"></i>
+                </div>
+                <div class="pdf-preview-text">PDF</div>
+            </div>
+        `;
+    }
+    
+    // Video preview
+    if (fileType.startsWith('video/') || /\.(mp4|avi|mov|wmv|flv|webm)$/i.test(fileName)) {
+        const videoPath = getWebPath(material.file_path) || `/uploads/classwork/${material.file_name}`;
+        return `
+            <div class="material-preview-video">
+                <video class="video-preview" muted>
+                    <source src="${videoPath}" type="${fileType}">
+                </video>
+                <div class="video-overlay">
+                    <i class="bi bi-play-circle"></i>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Audio preview
+    if (fileType.startsWith('audio/') || /\.(mp3|wav|ogg|m4a)$/i.test(fileName)) {
+        return `
+            <div class="material-preview-audio">
+                <div class="audio-icon">
+                    <i class="bi bi-music-note"></i>
+                </div>
+                <div class="audio-waveform">
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                    <div class="wave"></div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Document preview (Word, Excel, PowerPoint)
+    if (/\.(doc|docx|xls|xlsx|ppt|pptx)$/i.test(fileName)) {
+        const docIcon = fileName.toLowerCase().includes('xls') ? 'bi-file-spreadsheet' :
+                       fileName.toLowerCase().includes('ppt') ? 'bi-file-slides' :
+                       'bi-file-word';
+        return `
+            <div class="material-preview-document">
+                <div class="document-icon">
+                    <i class="bi ${docIcon}"></i>
+                </div>
+                <div class="document-preview-text">DOC</div>
+            </div>
+        `;
+    }
+    
+    // Text file preview
+    if (fileType.startsWith('text/') || /\.(txt|md|csv)$/i.test(fileName)) {
+        return `
+            <div class="material-preview-text">
+                <div class="text-icon">
+                    <i class="bi bi-file-text"></i>
+                </div>
+                <div class="text-preview-content">
+                    <div class="text-line"></div>
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Archive preview
+    if (/\.(zip|rar|7z|tar|gz)$/i.test(fileName)) {
+        return `
+            <div class="material-preview-archive">
+                <div class="archive-icon">
+                    <i class="bi bi-file-zip"></i>
+                </div>
+                <div class="archive-preview-text">ZIP</div>
+            </div>
+        `;
+    }
+    
+    // Default file preview
+    const fileExt = fileName.split('.').pop().toUpperCase() || 'FILE';
+    const icon = getMaterialIcon(material.file_type, fileName);
+    
+    return `
+        <div class="material-preview-default">
+            <div class="default-icon">
+                <i class="bi ${icon}"></i>
+            </div>
+            <div class="default-file-type">${fileExt}</div>
         </div>
     `;
 }
@@ -702,16 +886,94 @@ function formatDate(dateString) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function getMaterialIcon(type) {
-    const icons = {
+function getMaterialIcon(type, fileName = '') {
+    // Check file extension first
+    const ext = fileName.toLowerCase().split('.').pop();
+    
+    // Extension-based icons
+    const extIcons = {
+        // Documents
+        'doc': 'bi-file-word',
+        'docx': 'bi-file-word',
+        'txt': 'bi-file-text',
+        'rtf': 'bi-file-text',
+        'odt': 'bi-file-text',
+        
+        // Spreadsheets
+        'xls': 'bi-file-excel',
+        'xlsx': 'bi-file-excel',
+        'csv': 'bi-file-spreadsheet',
+        'ods': 'bi-file-spreadsheet',
+        
+        // Presentations
+        'ppt': 'bi-file-ppt',
+        'pptx': 'bi-file-ppt',
+        'odp': 'bi-file-slides',
+        
+        // PDFs
+        'pdf': 'bi-file-pdf',
+        
+        // Images
+        'jpg': 'bi-file-image',
+        'jpeg': 'bi-file-image',
+        'png': 'bi-file-image',
+        'gif': 'bi-file-image',
+        'bmp': 'bi-file-image',
+        'svg': 'bi-file-image',
+        'webp': 'bi-file-image',
+        
+        // Videos
+        'mp4': 'bi-file-play',
+        'avi': 'bi-file-play',
+        'mov': 'bi-file-play',
+        'wmv': 'bi-file-play',
+        'flv': 'bi-file-play',
+        'webm': 'bi-file-play',
+        
+        // Audio
+        'mp3': 'bi-file-music',
+        'wav': 'bi-file-music',
+        'ogg': 'bi-file-music',
+        'm4a': 'bi-file-music',
+        
+        // Archives
+        'zip': 'bi-file-zip',
+        'rar': 'bi-file-zip',
+        '7z': 'bi-file-zip',
+        'tar': 'bi-file-zip',
+        'gz': 'bi-file-zip',
+        
+        // Code
+        'html': 'bi-file-code',
+        'css': 'bi-file-code',
+        'js': 'bi-file-code',
+        'py': 'bi-file-code',
+        'java': 'bi-file-code',
+        'cpp': 'bi-file-code',
+        'c': 'bi-file-code',
+        'php': 'bi-file-code',
+        'json': 'bi-file-code',
+        'xml': 'bi-file-code'
+    };
+    
+    if (extIcons[ext]) {
+        return extIcons[ext];
+    }
+    
+    // Type-based icons (fallback)
+    const typeIcons = {
         'document': 'bi-file-earmark-text',
         'presentation': 'bi-file-earmark-slides',
         'spreadsheet': 'bi-file-earmark-spreadsheet',
         'video': 'bi-camera-video',
         'image': 'bi-image',
-        'pdf': 'bi-file-earmark-pdf'
+        'pdf': 'bi-file-earmark-pdf',
+        'audio': 'bi-music-note',
+        'archive': 'bi-file-zip',
+        'code': 'bi-code-square'
     };
-    return icons[type?.toLowerCase()] || 'bi-file-earmark';
+    
+    return typeIcons[type?.toLowerCase()] || 'bi-file-earmark';
 }
 
 function capitalizeFirst(str) {
@@ -972,7 +1234,9 @@ function viewMaterial(materialId) {
     
     // Open material file in new tab
     if (material.file_path) {
-        window.open(material.file_path, '_blank');
+        const webPath = getWebPath(material.file_path);
+        console.log('🔗 Opening material:', webPath);
+        window.open(webPath, '_blank');
     }
 }
 
@@ -1157,10 +1421,13 @@ window.editTaskFromDetail = editTaskFromDetail;
 window.markTaskComplete = markTaskComplete;
 window.confirmDeleteTask = confirmDeleteTask;
 window.viewMaterial = viewMaterial;
-window.handleDragStart = handleDragStart;
-window.handleDragEnd = handleDragEnd;
-window.handleDragOver = handleDragOver;
-window.handleDrop = handleDrop;
+    window.handleDragStart = handleDragStart;
+    window.handleDragEnd = handleDragEnd;
+    window.getWebPath = getWebPath;
+    window.handleDragOver = handleDragOver;
+    window.handleDrop = handleDrop;
+    window.updateHeaderButton = updateHeaderButton;
+    window.handleHeaderCreate = handleHeaderCreate;
 
 console.log('✅ Classwork functions exposed to global scope');
 

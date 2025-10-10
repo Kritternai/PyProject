@@ -45,6 +45,9 @@ def create_app(config_name=None):
     # Register template context processors
     register_template_context_processors(app)
     
+    # Register static file routes
+    register_static_routes(app)
+    
     # Import models to ensure they are registered with SQLAlchemy
     import_models()
     
@@ -173,6 +176,23 @@ def register_template_context_processors(app):
         """
         from flask import g
         return dict(user=getattr(g, 'user', None))
+
+
+def register_static_routes(app):
+    """
+    Register routes for serving static files from uploads folder.
+    
+    Args:
+        app: Flask application instance
+    """
+    import os
+    from flask import send_from_directory
+    
+    @app.route('/uploads/<path:filename>')
+    def uploaded_file(filename):
+        """Serve uploaded files from the uploads directory."""
+        upload_folder = app.config.get('UPLOAD_FOLDER')
+        return send_from_directory(upload_folder, filename)
 
 
 def import_models():

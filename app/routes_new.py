@@ -990,6 +990,7 @@ def lesson_classwork(lesson_id):
             'title': row[1],
             'description': row[2],
             'file_path': row[3],
+            'file_name': row[3].split('/')[-1] if row[3] else '',  # Extract filename from path
             'file_type': row[4],
             'file_size': row[5],
             'subject': row[6],
@@ -1084,6 +1085,7 @@ def classwork_materials(lesson_id):
             'title': row[1],
             'description': row[2],
             'file_path': row[3],
+            'file_name': row[3].split('/')[-1] if row[3] else '',  # Extract filename from path
             'file_type': row[4],
             'file_size': row[5],
             'subject': row[6],
