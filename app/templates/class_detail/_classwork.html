@@ -663,7 +663,6 @@ function createKanbanTask(task) {
 
 // Create material card HTML with preview
 function createMaterialCard(material) {
-    console.log('🎨 Creating material card for:', material);
     const previewContent = generatePreviewContent(material);
     const fileName = material.file_name || material.file_path?.split('/').pop() || '';
     const fileExt = fileName.split('.').pop().toUpperCase() || material.file_type || 'FILE';
@@ -686,26 +685,20 @@ function createMaterialCard(material) {
 
 // Convert absolute file path to web-accessible URL
 function getWebPath(filePath) {
-    console.log('🔍 Original filePath:', filePath);
-    
     if (!filePath) return '';
     
     // If it's already a web path (starts with /), return as is
     if (filePath.startsWith('/uploads/')) {
-        console.log('✅ Already web path:', filePath);
         return filePath;
     }
     
     // If it's an absolute path, convert to web path
     if (filePath.includes('/uploads/')) {
         const parts = filePath.split('/uploads/');
-        const webPath = '/uploads/' + parts[1];
-        console.log('🔄 Converted to web path:', webPath);
-        return webPath;
+        return '/uploads/' + parts[1];
     }
     
     // Default fallback
-    console.log('⚠️ Using fallback path:', filePath);
     return filePath;
 }
 
@@ -714,17 +707,9 @@ function generatePreviewContent(material) {
     const fileType = material.file_type?.toLowerCase() || '';
     const fileName = material.file_name || material.file_path?.split('/').pop() || '';
     
-    console.log('🎨 Preview generation:', {
-        fileType,
-        fileName,
-        file_path: material.file_path,
-        material
-    });
-    
     // Image preview
     if (fileType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(fileName)) {
         const imagePath = getWebPath(material.file_path) || `/uploads/classwork/${fileName}`;
-        console.log('🖼️ Generating image preview:', imagePath);
         return `
             <div class="material-preview-image">
                 <img src="${imagePath}" 
@@ -1235,7 +1220,6 @@ function viewMaterial(materialId) {
     // Open material file in new tab
     if (material.file_path) {
         const webPath = getWebPath(material.file_path);
-        console.log('🔗 Opening material:', webPath);
         window.open(webPath, '_blank');
     }
 }

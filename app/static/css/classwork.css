@@ -490,12 +490,12 @@
     background: #f8f9fa;
     border-radius: 16px;
     padding: 20px;
-    min-width: 320px;
+    flex: 1;
+    min-width: 300px;
     min-height: 600px;
     display: flex;
     flex-direction: column;
     transition: all 0.2s;
-    flex-shrink: 0;
 }
 
 .kanban-column:hover {
