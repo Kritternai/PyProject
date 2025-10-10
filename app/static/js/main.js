@@ -1801,6 +1801,83 @@ window.selectColor = function(element, colorId) {
   }
 }
 
+// Modal Color Selection (for new modal design)
+window.selectModalColor = function(element, colorId) {
+    console.log('🎨 Modal selectColor called:', colorId);
+    
+    // Prevent event bubbling
+    if (typeof event !== 'undefined') {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    try {
+        // Find the modal container
+        const modal = element.closest('.modal');
+        if (!modal) {
+            console.error('❌ Modal not found');
+            return;
+        }
+        
+        // Remove selected class from all modal-color-box in modal
+        const colorOptions = modal.querySelectorAll('.modal-color-box');
+        console.log('Found color options:', colorOptions.length);
+        
+        colorOptions.forEach(option => {
+            option.classList.remove('selected');
+            // Add a small shrink animation to deselected items
+            option.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                option.style.transform = '';
+            }, 200);
+        });
+        
+        // Add selected class to clicked option with delay for animation
+        setTimeout(() => {
+            element.classList.add('selected');
+            console.log('✅ Color selected:', colorId);
+        }, 100);
+        
+        // Update hidden input
+        const hiddenInput = modal.querySelector('#selectedColor');
+        if (hiddenInput) {
+            hiddenInput.value = colorId;
+            console.log('✅ Hidden input updated:', colorId);
+        } else {
+            console.error('❌ Hidden input not found');
+        }
+        
+        // Add ripple effect
+        const ripple = document.createElement('div');
+        ripple.style.cssText = `
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            animation: ripple 0.6s ease-out;
+            pointer-events: none;
+        `;
+        element.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+        
+    } catch (error) {
+        console.error('❌ Error in selectModalColor:', error);
+    }
+};
+
+// Character counter for modals
+window.updateCharCount = function(input, counterId, maxLength) {
+    const counter = document.getElementById(counterId);
+    if (counter) {
+        counter.textContent = input.value.length;
+    }
+};
+
+console.log('✅ selectModalColor and updateCharCount functions loaded');
+
 // Class Notes System Functions
 window.openNoteModal = function() {
     const modal = new bootstrap.Modal(document.getElementById('createNoteModal'));

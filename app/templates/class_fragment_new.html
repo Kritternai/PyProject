@@ -1,0 +1,341 @@
+<!-- Modern All Lessons Page - Sidebar Style -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lessons-modern.css') }}">
+
+<style>
+/* Ripple animation for color picker */
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+</style>
+
+<div class="lessons-page">
+    <!-- Hero Header -->
+    <div class="lessons-hero">
+        <div class="lessons-hero-content">
+            <h1 class="lessons-hero-title">All Classes</h1>
+            <p class="lessons-hero-subtitle">Organize, track, and master your learning journey</p>
+            
+            <div class="lessons-hero-actions">
+                <div class="lessons-search-hero">
+                    <i class="bi bi-search lessons-search-hero-icon"></i>
+                    <input type="text" id="lessonSearch" placeholder="Search classes...">
+                </div>
+                
+                <button class="lessons-btn lessons-btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>Create Class</span>
+                </button>
+                
+                <button class="lessons-btn lessons-btn-outline" onclick="window.location.reload()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lessons-content">
+
+    <!-- Calculate Statistics -->
+    {% set stats = namespace(total=0, active=0, completed=0, archived=0, favorites=0) %}
+    {% if lessons %}
+        {% set stats.total = lessons|length %}
+        {% for lesson in lessons %}
+            {% if lesson.status == 'active' or lesson.status == 'not_started' or lesson.status == 'in_progress' %}
+                {% set stats.active = stats.active + 1 %}
+            {% endif %}
+            {% if lesson.status == 'completed' %}
+                {% set stats.completed = stats.completed + 1 %}
+            {% endif %}
+            {% if lesson.status == 'archived' %}
+                {% set stats.archived = stats.archived + 1 %}
+            {% endif %}
+            {% if lesson.is_favorite %}
+                {% set stats.favorites = stats.favorites + 1 %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+        <!-- Filter Pills -->
+        <div class="lessons-filters">
+            <button class="lessons-filter-pill active" data-filter="all">
+                <i class="bi bi-grid-fill"></i>
+                <span>All Classes</span>
+                <span class="lessons-filter-count">{{ stats.total }}</span>
+            </button>
+            <button class="lessons-filter-pill" data-filter="active">
+                <i class="bi bi-play-circle-fill"></i>
+                <span>Active</span>
+                <span class="lessons-filter-count">{{ stats.active }}</span>
+            </button>
+            <button class="lessons-filter-pill" data-filter="completed">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Completed</span>
+                <span class="lessons-filter-count">{{ stats.completed }}</span>
+            </button>
+            <button class="lessons-filter-pill" data-filter="archived">
+                <i class="bi bi-archive-fill"></i>
+                <span>Archived</span>
+                <span class="lessons-filter-count">{{ stats.archived }}</span>
+            </button>
+            <button class="lessons-filter-pill" data-filter="favorites">
+                <i class="bi bi-star-fill"></i>
+                <span>Favorites</span>
+                <span class="lessons-filter-count">{{ stats.favorites }}</span>
+            </button>
+        </div>
+
+        <!-- Stats Dashboard -->
+        <div class="lessons-stats">
+            <div class="lessons-stat">
+                <div class="lessons-stat-header">
+                    <div class="lessons-stat-icon blue">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                    </div>
+                    <div class="lessons-stat-body">
+                        <h3>{{ stats.total }}</h3>
+                        <p>Total Classes</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lessons-stat">
+                <div class="lessons-stat-header">
+                    <div class="lessons-stat-icon green">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="lessons-stat-body">
+                        <h3>{{ stats.completed }}</h3>
+                        <p>Completed</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lessons-stat">
+                <div class="lessons-stat-header">
+                    <div class="lessons-stat-icon orange">
+                        <i class="bi bi-play-circle-fill"></i>
+                    </div>
+                    <div class="lessons-stat-body">
+                        <h3>{{ stats.active }}</h3>
+                        <p>In Progress</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lessons-stat">
+                <div class="lessons-stat-header">
+                    <div class="lessons-stat-icon purple">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <div class="lessons-stat-body">
+                        <h3>{{ stats.favorites }}</h3>
+                        <p>Favorites</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lessons Grid -->
+        <div class="lessons-grid" id="lessons-grid">
+            {% if lessons %}
+                {% for lesson in lessons %}
+                    <div class="lesson-card-modern" 
+                         data-lesson-id="{{ lesson.id }}" 
+                         data-status="{{ lesson.status or 'active' }}" 
+                         data-is-favorite="{{ 'true' if lesson.is_favorite else 'false' }}"
+                         onclick="if(typeof loadPage === 'function') { loadPage('class/{{ lesson.id }}'); } else { window.location.href='/class/{{ lesson.id }}'; }">
+                        
+                        <!-- Card Cover -->
+                        <div class="lesson-card-cover">
+                            {% if lesson.cover_image %}
+                                <img src="{{ url_for('static', filename=lesson.cover_image) }}" 
+                                     alt="{{ lesson.title }}">
+                            {% else %}
+                                {% set color_gradients = {
+                                    1: 'linear-gradient(135deg, #1976D2, #0D47A1)',
+                                    2: 'linear-gradient(135deg, #48BB78, #38A169)',
+                                    3: 'linear-gradient(135deg, #FC8181, #F56565)',
+                                    4: 'linear-gradient(135deg, #F6AD55, #ED8936)',
+                                    5: 'linear-gradient(135deg, #9F7AEA, #805AD5)',
+                                    6: 'linear-gradient(135deg, #F687B3, #ED64A6)'
+                                } %}
+                                {% set color_id = lesson.color_theme or lesson.selected_color or 1 %}
+                                {% set gradient = color_gradients[color_id|int] or color_gradients[1] %}
+                                <div class="lesson-card-gradient-cover" style="background: {{ gradient }};">
+                                    <i class="bi bi-book-fill"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Badges -->
+                            <div class="lesson-card-badges">
+                                <div class="lesson-card-status-badge {{ lesson.status or 'active' }}">
+                                    {% if lesson.status == 'completed' %}
+                                        Completed
+                                    {% elif lesson.status == 'archived' %}
+                                        Archived
+                                    {% else %}
+                                        Active
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="lesson-card-favorite {{ 'active' if lesson.is_favorite else '' }}" 
+                                     onclick="event.stopPropagation(); toggleFavorite('{{ lesson.id }}', this);">
+                                    <i class="bi {{ 'bi-star-fill' if lesson.is_favorite else 'bi-star' }}"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Card Body -->
+                        <div class="lesson-card-body">
+                            <h3 class="lesson-card-title">{{ lesson.title }}</h3>
+                            
+                            {% if lesson.description %}
+                                <p class="lesson-card-description">{{ lesson.description }}</p>
+                            {% else %}
+                                <p class="lesson-card-description">No description available</p>
+                            {% endif %}
+                            
+                            <!-- Card Footer -->
+                            <div class="lesson-card-footer">
+                                <div class="lesson-card-meta">
+                                    <i class="bi bi-calendar3"></i>
+                                    <span>{{ lesson.created_at.strftime('%b %d, %Y') if lesson.created_at else 'N/A' }}</span>
+                                </div>
+                                <div class="lesson-card-arrow">
+                                    <i class="bi bi-arrow-right"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <!-- Empty State -->
+                <div class="lessons-empty">
+                    <div class="lessons-empty-icon">
+                        <i class="bi bi-journal-plus"></i>
+                    </div>
+                    <h3>No Classes Yet</h3>
+                    <p>Start your learning journey by creating your first class</p>
+                    <button class="lessons-btn lessons-btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Create Your First Class</span>
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Define global functions FIRST (before modal is included)
+// Modern Lessons Page JavaScript
+(function() {
+    'use strict';
+    
+    // Search functionality
+    const searchInput = document.getElementById('lessonSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const lessonCards = document.querySelectorAll('.lesson-card-modern');
+            
+            lessonCards.forEach(card => {
+                const title = card.querySelector('.lesson-card-title')?.textContent.toLowerCase() || '';
+                const description = card.querySelector('.lesson-card-description')?.textContent.toLowerCase() || '';
+                
+                if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Filter functionality
+    const filterPills = document.querySelectorAll('.lessons-filter-pill');
+    filterPills.forEach(pill => {
+        pill.addEventListener('click', function() {
+            // Update active state
+            filterPills.forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            const lessonCards = document.querySelectorAll('.lesson-card-modern');
+            
+            lessonCards.forEach(card => {
+                const status = card.dataset.status;
+                const isFavorite = card.dataset.isFavorite === 'true';
+                
+                let shouldShow = false;
+                
+                if (filter === 'all') {
+                    shouldShow = true;
+                } else if (filter === 'favorites') {
+                    shouldShow = isFavorite;
+                } else if (filter === 'active') {
+                    shouldShow = status === 'active' || status === 'not_started' || status === 'in_progress';
+                } else {
+                    shouldShow = status === filter;
+                }
+                
+                card.style.display = shouldShow ? '' : 'none';
+            });
+        });
+    });
+    
+    console.log('✅ Modern Classes Page initialized');
+})();
+
+// Toggle favorite function (global scope)
+function toggleFavorite(lessonId, element) {
+    fetch(`/partial/class/${lessonId}/favorite`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const isFavorite = data.is_favorite;
+            const icon = element.querySelector('i');
+            const card = element.closest('.lesson-card');
+            
+            if (isFavorite) {
+                element.classList.add('active');
+                icon.className = 'bi bi-star-fill';
+                card.dataset.isFavorite = 'true';
+            } else {
+                element.classList.remove('active');
+                icon.className = 'bi bi-star';
+                card.dataset.isFavorite = 'false';
+            }
+            
+            // Show notification
+            if (typeof window.showSuccess === 'function') {
+                window.showSuccess(isFavorite ? 'Added to favorites' : 'Removed from favorites');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error toggling favorite:', error);
+        if (typeof window.showError === 'function') {
+            window.showError('Failed to update favorite status');
+        }
+    });
+}
+</script>
+
+<!-- Add Lesson Modal -->
+{% include 'modals/add_lesson_modal.html' %}
+

@@ -1,0 +1,479 @@
+<!-- Add Class Modal - Split Layout Design -->
+<style>
+.modal-split .modal-dialog {
+    max-width: 900px;
+}
+
+.modal-split .modal-content {
+    border-radius: 24px;
+    border: none;
+    box-shadow: 0 24px 80px rgba(25, 118, 210, 0.25);
+    overflow: hidden;
+}
+
+.modal-split .modal-header {
+    background: linear-gradient(135deg, #1976D2, #0D47A1);
+    color: white;
+    padding: 2rem 2.5rem;
+    border: none;
+    position: relative;
+}
+
+.modal-split .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #42A5F5, #1976D2, #0D47A1);
+}
+
+.modal-split .modal-title {
+    font-weight: 800;
+    font-size: 1.75rem;
+    letter-spacing: -0.5px;
+}
+
+.modal-split .modal-body {
+    padding: 0;
+    background: #F8F9FD;
+}
+
+.modal-split-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 500px;
+}
+
+.modal-split-left {
+    padding: 2.5rem;
+    background: white;
+    border-right: 2px solid #E5E7EB;
+}
+
+.modal-split-right {
+    padding: 2.5rem;
+    background: #F8F9FD;
+}
+
+.modal-split-section {
+    margin-bottom: 2rem;
+}
+
+.modal-split-section:last-child {
+    margin-bottom: 0;
+}
+
+.modal-split-section-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #1976D2;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-split .form-label {
+    font-weight: 600;
+    color: #1A202C;
+    margin-bottom: 0.5rem;
+    font-size: 0.9375rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.modal-split .form-control,
+.modal-split .form-select {
+    padding: 0.875rem 1rem;
+    border-radius: 12px;
+    border: 2px solid #E5E7EB;
+    font-size: 0.9375rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.modal-split .form-control:focus,
+.modal-split .form-select:focus {
+    border-color: #1976D2;
+    box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.1);
+    outline: none;
+}
+
+.modal-split .char-counter {
+    font-size: 0.75rem;
+    color: #718096;
+    margin-left: auto;
+}
+
+.modal-split .form-hint {
+    font-size: 0.8125rem;
+    color: #718096;
+    margin-top: 0.375rem;
+}
+
+.modal-split .color-picker {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.modal-split .modal-color-box {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    border: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-split .modal-color-box:hover {
+    transform: scale(1.08) rotate(2deg);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.modal-split .modal-color-box.selected {
+    border-color: #1976D2;
+    box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.25);
+    transform: scale(1.1);
+    animation: colorPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.modal-split .modal-color-box.selected::after {
+    content: '\F26B';
+    font-family: 'bootstrap-icons';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.75rem;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    animation: checkmarkPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes colorPop {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+}
+
+@keyframes checkmarkPop {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.3);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-split .modal-footer {
+    background: white;
+    border-top: 2px solid #E5E7EB;
+    padding: 1.75rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-split .modal-footer-left {
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+.modal-split .modal-footer-right {
+    display: flex;
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .modal-split-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-split-left {
+        border-right: none;
+        border-bottom: 2px solid #E5E7EB;
+    }
+}
+</style>
+
+<div class="modal fade modal-split" id="addLessonModal" tabindex="-1" aria-labelledby="addLessonModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addLessonModalLabel">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Create New Class
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form id="add-lesson-form" onsubmit="handleAddLesson(event)">
+                <input type="hidden" id="selectedColor" name="selectedColor" value="1">
+                
+                <div class="modal-body">
+                    <div class="modal-split-layout">
+                        <!-- Left Side: Basic Info -->
+                        <div class="modal-split-left">
+                            <div class="modal-split-section">
+                                <div class="modal-split-section-title">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                    <span>Basic Information</span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="lesson-title" class="form-label">
+                                        <i class="bi bi-type"></i>
+                                        <span>Class Title</span>
+                                        <span class="text-danger">*</span>
+                                        <span class="char-counter">
+                                            <span id="title-counter">0</span>/100
+                                        </span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="lesson-title" 
+                                           name="title" 
+                                           maxlength="100" 
+                                           placeholder="Enter class title" 
+                                           required
+                                           oninput="updateCharCount(this, 'title-counter', 100)">
+                                </div>
+                                
+                                <div class="mb-0">
+                                    <label for="lesson-description" class="form-label">
+                                        <i class="bi bi-textarea-t"></i>
+                                        <span>Description</span>
+                                        <span class="char-counter">
+                                            <span id="desc-counter">0</span>/500
+                                        </span>
+                                    </label>
+                                    <textarea class="form-control" 
+                                              id="lesson-description" 
+                                              name="description" 
+                                              rows="4" 
+                                              maxlength="500" 
+                                              placeholder="What will students learn?"
+                                              oninput="updateCharCount(this, 'desc-counter', 500)"></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-split-section">
+                                <div class="modal-split-section-title">
+                                    <i class="bi bi-palette-fill"></i>
+                                    <span>Color Theme</span>
+                                </div>
+                                
+                                <div class="color-picker">
+                                    <div class="modal-color-box selected" 
+                                         data-color="1" 
+                                         style="background: linear-gradient(135deg, #1976D2, #0D47A1);"
+                                         onclick="selectModalColor(this, 1)"></div>
+                                    <div class="modal-color-box" 
+                                         data-color="2" 
+                                         style="background: linear-gradient(135deg, #48BB78, #38A169);"
+                                         onclick="selectModalColor(this, 2)"></div>
+                                    <div class="modal-color-box" 
+                                         data-color="3" 
+                                         style="background: linear-gradient(135deg, #FC8181, #F56565);"
+                                         onclick="selectModalColor(this, 3)"></div>
+                                    <div class="modal-color-box" 
+                                         data-color="4" 
+                                         style="background: linear-gradient(135deg, #F6AD55, #ED8936);"
+                                         onclick="selectModalColor(this, 4)"></div>
+                                    <div class="modal-color-box" 
+                                         data-color="5" 
+                                         style="background: linear-gradient(135deg, #9F7AEA, #805AD5);"
+                                         onclick="selectModalColor(this, 5)"></div>
+                                    <div class="modal-color-box" 
+                                         data-color="6" 
+                                         style="background: linear-gradient(135deg, #F687B3, #ED64A6);"
+                                         onclick="selectModalColor(this, 6)"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Side: Details -->
+                        <div class="modal-split-right">
+                            <div class="modal-split-section">
+                                <div class="modal-split-section-title">
+                                    <i class="bi bi-gear-fill"></i>
+                                    <span>Class Settings</span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="lesson-status" class="form-label">
+                                        <i class="bi bi-ui-checks-grid"></i>
+                                        <span>Status</span>
+                                    </label>
+                                    <select class="form-select" id="lesson-status" name="status">
+                                        <option value="not_started" selected>Not Started</option>
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-0">
+                                    <label for="lesson-difficulty" class="form-label">
+                                        <i class="bi bi-star"></i>
+                                        <span>Difficulty</span>
+                                    </label>
+                                    <select class="form-select" id="lesson-difficulty" name="difficulty_level">
+                                        <option value="beginner" selected>Beginner</option>
+                                        <option value="intermediate">Intermediate</option>
+                                        <option value="advanced">Advanced</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-split-section">
+                                <div class="modal-split-section-title">
+                                    <i class="bi bi-person-fill"></i>
+                                    <span>Additional Info</span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="lesson-author" class="form-label">
+                                        <i class="bi bi-person-circle"></i>
+                                        <span>Author</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="lesson-author" 
+                                           name="author_name" 
+                                           maxlength="100"
+                                           placeholder="Teacher name">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="lesson-duration" class="form-label">
+                                        <i class="bi bi-clock"></i>
+                                        <span>Duration</span>
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="lesson-duration" 
+                                           name="estimated_duration" 
+                                           min="1"
+                                           max="999"
+                                           placeholder="Minutes">
+                                </div>
+                                
+                                <div class="mb-0">
+                                    <label for="lesson-tags" class="form-label">
+                                        <i class="bi bi-tags"></i>
+                                        <span>Tags</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="lesson-tags" 
+                                           name="tags" 
+                                           placeholder="python, programming">
+                                    <div class="form-hint">Separate with commas</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="modal-footer-left">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <span>All fields except title are optional</span>
+                    </div>
+                    <div class="modal-footer-right">
+                        <button type="button" 
+                                class="btn btn-secondary" 
+                                data-bs-dismiss="modal"
+                                style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 600;">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="btn btn-primary"
+                                style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 600; background: linear-gradient(135deg, #1976D2, #0D47A1); border: none;">
+                            <i class="bi bi-plus-circle-fill me-1"></i>Create Class
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form submission handler
+function handleAddLesson(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+    
+    fetch('/partial/class/add', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addLessonModal'));
+            modal.hide();
+            
+            // Reset form
+            form.reset();
+            
+            // Show success message
+            if (typeof window.showSuccess === 'function') {
+                window.showSuccess('Class created successfully!');
+            }
+            
+            // Reload lessons list
+            if (typeof loadPage === 'function') {
+                setTimeout(() => loadPage('class'), 500);
+            } else {
+                setTimeout(() => window.location.reload(), 500);
+            }
+        } else {
+            throw new Error(data.message || 'Failed to create class');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating class:', error);
+        if (typeof window.showError === 'function') {
+            window.showError(error.message || 'Failed to create class');
+        } else {
+            alert('Error: ' + error.message);
+        }
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+}
+</script>
+
