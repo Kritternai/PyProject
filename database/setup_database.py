@@ -299,40 +299,198 @@ def create_complete_database_schema():
         print("✅ Created uploads directories")
         
         # 12. Create pomodoro tables
+        # ตารางเก็บ session การทำงาน Pomodoro แต่ละรอบ
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS pomodoro_session (
+                id TEXT PRIMARY KEY,                  -- UUID ของ session
+                user_id TEXT NOT NULL,                -- อ้างอิงผู้ใช้, ลบ user แล้ว session หายด้วย
+                session_type TEXT NOT NULL,           -- ประเภท session: focus, short_break, long_break
+                duration INTEGER NOT NULL,            -- ระยะเวลาที่ตั้งไว้ (นาที)
+                actual_duration INTEGER,              -- ระยะเวลาที่ใช้จริง (นาที)
+                start_time TIMESTAMP NOT NULL,        -- เวลาที่เริ่ม session
+                end_time TIMESTAMP,                   -- เวลาที่จบ session
+                status TEXT DEFAULT 'active',         -- สถานะ: active, completed, interrupted
+                productivity_score INTEGER,           -- คะแนนประสิทธิภาพของ session
+                task TEXT,                            -- งานที่ทำใน session นี้
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่สร้าง
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่อัพเดต
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE -- ลบ user แล้ว session หายด้วย
+            )
+        """)
+
+        # ตารางเก็บสถิติการใช้งาน Pomodoro ของแต่ละวัน
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS pomodoro_statistics (
+                id TEXT PRIMARY KEY,                  -- UUID ของสถิติ
+                user_id TEXT NOT NULL,                -- อ้างอิงผู้ใช้, ลบ user แล้วสถิติหายด้วย
+                date DATE NOT NULL,                   -- วันที่เก็บสถิติ
+                total_sessions INTEGER DEFAULT 0,     -- จำนวน session ทั้งหมดในวันนั้น
+                total_focus_time INTEGER DEFAULT 0,   -- เวลาที่ใช้โฟกัส (นาที)
+                total_break_time INTEGER DEFAULT 0,   -- เวลาที่ใช้พัก (นาที)
+                total_long_break_time INTEGER DEFAULT 0, -- เวลาที่ใช้พักยาว (นาที)
+                total_interrupted_sessions INTEGER DEFAULT 0, -- จำนวน session ที่ถูกขัดจังหวะ
+                total_completed_sessions INTEGER DEFAULT 0,   -- จำนวน session ที่ทำเสร็จ
+                total_productivity_score INTEGER DEFAULT 0,   -- คะแนนประสิทธิภาพรวม
+                total_tasks_completed INTEGER DEFAULT 0,      -- จำนวนงานที่ทำเสร็จ
+                total_tasks INTEGER DEFAULT 0,                -- จำนวนงานทั้งหมด
+                total_focus_sessions INTEGER DEFAULT 0,       -- จำนวน session ที่โฟกัส
+                total_short_break_sessions INTEGER DEFAULT 0, -- จำนวน session ที่พักสั้น
+                total_long_break_sessions INTEGER DEFAULT 0,  -- จำนวน session ที่พักยาว
+                total_time_spent INTEGER DEFAULT 0,           -- เวลาที่ใช้ทั้งหมด (นาที)
+                total_effective_time INTEGER DEFAULT 0,       -- เวลาที่ใช้แบบมีประสิทธิภาพ (นาที)
+                total_ineffective_time INTEGER DEFAULT 0,     -- เวลาที่ใช้แบบไม่มีประสิทธิภาพ (นาที)
+                total_abandoned_sessions INTEGER DEFAULT 0,   -- จำนวน session ที่ถูกละทิ้ง
+                total_on_time_sessions INTEGER DEFAULT 0,     -- จำนวน session ที่ทำตรงเวลา
+                total_late_sessions INTEGER DEFAULT 0,        -- จำนวน session ที่ทำช้า
+                average_session_duration REAL DEFAULT 0.0,    -- ระยะเวลาเฉลี่ยต่อ session
+                productivity_score REAL DEFAULT 0.0,          -- คะแนนประสิทธิภาพเฉลี่ย
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่สร้าง
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่อัพเดต
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE -- ลบ user แล้วสถิติหายด้วย
+            )
+        """)
+
+        print("✅ Created pomodoro tables")
+        
+        # 13. Create classwork tables
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_task (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
-                session_type TEXT NOT NULL,
-                duration INTEGER NOT NULL,
-                actual_duration INTEGER,
-                start_time TIMESTAMP NOT NULL,
-                end_time TIMESTAMP,
-                status TEXT DEFAULT 'active',
-                productivity_score INTEGER,
-                notes TEXT,
+                lesson_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                subject TEXT,
+                category TEXT,
+                priority TEXT DEFAULT 'medium',
+                status TEXT DEFAULT 'todo',
+                due_date TIMESTAMP,
+                estimated_time INTEGER DEFAULT 0,
+                actual_time INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES user(id)
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id)
             )
         """)
         
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS pomodoro_statistics (
+            CREATE TABLE IF NOT EXISTS classwork_material (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
-                date DATE NOT NULL,
-                total_sessions INTEGER DEFAULT 0,
-                total_focus_time INTEGER DEFAULT 0,
-                total_break_time INTEGER DEFAULT 0,
-                productivity_score REAL DEFAULT 0.0,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                title TEXT NOT NULL,
+                description TEXT,
+                file_path TEXT,
+                file_type TEXT,
+                file_size INTEGER,
+                subject TEXT,
+                category TEXT,
+                tags TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES user(id)
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
             )
         """)
         
-        print("✅ Created pomodoro tables")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_note (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                title TEXT NOT NULL,
+                content TEXT,
+                subject TEXT,
+                category TEXT,
+                tags TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_session (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                session_name TEXT,
+                start_time TIMESTAMP,
+                end_time TIMESTAMP,
+                duration INTEGER DEFAULT 0,
+                break_duration INTEGER DEFAULT 0,
+                productivity_score INTEGER DEFAULT 0,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
+            )
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS classwork_progress (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                task_id TEXT,
+                progress_percentage INTEGER DEFAULT 0,
+                completed_at TIMESTAMP,
+                time_spent INTEGER DEFAULT 0,
+                achievement_badges TEXT,
+                streak_count INTEGER DEFAULT 0,
+                last_activity TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id),
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (task_id) REFERENCES classwork_task(id)
+            )
+        """)
+        
+        print("✅ Created classwork tables")
+        
+        # 14. Create classwork indexes
+        classwork_indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_classwork_task_user_id ON classwork_task(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_task_lesson_id ON classwork_task(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_task_status ON classwork_task(status)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_task_priority ON classwork_task(priority)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_task_due_date ON classwork_task(due_date)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_material_user_id ON classwork_material(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_material_lesson_id ON classwork_material(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_material_task_id ON classwork_material(task_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_material_subject ON classwork_material(subject)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_note_user_id ON classwork_note(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_note_lesson_id ON classwork_note(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_note_task_id ON classwork_note(task_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_session_user_id ON classwork_session(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_session_lesson_id ON classwork_session(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_session_task_id ON classwork_session(task_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_progress_user_id ON classwork_progress(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_progress_lesson_id ON classwork_progress(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_classwork_progress_task_id ON classwork_progress(task_id)"
+        ]
+        
+        for index_sql in classwork_indexes:
+            try:
+                cursor.execute(index_sql)
+            except sqlite3.OperationalError as e:
+                print(f"   Warning: {e}")
+        
+        print("✅ Created classwork indexes")
+        
+        # 15. Create classwork uploads directory
+        classwork_upload_dir = 'uploads/classwork'
+        os.makedirs(classwork_upload_dir, exist_ok=True)
+        print("✅ Created classwork uploads directory")
         
         # Commit all changes
         conn.commit()
