@@ -64,7 +64,7 @@ class GradeController:
         
         config = GradeConfig.query.filter_by(lesson_id=lesson_id).first()
         if not config:
-            raise NotFoundException("Grade configuration not found")
+            raise NotFoundException("Grade configuration", lesson_id)
         
         # Parse JSON and return dict
         return {
@@ -87,7 +87,7 @@ class GradeController:
         
         config = GradeConfig.query.filter_by(lesson_id=lesson_id).first()
         if not config:
-            raise NotFoundException("Grade configuration not found")
+            raise NotFoundException("Grade configuration", lesson_id)
         
         # Update fields
         config.grading_scale = json.dumps(grading_scale)
@@ -115,7 +115,7 @@ class GradeController:
         # Delete config (will cascade delete categories, items, entries due to FK constraints)
         config = GradeConfig.query.filter_by(lesson_id=lesson_id).first()
         if not config:
-            raise NotFoundException("Grade configuration not found")
+            raise NotFoundException("Grade configuration", lesson_id)
         
         # Manually delete related data
         GradeSummary.query.filter_by(lesson_id=lesson_id).delete()
@@ -193,7 +193,7 @@ class GradeController:
         
         category = GradeCategory.query.get(category_id)
         if not category:
-            raise NotFoundException("Category not found")
+            raise NotFoundException("Category", category_id)
         
         db.session.delete(category)
         db.session.commit()
@@ -212,7 +212,18 @@ class GradeController:
         # Validate category exists
         category = GradeCategory.query.get(category_id)
         if not category:
-            raise NotFoundException("Category not found")
+            raise NotFoundException("Category", category_id)
+        
+        # Parse due_date if provided
+        due_date = None
+        if kwargs.get('due_date'):
+            try:
+                if isinstance(kwargs['due_date'], str):
+                    due_date = datetime.fromisoformat(kwargs['due_date'])
+                else:
+                    due_date = kwargs['due_date']
+            except ValueError:
+                raise ValidationException("Invalid due_date format. Use YYYY-MM-DD")
         
         # Create grade item
         item = GradeItem(
@@ -221,7 +232,7 @@ class GradeController:
             name=name,
             description=kwargs.get('description', ''),
             points_possible=points_possible,
-            due_date=kwargs.get('due_date'),
+            due_date=due_date,
             published_date=kwargs.get('published_date'),
             is_published=kwargs.get('is_published', False),
             is_extra_credit=kwargs.get('is_extra_credit', False),
@@ -296,7 +307,7 @@ class GradeController:
         # Get grade item
         item = GradeItem.query.get(grade_item_id)
         if not item:
-            raise NotFoundException("Grade item not found")
+            raise NotFoundException("Grade item", grade_item_id)
         
         # Check if entry exists
         entry = GradeEntry.query.filter_by(

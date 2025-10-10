@@ -472,7 +472,7 @@
         
         for (const category of categoriesData) {
             const option = document.createElement('option');
-            option.value = category.id;
+            option.value = category.id;  // Use UUID, not name
             option.textContent = `${category.name} (${category.weight}%)`;
             categorySelect.appendChild(option);
         }
