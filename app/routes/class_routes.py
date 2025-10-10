@@ -105,22 +105,88 @@ def view_detail(lesson_id):
         return jsonify({'error': str(e)}), 500
 
 
-@class_bp.route('/class/<lesson_id>/stream-notes')
-def stream_notes(lesson_id):
-    """Load stream notes template"""
+@class_bp.route('/class/<lesson_id>/classwork')
+def get_classwork_data(lesson_id):
+    """Get classwork data (tasks and materials) for a lesson"""
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
         lesson_service = LessonService()
         lesson = lesson_service.get_lesson_by_id(lesson_id)
-        if not lesson:
-            return jsonify({'error': 'Lesson not found'}), 404
-        if lesson.user_id != g.user.id:
-            return jsonify({'error': 'Unauthorized'}), 403
-        return render_template('class_detail/_stream_notes.html', lesson=lesson, user=g.user)
+        
+        if not lesson or lesson.user_id != g.user.id:
+            return jsonify({'error': 'Class not found or no permission'}), 404
+        
+        # Get classwork tasks
+        classwork_tasks = db.session.execute(
+            text("""
+                SELECT id, title, description, subject, category, priority, status, 
+                       due_date, estimated_time, actual_time, created_at, updated_at
+                FROM classwork_task 
+                WHERE lesson_id = :lesson_id AND user_id = :user_id
+                ORDER BY created_at DESC
+            """),
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
+        ).fetchall()
+        
+        # Get classwork materials
+        classwork_materials = db.session.execute(
+            text("""
+                SELECT id, title, description, file_path, file_type, file_size,
+                       subject, category, tags, created_at, updated_at
+                FROM classwork_material 
+                WHERE lesson_id = :lesson_id AND user_id = :user_id
+                ORDER BY created_at DESC
+            """),
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
+        ).fetchall()
+        
+        # Convert to list of dicts
+        tasks = [{
+            'id': row[0],
+            'title': row[1],
+            'description': row[2],
+            'subject': row[3],
+            'category': row[4],
+            'priority': row[5],
+            'status': row[6],
+            'due_date': row[7],
+            'estimated_time': row[8],
+            'actual_time': row[9],
+            'created_at': row[10],
+            'updated_at': row[11]
+        } for row in classwork_tasks]
+        
+        materials = [{
+            'id': row[0],
+            'title': row[1],
+            'description': row[2],
+            'file_path': row[3],
+            'file_name': row[3].split('/')[-1] if row[3] else '',
+            'file_type': row[4],
+            'file_size': row[5],
+            'subject': row[6],
+            'category': row[7],
+            'tags': row[8],
+            'created_at': row[9],
+            'updated_at': row[10]
+        } for row in classwork_materials]
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'id': lesson.id,
+                'title': lesson.title,
+                'description': lesson.description,
+                'classwork': {
+                    'tasks': tasks,
+                    'materials': materials
+                }
+            }
+        })
     except Exception as e:
-        print(f"Error loading stream notes: {e}")
+        print(f"Error loading classwork data: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
@@ -180,7 +246,7 @@ def add_lesson():
             description=description or ''
         )
         
-        # Update status
+        # Update status and other fields
         status_map = {
             'not_started': 'not_started',
             'in_progress': 'in_progress', 
@@ -190,9 +256,38 @@ def add_lesson():
         }
         status_value = status_map.get(status, 'not_started')
         
+        # Get additional fields
+        difficulty_level = request.form.get('difficulty_level', 'beginner')
+        author_name = request.form.get('author_name', '')
+        estimated_duration = request.form.get('estimated_duration', 0)
+        tags = request.form.get('tags', '')
+        
+        # Convert duration to integer
+        try:
+            duration = int(estimated_duration) if estimated_duration else 0
+        except:
+            duration = 0
+        
         db.session.execute(
-            text("UPDATE lesson SET status = :status WHERE id = :lesson_id"),
-            {"status": status_value, "lesson_id": lesson.id}
+            text("""
+                UPDATE lesson 
+                SET status = :status,
+                    color_theme = :color_theme,
+                    difficulty_level = :difficulty_level,
+                    author_name = :author_name,
+                    estimated_duration = :estimated_duration,
+                    tags = :tags
+                WHERE id = :lesson_id
+            """),
+            {
+                "status": status_value,
+                "color_theme": color_theme,
+                "difficulty_level": difficulty_level,
+                "author_name": author_name,
+                "estimated_duration": duration,
+                "tags": tags,
+                "lesson_id": lesson.id
+            }
         )
         db.session.commit()
         
