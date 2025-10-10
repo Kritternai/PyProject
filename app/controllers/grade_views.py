@@ -369,12 +369,10 @@ class GradeController:
                 is_published=True
             ).all()
             
-            if not items:
-                continue
-            
             # Get grades for these items
             total_earned = 0
             total_possible = 0
+            graded_count = 0
             
             for item in items:
                 entry = GradeEntry.query.filter_by(
@@ -386,6 +384,7 @@ class GradeController:
                 if entry and entry.score is not None:
                     total_earned += float(entry.score)
                     total_possible += float(entry.points_possible)
+                    graded_count += 1
             
             # Calculate category percentage
             if total_possible > 0:
@@ -397,6 +396,7 @@ class GradeController:
             weighted_score = category_percentage * (float(category.weight) / 100)
             total_weighted_score += weighted_score
             
+            # Always include category in breakdown (even if no items)
             category_breakdown[category.id] = {
                 'name': category.name,
                 'weight': float(category.weight),
@@ -404,7 +404,10 @@ class GradeController:
                 'possible': total_possible,
                 'percentage': round(category_percentage, 2),
                 'weighted_score': round(weighted_score, 2),
-                'color': category.color
+                'color': category.color,
+                'total_items': len(items),
+                'graded_items': graded_count,
+                'pending_items': len(items) - graded_count
             }
         
         # Get letter grade

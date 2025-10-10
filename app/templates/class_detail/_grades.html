@@ -274,11 +274,16 @@
             const summaryResponse = await fetch(`/grades/lessons/${lessonId}/summary`);
             const summaryData = await summaryResponse.json();
             
+            console.log('📊 Summary data:', summaryData);
+            
             if (summaryData.success) {
                 currentSummary = summaryData.data;
+                console.log('📈 Category breakdown:', summaryData.data.category_breakdown);
                 renderGradeSummary(summaryData.data);
                 renderGoals(summaryData.data.goals);
                 renderCategoryBreakdown(summaryData.data.category_breakdown);
+            } else {
+                console.error('❌ Failed to load summary:', summaryData);
             }
             
             // Load grades table
@@ -416,8 +421,16 @@
     function renderCategoryBreakdown(breakdown) {
         const container = document.getElementById('category-breakdown');
         
-        if (Object.keys(breakdown).length === 0) {
-            container.innerHTML = '<div class="text-center text-muted py-4">No categories configured yet</div>';
+        if (!breakdown || Object.keys(breakdown).length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="mb-0">No categories configured yet</p>
+                    <button class="btn btn-sm btn-primary mt-2" onclick="openSetupModal()">
+                        <i class="bi bi-gear"></i> Setup Grading
+                    </button>
+                </div>
+            `;
             return;
         }
         
@@ -426,11 +439,18 @@
         for (const categoryId in breakdown) {
             const category = breakdown[categoryId];
             
+            // Determine if category has any data
+            const hasData = category.total_items > 0;
+            const hasGrades = category.graded_items > 0;
+            
             html += `
                 <div class="category-card">
                     <div class="category-header">
                         <div class="category-info">
-                            <h4 class="category-name">${category.name}</h4>
+                            <h4 class="category-name">
+                                <span style="color: ${category.color}">●</span>
+                                ${category.name}
+                            </h4>
                             <span class="category-weight">${category.weight}%</span>
                         </div>
                     </div>
@@ -444,9 +464,42 @@
                                 <div class="progress-bar-fill" style="width: ${category.percentage}%; background: ${category.color}"></div>
                             </div>
                         </div>
+                        
+                        <!-- Item counts -->
+                        <div class="category-stats mt-2">
+                            <div class="stat-item">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <span>${category.total_items} assignment${category.total_items !== 1 ? 's' : ''}</span>
+                            </div>
+                            ${hasGrades ? `
+                            <div class="stat-item">
+                                <i class="bi bi-check-circle text-success"></i>
+                                <span>${category.graded_items} graded</span>
+                            </div>
+                            ` : ''}
+                            ${category.pending_items > 0 ? `
+                            <div class="stat-item">
+                                <i class="bi bi-clock text-warning"></i>
+                                <span>${category.pending_items} pending</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                        
                         <div class="category-contribution">
                             Contributes: <strong>${category.weighted_score}%</strong> to final grade
                         </div>
+                        
+                        ${!hasData ? `
+                        <div class="alert alert-info mt-2 mb-0 py-2 small">
+                            <i class="bi bi-info-circle"></i>
+                            No assignments added yet
+                        </div>
+                        ` : !hasGrades ? `
+                        <div class="alert alert-warning mt-2 mb-0 py-2 small">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            No grades submitted yet
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
