@@ -1,0 +1,695 @@
+/* ============================================
+   ENCHAT SIDEBAR SYSTEM
+   Modern, Professional Sidebar Design
+   ============================================ */
+
+:root {
+  /* Enchat Color Palette - Blue & White Theme */
+  --enchat-primary: #1976D2;
+  --enchat-primary-dark: #0D47A1;
+  --enchat-primary-light: #42A5F5;
+  --enchat-accent: #2196F3;
+  --enchat-accent-hover: #1E88E5;
+  --enchat-success: #4CAF50;
+  --enchat-warning: #FFC107;
+  --enchat-danger: #F44336;
+  
+  /* Sidebar Specific - Blue & White Theme */
+  --enchat-sidebar-bg: linear-gradient(180deg, #1565C0 0%, #1976D2 50%, #1E88E5 100%);
+  --enchat-sidebar-bg-alt: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
+  --enchat-sidebar-width: 260px;
+  --enchat-sidebar-collapsed-width: 80px;
+  --enchat-sidebar-text: #ffffff;
+  --enchat-sidebar-text-muted: rgba(255, 255, 255, 0.8);
+  --enchat-sidebar-hover: rgba(255, 255, 255, 0.15);
+  --enchat-sidebar-active: #ffffff;
+  --enchat-sidebar-shadow: 0 4px 20px rgba(13, 71, 161, 0.25);
+  
+  /* Transitions */
+  --enchat-transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --enchat-transition-fast: all 0.15s ease-in-out;
+}
+
+/* ============================================
+   SIDEBAR CONTAINER
+   ============================================ */
+
+.enchat-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--enchat-sidebar-width);
+  background: var(--enchat-sidebar-bg);
+  color: var(--enchat-sidebar-text);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  box-shadow: var(--enchat-sidebar-shadow);
+  overflow: hidden;
+  transition: var(--enchat-transition-base);
+}
+
+.enchat-sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 100%);
+  pointer-events: none;
+}
+
+/* ============================================
+   SIDEBAR HEADER / LOGO
+   ============================================ */
+
+.enchat-sidebar__header {
+  position: relative;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.enchat-sidebar__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: var(--enchat-sidebar-text);
+  transition: var(--enchat-transition-fast);
+}
+
+.enchat-sidebar__logo:hover {
+  transform: scale(1.05);
+}
+
+.enchat-sidebar__logo-icon {
+  font-size: 2rem;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: enchat-pulse 2s ease-in-out infinite;
+}
+
+.enchat-sidebar__logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.enchat-sidebar__logo-subtitle {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 400;
+  opacity: 0.8;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+}
+
+/* ============================================
+   SIDEBAR MENU
+   ============================================ */
+
+.enchat-sidebar__menu {
+  flex: 1;
+  padding: 1.5rem 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+.enchat-sidebar__menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.enchat-sidebar__menu::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.enchat-sidebar__menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.enchat-sidebar__menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.enchat-sidebar__nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* ============================================
+   MENU ITEMS
+   ============================================ */
+
+.enchat-sidebar__nav-item {
+  margin: 0;
+  padding: 0;
+}
+
+.enchat-sidebar__nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.5rem;
+  margin: 0.25rem 0.75rem;
+  color: var(--enchat-sidebar-text);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 0.75rem;
+  transition: var(--enchat-transition-fast);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.enchat-sidebar__nav-link::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 0;
+  background: var(--enchat-sidebar-active);
+  border-radius: 0 4px 4px 0;
+  transition: var(--enchat-transition-fast);
+}
+
+.enchat-sidebar__nav-link:hover {
+  background: var(--enchat-sidebar-hover);
+  transform: translateX(4px);
+  color: var(--enchat-sidebar-text);
+}
+
+.enchat-sidebar__nav-link:hover::before {
+  height: 60%;
+}
+
+.enchat-sidebar__nav-link.active {
+  background: var(--enchat-sidebar-active);
+  color: #1565C0;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+}
+
+.enchat-sidebar__nav-link.active::before {
+  height: 100%;
+  background: #0D47A1;
+}
+
+.enchat-sidebar__nav-link.active .enchat-sidebar__nav-icon {
+  transform: scale(1.1);
+  animation: enchat-bounce 0.5s ease-in-out;
+}
+
+.enchat-sidebar__nav-icon {
+  font-size: 1.25rem;
+  min-width: 1.5rem;
+  text-align: center;
+  transition: var(--enchat-transition-fast);
+}
+
+.enchat-sidebar__nav-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.enchat-sidebar__nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--enchat-danger);
+  color: white;
+  border-radius: 0.75rem;
+  animation: enchat-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   SIDEBAR FOOTER / AUTH
+   ============================================ */
+
+.enchat-sidebar__footer {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.enchat-sidebar__user {
+  position: relative;
+}
+
+.enchat-sidebar__user-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.75rem;
+  color: var(--enchat-sidebar-text);
+  font-weight: 500;
+  transition: var(--enchat-transition-fast);
+  cursor: pointer;
+  text-align: left;
+}
+
+.enchat-sidebar__user-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.enchat-sidebar__user-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #42A5F5 0%, #1E88E5 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.enchat-sidebar__user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.enchat-sidebar__user-name {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.15rem;
+}
+
+.enchat-sidebar__user-role {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.enchat-sidebar__user-dropdown-icon {
+  font-size: 1rem;
+  transition: var(--enchat-transition-fast);
+}
+
+.enchat-sidebar__user-btn[aria-expanded="true"] .enchat-sidebar__user-dropdown-icon {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu Styling */
+.enchat-sidebar__dropdown-menu {
+  margin-top: 0.5rem !important;
+  background: white;
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 0.5rem;
+  min-width: 100%;
+}
+
+.enchat-sidebar__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  transition: var(--enchat-transition-fast);
+  color: #333;
+}
+
+.enchat-sidebar__dropdown-item:hover {
+  background: #E3F2FD;
+  color: #1565C0;
+}
+
+.enchat-sidebar__dropdown-item i {
+  font-size: 1.1rem;
+  width: 1.5rem;
+  text-align: center;
+}
+
+.enchat-sidebar__dropdown-divider {
+  margin: 0.5rem 0;
+  border-top: 1px solid #e9ecef;
+}
+
+.enchat-sidebar__dropdown-item--danger {
+  color: var(--enchat-danger);
+}
+
+.enchat-sidebar__dropdown-item--danger:hover {
+  background: rgba(255, 86, 48, 0.1);
+  color: var(--enchat-danger);
+}
+
+/* Auth Buttons for Non-logged Users */
+.enchat-sidebar__auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.enchat-sidebar__btn {
+  padding: 0.875rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: var(--enchat-transition-fast);
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.enchat-sidebar__btn--primary {
+  background: white;
+  color: #1565C0;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+}
+
+.enchat-sidebar__btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.4);
+  color: #0D47A1;
+  background: #f8fbff;
+}
+
+.enchat-sidebar__btn--outline {
+  background: transparent;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.enchat-sidebar__btn--outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  color: white;
+}
+
+/* ============================================
+   MAIN CONTENT ADJUSTMENT
+   ============================================ */
+
+.enchat-main-content {
+  margin-left: var(--enchat-sidebar-width);
+  min-height: 100vh;
+  padding: 0;
+  background: #f5f7fa;
+  transition: var(--enchat-transition-base);
+  width: calc(100% - var(--enchat-sidebar-width));
+  overflow-x: hidden;
+}
+
+/* Container adjustments for full-width content */
+.enchat-main-content > .container-fluid {
+  padding: 0;
+  max-width: 100%;
+}
+
+.enchat-main-content .container-fluid[style*="padding: 0"] {
+  padding: 0 !important;
+}
+
+/* Add padding for fragments that need it */
+.enchat-main-content > .container-fluid:not([style*="padding: 0"]) {
+  padding: 2rem;
+}
+
+/* Special handling for specific fragments */
+#main-content .container-fluid {
+  max-width: 100%;
+}
+
+/* Dashboard and other fragments padding */
+#main-content > .container-fluid:not([style*="padding: 0"]):not([id*="class-detail"]) {
+  padding: 1.5rem 2rem;
+}
+
+/* Pomodoro fragment specific */
+#main-content .container:has(.logo) {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes enchat-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes enchat-bounce {
+  0%, 100% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+@keyframes enchat-slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 992px) {
+  .enchat-sidebar {
+    width: var(--enchat-sidebar-collapsed-width);
+  }
+  
+  .enchat-sidebar__logo-text,
+  .enchat-sidebar__logo-subtitle,
+  .enchat-sidebar__nav-text,
+  .enchat-sidebar__nav-badge,
+  .enchat-sidebar__user-info {
+    display: none;
+  }
+  
+  .enchat-sidebar__nav-link {
+    justify-content: center;
+    padding: 1rem;
+  }
+  
+  .enchat-sidebar__nav-icon {
+    margin: 0;
+  }
+  
+  .enchat-main-content {
+    margin-left: var(--enchat-sidebar-collapsed-width);
+    width: calc(100% - var(--enchat-sidebar-collapsed-width));
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .enchat-sidebar {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    padding: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1.5rem 1.5rem 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .enchat-sidebar__header,
+  .enchat-sidebar__footer {
+    display: none;
+  }
+  
+  .enchat-sidebar__menu {
+    width: 100%;
+    padding: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  
+  .enchat-sidebar__nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0.5rem;
+    gap: 0.25rem;
+  }
+  
+  .enchat-sidebar__nav-item {
+    flex: 1;
+    min-width: fit-content;
+  }
+  
+  .enchat-sidebar__nav-link {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 0.5rem;
+    margin: 0;
+    font-size: 0.7rem;
+    border-radius: 0.75rem;
+    text-align: center;
+  }
+  
+  .enchat-sidebar__nav-link:hover {
+    transform: none;
+  }
+  
+  .enchat-sidebar__nav-link::before {
+    display: none;
+  }
+  
+  .enchat-sidebar__nav-link.active {
+    background: var(--enchat-sidebar-active);
+    color: #1565C0;
+  }
+  
+  .enchat-sidebar__nav-icon {
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  
+  .enchat-sidebar__nav-text {
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+  
+  .enchat-sidebar__nav-badge {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    min-width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.6rem;
+  }
+  
+  .enchat-main-content {
+    margin-left: 0;
+    margin-bottom: 5rem;
+    padding: 0;
+    width: 100%;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .enchat-sidebar__nav-link {
+    padding: 0.625rem 0.25rem;
+    font-size: 0.65rem;
+  }
+  
+  .enchat-sidebar__nav-icon {
+    font-size: 1.25rem;
+  }
+  
+  .enchat-sidebar__nav-text {
+    font-size: 0.65rem;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+.enchat-sidebar__nav-link:focus,
+.enchat-sidebar__user-btn:focus,
+.enchat-sidebar__btn:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  .enchat-sidebar {
+    display: none;
+  }
+  
+  .enchat-main-content {
+    margin-left: 0;
+  }
+}
+
+/* ============================================
+   THEME VARIATIONS (Optional)
+   ============================================ */
+
+/* Dark Theme */
+.enchat-sidebar--dark {
+  --enchat-sidebar-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+/* Light Theme */
+.enchat-sidebar--light {
+  --enchat-sidebar-bg: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
+  --enchat-sidebar-text: #333;
+  --enchat-sidebar-text-muted: rgba(0, 0, 0, 0.6);
+}
+
+/* Blue Theme */
+.enchat-sidebar--blue {
+  --enchat-sidebar-bg: linear-gradient(135deg, #0052CC 0%, #003B8E 100%);
+}
+
+/* Green Theme */
+.enchat-sidebar--green {
+  --enchat-sidebar-bg: linear-gradient(135deg, #00875A 0%, #006644 100%);
+}
+
+/* Blue Theme (Default) */
+.enchat-sidebar--blue {
+  --enchat-sidebar-bg: linear-gradient(180deg, #1565C0 0%, #1976D2 50%, #1E88E5 100%);
+}
+
