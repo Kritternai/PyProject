@@ -80,6 +80,7 @@ def register_blueprints(app):
     from .routes.task_routes import task_bp
     from .routes.pomodoro_routes import pomodoro_bp
     from .routes.pomodoro_session_routes import pomodoro_session_bp
+    from .routes.grade_routes import grade_bp
     
     # ============================================
     # INTEGRATION ROUTES
@@ -107,6 +108,7 @@ def register_blueprints(app):
     app.register_blueprint(task_bp)         # /api/tasks/*
     app.register_blueprint(pomodoro_bp)     # /api/pomodoro/*
     app.register_blueprint(pomodoro_session_bp)  # /pomodoro/session/*, /pomodoro/statistics/*
+    app.register_blueprint(grade_bp)        # /grades/* - Grade System
     
     # ============================================
     # REGISTER INTEGRATION BLUEPRINTS
@@ -233,3 +235,9 @@ def import_models():
     from .models.lesson_section import LessonSectionModel
     from .models.note import NoteModel
     from .models.task import TaskModel
+    
+    # Import Grade models
+    try:
+        from database.models.grade import GradeConfig, GradeCategory, GradeItem, GradeEntry, GradeSummary
+    except ImportError:
+        pass  # Grade models may not exist yet

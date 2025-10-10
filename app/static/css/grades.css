@@ -1,0 +1,613 @@
+/* 
+ * Grades System CSS
+ * Modern, clean design for grade display and calculator
+ */
+
+/* ==========================================
+ * Container & Layout
+ * ========================================== */
+
+.grades-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* ==========================================
+ * Header
+ * ========================================== */
+
+.grades-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.grades-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0;
+}
+
+.grades-subtitle {
+    font-size: 0.95rem;
+    color: #718096;
+    margin: 0.25rem 0 0 0;
+}
+
+.grades-header-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* ==========================================
+ * Buttons
+ * ========================================== */
+
+.btn-grades {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-grades:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-grades-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-grades-secondary:hover {
+    background: #667eea;
+    color: white;
+}
+
+/* ==========================================
+ * Grade Summary Card
+ * ========================================== */
+
+.grade-summary-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 2.5rem;
+    color: white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    margin-bottom: 2rem;
+}
+
+.grade-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.current-grade {
+    text-align: center;
+}
+
+.grade-letter {
+    font-size: 5rem;
+    font-weight: 800;
+    line-height: 1;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.grade-gpa {
+    font-size: 1.25rem;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-top: 0.5rem;
+}
+
+.grade-details {
+    flex: 1;
+    min-width: 300px;
+}
+
+.grade-percentage {
+    margin-bottom: 1rem;
+}
+
+.percentage-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar-container {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    height: 12px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    background: rgba(255, 255, 255, 0.9);
+    height: 100%;
+    border-radius: 50px;
+    transition: width 0.6s ease;
+}
+
+.grade-points {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-top: 1rem;
+}
+
+.grade-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    margin-top: 1rem;
+    font-weight: 500;
+}
+
+.grade-status.passing {
+    background: rgba(16, 185, 129, 0.3);
+}
+
+.grade-status.failing {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+/* Setup Prompt */
+.setup-prompt {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: white;
+}
+
+.setup-prompt i {
+    margin-bottom: 1rem;
+}
+
+.setup-prompt h3 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.setup-prompt p {
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+}
+
+/* ==========================================
+ * Grade Goals Section
+ * ========================================== */
+
+.grade-goals-section {
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 1.25rem;
+}
+
+.goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.goal-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: white;
+    border-radius: 12px;
+    border: 2px solid;
+    transition: all 0.2s;
+}
+
+.goal-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.goal-card.achieved {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+}
+
+.goal-card.achievable {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+}
+
+.goal-card.not-achievable {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, #fee 0%, #fdd 100%);
+}
+
+.goal-icon {
+    font-size: 2rem;
+}
+
+.goal-card.achieved .goal-icon {
+    color: #10b981;
+}
+
+.goal-card.achievable .goal-icon {
+    color: #f59e0b;
+}
+
+.goal-card.not-achievable .goal-icon {
+    color: #ef4444;
+}
+
+.goal-content {
+    flex: 1;
+}
+
+.goal-grade {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.goal-message {
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+/* ==========================================
+ * Category Breakdown
+ * ========================================== */
+
+.category-breakdown-section {
+    margin-bottom: 2rem;
+}
+
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+}
+
+.category-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s;
+}
+
+.category-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.category-header {
+    margin-bottom: 1rem;
+}
+
+.category-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.category-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a202c;
+    margin: 0;
+}
+
+.category-weight {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #667eea;
+    background: #e9ecff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+.category-body {
+}
+
+.category-score {
+    margin-bottom: 1rem;
+}
+
+.score-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.75rem;
+}
+
+.score-percentage {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a202c;
+}
+
+.score-points {
+    font-size: 0.9rem;
+    color: #718096;
+}
+
+.category-contribution {
+    font-size: 0.85rem;
+    color: #718096;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* ==========================================
+ * Grades Table
+ * ========================================== */
+
+.grades-table-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.grades-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.table-filters {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.grades-table {
+    margin: 0;
+}
+
+.grades-table thead th {
+    background: #f7fafc;
+    color: #4a5568;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 1rem 0.75rem;
+}
+
+.grades-table tbody tr {
+    border-bottom: 1px solid #e2e8f0;
+    transition: background 0.2s;
+}
+
+.grades-table tbody tr:hover {
+    background: #f7fafc;
+}
+
+.grades-table tbody td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+}
+
+.assignment-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.assignment-name {
+    font-weight: 500;
+    color: #1a202c;
+}
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-badge.graded {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.missing {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* ==========================================
+ * Goal Calculator Modal
+ * ========================================== */
+
+.calculator-form {
+    padding: 1rem;
+}
+
+.calculator-form label {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+.calculator-result {
+    margin-top: 1.5rem;
+}
+
+.goal-details {
+    margin-top: 1rem;
+}
+
+.goal-stat {
+    padding: 1rem;
+}
+
+.goal-stat .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.goal-stat .stat-label {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-top: 0.25rem;
+}
+
+/* ==========================================
+ * Setup Modal
+ * ========================================== */
+
+.setup-section {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.setup-section h6 {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.grading-scale-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.category-row {
+    padding: 1rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+/* ==========================================
+ * Responsive Design
+ * ========================================== */
+
+@media (max-width: 768px) {
+    .grades-container {
+        padding: 1rem;
+    }
+    
+    .grade-display {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .grade-letter {
+        font-size: 4rem;
+    }
+    
+    .goals-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .categories-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .grades-table-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .table-filters {
+        flex-direction: column;
+    }
+    
+    .grades-table {
+        font-size: 0.875rem;
+    }
+    
+    .grades-table thead th,
+    .grades-table tbody td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+/* ==========================================
+ * Animations
+ * ========================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.goal-card,
+.category-card {
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* ==========================================
+ * Utilities
+ * ========================================== */
+
+.text-muted {
+    color: #718096 !important;
+}
+
+.badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
