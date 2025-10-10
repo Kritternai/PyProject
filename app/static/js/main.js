@@ -2,16 +2,139 @@ function loadPage(page) {
   // Show loading indicator
   const mainContent = document.getElementById('main-content');
   mainContent.innerHTML = '<div class="text-center py-5 text-secondary" id="loading-indicator">Loading...</div>';
+  console.log('🔄 Loading page:', page);
   
   fetch('/partial/' + page)
     .then(response => {
+      console.log('📥 Response received for:', page);
+      console.log('📋 Content-Type:', response.headers.get('content-type'));
+      
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
+        console.log('🔄 Handling JSON response');
         return response.json().then(handleJsonRedirect);
       } else {
+        console.log('🔄 Handling HTML response');
         return response.text().then(html => {
-          document.getElementById('main-content').innerHTML = html;
-          if (page === 'dashboard') setupFullCalendar();
+          console.log('📝 Updating main-content');
+        document.getElementById('main-content').innerHTML = html;
+        
+        if (page === 'dashboard') {
+          console.log('📅 Setting up calendar...');
+          setupFullCalendar();
+        }
+        
+        if (page === 'pomodoro') {
+          console.log('⏰ Pomodoro page detected');
+          window.isInSpaMode = true;
+          
+          // Check if already loaded
+          if (window.pomodoroLoaded && window.pomodoroInitialized) {
+            console.log('✅ Pomodoro already loaded and initialized');
+            return;
+          }
+          
+          // โหลด pomodoro.js แบบ dynamic
+          const loadPomodoro = () => {
+            console.log('📥 Loading pomodoro.js dynamically...');
+            
+            // ตรวจสอบว่ามี script อยู่แล้วหรือไม่
+            const existingScript = document.querySelector('script[src*="pomodoro.js"]');
+            if (existingScript) {
+              console.log('⚠️ Found existing pomodoro.js script, removing...');
+              existingScript.remove();
+            }
+            
+            const script = document.createElement('script');
+            script.src = '/static/js/pomodoro.js';
+            script.async = true;
+            
+            script.onload = () => {
+              console.log('✅ pomodoro.js loaded successfully');
+              
+              // รอให้ script ทำงานและ define functions เสร็จ
+              setTimeout(() => {
+                if (window.onLoadPomodoro) {
+                  console.log('✅ Found onLoadPomodoro function, initializing...');
+                  try {
+                    // ตรวจสอบว่าเคย initialize แล้วหรือยัง
+                    if (!window.pomodoroInitialized) {
+                      window.onLoadPomodoro();
+                      console.log('✅ Pomodoro initialized successfully');
+                    } else {
+                      console.log('⚠️ Pomodoro already initialized');
+                    }
+                  } catch (error) {
+                    console.error('❌ Error initializing Pomodoro:', error);
+                    showPomodoroError('Error initializing Pomodoro Timer');
+                  }
+                } else {
+                  console.error('❌ onLoadPomodoro function not found after script load!');
+                  showPomodoroError('Error loading Pomodoro Timer');
+                }
+              }, 100); // รอ 100ms ให้ script ทำงานเสร็จ
+            };
+            
+            script.onerror = () => {
+              console.error('❌ Failed to load pomodoro.js');
+              showPomodoroError('Failed to load Pomodoro Timer');
+            };
+            
+            document.head.appendChild(script);
+          };
+          
+          // Helper function to show error
+          const showPomodoroError = (message) => {
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) {
+              mainContent.innerHTML += `
+                <div class="alert alert-danger">
+                  ${message}. Please refresh the page or contact support.
+                </div>
+              `;
+            }
+          };
+          
+          // Initialize variables for pomodoro loading
+          let attempts = 0;
+          const maxAttempts = 10;
+          
+          // เริ่มโหลด pomodoro.js
+          loadPomodoro();
+          
+          const checkPomodoro = () => {
+            attempts++;
+            
+            if (window.onLoadPomodoro) {
+              console.log('✅ Found onLoadPomodoro function, initializing...');
+              try {
+                window.onLoadPomodoro();
+                console.log('✅ Pomodoro initialized successfully');
+              } catch (error) {
+                console.error('❌ Error initializing Pomodoro:', error);
+              }
+            } else {
+              if (attempts < maxAttempts) {
+                console.log(`⏳ Waiting for onLoadPomodoro function... (attempt ${attempts}/${maxAttempts})`);
+                setTimeout(checkPomodoro, 100);
+              } else {
+                console.error('❌ Timeout waiting for onLoadPomodoro function!');
+                // แสดง error message ให้ user
+                const mainContent = document.getElementById('main-content');
+                if (mainContent) {
+                  mainContent.innerHTML += `
+                    <div class="alert alert-danger">
+                      Error loading Pomodoro Timer. Please refresh the page.
+                    </div>
+                  `;
+                }
+              }
+            }
+          };
+          
+          // เริ่มการตรวจสอบ
+          checkPomodoro();
+        }
           setupAuthForms();
           setupLessonForms();
           setupLessonEditForm(); // <-- เพิ่มตรงนี้

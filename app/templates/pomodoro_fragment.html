@@ -1,23 +1,173 @@
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-clock me-2"></i>Pomodoro Timer
-                    </h4>
-                </div>
-                <div class="card-body text-center py-5">
-                    <div class="mb-4">
-                        <i class="fas fa-tools fa-3x text-muted"></i>
-                    </div>
-                    <h3 class="text-muted">Coming Soon</h3>
-                    <p class="text-muted">Pomodoro Timer feature is under development</p>
-                    <div class="mt-4">
-                        <span class="badge bg-primary">In Development</span>
-                    </div>
-                </div>
-            </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pomodoro.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dialog-polyfill.css') }}" />
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">🍅</div>
+        <span>Pomodoro</span>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="statsBtn" title="Statistics">📊</button>
+        <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+      </div>
+    </header>
+
+    <div class="main-card">
+      <div class="mode-tabs">
+  <button class="mode-tab active" data-mode="pomodoro">Pomodoro</button>
+  <button class="mode-tab" data-mode="short">Short Break</button>
+  <button class="mode-tab" data-mode="long">Long Break</button>
+      </div>
+
+      <div class="timer-display">
+        <div class="time" id="timeDisplay">25:00</div>
+        <div class="progress-ring">
+          <div class="progress-fill" id="progressBar"></div>
         </div>
+      </div>
+
+      <div class="controls">
+  <button class="btn btn-primary" id="startBtn">Start</button>
+  <button class="btn btn-secondary" id="resetBtn">Reset</button>
+  <button class="btn btn-secondary" id="skipBtn">Skip</button>
+      </div>
+
+      <div class="status-info">
+        <div class="badge">
+          <span>🔥</span>
+          <span id="cycleInfo">Cycle #1</span>
+        </div>
+        <div class="badge">
+          <span>🎯</span>
+          <span id="statusText">Time to focus!</span>
+        </div>
+      </div>
     </div>
-</div>
+
+    <div class="grid-layout">
+      <div class="section-card">
+        <div class="section-title">
+          <span>📝 Your Tasks</span>
+          <span id="taskCount" style="font-size: 14px; color: var(--text-muted);">0 tasks</span>
+        </div>
+        <div class="task-input">
+          <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="100">
+          <button class="btn btn-primary" id="addTaskBtn">Add</button>
+        </div>
+        <ul class="task-list" id="taskList"></ul>
+      </div>
+
+      <div class="section-card">
+  <div class="section-title">📈 Today's Stats</div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="completedPomodoros">0</div>
+            <div class="stat-label">Pomodoros</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="focusTime">0h</div>
+            <div class="stat-label">Focus Time</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="completedTasks">0</div>
+            <div class="stat-label">Tasks Done</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalBreaks">0</div>
+            <div class="stat-label">Total Breaks</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- User Profile Section ย้ายไปอยู่ด้านล่าง -->
+  </div>
+
+  <dialog id="settingsDialog">
+    <div class="modal-header">
+  <h2 class="modal-title">⚙️ Settings</h2>
+      <button class="icon-btn" id="closeSettings" style="width: 36px; height: 36px;">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-group">
+  <label>Pomodoro (minutes)</label>
+        <input type="number" id="pomodoroTime" min="1" max="60" value="25">
+      </div>
+      <div class="settings-group">
+  <label>Short Break (minutes)</label>
+        <input type="number" id="shortBreakTime" min="1" max="30" value="5">
+      </div>
+      <div class="settings-group">
+  <label>Long Break (minutes)</label>
+        <input type="number" id="longBreakTime" min="1" max="60" value="15">
+      </div>
+      <div class="settings-group">
+  <label>Long Break every (Pomodoros)</label>
+        <input type="number" id="longBreakInterval" min="2" max="10" value="4">
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="autoStartBreaks" class="checkbox">
+  <label for="autoStartBreaks">Auto start breaks</label>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="soundEnabled" class="checkbox" checked>
+  <label for="soundEnabled">Enable sound notification</label>
+      </div>
+    </div>
+    <div class="modal-actions">
+  <button class="btn btn-secondary" id="resetStatsBtn">Reset Stats</button>
+  <button class="btn btn-primary" id="saveSettings">Save</button>
+    </div>
+  </dialog>
+
+  <dialog id="statsDialog">
+    <div class="modal-header">
+  <h2 class="modal-title">📊 Detailed Statistics</h2>
+      <button class="icon-btn" id="closeStats" style="width: 36px; height: 36px;">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="totalPomodoros">0</div>
+          <div class="stat-label">Total Pomodoros</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="totalFocusTime">0h</div>
+          <div class="stat-label">Total Focus Time</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="totalTasksCompleted">0</div>
+          <div class="stat-label">Total Tasks Done</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="streak">0</div>
+          <div class="stat-label">Streak (days)</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+  <button class="btn btn-secondary" id="closeStatsBtn">Close</button>
+    </div>
+  </dialog>
+
+  <div class="notification" id="notification">
+    <span id="notificationText"></span>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
+  <script>
+    // Polyfill for dialog
+    if (!('showModal' in document.createElement('dialog'))) {
+      dialogPolyfill.registerDialog(document.getElementById('settingsDialog'));
+      dialogPolyfill.registerDialog(document.getElementById('statsDialog'));
+    }
+    
+    // Make sure dialogs are closed by default
+    document.getElementById('settingsDialog').close();
+    document.getElementById('statsDialog').close();
+
+    // Initialize when fragment is loaded in SPA
+    if (window.onLoadPomodoro) {
+      window.onLoadPomodoro();
+    }
+  </script>

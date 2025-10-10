@@ -1,0 +1,29 @@
+dialog {
+  position: absolute;
+  left: 0; right: 0;
+  margin: auto;
+  padding: 1em;
+  background: white;
+  color: black;
+  display: none;
+  border: 1px solid;
+}
+
+dialog[open] {
+  display: block;
+}
+
+.backdrop {
+  position: fixed;
+  background: rgba(0,0,0,0.6);
+  top: 0; right: 0; bottom: 0; left: 0;
+}
+
+dialog + .backdrop {
+  position: fixed;
+  display: none;
+}
+
+dialog[open] + .backdrop {
+  display: block;
+}
