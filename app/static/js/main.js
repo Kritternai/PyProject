@@ -1,8 +1,30 @@
 function loadPage(page) {
-  // Show loading indicator
-  const mainContent = document.getElementById('main-content');
-  mainContent.innerHTML = '<div class="text-center py-5 text-secondary" id="loading-indicator">Loading...</div>';
   console.log('🔄 Loading page:', page);
+  
+  const mainContent = document.getElementById('main-content');
+  
+  // Add loading class for smooth transition
+  mainContent.classList.add('loading');
+  
+  // Show loading indicator immediately with better styling
+  mainContent.innerHTML = `
+    <div class="loading-container" style="
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      padding: 2rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+      margin: 1rem;
+    ">
+      <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div class="text-secondary">Loading ${page.charAt(0).toUpperCase() + page.slice(1)}...</div>
+    </div>
+  `;
   
   fetch('/partial/' + page)
     .then(response => {
@@ -17,7 +39,9 @@ function loadPage(page) {
         console.log('🔄 Handling HTML response');
         return response.text().then(html => {
           console.log('📝 Updating main-content');
-        document.getElementById('main-content').innerHTML = html;
+          // Remove loading class and update content
+          mainContent.classList.remove('loading');
+          mainContent.innerHTML = html;
         
         if (page === 'dashboard') {
           console.log('📅 Setting up calendar...');
@@ -169,11 +193,35 @@ function loadPage(page) {
     })
     .catch(error => {
       console.error('Error loading page:', error);
-      // Show error message
+      // Show error message and remove loading state
       const mainContent = document.getElementById('main-content');
+      mainContent.classList.remove('loading');
       mainContent.innerHTML = '<div class="text-center py-5"><div class="alert alert-danger">Error loading page. Please try again.</div></div>';
     });
 }
+// Preload function for faster navigation
+function preloadPage(page) {
+  // Prefetch the page content without displaying it
+  fetch(`/partial/${page}`)
+    .then(response => {
+      if (response.ok) {
+        console.log(`✅ Preloaded: ${page}`);
+      }
+    })
+    .catch(error => {
+      console.log(`⚠️ Preload failed for: ${page}`, error);
+    });
+}
+
+// Preload common pages on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Preload dashboard and class pages
+  setTimeout(() => {
+    preloadPage('dashboard');
+    preloadPage('class');
+  }, 1000);
+});
+
 // Open full-page note editor (fragment) with optional selected note
 window.openNoteEditor = function(noteId) {
   const target = noteId ? `note/editor/${noteId}` : 'note/editor';
@@ -1965,14 +2013,9 @@ window.sortLessonsByFavorite = function() {
         return aFav - bFav;
     });
     
-    // Re-append in sorted order with animation
-    cards.forEach((card, index) => {
-        card.style.animation = 'none';
-        setTimeout(() => {
-            grid.appendChild(card);
-            card.style.animation = 'fadeInUp 0.4s ease-out forwards';
-            card.style.animationDelay = `${index * 0.05}s`;
-        }, 10);
+    // Re-append in sorted order (no animation for performance)
+    cards.forEach((card) => {
+        grid.appendChild(card);
     });
 };
 

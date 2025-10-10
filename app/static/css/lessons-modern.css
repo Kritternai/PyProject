@@ -31,8 +31,8 @@
     --lessons-shadow-lg: 0 8px 24px rgba(13, 71, 161, 0.16);
     --lessons-shadow-xl: 0 12px 32px rgba(13, 71, 161, 0.20);
     
-    /* Transitions */
-    --lessons-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Transitions - Simplified for performance */
+    --lessons-transition: all 0.2s ease;
 }
 
 /* ===== Page Container ===== */
@@ -102,10 +102,12 @@
 
 .lessons-hero-actions {
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     flex-wrap: wrap;
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 /* ===== Search Wrapper ===== */
@@ -113,8 +115,17 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    flex: 1;
+    min-width: 400px;
     max-width: 600px;
-    width: 100%;
+}
+
+/* ===== Action Buttons Container ===== */
+.lessons-action-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    flex-shrink: 0;
 }
 
 /* ===== Search Bar (Hero Style) ===== */
@@ -176,7 +187,6 @@
 .filter-compact-btn:hover {
     background: rgba(255, 255, 255, 0.3);
     border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-2px);
 }
 
 .filter-compact-btn.active {
@@ -192,8 +202,8 @@
 
 /* ===== Action Buttons ===== */
 .lessons-btn {
-    padding: 1rem 2rem;
-    border-radius: 12px;
+    padding: 1.125rem 1.75rem;
+    border-radius: 16px;
     font-weight: 600;
     font-size: 1rem;
     border: none;
@@ -204,28 +214,31 @@
     transition: var(--lessons-transition);
     text-decoration: none;
     white-space: nowrap;
+    height: 56px; /* Match search input height */
+    box-sizing: border-box;
 }
 
 .lessons-btn-primary {
     background: white;
     color: var(--lessons-primary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border: 2px solid transparent;
 }
 
 .lessons-btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
 }
 
 .lessons-btn-outline {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.1);
     color: white;
-    border: 2px solid rgba(255, 255, 255, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
 }
 
 .lessons-btn-outline:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: white;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* ===== Container ===== */
@@ -383,8 +396,8 @@
 }
 
 .lesson-card-modern:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: var(--lessons-shadow-xl);
+    transform: translateY(-2px);
+    box-shadow: var(--lessons-shadow-lg);
     border-color: var(--lessons-primary);
 }
 
@@ -632,14 +645,30 @@
     .lessons-hero-actions {
         flex-direction: column;
         width: 100%;
+        gap: 1rem;
     }
     
     .lessons-search-wrapper {
         max-width: 100%;
+        min-width: auto;
     }
     
     .lessons-search-hero {
         max-width: 100%;
+    }
+    
+    .lessons-action-buttons {
+        width: 100%;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    
+    .lessons-btn {
+        flex: 1;
+        min-width: 140px;
+        height: 48px;
+        padding: 0.875rem 1.25rem;
+        font-size: 0.875rem;
     }
     
     .lessons-filter-compact {
@@ -670,31 +699,8 @@
     }
 }
 
-/* ===== Animations ===== */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.lesson-card-modern {
-    animation: fadeInUp 0.5s ease-out backwards;
-}
-
-.lesson-card-modern:nth-child(1) { animation-delay: 0.05s; }
-.lesson-card-modern:nth-child(2) { animation-delay: 0.1s; }
-.lesson-card-modern:nth-child(3) { animation-delay: 0.15s; }
-.lesson-card-modern:nth-child(4) { animation-delay: 0.2s; }
-.lesson-card-modern:nth-child(5) { animation-delay: 0.25s; }
-.lesson-card-modern:nth-child(6) { animation-delay: 0.3s; }
-.lesson-card-modern:nth-child(7) { animation-delay: 0.35s; }
-.lesson-card-modern:nth-child(8) { animation-delay: 0.4s; }
-.lesson-card-modern:nth-child(9) { animation-delay: 0.45s; }
+/* ===== Animations (Disabled for Performance) ===== */
+/* Removed card animations for faster loading */
 
 @keyframes pulse {
     0%, 100% {
