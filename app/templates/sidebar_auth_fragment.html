@@ -34,13 +34,15 @@
     </ul>
   </div>
 {% else %}
-  <!-- Not Logged In -->
-  <div class="enchat-sidebar__auth-buttons">
-    <a href="{{ url_for('auth.login') }}" class="enchat-sidebar__btn enchat-sidebar__btn--primary">
-      <i class="bi bi-box-arrow-in-right me-2"></i>Login
-    </a>
-    <a href="{{ url_for('auth.register') }}" class="enchat-sidebar__btn enchat-sidebar__btn--outline">
-      <i class="bi bi-person-plus me-2"></i>Register
+  <div class="d-grid gap-2">
+    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">Register</a>
+    <!-- Google Sign-In button -->
+    <a href="{{ url_for('google_auth.login') }}" class="btn btn-google" id="google-signin-sidebar">
+      <img src="{{ url_for('static', filename='icons/google-logo.svg') }}" alt="Google">
+      <span class="label-small">เข้าสู่ระบบด้วย Google</span>
+      <span class="spinner" aria-hidden="true"></span>
+      <!-- JS will add 'loading' class on click -->
     </a>
   </div>
 {% endif %}

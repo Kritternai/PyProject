@@ -74,7 +74,42 @@ def reexec_in_venv() -> None:
 def set_env_defaults() -> None:
     """Set environment variables with defaults"""
     print_status("Setting environment variables...")
-    
+    # Load .env file from project root if present (simple parser, don't overwrite existing env vars)
+    try:
+        from pathlib import Path
+        # Check project root .env first
+        env_path = Path(os.getcwd()) / '.env'
+        loaded = False
+        if env_path.exists():
+            print_status(f"Loading environment variables from {env_path}")
+            loaded = True
+            for raw in env_path.read_text(encoding='utf-8').splitlines():
+                line = raw.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if '=' in line:
+                    k, v = line.split('=', 1)
+                    k = k.strip()
+                    v = v.strip().strip('"').strip("'")
+                    os.environ.setdefault(k, v)
+
+        # If not found at project root, check app/.env
+        if not loaded:
+            app_env = Path(os.getcwd()) / 'app' / '.env'
+            if app_env.exists():
+                print_status(f"Loading environment variables from {app_env}")
+                for raw in app_env.read_text(encoding='utf-8').splitlines():
+                    line = raw.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    if '=' in line:
+                        k, v = line.split('=', 1)
+                        k = k.strip()
+                        v = v.strip().strip('"').strip("'")
+                        os.environ.setdefault(k, v)
+    except Exception:
+        pass
+
     if not os.environ.get("GOOGLE_CLIENT_ID") or not os.environ.get("GOOGLE_CLIENT_SECRET"):
         print_warning("Google OAuth credentials not found in environment variables")
         print_status("Please set the following environment variables:")
@@ -263,7 +298,17 @@ def start_flask_server() -> None:
     """Start Flask development server"""
     print_header("Starting Smart Learning Hub MVC Architecture Flask Application")
     
-    port = 5003 if try_port(5003) else 5004
+    # Prefer explicit PORT env var if set and free, else fall back to 5003/5004
+    env_port = None
+    try:
+        env_port = int(os.environ.get('PORT', 0))
+    except Exception:
+        env_port = None
+
+    if env_port and try_port(env_port):
+        port = env_port
+    else:
+        port = 5003 if try_port(5003) else 5004
     print_status(f"Application will be available at: http://localhost:{port}")
     print_status("Architecture: MVC (Model-View-Controller)")
     print_status("Features: User, Lesson, Note, Task, Pomodoro Management")
@@ -291,8 +336,9 @@ def main() -> None:
     print_header("Smart Learning Hub - MVC Architecture Environment Setup")
     
     # Setup steps
-    reexec_in_venv()
+    # Load environment first so re-exec'ed process inherits variables
     set_env_defaults()
+    reexec_in_venv()
     ensure_dependencies()
     validate_oop_files()
     setup_database()

@@ -93,6 +93,13 @@
                                     <i class="fas fa-sign-in-alt me-2"></i>Sign In
                                 </button>
                             </div>
+                                <div class="text-center mt-3">
+                                    <a href="{{ url_for('google_auth.login') }}" class="btn btn-google" id="google-signin-login">
+                                        <img src="{{ url_for('static', filename='icons/google-logo.svg') }}" alt="Google">
+                                        <span class="label-small">เข้าสู่ระบบด้วย Google</span>
+                                        <span class="spinner" aria-hidden="true"></span>
+                                    </a>
+                                </div>
                         </form>
                         
                         <div class="text-center mt-4">

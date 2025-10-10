@@ -84,8 +84,15 @@ def register_blueprints(app):
     # INTEGRATION ROUTES
     # ============================================
     from .routes_google_classroom import google_classroom_bp
+    from .routes_google_auth import google_auth_bp
     from .routes_microsoft_teams import microsoft_teams_bp
-    
+
+    # Register main routes (for HTML pages)
+    app.register_blueprint(main_bp)
+    app.register_blueprint(google_classroom_bp)  # Google Classroom integration
+    app.register_blueprint(google_auth_bp)  # Google Sign-In (OAuth)
+    app.register_blueprint(microsoft_teams_bp)  # Microsoft Teams integration (mockup)
+
     # ============================================
     # POMODORO SESSION ROUTES (from routes_new.py)
     # ============================================
