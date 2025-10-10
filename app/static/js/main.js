@@ -1477,6 +1477,13 @@ window.toggleAdvancedSearch = function() {
 function setupLessonSearchAndFilter() {
   console.log('setupLessonSearchAndFilter called');
   
+  // Check if we're on the new All Classes page (lessons-page class)
+  if (document.querySelector('.lessons-page')) {
+    console.log('New All Classes page detected - initializing real-time search');
+    initializeClassesRealtimeSearch();
+    return;
+  }
+  
   // Add a small delay to ensure DOM is ready
   setTimeout(() => {
     const searchInput = document.getElementById('lessonSearch');
@@ -1930,6 +1937,158 @@ console.log('✅ selectModalColor and updateCharCount functions loaded');
 // ALL CLASSES PAGE FUNCTIONS
 // ============================================
 
+// Initialize Real-time Search for All Classes
+function initializeClassesRealtimeSearch() {
+    console.log('='.repeat(60));
+    console.log('🎓 INITIALIZING REAL-TIME SEARCH FOR ALL CLASSES');
+    console.log('='.repeat(60));
+    
+    // Set initial filter state
+    window.currentLessonFilter = 'all';
+    
+    // Get elements
+    const searchInput = document.getElementById('lessonSearch');
+    const clearButton = document.getElementById('clearSearch');
+    const lessonsGrid = document.getElementById('lessons-grid');
+    
+    console.log('📋 Elements Check:');
+    console.log('  searchInput:', !!searchInput);
+    console.log('  clearButton:', !!clearButton);
+    console.log('  lessonsGrid:', !!lessonsGrid);
+    
+    if (!searchInput) {
+        console.error('❌ Search input not found!');
+        return;
+    }
+    
+    // Check if already initialized
+    if (searchInput.dataset.searchInitialized === 'true') {
+        console.log('⚠️ Already initialized');
+        return;
+    }
+    
+    // Real-time search function
+    function performRealtimeSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const lessonCards = document.querySelectorAll('.lesson-card-modern');
+        let visibleCount = 0;
+        
+        console.log(`🔍 Real-time search: "${searchTerm}"`);
+        
+        // Show/hide clear button
+        if (clearButton) {
+            clearButton.style.display = searchTerm.length > 0 ? 'flex' : 'none';
+        }
+        
+        // Filter cards
+        lessonCards.forEach((card) => {
+            const title = (card.querySelector('.lesson-card-title')?.textContent || '').toLowerCase();
+            const description = (card.querySelector('.lesson-card-description')?.textContent || '').toLowerCase();
+            
+            const matchesSearch = searchTerm === '' || 
+                                 title.includes(searchTerm) || 
+                                 description.includes(searchTerm);
+            
+            const matchesFilter = window.checkFilterMatch ? 
+                                 window.checkFilterMatch(card, window.currentLessonFilter) : 
+                                 true;
+            
+            const shouldShow = matchesSearch && matchesFilter;
+            card.style.display = shouldShow ? '' : 'none';
+            
+            if (shouldShow) visibleCount++;
+        });
+        
+        console.log(`✅ Results: ${visibleCount}/${lessonCards.length} visible`);
+        
+        // Show/hide empty state
+        if (lessonsGrid) {
+            let emptyState = lessonsGrid.querySelector('.lessons-search-empty');
+            
+            if (visibleCount === 0 && lessonCards.length > 0) {
+                if (!emptyState) {
+                    emptyState = document.createElement('div');
+                    emptyState.className = 'lessons-search-empty';
+                    emptyState.innerHTML = `
+                        <div class="lessons-empty">
+                            <div class="lessons-empty-icon">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <h3>No Results Found</h3>
+                            <p>Try adjusting your search term or filter</p>
+                        </div>
+                    `;
+                    lessonsGrid.appendChild(emptyState);
+                }
+                emptyState.style.display = 'block';
+            } else if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+        }
+    }
+    
+    // Attach event listeners
+    console.log('⚡ Attaching event listeners...');
+    
+    // INPUT event - REAL-TIME
+    searchInput.addEventListener('input', function(e) {
+        console.log('⌨️ INPUT:', e.target.value);
+        performRealtimeSearch();
+    });
+    
+    // KEYUP event - backup
+    searchInput.addEventListener('keyup', function() {
+        performRealtimeSearch();
+    });
+    
+    // Clear button
+    if (clearButton) {
+        clearButton.addEventListener('click', function(e) {
+            console.log('🗑️ Clear clicked');
+            e.preventDefault();
+            e.stopPropagation();
+            searchInput.value = '';
+            clearButton.style.display = 'none';
+            searchInput.focus();
+            performRealtimeSearch();
+        });
+    }
+    
+    // Keyboard shortcuts
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchInput.blur();
+        } else if (e.key === 'Escape') {
+            searchInput.value = '';
+            if (clearButton) clearButton.style.display = 'none';
+            performRealtimeSearch();
+        }
+    });
+    
+    // Mark as initialized
+    searchInput.dataset.searchInitialized = 'true';
+    
+    // Initial setup
+    if (clearButton) {
+        clearButton.style.display = 'none';
+    }
+    
+    // Sort by favorites
+    setTimeout(() => {
+        if (typeof window.sortLessonsByFavorite === 'function') {
+            window.sortLessonsByFavorite();
+            console.log('✓ Sorted by favorites');
+        }
+    }, 100);
+    
+    console.log('✅ REAL-TIME SEARCH READY!');
+    console.log('='.repeat(60));
+    
+    // Test immediately
+    performRealtimeSearch();
+}
+
 // Helper function to check filter match
 window.checkFilterMatch = function(card, filter) {
     if (filter === 'all') return true;
@@ -1967,13 +2126,18 @@ window.filterLessons = function(filter, buttonElement) {
     
     // Apply filter
     const lessonCards = document.querySelectorAll('.lesson-card-modern');
-    const searchTerm = document.getElementById('lessonSearch')?.value.toLowerCase() || '';
+    const searchInput = document.getElementById('lessonSearch');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
     
     let visibleCount = 0;
     lessonCards.forEach(card => {
         const title = card.querySelector('.lesson-card-title')?.textContent.toLowerCase() || '';
         const description = card.querySelector('.lesson-card-description')?.textContent.toLowerCase() || '';
-        const matchesSearch = !searchTerm || title.includes(searchTerm) || description.includes(searchTerm);
+        
+        // Check search match
+        const matchesSearch = searchTerm === '' || title.includes(searchTerm) || description.includes(searchTerm);
+        
+        // Check filter match
         const matchesFilter = window.checkFilterMatch(card, filter);
         
         const shouldShow = matchesSearch && matchesFilter;
@@ -1983,6 +2147,32 @@ window.filterLessons = function(filter, buttonElement) {
     });
     
     console.log(`✅ Filter applied: ${visibleCount}/${lessonCards.length} cards visible`);
+    
+    // Show/hide empty state
+    const lessonsGrid = document.getElementById('lessons-grid');
+    if (lessonsGrid) {
+        let emptyState = lessonsGrid.querySelector('.lessons-search-empty');
+        
+        if (visibleCount === 0 && lessonCards.length > 0) {
+            if (!emptyState) {
+                emptyState = document.createElement('div');
+                emptyState.className = 'lessons-search-empty';
+                emptyState.innerHTML = `
+                    <div class="lessons-empty">
+                        <div class="lessons-empty-icon">
+                            <i class="bi bi-funnel"></i>
+                        </div>
+                        <h3>No Classes Match Filter</h3>
+                        <p>Try selecting a different filter or search term</p>
+                    </div>
+                `;
+                lessonsGrid.appendChild(emptyState);
+            }
+            emptyState.style.display = 'block';
+        } else if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+    }
 };
 
 // Navigate to class

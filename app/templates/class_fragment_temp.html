@@ -26,7 +26,10 @@
                 <div class="lessons-search-wrapper">
                     <div class="lessons-search-hero">
                         <i class="bi bi-search lessons-search-hero-icon"></i>
-                        <input type="text" id="lessonSearch" placeholder="Search classes...">
+                        <input type="text" id="lessonSearch" placeholder="Search classes by title or description...">
+                        <button class="lessons-search-clear" id="clearSearch" style="display: none;" title="Clear search">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
                     </div>
                     
                     <!-- Compact Filter Pills -->
@@ -162,62 +165,207 @@
 </div>
 
 <script>
-// Modern Lessons Page Initialization
-// Note: All functions are defined in main.js for global access
+// ============================================
+// REAL-TIME SEARCH FOR ALL CLASSES PAGE
+// ============================================
 (function() {
     'use strict';
     
-    console.log('🎓 Initializing All Classes page...');
-    
-    // Set initial filter state
-    window.currentLessonFilter = 'all';
-    
-    // Setup search functionality
-    const searchInput = document.getElementById('lessonSearch');
-    if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
+    // Function to initialize search - can be called multiple times safely
+    function initializeClassesSearch() {
+        console.log('='.repeat(60));
+        console.log('🎓 INITIALIZING ALL CLASSES PAGE - REAL-TIME SEARCH');
+        console.log('='.repeat(60));
+        
+        // Set initial filter state
+        window.currentLessonFilter = 'all';
+        
+        // Get elements
+        const searchInput = document.getElementById('lessonSearch');
+        const clearButton = document.getElementById('clearSearch');
+        const lessonsGrid = document.getElementById('lessons-grid');
+        
+        console.log('📋 Element Check:');
+        console.log('  - Search Input:', searchInput ? '✅ Found' : '❌ NOT FOUND');
+        console.log('  - Clear Button:', clearButton ? '✅ Found' : '❌ NOT FOUND');
+        console.log('  - Lessons Grid:', lessonsGrid ? '✅ Found' : '❌ NOT FOUND');
+        
+        if (!searchInput) {
+            console.error('❌ FATAL: Search input not found! Cannot initialize search.');
+            return false;
+        }
+        
+        // Real-time search function
+        function performRealtimeSearch() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
             const lessonCards = document.querySelectorAll('.lesson-card-modern');
+            let visibleCount = 0;
             
-            lessonCards.forEach(card => {
-                const title = card.querySelector('.lesson-card-title')?.textContent.toLowerCase() || '';
-                const description = card.querySelector('.lesson-card-description')?.textContent.toLowerCase() || '';
-                const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
-                const matchesFilter = window.checkFilterMatch(card, window.currentLessonFilter);
+            console.log(`\n🔍 SEARCHING: "${searchTerm}" (${searchTerm.length} chars)`);
+            console.log(`📊 Total cards to search: ${lessonCards.length}`);
+            
+            // Show/hide clear button
+            if (clearButton) {
+                if (searchTerm.length > 0) {
+                    clearButton.style.display = 'flex';
+                } else {
+                    clearButton.style.display = 'none';
+                }
+            }
+            
+            // Filter cards in real-time
+            lessonCards.forEach((card, index) => {
+                const titleElement = card.querySelector('.lesson-card-title');
+                const descElement = card.querySelector('.lesson-card-description');
                 
-                card.style.display = (matchesSearch && matchesFilter) ? '' : 'none';
+                const title = (titleElement?.textContent || '').toLowerCase().trim();
+                const description = (descElement?.textContent || '').toLowerCase().trim();
+                
+                // Debug first 3 cards
+                if (index < 3) {
+                    console.log(`  Card ${index + 1}: "${title.substring(0, 30)}..."`);
+                }
+                
+                // Check if search term matches
+                const matchesSearch = searchTerm === '' || 
+                                     title.includes(searchTerm) || 
+                                     description.includes(searchTerm);
+                
+                // Check if card matches current filter
+                const matchesFilter = window.checkFilterMatch ? 
+                                     window.checkFilterMatch(card, window.currentLessonFilter) : 
+                                     true;
+                
+                // Show card only if matches both
+                const shouldShow = matchesSearch && matchesFilter;
+                card.style.display = shouldShow ? '' : 'none';
+                
+                if (shouldShow) visibleCount++;
             });
+            
+            console.log(`✅ RESULTS: ${visibleCount}/${lessonCards.length} cards visible\n`);
+            
+            // Show/hide empty state
+            if (lessonsGrid) {
+                let emptyState = lessonsGrid.querySelector('.lessons-search-empty');
+                
+                if (visibleCount === 0 && lessonCards.length > 0) {
+                    if (!emptyState) {
+                        emptyState = document.createElement('div');
+                        emptyState.className = 'lessons-search-empty';
+                        emptyState.innerHTML = `
+                            <div class="lessons-empty">
+                                <div class="lessons-empty-icon">
+                                    <i class="bi bi-search"></i>
+                                </div>
+                                <h3>No Results Found</h3>
+                                <p>Try adjusting your search term or change filter</p>
+                            </div>
+                        `;
+                        lessonsGrid.appendChild(emptyState);
+                    }
+                    emptyState.style.display = 'block';
+                } else if (emptyState) {
+                    emptyState.style.display = 'none';
+                }
+            }
+        }
+        
+        // Remove old event listeners (if any) by cloning
+        const newSearchInput = searchInput.cloneNode(true);
+        searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+        
+        // Re-get the element after cloning
+        const freshSearchInput = document.getElementById('lessonSearch');
+        
+        console.log('\n⚡ Attaching Event Listeners...');
+        
+        // Real-time input event (triggers on every keystroke)
+        freshSearchInput.addEventListener('input', function(e) {
+            console.log('⌨️ INPUT EVENT FIRED - Value:', e.target.value);
+            performRealtimeSearch();
         });
-        console.log('  ✓ Search initialized');
-    }
-    
-    // Log all cards for debugging
-    const allCards = document.querySelectorAll('.lesson-card-modern');
-    console.log(`  ✓ Total cards loaded: ${allCards.length}`);
-    
-    if (allCards.length > 0) {
-        allCards.forEach((card, index) => {
-            console.log(`    Card ${index + 1}:`, {
-                id: card.dataset.lessonId,
-                status: card.dataset.status,
-                isFavorite: card.dataset.isFavorite,
-                title: card.querySelector('.lesson-card-title')?.textContent
+        console.log('  ✓ Input event listener attached');
+        
+        // Keyup as backup (for better compatibility)
+        freshSearchInput.addEventListener('keyup', function(e) {
+            console.log('⌨️ KEYUP EVENT FIRED - Key:', e.key);
+            performRealtimeSearch();
+        });
+        console.log('  ✓ Keyup event listener attached');
+        
+        // Clear button
+        if (clearButton) {
+            clearButton.addEventListener('click', function(e) {
+                console.log('🗑️ CLEAR BUTTON CLICKED');
+                e.preventDefault();
+                e.stopPropagation();
+                freshSearchInput.value = '';
+                clearButton.style.display = 'none';
+                freshSearchInput.focus();
+                performRealtimeSearch();
             });
+            console.log('  ✓ Clear button listener attached');
+        }
+        
+        // Keyboard shortcuts
+        freshSearchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                freshSearchInput.blur();
+            }
+            if (e.key === 'Escape') {
+                freshSearchInput.value = '';
+                if (clearButton) clearButton.style.display = 'none';
+                performRealtimeSearch();
+            }
         });
+        console.log('  ✓ Keyboard shortcuts attached');
+        
+        // Initial state
+        if (clearButton) {
+            clearButton.style.display = 'none';
+        }
+        
+        // Log all cards
+        const allCards = document.querySelectorAll('.lesson-card-modern');
+        console.log(`\n📦 Loaded ${allCards.length} lesson cards`);
         
         // Initial sort by favorites
         setTimeout(() => {
             if (typeof window.sortLessonsByFavorite === 'function') {
                 window.sortLessonsByFavorite();
-                console.log('  ✓ Initial favorite sorting applied');
+                console.log('✓ Sorted by favorites');
             }
         }, 100);
+        
+        console.log('='.repeat(60));
+        console.log('✅ ALL CLASSES REAL-TIME SEARCH READY!');
+        console.log('='.repeat(60));
+        
+        // Test the search immediately
+        console.log('\n🧪 Testing search function...');
+        performRealtimeSearch();
+        
+        return true;
     }
     
-    console.log('✅ All Classes page initialized');
+    // Try to initialize immediately
+    if (document.readyState === 'loading') {
+        console.log('⏳ DOM still loading, waiting...');
+        document.addEventListener('DOMContentLoaded', initializeClassesSearch);
+    } else {
+        console.log('✓ DOM ready, initializing now...');
+        initializeClassesSearch();
+    }
+    
+    // Also try after a short delay as backup
+    setTimeout(initializeClassesSearch, 500);
+    
 })();
 </script>
 
 <!-- Add Lesson Modal -->
 {% include 'modals/add_lesson_modal.html' %}
+
 

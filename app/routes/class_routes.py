@@ -60,7 +60,7 @@ def partial_class_list():
         microsoft_teams_connected = session.get('microsoft_teams_connected', False)
         microsoft_teams_data = session.get('microsoft_teams_data', None)
         
-        return render_template('class_fragment_new.html', 
+        return render_template('class_fragment.html', 
                              lessons=lessons, 
                              user=g.user,
                              google_classroom_connected=False,
@@ -70,7 +70,7 @@ def partial_class_list():
         print(f"❌ Error loading lessons: {e}")
         import traceback
         traceback.print_exc()
-        return render_template('class_fragment_new.html', 
+        return render_template('class_fragment.html', 
                              lessons=[], 
                              user=g.user,
                              google_classroom_connected=False,

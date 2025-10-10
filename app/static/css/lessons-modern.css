@@ -136,7 +136,7 @@
 
 .lessons-search-hero input {
     width: 100%;
-    padding: 1.125rem 1.5rem 1.125rem 3.5rem;
+    padding: 1.125rem 3.5rem 1.125rem 3.5rem;
     border: none;
     border-radius: 16px;
     font-size: 1rem;
@@ -158,6 +158,31 @@
     transform: translateY(-50%);
     color: var(--lessons-primary);
     font-size: 1.25rem;
+    pointer-events: none;
+}
+
+.lessons-search-clear {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--lessons-text-light);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--lessons-transition);
+    opacity: 0.6;
+}
+
+.lessons-search-clear:hover {
+    color: var(--lessons-primary);
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1);
 }
 
 /* ===== Compact Filter Pills ===== */
@@ -589,6 +614,11 @@
     text-align: center;
     padding: 5rem 2rem;
     grid-column: 1 / -1;
+}
+
+.lessons-search-empty {
+    grid-column: 1 / -1;
+    display: none;
 }
 
 .lessons-empty-icon {
