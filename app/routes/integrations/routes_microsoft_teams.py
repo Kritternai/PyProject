@@ -214,7 +214,7 @@ def oauth2callback():
     print(f"DEBUG: Mock Microsoft Teams connection completed for user {user_id}")
     
     # Redirect to class page to show the teams
-    return redirect(url_for('main.index') + '#class?microsoft_teams_connected=true')
+    return redirect(url_for('main_routes.index') + '#class?microsoft_teams_connected=true')
 
 @microsoft_teams_bp.route('/fetch_teams')
 @login_required
@@ -261,7 +261,7 @@ def disconnect():
     session.pop('microsoft_teams_data', None)
     
     flash('Successfully disconnected from Microsoft Teams.', 'info')
-    return redirect(url_for('main.index') + '#class')
+    return redirect(url_for('main_routes.index') + '#class')
 
 @microsoft_teams_bp.route('/status')
 @login_required

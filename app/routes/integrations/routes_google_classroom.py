@@ -60,7 +60,7 @@ def authorize():
     """Authorize Google Classroom API access"""
     if not current_app.config.get('GOOGLE_CLIENT_ID') or not current_app.config.get('GOOGLE_CLIENT_SECRET'):
         flash('Google API credentials are not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main_routes.index'))
 
     flow = Flow.from_client_config(
         client_config={
@@ -101,7 +101,7 @@ def oauth2callback():
 
     if not state or state != request.args.get('state'):
         flash('Invalid state parameter.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main_routes.index'))
 
     port = current_app.config.get('PORT', 5004)
     
@@ -143,7 +143,7 @@ def oauth2callback():
         
         if not user:
             flash('User not found.', 'danger')
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main_routes.index'))
         
         # Store credentials in user metadata (you may want to create a separate table for this)
         # For now, we'll use a simple approach
@@ -169,7 +169,7 @@ def oauth2callback():
         import traceback
         traceback.print_exc()
         flash(f'Failed to save Google Classroom credentials: {str(e)}', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main_routes.index'))
 
 @google_classroom_bp.route('/fetch_courses')
 @login_required

@@ -128,3 +128,15 @@ def partial_change_password():
     
     return render_template('change_password_fragment.html', user=g.user)
 
+
+@main_routes_bp.route('/partial/pomodoro')
+def partial_pomodoro():
+    """Pomodoro timer fragment"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        return render_template('pomodoro_fragment.html', user=g.user)
+    except Exception as e:
+        return render_template('pomodoro_fragment.html', user=g.user)
+

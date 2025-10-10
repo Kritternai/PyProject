@@ -79,24 +79,14 @@ def register_blueprints(app):
     from .routes.note_routes import note_bp
     from .routes.task_routes import task_bp
     from .routes.pomodoro_routes import pomodoro_bp
+    from .routes.pomodoro_session_routes import pomodoro_session_bp
     
     # ============================================
     # INTEGRATION ROUTES
     # ============================================
-    from .routes_google_classroom import google_classroom_bp
-    from .routes_google_auth import google_auth_bp
-    from .routes_microsoft_teams import microsoft_teams_bp
-
-    # Register main routes (for HTML pages)
-    app.register_blueprint(main_bp)
-    app.register_blueprint(google_classroom_bp)  # Google Classroom integration
-    app.register_blueprint(google_auth_bp)  # Google Sign-In (OAuth)
-    app.register_blueprint(microsoft_teams_bp)  # Microsoft Teams integration (mockup)
-
-    # ============================================
-    # POMODORO SESSION ROUTES (from routes_new.py)
-    # ============================================
-    from .routes_new import main_bp as pomodoro_legacy_bp
+    from .routes.integrations.routes_google_classroom import google_classroom_bp
+    from .routes.integrations.routes_google_auth import google_auth_bp
+    from .routes.integrations.routes_microsoft_teams import microsoft_teams_bp
 
     # ============================================
     # REGISTER MAIN WEB ROUTES
@@ -116,17 +106,14 @@ def register_blueprints(app):
     app.register_blueprint(note_bp)         # /api/notes/*
     app.register_blueprint(task_bp)         # /api/tasks/*
     app.register_blueprint(pomodoro_bp)     # /api/pomodoro/*
+    app.register_blueprint(pomodoro_session_bp)  # /pomodoro/session/*, /pomodoro/statistics/*
     
     # ============================================
     # REGISTER INTEGRATION BLUEPRINTS
     # ============================================
     app.register_blueprint(google_classroom_bp)   # Google Classroom
+    app.register_blueprint(google_auth_bp)        # Google OAuth Sign-In
     app.register_blueprint(microsoft_teams_bp)    # Microsoft Teams
-    
-    # ============================================
-    # REGISTER POMODORO SESSION ROUTES
-    # ============================================
-    app.register_blueprint(pomodoro_legacy_bp)  # /pomodoro/session/*, /pomodoro/statistics/*
 
 
 def register_template_filters(app):

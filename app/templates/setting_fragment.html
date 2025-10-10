@@ -1,0 +1,174 @@
+<!-- Settings Fragment -->
+<div class="container-fluid" style="padding: 2rem;">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="bi bi-gear-fill me-2"></i>Settings
+            </h2>
+        </div>
+    </div>
+    
+    <!-- Account Settings -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-circle me-2"></i>Account Settings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Username</label>
+                        <input type="text" class="form-control" value="{{ user.username if user else '' }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        <input type="email" class="form-control" value="{{ user.email if user else '' }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Role</label>
+                        <input type="text" class="form-control" value="{{ user.role|default('Student') }}" readonly>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=profile]'));loadPage('profile')">
+                            <i class="bi bi-person-circle me-2"></i>Edit Profile
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=change_password]'));loadPage('change_password')">
+                            <i class="bi bi-key-fill me-2"></i>Change Password
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-palette-fill me-2"></i>Theme
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Choose your preferred sidebar theme</p>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="changeSidebarTheme('blue')">
+                            <i class="bi bi-circle-fill text-primary me-2"></i>Blue (Current)
+                        </button>
+                        <button class="btn btn-outline-success" onclick="changeSidebarTheme('green')">
+                            <i class="bi bi-circle-fill text-success me-2"></i>Green
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="changeSidebarTheme('dark')">
+                            <i class="bi bi-circle-fill text-dark me-2"></i>Dark
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Settings -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bell-fill me-2"></i>Notifications
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                        <label class="form-check-label" for="emailNotifications">
+                            Email notifications for tasks and deadlines
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="pushNotifications" checked>
+                        <label class="form-check-label" for="pushNotifications">
+                            Push notifications
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="weeklyDigest">
+                        <label class="form-check-label" for="weeklyDigest">
+                            Weekly digest email
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Privacy Settings -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-shield-lock-fill me-2"></i>Privacy & Security
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="publicProfile">
+                        <label class="form-check-label" for="publicProfile">
+                            Make my profile public
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="shareProgress">
+                        <label class="form-check-label" for="shareProgress">
+                            Share my learning progress
+                        </label>
+                    </div>
+                    <hr>
+                    <div class="d-grid">
+                        <button class="btn btn-outline-danger">
+                            <i class="bi bi-trash-fill me-2"></i>Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Save Button -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button class="btn btn-secondary" onclick="loadPage('dashboard')">
+                    <i class="bi bi-x-circle me-2"></i>Cancel
+                </button>
+                <button class="btn btn-primary" onclick="saveSettings()">
+                    <i class="bi bi-check-circle me-2"></i>Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function changeSidebarTheme(themeName) {
+    if (window.EnchatSidebar && window.EnchatSidebar.themes) {
+        window.EnchatSidebar.themes.applyTheme(themeName);
+        alert(`Theme changed to ${themeName}!`);
+    }
+}
+
+function saveSettings() {
+    // Collect settings
+    const settings = {
+        email_notifications: document.getElementById('emailNotifications').checked,
+        push_notifications: document.getElementById('pushNotifications').checked,
+        weekly_digest: document.getElementById('weeklyDigest').checked,
+        public_profile: document.getElementById('publicProfile').checked,
+        share_progress: document.getElementById('shareProgress').checked
+    };
+    
+    // TODO: Send to backend
+    console.log('Saving settings:', settings);
+    alert('Settings saved successfully!');
+}
+</script>
+

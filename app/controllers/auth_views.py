@@ -73,12 +73,12 @@ class AuthController:
                             'last_name': user.last_name,
                             'role': user.role
                         },
-                        'redirect_url': url_for('main.dashboard')
+                        'redirect_url': url_for('main_routes.dashboard')
                     }
                 }), 200
             else:
                 flash(f'Welcome back, {user.username}!', 'success')
-                return redirect(url_for('main.dashboard'))
+                return redirect(url_for('main_routes.dashboard'))
 
         except ValidationException as e:
             if request.is_json:
@@ -205,4 +205,4 @@ class AuthController:
         """
         session.pop('user_id', None)
         flash('You have been logged out.', 'info')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main_routes.index'))

@@ -74,7 +74,7 @@ def admin_required(f):
             else:
                 from flask import redirect, url_for, flash
                 flash('Admin privileges required.', 'error')
-                return redirect(url_for('main.index'))
+                return redirect(url_for('main_routes.index'))
         
         return f(*args, **kwargs)
     return decorated_function
@@ -126,7 +126,7 @@ def require_user_ownership(user_id: str):
                 else:
                     from flask import redirect, url_for, flash
                     flash('Access denied.', 'error')
-                    return redirect(url_for('main.index'))
+                    return redirect(url_for('main_routes.index'))
             
             return f(*args, **kwargs)
         return decorated_function

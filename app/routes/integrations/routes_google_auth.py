@@ -120,7 +120,7 @@ def login():
     flow = get_google_flow(base_url=request.url_root)
     if not flow:
         flash('Google OAuth configuration error. Please check server logs for "CRITICAL" messages.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main_routes.index'))
 
     # สร้าง URL สำหรับให้ผู้ใช้กดเพื่อล็อกอิน
     authorization_url, state = flow.authorization_url(
@@ -146,7 +146,7 @@ def callback():
     flow = get_google_flow(state=state, base_url=request.url_root)
     if not flow:
         flash('Google OAuth configuration error. Please check server logs for "CRITICAL" messages.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main_routes.index'))
 
     try:
         # นำ authorization code ที่ได้จาก URL มาแลกเป็น token

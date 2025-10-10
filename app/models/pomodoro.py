@@ -30,45 +30,27 @@ class PomodoroSessionModel(db.Model):
     def __repr__(self):
         return f'<PomodoroSessionModel {self.id} {self.session_type}>'
 
-    def to_domain_entity(self):
+    def to_dict(self):
         """
-        Convert SQLAlchemy model to domain entity.
+        Convert model to dictionary (MVC pattern).
+        
+        Returns:
+            Dictionary representation of pomodoro session
         """
-        from app.domain.entities.pomodoro import PomodoroSession
-        return PomodoroSession(
-            id=self.id,
-            user_id=self.user_id,
-            session_type=self.session_type,
-            duration=self.duration,
-            actual_duration=self.actual_duration,
-            start_time=self.start_time,
-            end_time=self.end_time,
-            status=self.status,
-            productivity_score=self.productivity_score,
-            task=self.task,
-            created_at=self.created_at,
-            updated_at=self.updated_at
-        )
-
-    @classmethod
-    def from_domain_entity(cls, session):
-        """
-        Create SQLAlchemy model from domain entity.
-        """
-        return cls(
-            id=session.id,
-            user_id=session.user_id,
-            session_type=session.session_type,
-            duration=session.duration,
-            actual_duration=session.actual_duration,
-            start_time=session.start_time,
-            end_time=session.end_time,
-            status=session.status,
-            productivity_score=session.productivity_score,
-            task=session.task,
-            created_at=session.created_at,
-            updated_at=session.updated_at
-        )
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'session_type': self.session_type,
+            'duration': self.duration,
+            'actual_duration': self.actual_duration,
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None,
+            'status': self.status,
+            'productivity_score': self.productivity_score,
+            'task': self.task,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
 
 class PomodoroStatisticsModel(db.Model):
     """
@@ -106,62 +88,37 @@ class PomodoroStatisticsModel(db.Model):
     def __repr__(self):
         return f'<PomodoroStatisticsModel {self.id} {self.date}>'
 
-    def to_domain_entity(self):
-        from app.domain.entities.pomodoro import PomodoroStatistics
-        return PomodoroStatistics(
-            id=self.id,
-            user_id=self.user_id,
-            date=self.date,
-            total_sessions=self.total_sessions,
-            total_focus_time=self.total_focus_time,
-            total_break_time=self.total_break_time,
-            total_long_break_time=self.total_long_break_time,
-            total_interrupted_sessions=self.total_interrupted_sessions,
-            total_completed_sessions=self.total_completed_sessions,
-            total_productivity_score=self.total_productivity_score,
-            total_tasks_completed=self.total_tasks_completed,
-            total_tasks=self.total_tasks,
-            total_focus_sessions=self.total_focus_sessions,
-            total_short_break_sessions=self.total_short_break_sessions,
-            total_long_break_sessions=self.total_long_break_sessions,
-            total_time_spent=self.total_time_spent,
-            total_effective_time=self.total_effective_time,
-            total_ineffective_time=self.total_ineffective_time,
-            total_abandoned_sessions=self.total_abandoned_sessions,
-            total_on_time_sessions=self.total_on_time_sessions,
-            total_late_sessions=self.total_late_sessions,
-            average_session_duration=self.average_session_duration,
-            productivity_score=self.productivity_score,
-            created_at=self.created_at,
-            updated_at=self.updated_at
-        )
-
-    @classmethod
-    def from_domain_entity(cls, stats):
-        return cls(
-            id=stats.id,
-            user_id=stats.user_id,
-            date=stats.date,
-            total_sessions=stats.total_sessions,
-            total_focus_time=stats.total_focus_time,
-            total_break_time=stats.total_break_time,
-            total_long_break_time=stats.total_long_break_time,
-            total_interrupted_sessions=stats.total_interrupted_sessions,
-            total_completed_sessions=stats.total_completed_sessions,
-            total_productivity_score=stats.total_productivity_score,
-            total_tasks_completed=stats.total_tasks_completed,
-            total_tasks=stats.total_tasks,
-            total_focus_sessions=stats.total_focus_sessions,
-            total_short_break_sessions=stats.total_short_break_sessions,
-            total_long_break_sessions=stats.total_long_break_sessions,
-            total_time_spent=stats.total_time_spent,
-            total_effective_time=stats.total_effective_time,
-            total_ineffective_time=stats.total_ineffective_time,
-            total_abandoned_sessions=stats.total_abandoned_sessions,
-            total_on_time_sessions=stats.total_on_time_sessions,
-            total_late_sessions=stats.total_late_sessions,
-            average_session_duration=stats.average_session_duration,
-            productivity_score=stats.productivity_score,
-            created_at=stats.created_at,
-            updated_at=stats.updated_at
-        )
+    def to_dict(self):
+        """
+        Convert model to dictionary (MVC pattern).
+        
+        Returns:
+            Dictionary representation of pomodoro statistics
+        """
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'date': self.date.isoformat() if self.date else None,
+            'total_sessions': self.total_sessions,
+            'total_focus_time': self.total_focus_time,
+            'total_break_time': self.total_break_time,
+            'total_long_break_time': self.total_long_break_time,
+            'total_interrupted_sessions': self.total_interrupted_sessions,
+            'total_completed_sessions': self.total_completed_sessions,
+            'total_productivity_score': self.total_productivity_score,
+            'total_tasks_completed': self.total_tasks_completed,
+            'total_tasks': self.total_tasks,
+            'total_focus_sessions': self.total_focus_sessions,
+            'total_short_break_sessions': self.total_short_break_sessions,
+            'total_long_break_sessions': self.total_long_break_sessions,
+            'total_time_spent': self.total_time_spent,
+            'total_effective_time': self.total_effective_time,
+            'total_ineffective_time': self.total_ineffective_time,
+            'total_abandoned_sessions': self.total_abandoned_sessions,
+            'total_on_time_sessions': self.total_on_time_sessions,
+            'total_late_sessions': self.total_late_sessions,
+            'average_session_duration': self.average_session_duration,
+            'productivity_score': self.productivity_score,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
