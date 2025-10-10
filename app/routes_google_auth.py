@@ -18,7 +18,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/userinfo.profile"
 ]
 
-def get_google_flow(state=None):
+def get_google_flow(state=None, base_url=None):
     """
     ฟังก์ชันช่วยสร้างอ็อบเจกต์ Flow ของ Google OAuth
     เพื่อให้แน่ใจว่าใช้การตั้งค่าเดียวกันทั้งใน /login และ /callback
@@ -52,6 +52,10 @@ def get_google_flow(state=None):
                 return None
 
             try:
+                # If base_url provided, prefer that as redirect_uri
+                if base_url:
+                    redirect_uri = base_url.rstrip('/') + '/auth/google/callback'
+
                 flow = Flow.from_client_config(
                     client_config={
                         "web": {
@@ -70,7 +74,7 @@ def get_google_flow(state=None):
             except Exception as e:
                 current_app.logger.exception('CRITICAL: Failed to initialize Google Flow from env. Error: %s', e)
                 return None
-            
+
         # สร้าง Flow จากไฟล์ client_secrets.json โดยตรง
         flow = Flow.from_client_secrets_file(
             str(secrets_path),
@@ -83,7 +87,23 @@ def get_google_flow(state=None):
         # เพิ่มการตรวจสอบ 'web' key เพื่อป้องกัน error หากไฟล์มี format อื่น
         client_config = json.loads(secrets_path.read_text())
         if 'web' in client_config and 'redirect_uris' in client_config['web']:
-            flow.redirect_uri = client_config['web']['redirect_uris'][0]
+            uris = client_config['web']['redirect_uris']
+            # If base_url provided, try to find matching redirect URI (same host:port)
+            if base_url:
+                # extract host:port from base_url
+                host_port = base_url.rstrip('/').split('://')[-1].split('/')[0]
+                preferred = base_url.rstrip('/') + '/auth/google/callback'
+                if preferred in uris:
+                    flow.redirect_uri = preferred
+                else:
+                    matched = None
+                    for u in uris:
+                        if host_port in u:
+                            matched = u
+                            break
+                    flow.redirect_uri = matched or uris[0]
+            else:
+                flow.redirect_uri = client_config['web']['redirect_uris'][0]
         else:
             current_app.logger.error("CRITICAL: 'redirect_uris' not found in client_secrets.json under 'web' key.")
             return None
@@ -97,7 +117,7 @@ def get_google_flow(state=None):
 
 @google_auth_bp.route('/login')
 def login():
-    flow = get_google_flow()
+    flow = get_google_flow(base_url=request.url_root)
     if not flow:
         flash('Google OAuth configuration error. Please check server logs for "CRITICAL" messages.', 'danger')
         return redirect(url_for('main.index'))
@@ -123,7 +143,7 @@ def callback():
         return redirect(url_for("main.index"))
 
     # สร้าง Flow อีกครั้งโดยใช้ state ที่ได้รับกลับมา
-    flow = get_google_flow(state=state)
+    flow = get_google_flow(state=state, base_url=request.url_root)
     if not flow:
         flash('Google OAuth configuration error. Please check server logs for "CRITICAL" messages.', 'danger')
         return redirect(url_for('main.index'))
