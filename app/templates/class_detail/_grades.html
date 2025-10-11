@@ -2,86 +2,198 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/grades.css') }}">
 
 <div class="grades-container">
-    <!-- Header with Actions -->
+    <!-- Header -->
     <div class="grades-header">
-        <div>
-            <h2 class="grades-title">📊 Grades</h2>
-            <p class="grades-subtitle">Track your performance and set goals</p>
-        </div>
-        <div class="grades-header-actions">
-            <button class="btn-grades-secondary" onclick="openSetupModal()">
-                <i class="bi bi-gear"></i>
-                <span>Setup Grading</span>
-            </button>
-            <button class="btn-grades" onclick="openGoalCalculator()">
-                <i class="bi bi-calculator"></i>
-                <span>Goal Calculator</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Grade Summary Card -->
-    <div class="grade-summary-card" id="grade-summary">
-        <!-- Loading state -->
-        <div class="text-center py-5">
-            <div class="spinner-border text-white" role="status">
-                <span class="visually-hidden">Loading...</span>
+        <div class="grades-header-content">
+            <div>
+                <h2 class="grades-title">📊 Grades</h2>
+                <p class="grades-subtitle">Track your academic progress and set goals</p>
             </div>
-            <p class="text-white mt-2">Loading grade summary...</p>
-        </div>
-    </div>
-
-    <!-- Grade Goals Section -->
-    <div class="grade-goals-section">
-        <h3 class="section-title">🎯 Grade Goals</h3>
-        <div class="goals-grid" id="grade-goals">
-            <!-- Dynamically loaded -->
-        </div>
-    </div>
-
-    <!-- Category Breakdown -->
-    <div class="category-breakdown-section">
-        <h3 class="section-title">📈 Category Breakdown</h3>
-        <div class="categories-grid" id="category-breakdown">
-            <!-- Dynamically loaded -->
-        </div>
-    </div>
-
-    <!-- Detailed Grades Table -->
-    <div class="grades-table-section">
-        <div class="grades-table-header">
-            <h3 class="section-title">📋 All Assignments</h3>
-            <div class="d-flex gap-2 align-items-center">
-                <button class="btn btn-primary btn-sm" onclick="openCreateGradeItemModal()">
-                    <i class="bi bi-plus-circle"></i> Add Assignment
+            <div class="grades-actions">
+                <button class="btn-icon" onclick="toggleGradesSidebar()" id="grades-sidebar-toggle">
+                    <i class="bi bi-list"></i>
                 </button>
-                <select class="form-select form-select-sm" id="category-filter" onchange="filterGrades()">
-                    <option value="all">All Categories</option>
-                </select>
-                <input type="text" class="form-control form-control-sm" id="search-grades" 
-                       placeholder="Search assignments..." oninput="searchGrades()">
+                <button class="btn-goal-calculator" onclick="openGoalCalculator()">
+                    <i class="bi bi-target"></i>
+                    <span>Goal Calculator</span>
+                </button>
+                <button class="btn-grades-secondary" onclick="openSetupModal()">
+                    <i class="bi bi-gear"></i>
+                    <span>Setup</span>
+                </button>
+                <button class="btn-grades-primary" id="grades-create-btn" onclick="openCreateGradeItemModal()">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Add Assignment</span>
+                </button>
             </div>
         </div>
-        
-        <div class="table-responsive">
-            <table class="table grades-table">
-                <thead>
-                    <tr>
-                        <th>Assignment</th>
-                        <th>Category</th>
-                        <th>Due Date</th>
-                        <th>Score</th>
-                        <th>Percentage</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="grades-table-body">
-                    <!-- Dynamically loaded -->
-                </tbody>
-            </table>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="grades-main">
+        <!-- Content Layout -->
+        <div class="grades-content-layout">
+            <!-- Sidebar -->
+            <div class="grades-sidebar" id="grades-sidebar">
+                <!-- Navigation Section -->
+                <div class="grades-nav-section">
+                    <a href="#" class="grades-nav-item active" data-tab="overview" onclick="switchGradesTab('overview'); return false;">
+                        <i class="bi bi-speedometer2 grades-nav-item-icon"></i>
+                        Overview
+                    </a>
+                    <a href="#" class="grades-nav-item" data-tab="assignments" onclick="switchGradesTab('assignments'); return false;">
+                        <i class="bi bi-list-check grades-nav-item-icon"></i>
+                        Assignments
+                    </a>
+                    <a href="#" class="grades-nav-item" data-tab="categories" onclick="switchGradesTab('categories'); return false;">
+                        <i class="bi bi-grid-3x3-gap grades-nav-item-icon"></i>
+                        Categories
+                    </a>
+                    <a href="#" class="grades-nav-item" data-tab="goals" onclick="switchGradesTab('goals'); return false;">
+                        <i class="bi bi-target grades-nav-item-icon"></i>
+                        Goals
+                    </a>
+                </div>
+
+                <!-- Search Section -->
+                <div class="grades-search-section">
+                    <div class="search-container">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="Search assignments..." 
+                               id="grades-search-input">
+                    </div>
+                </div>
+
+                <!-- Stats Section -->
+                <div class="grades-stats-section">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number" id="total-assignments">0</div>
+                            <div class="stat-label">Total</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="graded-assignments">0</div>
+                            <div class="stat-label">Graded</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="pending-assignments">0</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="current-grade">--</div>
+                            <div class="stat-label">Current</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="grades-filter-section">
+                    <h4 class="filter-title">Filter by Status</h4>
+                    <div class="filter-options">
+                        <button class="filter-option active" data-filter="all" onclick="setGradesFilter('all')">
+                            <span class="status-dot all"></span>
+                            <span>All</span>
+                        </button>
+                        <button class="filter-option" data-filter="graded" onclick="setGradesFilter('graded')">
+                            <span class="status-dot graded"></span>
+                            <span>Graded</span>
+                        </button>
+                        <button class="filter-option" data-filter="pending" onclick="setGradesFilter('pending')">
+                            <span class="status-dot pending"></span>
+                            <span>Pending</span>
+                        </button>
+                        <button class="filter-option" data-filter="missing" onclick="setGradesFilter('missing')">
+                            <span class="status-dot missing"></span>
+                            <span>Missing</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="grades-filter-section">
+                    <h4 class="filter-title">Filter by Category</h4>
+                    <div class="filter-options" id="category-filters">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="grades-content" id="grades-content">
+                <!-- Overview Tab -->
+                <div class="grades-tab-content active" id="grades-tab-overview">
+                    <!-- Grade Summary Card -->
+                    <div class="grade-summary-card" id="grade-summary">
+                        <!-- Loading state -->
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-white" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="text-white mt-2">Loading grade summary...</p>
+                        </div>
+                    </div>
+
+                    <!-- Grade Goals Section -->
+                    <div class="grade-goals-section">
+                        <h3 class="section-title">🎯 Grade Goals</h3>
+                        <div class="goals-grid" id="grade-goals">
+                            <!-- Dynamically loaded -->
+                        </div>
+                    </div>
+
+                    <!-- Category Breakdown -->
+                    <div class="category-breakdown-section">
+                        <h3 class="section-title">📈 Category Breakdown</h3>
+                        <div class="categories-grid" id="category-breakdown">
+                            <!-- Dynamically loaded -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignments Tab -->
+                <div class="grades-tab-content" id="grades-tab-assignments">
+                    <!-- Detailed Grades Table -->
+                    <div class="assignments-section">
+                        <div class="assignments-header">
+                            <h3 class="assignments-title">📋 All Assignments</h3>
+                            <button class="btn-grades-primary" onclick="openCreateGradeItemModal()">
+                                <i class="bi bi-plus-lg"></i>
+                                <span>Add Assignment</span>
+                            </button>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="assignments-table" id="grades-table">
+                                <thead>
+                                    <tr>
+                                        <th>Assignment</th>
+                                        <th>Category</th>
+                                        <th>Due Date</th>
+                                        <th>Score</th>
+                                        <th>Percentage</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="grades-table-body">
+                                    <!-- Dynamically loaded -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories Tab -->
+                <div class="grades-tab-content" id="grades-tab-categories">
+                    <!-- Categories content will be loaded dynamically -->
+                </div>
+
+                <!-- Goals Tab -->
+                <div class="grades-tab-content" id="grades-tab-goals">
+                    <!-- Goals content will be loaded dynamically -->
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
 <!-- Create Grade Item Modal -->
 <div class="modal fade" id="createGradeItemModal" tabindex="-1">
@@ -350,6 +462,7 @@
     let currentGradingScale = null;
     let isEditMode = false;
     let availableTasks = [];
+    let currentGradesData = []; // Store grades data for filtering/searching
     
     // Initialize
     initializeGradesSystem();
@@ -375,6 +488,9 @@
         } catch (error) {
             console.error('Error initializing modals:', error);
         }
+        
+        // Initialize sidebar search
+        initializeSidebarSearch();
         
         // Load grade data
         loadGradeData();
@@ -403,6 +519,7 @@
                 renderGradeSummary(summaryData.data);
                 renderGoals(summaryData.data.goals);
                 renderCategoryBreakdown(summaryData.data.category_breakdown);
+                updateSidebarStats(summaryData); // Update sidebar stats
             } else {
                 console.error('❌ Failed to load summary:', summaryData);
             }
@@ -415,6 +532,7 @@
             console.log('📊 Grades response:', gradesData);
             
             if (gradesData.success) {
+                currentGradesData = gradesData.data; // Store for filtering/searching
                 console.log('📝 Rendering grades table with', gradesData.data.length, 'items');
                 renderGradesTable(gradesData.data);
             } else {
@@ -717,21 +835,28 @@
     
     function showSetupPrompt() {
         const container = document.getElementById('grade-summary');
-        container.innerHTML = `
-            <div class="setup-prompt">
-                <i class="bi bi-gear" style="font-size: 3rem; opacity: 0.5;"></i>
-                <h3>Grade System Not Configured</h3>
-                <p>Set up your grading scale and categories to start tracking grades</p>
-                <button class="btn btn-primary btn-lg" onclick="openSetupModal()">
-                    <i class="bi bi-gear"></i> Setup Grading System
-                </button>
-            </div>
-        `;
+        if (container) {
+            container.innerHTML = `
+                <div class="setup-prompt">
+                    <i class="bi bi-gear" style="font-size: 3rem; opacity: 0.5;"></i>
+                    <h3>Grade System Not Configured</h3>
+                    <p>Set up your grading scale and categories to start tracking grades</p>
+                    <button class="btn btn-primary btn-lg" onclick="openSetupModal()">
+                        <i class="bi bi-gear"></i> Setup Grading System
+                    </button>
+                </div>
+            `;
+        }
         
-        // Hide other sections
-        document.getElementById('grade-goals').style.display = 'none';
-        document.getElementById('category-breakdown').style.display = 'none';
-        document.querySelector('.grades-table-section').style.display = 'none';
+        // Hide other sections (safely check if they exist)
+        const goalsSection = document.getElementById('grade-goals');
+        if (goalsSection) goalsSection.style.display = 'none';
+        
+        const categorySection = document.getElementById('category-breakdown');
+        if (categorySection) categorySection.style.display = 'none';
+        
+        const tableSection = document.querySelector('.assignments-section');
+        if (tableSection) tableSection.style.display = 'none';
     }
     
     function renderGradeSummary(summary) {
@@ -776,9 +901,9 @@
         document.getElementById('grade-summary').innerHTML = html;
     }
     
-    function renderGoals(goalsData) {
+    function renderGoals(goalsData, containerId = 'grade-goals') {
         const goals = goalsData.goals;
-        const container = document.getElementById('grade-goals');
+        const container = document.getElementById(containerId);
         
         let html = '';
         
@@ -824,8 +949,8 @@
         container.innerHTML = html;
     }
     
-    function renderCategoryBreakdown(breakdown) {
-        const container = document.getElementById('category-breakdown');
+    function renderCategoryBreakdown(breakdown, containerId = 'category-breakdown') {
+        const container = document.getElementById(containerId);
         
         if (!breakdown || Object.keys(breakdown).length === 0) {
             container.innerHTML = `
@@ -914,15 +1039,15 @@
         container.innerHTML = html;
     }
     
-    function renderGradesTable(grades) {
-        console.log('🎨 renderGradesTable called with:', grades);
-        
-        const tbody = document.getElementById('grades-table-body');
-        
-        if (!tbody) {
-            console.error('❌ grades-table-body element not found!');
-            return;
-        }
+        function renderGradesTable(grades, tableId = 'grades-table-body') {
+            console.log('🎨 renderGradesTable called with:', grades);
+            
+            const tbody = document.getElementById(tableId);
+            
+            if (!tbody) {
+                console.error('❌ grades table body element not found!', tableId);
+                return;
+            }
         
         if (!grades || grades.length === 0) {
             console.log('📭 No grades to display');
@@ -1025,14 +1150,9 @@
     }
     
     function populateCategoryFilter(categories) {
-        const select = document.getElementById('category-filter');
-        
-        for (const category of categories) {
-            const option = document.createElement('option');
-            option.value = category.name;
-            option.textContent = category.name;
-            select.appendChild(option);
-        }
+        // This function is deprecated - category filtering is now handled by sidebar
+        // Keeping for backward compatibility but does nothing
+        console.log('📋 Category filter (deprecated):', categories);
     }
     
     // Modal functions
@@ -1487,32 +1607,13 @@
         }
     }
     
+    // Old filterGrades function - deprecated, replaced by sidebar filtering
+    // Keeping for backward compatibility but redirecting to new search function
     function filterGrades() {
-        const categoryFilter = document.getElementById('category-filter').value;
-        const rows = document.querySelectorAll('.grade-row');
-        
-        rows.forEach(row => {
-            if (categoryFilter === 'all' || row.dataset.category === categoryFilter) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-    
-    function searchGrades() {
-        const searchTerm = document.getElementById('search-grades').value.toLowerCase();
-        const rows = document.querySelectorAll('.grade-row');
-        
-        rows.forEach(row => {
-            const assignmentName = row.querySelector('.assignment-name').textContent.toLowerCase();
-            
-            if (assignmentName.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
+        console.log('⚠️ filterGrades (deprecated) - use searchGrades instead');
+        const searchInput = document.getElementById('grades-search-input');
+        const searchTerm = searchInput ? searchInput.value : '';
+        searchGrades(searchTerm);
     }
     
     function formatDate(dateString) {
@@ -1861,6 +1962,226 @@
         }
     }
     
+    // ==========================================
+    // SIDEBAR & NAVIGATION FUNCTIONS
+    // ==========================================
+    
+    // Toggle sidebar
+    function toggleGradesSidebar() {
+        const sidebar = document.getElementById('grades-sidebar');
+        const toggle = document.getElementById('grades-sidebar-toggle');
+        
+        if (sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            toggle.innerHTML = '<i class="bi bi-list"></i>';
+        } else {
+            sidebar.classList.add('open');
+            toggle.innerHTML = '<i class="bi bi-x"></i>';
+        }
+    }
+    
+    // Switch tabs
+    function switchGradesTab(tabName) {
+        // Update nav items
+        document.querySelectorAll('.grades-nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.grades-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`grades-tab-${tabName}`).classList.add('active');
+        
+        // Load tab-specific content
+        if (tabName === 'assignments') {
+            loadAssignmentsTab();
+        } else if (tabName === 'categories') {
+            loadCategoriesTab();
+        } else if (tabName === 'goals') {
+            loadGoalsTab();
+        }
+    }
+    
+    // Load assignments tab content
+    function loadAssignmentsTab() {
+        const assignmentsTab = document.getElementById('grades-tab-assignments');
+        if (!assignmentsTab) return;
+        
+        // Ensure assignments table is in the right place
+        const existingTable = document.querySelector('.assignments-section');
+        if (existingTable && !assignmentsTab.contains(existingTable)) {
+            assignmentsTab.appendChild(existingTable);
+        }
+        
+        // Reload grades table if needed
+        if (currentGradesData && currentGradesData.length > 0) {
+            renderGradesTable(currentGradesData);
+        }
+    }
+    
+    // Load categories tab content
+    function loadCategoriesTab() {
+        const categoriesTab = document.getElementById('grades-tab-categories');
+        if (!categoriesTab) return;
+        
+        categoriesTab.innerHTML = `
+            <div class="category-breakdown-section">
+                <h3 class="section-title">📈 Category Breakdown</h3>
+                <div class="categories-grid" id="category-breakdown-tab">
+                    <!-- Dynamically loaded -->
+                </div>
+            </div>
+        `;
+        
+        // Load categories data
+        if (currentSummary && currentSummary.category_breakdown) {
+            renderCategoryBreakdown(currentSummary.category_breakdown, 'category-breakdown-tab');
+        }
+    }
+    
+    // Load goals tab content
+    function loadGoalsTab() {
+        const goalsTab = document.getElementById('grades-tab-goals');
+        if (!goalsTab) return;
+        
+        goalsTab.innerHTML = `
+            <div class="grade-goals-section">
+                <h3 class="section-title">🎯 Grade Goals</h3>
+                <div class="goals-grid" id="grade-goals-tab">
+                    <!-- Dynamically loaded -->
+                </div>
+            </div>
+        `;
+        
+        // Load goals data
+        if (currentSummary && currentSummary.goals) {
+            renderGoals(currentSummary.goals, 'grade-goals-tab');
+        }
+    }
+    
+    // Set grades filter
+    function setGradesFilter(filter) {
+        // Update filter buttons
+        document.querySelectorAll('.grades-filter-section .filter-option').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const filterButton = document.querySelector(`[data-filter="${filter}"]`);
+        if (filterButton) {
+            filterButton.classList.add('active');
+        }
+        
+        // Apply filter using search function
+        const searchInput = document.getElementById('grades-search-input');
+        const searchTerm = searchInput ? searchInput.value : '';
+        searchGrades(searchTerm);
+    }
+    
+    // Update sidebar stats
+    function updateSidebarStats(summaryData) {
+        if (!summaryData || !summaryData.data) return;
+        
+        const data = summaryData.data;
+        
+        // Update stats
+        document.getElementById('total-assignments').textContent = data.total_assignments || 0;
+        document.getElementById('graded-assignments').textContent = data.graded_assignments || 0;
+        document.getElementById('pending-assignments').textContent = data.pending_assignments || 0;
+        document.getElementById('current-grade').textContent = data.letter_grade || '--';
+        
+        // Update category filters
+        updateCategoryFilters(data.category_breakdown || {});
+    }
+    
+    // Initialize sidebar search
+    function initializeSidebarSearch() {
+        const searchInput = document.getElementById('grades-search-input');
+        if (!searchInput) return;
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            searchGrades(searchTerm);
+        });
+        
+        // Clear search on escape
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                searchGrades('');
+            }
+        });
+    }
+    
+    // Enhanced search function
+    function searchGrades(searchTerm = '') {
+        if (!currentGradesData || !Array.isArray(currentGradesData)) return;
+        
+        let filteredGrades = currentGradesData;
+        
+        if (searchTerm) {
+            filteredGrades = currentGradesData.filter(grade => 
+                grade.item_name.toLowerCase().includes(searchTerm) ||
+                grade.category_name.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        // Apply current filter if any
+        const activeFilter = document.querySelector('.grades-filter-section .filter-option.active');
+        if (activeFilter) {
+            const filterType = activeFilter.getAttribute('data-filter');
+            if (filterType !== 'all') {
+                filteredGrades = filteredGrades.filter(grade => {
+                    if (filterType === 'graded') return grade.status === 'graded';
+                    if (filterType === 'pending') return grade.status === 'pending';
+                    if (filterType === 'missing') return grade.status === 'missing';
+                    if (filterType.startsWith('category-')) {
+                        const categoryId = filterType.replace('category-', '');
+                        return grade.category_id === categoryId;
+                    }
+                    return true;
+                });
+            }
+        }
+        
+        // Render filtered results
+        renderGradesTable(filteredGrades);
+        
+        // Update search input visual feedback
+        const searchInput = document.getElementById('grades-search-input');
+        if (searchInput) {
+            if (searchTerm) {
+                searchInput.style.borderColor = '#007aff';
+                searchInput.style.backgroundColor = 'white';
+            } else {
+                searchInput.style.borderColor = '#e5e5ea';
+                searchInput.style.backgroundColor = '#f2f2f7';
+            }
+        }
+    }
+    
+    // Update category filters in sidebar
+    function updateCategoryFilters(categoryBreakdown) {
+        const categoryFilters = document.getElementById('category-filters');
+        if (!categoryFilters) return;
+        
+        categoryFilters.innerHTML = '';
+        
+        for (const [categoryId, category] of Object.entries(categoryBreakdown)) {
+            const button = document.createElement('button');
+            button.className = 'filter-option';
+            button.setAttribute('data-category', categoryId);
+            button.onclick = () => setGradesFilter(`category-${categoryId}`);
+            
+            button.innerHTML = `
+                <span class="status-dot" style="background-color: ${category.color}"></span>
+                <span>${category.name}</span>
+            `;
+            
+            categoryFilters.appendChild(button);
+        }
+    }
+    
     // Expose functions globally
     window.openGoalCalculator = openGoalCalculator;
     window.openSetupModal = openSetupModal;
@@ -1882,7 +2203,7 @@
     window.saveGradingScale = saveGradingScale;
     window.cancelGradingScaleEdit = cancelGradingScaleEdit;
     window.resetGradingScale = resetGradingScale;
-    window.filterGrades = filterGrades;
+    window.filterGrades = filterGrades; // Deprecated - kept for compatibility
     window.searchGrades = searchGrades;
     
     // Inline editing functions
@@ -1896,6 +2217,11 @@
     window.saveScore = saveScore;
     window.clearDueDate = clearDueDate;
     window.cancelEdit = cancelEdit;
+    
+    // Sidebar and navigation functions
+    window.toggleGradesSidebar = toggleGradesSidebar;
+    window.switchGradesTab = switchGradesTab;
+    window.setGradesFilter = setGradesFilter;
     
     console.log('✅ Grades system initialized');
     

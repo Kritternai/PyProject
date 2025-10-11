@@ -1,92 +1,380 @@
 /* 
- * Grades System CSS
- * Modern, clean design for grade display and calculator
+ * Grades System CSS - Matching Classwork Design
+ * Professional, clean design with consistent styling
  */
 
 /* ==========================================
- * Container & Layout
+ * Container & Layout (Matching Classwork)
  * ========================================== */
 
+/* ===== Container ===== */
 .grades-container {
-    padding: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
-    background: #f8f9fa;
+    background: #f2f2f7;
     min-height: 100vh;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* ==========================================
- * Header
- * ========================================== */
-
+/* ===== Header ===== */
 .grades-header {
+    background: white;
+    border-bottom: 1px solid #e5e5ea;
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.grades-header-content {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    gap: 1rem;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .grades-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1a202c;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1d1d1f;
     margin: 0;
 }
 
 .grades-subtitle {
-    font-size: 0.95rem;
-    color: #718096;
-    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+    color: #8e8e93;
+    margin: 4px 0 0 0;
 }
 
-.grades-header-actions {
+.grades-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: 12px;
+    align-items: center;
+}
+
+/* ===== Main Content Area ===== */
+.grades-main {
+    display: flex;
+    height: calc(100vh - 80px);
+    width: 100%;
+    margin: 0;
+    max-width: none;
+}
+
+/* Content Layout */
+.grades-content-layout {
+    display: flex;
+    gap: 0;
+    padding: 0;
+    flex: 1;
+    width: 100%;
+}
+
+/* ===== Sidebar ===== */
+.grades-sidebar {
+    width: 320px;
+    background: white;
+    border-right: 1px solid #e5e5ea;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    height: 100%;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+/* ===== Navigation ===== */
+.grades-nav-section {
+    padding: 20px 0;
+    border-bottom: 1px solid #e5e5ea;
+    margin-bottom: 20px;
+}
+
+.grades-nav-item {
+    display: block;
+    padding: 12px 20px;
+    color: #8e8e93;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.grades-nav-item:hover {
+    background: #f2f2f7;
+    color: #1d1d1f;
+}
+
+.grades-nav-item.active {
+    background: #f2f2f7;
+    color: #007aff;
+    border-left-color: #007aff;
+}
+
+.grades-nav-item-icon {
+    margin-right: 12px;
+    font-size: 1rem;
+    width: 16px;
+    text-align: center;
+}
+
+/* ===== Search Section ===== */
+.grades-search-section {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid #e5e5ea;
+    margin-bottom: 20px;
+}
+
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    color: #8e8e93;
+    font-size: 0.875rem;
+    z-index: 1;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid #e5e5ea;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: #f2f2f7;
+    color: #1d1d1f;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #007aff;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* ===== Stats Section ===== */
+.grades-stats-section {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid #e5e5ea;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 12px 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e5e5ea;
+}
+
+.stat-number {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #8e8e93;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ===== Filter Section ===== */
+.grades-filter-section {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid #e5e5ea;
+    margin-bottom: 20px;
+}
+
+.grades-filter-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.filter-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin: 0 0 12px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    text-align: left;
+    font-size: 0.875rem;
+    color: #8e8e93;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.filter-option:hover {
+    background: #f2f2f7;
+    color: #1d1d1f;
+}
+
+.filter-option.active {
+    background: #f2f2f7;
+    color: #007aff;
+}
+
+.filter-option span {
+    margin-left: 8px;
+}
+
+/* ===== Status Dots ===== */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-dot.all {
+    background: #8e8e93;
+}
+
+.status-dot.graded {
+    background: #34c759;
+}
+
+.status-dot.pending {
+    background: #ff9500;
+}
+
+.status-dot.missing {
+    background: #ff3b30;
+}
+
+/* ===== Content Area ===== */
+.grades-content {
+    flex: 1;
+    background: #f2f2f7;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.grades-tab-content {
+    display: none;
+}
+
+.grades-tab-content.active {
+    display: block;
 }
 
 /* ==========================================
- * Buttons
+ * Buttons (Matching Classwork Style)
  * ========================================== */
 
-.btn-grades {
-    display: inline-flex;
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e5e5ea;
+    background: white;
+    border-radius: 8px;
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    justify-content: center;
+    color: #8e8e93;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.btn-icon:hover {
+    background: #f2f2f7;
+    color: #1d1d1f;
+    border-color: #d1d1d6;
+}
+
+.btn-grades-primary {
+    background: #007aff;
     color: white;
     border: none;
     border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.875rem;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-.btn-grades:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+.btn-grades-primary:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
 }
 
 .btn-grades-secondary {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
     background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
+    color: #007aff;
+    border: 1px solid #007aff;
     border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.875rem;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .btn-grades-secondary:hover {
-    background: #667eea;
+    background: #f2f2f7;
+    border-color: #0056b3;
+    color: #0056b3;
+}
+
+.btn-goal-calculator {
+    background: #34c759;
     color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-goal-calculator:hover {
+    background: #28a745;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
 }
 
 /* ==========================================
@@ -96,115 +384,77 @@
 .grade-summary-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 16px;
-    padding: 2.5rem;
+    padding: 24px;
+    margin-bottom: 24px;
     color: white;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
 }
 
-.grade-display {
-    display: flex;
-    justify-content: space-between;
+.grade-summary-content {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
     align-items: center;
-    gap: 2rem;
-    flex-wrap: wrap;
 }
 
-.current-grade {
-    text-align: center;
-}
-
-.grade-letter {
-    font-size: 5rem;
-    font-weight: 800;
-    line-height: 1;
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.grade-gpa {
-    font-size: 1.25rem;
-    font-weight: 500;
-    opacity: 0.9;
-    margin-top: 0.5rem;
-}
-
-.grade-details {
+.grade-summary-main {
     flex: 1;
-    min-width: 300px;
+}
+
+.grade-current {
+    font-size: 3rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .grade-percentage {
-    margin-bottom: 1rem;
-}
-
-.percentage-value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    display: block;
-    margin-bottom: 0.5rem;
-}
-
-.progress-bar-container {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50px;
-    height: 12px;
-    overflow: hidden;
-}
-
-.progress-bar-fill {
-    background: rgba(255, 255, 255, 0.9);
-    height: 100%;
-    border-radius: 50px;
-    transition: width 0.6s ease;
-}
-
-.grade-points {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.1rem;
-    font-weight: 500;
-    margin-top: 1rem;
+    font-size: 1.25rem;
+    opacity: 0.9;
+    margin: 4px 0 0 0;
 }
 
 .grade-status {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50px;
-    margin-top: 1rem;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.grade-status-icon {
+    font-size: 1.125rem;
+}
+
+.grade-status-text {
+    font-size: 0.875rem;
     font-weight: 500;
 }
 
-.grade-status.passing {
-    background: rgba(16, 185, 129, 0.3);
-}
-
-.grade-status.failing {
-    background: rgba(239, 68, 68, 0.3);
-}
-
-/* Setup Prompt */
-.setup-prompt {
+.grade-summary-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
     text-align: center;
-    padding: 3rem 2rem;
-    color: white;
 }
 
-.setup-prompt i {
-    margin-bottom: 1rem;
+.grade-stat {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
 }
 
-.setup-prompt h3 {
-    margin-bottom: 0.5rem;
+.grade-stat-value {
+    font-size: 1.5rem;
     font-weight: 600;
+    margin-bottom: 4px;
 }
 
-.setup-prompt p {
-    opacity: 0.9;
-    margin-bottom: 1.5rem;
+.grade-stat-label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* ==========================================
@@ -212,30 +462,35 @@
  * ========================================== */
 
 .grade-goals-section {
-    margin-bottom: 2rem;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1a202c;
-    margin-bottom: 1.25rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .goals-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
 }
 
 .goal-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1.25rem;
-    background: white;
-    border-radius: 12px;
-    border: 2px solid;
+    background: #f8f9fa;
+    border: 1px solid #e5e5ea;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
     transition: all 0.2s;
 }
 
@@ -244,50 +499,34 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.goal-card.achieved {
-    border-color: #10b981;
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-}
-
-.goal-card.achievable {
-    border-color: #f59e0b;
-    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-}
-
-.goal-card.not-achievable {
-    border-color: #ef4444;
-    background: linear-gradient(135deg, #fee 0%, #fdd 100%);
-}
-
-.goal-icon {
-    font-size: 2rem;
-}
-
-.goal-card.achieved .goal-icon {
-    color: #10b981;
-}
-
-.goal-card.achievable .goal-icon {
-    color: #f59e0b;
-}
-
-.goal-card.not-achievable .goal-icon {
-    color: #ef4444;
-}
-
-.goal-content {
-    flex: 1;
-}
-
 .goal-grade {
     font-size: 1.5rem;
     font-weight: 700;
-    margin-bottom: 0.25rem;
+    color: #1d1d1f;
+    margin-bottom: 8px;
 }
 
-.goal-message {
-    font-size: 0.9rem;
-    color: #4a5568;
+.goal-points {
+    font-size: 0.875rem;
+    color: #8e8e93;
+    margin-bottom: 4px;
+}
+
+.goal-percentage {
+    font-size: 0.75rem;
+    color: #8e8e93;
+}
+
+.goal-card.achievable .goal-grade {
+    color: #34c759;
+}
+
+.goal-card.challenging .goal-grade {
+    color: #ff9500;
+}
+
+.goal-card.impossible .goal-grade {
+    color: #ff3b30;
 }
 
 /* ==========================================
@@ -295,177 +534,240 @@
  * ========================================== */
 
 .category-breakdown-section {
-    margin-bottom: 2rem;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .categories-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
 }
 
 .category-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: #f8f9fa;
+    border: 1px solid #e5e5ea;
+    border-radius: 8px;
+    padding: 16px;
     transition: all 0.2s;
 }
 
 .category-card:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .category-header {
-    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
-.category-info {
+.category-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
 }
 
 .category-name {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
-    color: #1a202c;
-    margin: 0;
+    color: #1d1d1f;
 }
 
 .category-weight {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #667eea;
-    background: #e9ecff;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
+    font-size: 0.75rem;
+    color: #8e8e93;
+    margin-left: auto;
 }
 
-.category-body {
+.category-progress {
+    margin-bottom: 12px;
+}
+
+.category-percentage {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1d1d1f;
+    margin-bottom: 4px;
 }
 
 .category-score {
-    margin-bottom: 1rem;
-}
-
-.score-display {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 0.75rem;
-}
-
-.score-percentage {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1a202c;
-}
-
-.score-points {
-    font-size: 0.9rem;
-    color: #718096;
+    font-size: 0.875rem;
+    color: #8e8e93;
 }
 
 .category-stats {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid #e2e8f0;
+    gap: 8px;
+    margin-top: 8px;
 }
 
-.category-stats .stat-item {
+.stat-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: #4a5568;
-}
-
-.category-stats .stat-item i {
-    font-size: 1rem;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #8e8e93;
 }
 
 .category-contribution {
-    font-size: 0.85rem;
-    color: #718096;
-    padding-top: 0.75rem;
-    border-top: 1px solid #e2e8f0;
-    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: #8e8e93;
+    padding-top: 8px;
+    border-top: 1px solid #e5e5ea;
+    margin-top: 8px;
 }
 
 /* ==========================================
- * Grades Table
+ * Assignments Table
  * ========================================== */
 
-.grades-table-section {
+.assignments-section {
     background: white;
     border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.grades-table-header {
+.assignments-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
+    margin-bottom: 16px;
 }
 
-.table-filters {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.grades-table {
+.assignments-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1d1d1f;
     margin: 0;
 }
 
-.grades-table thead th {
-    background: #f7fafc;
-    color: #4a5568;
+.assignments-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+.assignments-table th {
+    background: #f8f9fa;
+    color: #8e8e93;
+    font-size: 0.75rem;
     font-weight: 600;
-    font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border-bottom: 2px solid #e2e8f0;
-    padding: 1rem 0.75rem;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e5ea;
 }
 
-.grades-table tbody tr {
-    border-bottom: 1px solid #e2e8f0;
-    transition: background 0.2s;
-}
-
-.grades-table tbody tr:hover {
-    background: #f7fafc;
-}
-
-.grades-table tbody td {
-    padding: 1rem 0.75rem;
+.assignments-table td {
+    padding: 16px;
+    border-bottom: 1px solid #f2f2f7;
     vertical-align: middle;
 }
 
-.assignment-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.assignments-table tr:hover {
+    background: #f8f9fa;
+}
+
+.assignment-name-cell,
+.category-cell,
+.due-date-cell,
+.score-cell {
+    cursor: pointer;
+    position: relative;
+}
+
+.assignment-name-cell:hover,
+.category-cell:hover,
+.due-date-cell:hover,
+.score-cell:hover {
+    background-color: rgba(0, 122, 255, 0.05);
+    border-radius: 4px;
+}
+
+.edit-icon {
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+    color: #8e8e93;
+}
+
+.assignment-name-cell:hover .edit-icon,
+.category-cell:hover .edit-icon,
+.due-date-cell:hover .edit-icon,
+.score-cell:hover .edit-icon {
+    opacity: 1;
 }
 
 .assignment-name {
+    cursor: pointer;
+    transition: color 0.2s;
     font-weight: 500;
-    color: #1a202c;
+}
+
+.assignment-name:hover {
+    color: #007aff;
+}
+
+.category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.category-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.due-date {
+    cursor: pointer;
+    transition: color 0.2s;
+    font-size: 0.875rem;
+}
+
+.due-date:hover {
+    color: #007aff;
+}
+
+.score-display {
+    cursor: pointer;
+    transition: color 0.2s;
+    font-weight: 500;
+}
+
+.score-display:hover {
+    color: #007aff;
 }
 
 .status-badge {
-    padding: 0.375rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
     font-weight: 500;
 }
 
@@ -485,7 +787,96 @@
 }
 
 /* ==========================================
- * Create Grade Item Modal - Custom Combobox
+ * Inline Editing Styles
+ * ========================================== */
+
+.edit-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f8f9fa;
+    padding: 0.25rem;
+    border-radius: 4px;
+    border: 1px solid #e5e5ea;
+}
+
+.edit-form .form-control,
+.edit-form .form-select {
+    min-width: 120px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.edit-form .form-control:focus,
+.edit-form .form-select:focus {
+    border-color: #007aff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 122, 255, 0.25);
+}
+
+.edit-buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.edit-buttons .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 3px;
+    min-width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-buttons .btn-success {
+    background-color: #34c759;
+    border-color: #34c759;
+    color: white;
+}
+
+.edit-buttons .btn-success:hover {
+    background-color: #28a745;
+    border-color: #1e7e34;
+}
+
+.edit-buttons .btn-secondary {
+    background-color: #8e8e93;
+    border-color: #8e8e93;
+    color: white;
+}
+
+.edit-buttons .btn-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.edit-buttons .btn-outline-danger {
+    color: #ff3b30;
+    border-color: #ff3b30;
+}
+
+.edit-buttons .btn-outline-danger:hover {
+    background-color: #ff3b30;
+    border-color: #ff3b30;
+    color: white;
+}
+
+.score-edit-container {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.score-separator {
+    font-weight: bold;
+    color: #8e8e93;
+    user-select: none;
+}
+
+/* ==========================================
+ * Custom Combobox (Task Linking)
  * ========================================== */
 
 .custom-combobox {
@@ -502,7 +893,7 @@
     right: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: #6c757d;
+    color: #8e8e93;
     font-size: 1rem;
     cursor: pointer;
     pointer-events: all;
@@ -511,7 +902,7 @@
 }
 
 .custom-combobox .dropdown-icon:hover {
-    color: #495057;
+    color: #1d1d1f;
     transform: translateY(-50%) scale(1.2);
 }
 
@@ -522,7 +913,7 @@
     right: 0;
     margin-top: 0.25rem;
     background: white;
-    border: 1px solid #dee2e6;
+    border: 1px solid #e5e5ea;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     max-height: 400px;
@@ -547,7 +938,7 @@
     top: 0;
     background: #f8f9fa;
     padding: 0.75rem;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid #e5e5ea;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -555,7 +946,7 @@
 }
 
 .dropdown-search i {
-    color: #6c757d;
+    color: #8e8e93;
     font-size: 1rem;
 }
 
@@ -570,7 +961,7 @@
 }
 
 .dropdown-search-input:focus {
-    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.25);
 }
 
 .dropdown-section {
@@ -582,7 +973,7 @@
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    color: #6c757d;
+    color: #8e8e93;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -605,7 +996,7 @@
 
 .dropdown-item:hover {
     background: #f8f9fa;
-    border-left-color: #0d6efd;
+    border-left-color: #007aff;
 }
 
 .dropdown-item.task-item {
@@ -613,7 +1004,7 @@
 }
 
 .dropdown-item.empty {
-    color: #6c757d;
+    color: #8e8e93;
     cursor: default;
     justify-content: center;
 }
@@ -624,7 +1015,7 @@
 }
 
 .dropdown-item.create-new-hint {
-    color: #0d6efd;
+    color: #007aff;
     font-weight: 500;
 }
 
@@ -641,13 +1032,13 @@
 
 .task-title {
     font-weight: 500;
-    color: #212529;
+    color: #1d1d1f;
     margin-bottom: 0.15rem;
 }
 
 .task-desc {
     font-size: 0.85rem;
-    color: #6c757d;
+    color: #8e8e93;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -655,7 +1046,7 @@
 
 .task-due {
     font-size: 0.8rem;
-    color: #6c757d;
+    color: #8e8e93;
     display: flex;
     align-items: center;
     gap: 0.25rem;
@@ -672,7 +1063,7 @@
 
 .dropdown-divider {
     height: 1px;
-    background: #dee2e6;
+    background: #e5e5ea;
     margin: 0.5rem 0;
 }
 
@@ -685,7 +1076,7 @@
     border-radius: 6px;
     background: #f8f9fa;
     font-size: 0.9rem;
-    border-left: 3px solid #6c757d;
+    border-left: 3px solid #8e8e93;
     transition: all 0.3s;
 }
 
@@ -695,231 +1086,397 @@
 
 .task-link-status.linked {
     background: #d4edda;
-    border-left-color: #28a745;
+    border-left-color: #34c759;
     color: #155724;
 }
 
 .task-link-status.linked i {
-    color: #28a745;
+    color: #34c759;
 }
 
 .task-link-status.new {
     background: #cce5ff;
-    border-left-color: #0d6efd;
+    border-left-color: #007aff;
     color: #004085;
 }
 
 .task-link-status.new i {
-    color: #0d6efd;
+    color: #007aff;
 }
 
 .task-link-status.suggestion {
     background: #fff3cd;
-    border-left-color: #ffc107;
+    border-left-color: #ff9500;
     color: #856404;
 }
 
 .task-link-status.suggestion i {
-    color: #ffc107;
-}
-
-/* Scrollbar styling for dropdown */
-.custom-dropdown-menu::-webkit-scrollbar,
-.dropdown-items::-webkit-scrollbar {
-    width: 6px;
-}
-
-.custom-dropdown-menu::-webkit-scrollbar-track,
-.dropdown-items::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.custom-dropdown-menu::-webkit-scrollbar-thumb,
-.dropdown-items::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 3px;
-}
-
-.custom-dropdown-menu::-webkit-scrollbar-thumb:hover,
-.dropdown-items::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    color: #ff9500;
 }
 
 /* ==========================================
- * Inline Editing Styles
+ * Responsive Design
  * ========================================== */
 
-.assignment-name-cell,
-.category-cell,
-.due-date-cell,
-.score-cell {
-    cursor: pointer;
-    position: relative;
+@media (max-width: 1024px) {
+    .grades-sidebar {
+        width: 280px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .stat-item {
+        padding: 8px 6px;
+    }
+    
+    .stat-number {
+        font-size: 1.125rem;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
+    }
 }
 
-.assignment-name-cell:hover,
-.category-cell:hover,
-.due-date-cell:hover,
-.score-cell:hover {
-    background-color: rgba(13, 110, 253, 0.05);
-    border-radius: 4px;
-}
-
-.edit-icon {
-    opacity: 0;
-    transition: opacity 0.2s;
-    font-size: 0.75rem;
-    margin-left: 0.25rem;
-    color: #6c757d;
-}
-
-.assignment-name-cell:hover .edit-icon,
-.category-cell:hover .edit-icon,
-.due-date-cell:hover .edit-icon,
-.score-cell:hover .edit-icon {
-    opacity: 1;
-}
-
-.assignment-name {
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.assignment-name:hover {
-    color: #0d6efd;
-}
-
-.category-badge {
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.category-badge:hover {
-    transform: scale(1.05);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.due-date {
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.due-date:hover {
-    color: #0d6efd;
-}
-
-.score-display {
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.score-display:hover {
-    color: #0d6efd;
-}
-
-/* Edit Form Styles */
-.edit-form {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #f8f9fa;
-    padding: 0.25rem;
-    border-radius: 4px;
-    border: 1px solid #dee2e6;
-}
-
-.edit-form .form-control,
-.edit-form .form-select {
-    min-width: 120px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 0.875rem;
-}
-
-.edit-form .form-control:focus,
-.edit-form .form-select:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-}
-
-.edit-buttons {
-    display: flex;
-    gap: 0.25rem;
-}
-
-.edit-buttons .btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    border-radius: 3px;
-    min-width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.edit-buttons .btn-success {
-    background-color: #198754;
-    border-color: #198754;
-}
-
-.edit-buttons .btn-success:hover {
-    background-color: #157347;
-    border-color: #146c43;
-}
-
-.edit-buttons .btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-}
-
-.edit-buttons .btn-secondary:hover {
-    background-color: #5c636a;
-    border-color: #565e64;
-}
-
-.edit-buttons .btn-outline-danger {
-    color: #dc3545;
-    border-color: #dc3545;
-}
-
-.edit-buttons .btn-outline-danger:hover {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
-}
-
-/* Score Edit Container */
-.score-edit-container {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.score-separator {
-    font-weight: bold;
-    color: #6c757d;
-    user-select: none;
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
+    .grades-sidebar {
+        width: 100%;
+        position: fixed;
+        top: 80px;
+        left: -100%;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .grades-sidebar.open {
+        left: 0;
+    }
+    
+    .grades-content {
+        padding: 16px;
+        width: 100%;
+    }
+    
+    .grades-header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .grades-actions {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .grades-actions .btn-grades-primary,
+    .grades-actions .btn-grades-secondary,
+    .grades-actions .btn-goal-calculator {
+        flex: 1;
+        min-width: 120px;
+        font-size: 0.8rem;
+        padding: 8px 12px;
+    }
+    
+    .grades-actions .btn-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .grade-summary-content {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .grade-summary-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .goals-grid,
+    .categories-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .assignments-table {
+        font-size: 0.875rem;
+    }
+    
+    .assignments-table th,
+    .assignments-table td {
+        padding: 8px 12px;
+    }
+    
     .edit-form {
         flex-direction: column;
         align-items: stretch;
+        gap: 0.5rem;
     }
     
     .edit-form .form-control,
     .edit-form .form-select {
         min-width: auto;
+        width: 100%;
     }
     
     .edit-buttons {
         justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .score-edit-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .score-edit-container input {
+        width: 100%;
+    }
+    
+    .score-separator {
+        display: none;
+    }
+    
+    .custom-dropdown-menu {
+        max-height: 300px;
+    }
+    
+    .dropdown-item {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .task-info {
+        min-width: 0;
+    }
+    
+    .task-desc {
+        display: none;
+    }
+    
+    .task-due {
+        font-size: 0.75rem;
     }
 }
 
-/* Animation for edit mode */
+@media (max-width: 480px) {
+    .grades-header {
+        padding: 12px 16px;
+    }
+    
+    .grades-title {
+        font-size: 1.25rem;
+    }
+    
+    .grades-subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .setup-prompt {
+        padding: 40px 20px;
+    }
+    
+    .setup-prompt i {
+        font-size: 2.5rem;
+    }
+    
+    .setup-prompt h3 {
+        font-size: 1.25rem;
+    }
+    
+    .setup-prompt p {
+        font-size: 0.875rem;
+    }
+    
+    .setup-prompt .btn {
+        width: 100%;
+        padding: 12px 24px;
+        font-size: 0.95rem;
+    }
+    
+    .grades-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .grades-actions .btn-grades-primary,
+    .grades-actions .btn-grades-secondary,
+    .grades-actions .btn-goal-calculator {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .grades-content {
+        padding: 12px;
+    }
+    
+    .grade-summary-card {
+        padding: 16px;
+        border-radius: 12px;
+    }
+    
+    .grade-current {
+        font-size: 2.5rem;
+    }
+    
+    .grade-percentage {
+        font-size: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+    
+    .stat-item {
+        padding: 6px 4px;
+    }
+    
+    .stat-number {
+        font-size: 1rem;
+    }
+    
+    .stat-label {
+        font-size: 0.65rem;
+    }
+    
+    .assignments-table {
+        font-size: 0.8rem;
+    }
+    
+    .assignments-table th,
+    .assignments-table td {
+        padding: 6px 8px;
+    }
+    
+    .assignment-name {
+        font-size: 0.875rem;
+        line-height: 1.3;
+    }
+    
+    .category-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+    
+    .due-date {
+        font-size: 0.75rem;
+    }
+    
+    .score-display {
+        font-size: 0.8rem;
+    }
+    
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+    
+    .edit-buttons .btn {
+        min-width: 24px;
+        height: 24px;
+        padding: 0.2rem 0.4rem;
+        font-size: 0.7rem;
+    }
+    
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .modal-content {
+        border-radius: 12px;
+    }
+    
+    .modal-header {
+        padding: 1rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        padding: 1rem;
+    }
+    
+    .custom-dropdown-menu {
+        max-height: 250px;
+    }
+    
+    .dropdown-item {
+        padding: 0.4rem 0.6rem;
+    }
+    
+    .task-title {
+        font-size: 0.875rem;
+    }
+}
+
+/* ==========================================
+ * Setup Prompt
+ * ========================================== */
+
+.setup-prompt {
+    text-align: center;
+    padding: 60px 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.setup-prompt i {
+    font-size: 3rem;
+    opacity: 0.8;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.setup-prompt h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: white;
+}
+
+.setup-prompt p {
+    font-size: 0.95rem;
+    opacity: 0.9;
+    margin-bottom: 24px;
+    color: white;
+}
+
+.setup-prompt .btn {
+    background: white;
+    color: #667eea;
+    border: none;
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.setup-prompt .btn:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================
+ * Animations
+ * ========================================== */
+
 @keyframes editModeIn {
     from {
         opacity: 0;
@@ -935,124 +1492,6 @@
     animation: editModeIn 0.2s ease-out;
 }
 
-/* ==========================================
- * Goal Calculator Modal
- * ========================================== */
-
-.calculator-form {
-    padding: 1rem;
-}
-
-.calculator-form label {
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-bottom: 0.75rem;
-    display: block;
-}
-
-.calculator-result {
-    margin-top: 1.5rem;
-}
-
-.goal-details {
-    margin-top: 1rem;
-}
-
-.goal-stat {
-    padding: 1rem;
-}
-
-.goal-stat .stat-value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #667eea;
-}
-
-.goal-stat .stat-label {
-    font-size: 0.9rem;
-    color: #718096;
-    margin-top: 0.25rem;
-}
-
-/* ==========================================
- * Setup Modal
- * ========================================== */
-
-.setup-section {
-    padding: 1.5rem;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-.setup-section h6 {
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-}
-
-.grading-scale-preview {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.category-row {
-    padding: 1rem;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-}
-
-/* ==========================================
- * Responsive Design
- * ========================================== */
-
-@media (max-width: 768px) {
-    .grades-container {
-        padding: 1rem;
-    }
-    
-    .grade-display {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .grade-letter {
-        font-size: 4rem;
-    }
-    
-    .goals-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .categories-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .grades-table-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .table-filters {
-        flex-direction: column;
-    }
-    
-    .grades-table {
-        font-size: 0.875rem;
-    }
-    
-    .grades-table thead th,
-    .grades-table tbody td {
-        padding: 0.75rem 0.5rem;
-    }
-}
-
-/* ==========================================
- * Animations
- * ========================================== */
-
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -1064,23 +1503,31 @@
     }
 }
 
-.goal-card,
-.category-card {
+.setup-prompt {
     animation: fadeIn 0.4s ease-out;
 }
 
 /* ==========================================
- * Utilities
+ * Scrollbar Styling
  * ========================================== */
 
-.text-muted {
-    color: #718096 !important;
+.custom-dropdown-menu::-webkit-scrollbar,
+.dropdown-items::-webkit-scrollbar {
+    width: 6px;
 }
 
-.badge {
-    padding: 0.375rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
+.custom-dropdown-menu::-webkit-scrollbar-track,
+.dropdown-items::-webkit-scrollbar-track {
+    background: #f1f1f1;
 }
 
+.custom-dropdown-menu::-webkit-scrollbar-thumb,
+.dropdown-items::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.custom-dropdown-menu::-webkit-scrollbar-thumb:hover,
+.dropdown-items::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
