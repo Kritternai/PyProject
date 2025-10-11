@@ -1,17 +1,20 @@
-<div class="container-fluid px-0 ng-font" id="note-editor-page" data-selected-note-id="{{ selected_note_id or '' }}">
-  <div class="note-header d-flex align-items-center justify-content-between px-4 pt-3 pb-2 border-bottom">
-    <div class="d-flex align-items-center gap-2">
-      <button class="btn btn-light btn-sm btn-soft ng-btn" onclick="loadPage('note')" aria-label="Back to notes"><i class="bi bi-arrow-left"></i></button>
+<!-- Load shared note styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/note_shared.css') }}">
+
+<div class="px-0 container-fluid ng-font note-section-top-0" id="note-editor-page" data-selected-note-id="{{ selected_note_id or '' }}">
+  <div class="px-4 pt-2 pb-2 note-header d-flex align-items-center justify-content-between border-bottom note-header-top-0">
+    <div class="gap-2 d-flex align-items-center">
+      <button class="ng-btn ng-btn-sm" onclick="loadPage('note')" aria-label="Back to notes"><i class="bi bi-arrow-left"></i></button>
       <div class="d-flex align-items-center">
-        <div class="hero-icon me-2"><i class="bi bi-journal-text"></i></div>
+        <div class="hero-icon me-2"><i class="bi bi-journal-text note-icon-md"></i></div>
         <div>
           <h5 class="mb-0 ng-title">Notes</h5>
-          <div class="opacity-75 small ng-subtitle">Edit and organize your notes</div>
+          <div class="ng-subtitle">Edit and organize your notes</div>
         </div>
       </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <button class="btn btn-light btn-sm" onclick="openNoteEditor()"><i class="bi bi-plus-lg me-1"></i>New</button>
+    <div class="gap-2 d-flex align-items-center">
+      <button class="ng-btn-primary ng-btn-sm" onclick="openNoteEditor()" title="Create new note"><i class="bi bi-plus-lg"></i>New</button>
     </div>
   </div>
 
@@ -19,7 +22,7 @@
     <!-- Left: list -->
     <aside class="border-end sidebar-panel glass-dark" style="width: 300px; min-width: 260px;">
       <div class="p-3 border-bottom glass-section ng-space">
-        <label class="form-label section-title mb-2"><i class="bi bi-search me-1"></i>Search</label>
+        <label class="mb-2 form-label section-title"><i class="bi bi-search"></i>Search</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-search"></i></span>
           <input type="text" class="form-control ng-input" id="editorNoteSearch" placeholder="Search notes..." aria-label="Search notes">
@@ -29,31 +32,31 @@
         {% if notes %}
           {% for note in notes %}
           <div class="p-3 note-row neo-card-lite ng-neo" role="button" onclick="loadEditorNote('{{ note.id }}')" data-note-id="{{ note.id }}">
-            <div class="fw-semibold text-truncate"><i class="bi bi-journal-text me-1 text-primary"></i>{{ note.title }}</div>
+            <div class="fw-semibold text-truncate"><i class="bi bi-journal-text note-icon-primary"></i>{{ note.title }}</div>
             <div class="small text-muted text-truncate">{{ (note.content or '')|striptags }}</div>
-            <div class="small text-muted"><i class="bi bi-calendar2-week me-1"></i>{{ note.created_at.strftime('%Y-%m-%d %H:%M') if note.created_at else '' }}</div>
+            <div class="small text-muted"><i class="bi bi-calendar2-week"></i>{{ note.created_at.strftime('%Y-%m-%d %H:%M') if note.created_at else '' }}</div>
           </div>
           {% endfor %}
         {% else %}
-          <div class="text-center text-muted py-5">No notes yet</div>
+          <div class="py-5 text-center text-muted">No notes yet</div>
         {% endif %}
       </div>
     </aside>
 
     <!-- Right: editor -->
-    <section class="flex-grow-1 d-flex flex-column bg-white ng-space">
-      <div class="p-3 border-bottom d-flex align-items-center gap-3 ui-surface glass-panel">
+    <section class="bg-white flex-grow-1 d-flex flex-column ng-space">
+      <div class="gap-3 p-3 border-bottom d-flex align-items-center ui-surface glass-panel">
         <div class="w-100">
-          <label class="form-label section-title mb-1 ng-subtitle"><i class="bi bi-type me-1"></i>Title</label>
+          <label class="mb-1 form-label section-title"><i class="bi bi-type"></i>Title</label>
           <input type="text" class="form-control form-control-lg ng-input" id="editorTitle" placeholder="Note title..." aria-label="Note title">
         </div>
-        <div class="d-flex align-items-end gap-2">
-          <button class="btn ng-chip" onclick="refreshEditorNote()" title="Refresh" aria-label="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
-          <button class="btn ng-btn-save" onclick="saveEditorNote()"><i class="bi bi-save me-1"></i>Save</button>
+        <div class="gap-2 d-flex align-items-end">
+          <button class="ng-chip" onclick="refreshEditorNote()" title="Refresh" aria-label="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
+          <button class="ng-btn-save" onclick="saveEditorNote()"><i class="bi bi-save"></i>Save</button>
         </div>
       </div>
-      <div class="editor-toolbar ui-toolbar glass-panel border-0 p-2 mt-2 mb-1 mx-2">
-        <div class="d-flex gap-2 flex-wrap align-items-center">
+      <div class="p-2 mx-2 mt-2 mb-1 border-0 editor-toolbar ui-toolbar glass-panel">
+        <div class="flex-wrap gap-2 d-flex align-items-center">
           <!-- Text Formatting -->
           <button class="btn btn-sm ng-chip" onclick="formatText('bold')" title="Bold (Ctrl+B)">
             <i class="bi bi-type-bold"></i>
@@ -107,7 +110,7 @@
           </button>
         </div>
       </div>
-      <div id="editorContent" class="flex-grow-1 p-4 overflow-auto editor-card glass-panel" contenteditable="true" style="outline:none;"
+      <div id="editorContent" class="p-4 overflow-auto flex-grow-1 editor-card glass-panel" contenteditable="true" style="outline:none;"
            aria-label="Note content editor" role="textbox">
       </div>
       <div class="p-2 border-top small text-muted d-flex justify-content-between glass-section ng-glass ng-rounded">
@@ -118,10 +121,40 @@
   </div>
 </div>
 
+<!-- Script loaded dynamically via main.js for SPA compatibility -->
+<!-- See: app/static/js/note_js/note_editor.js -->
+
 <script>
+// Fallback initialization for non-SPA mode
+(function() {
+  console.log('[note_editor_fragment] Script tag executed');
+  
+  // Check if we need to load the script manually (non-SPA mode)
+  if (!window.loadEditorNote) {
+    console.log('[note_editor_fragment] loadEditorNote not found, loading script...');
+    const script = document.createElement('script');
+    script.src = '/static/js/note_js/note_editor.js?v=' + Date.now();
+    script.onload = () => {
+      console.log('[note_editor_fragment] Script loaded successfully');
+    };
+    document.head.appendChild(script);
+  } else {
+    console.log('[note_editor_fragment] Functions already loaded');
+    // Re-initialize if already loaded
+    if (window.initializeNoteEditor) {
+      window.initializeNoteEditor();
+    }
+  }
+})();
+</script>
+
+<script>
+// Old inline code kept as backup (will be removed later)
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-  initializeNoteEditor();
+  if (typeof initializeNoteEditor === 'function') {
+    initializeNoteEditor();
+  }
 });
 
 function initializeNoteEditor() {
@@ -298,86 +331,20 @@ window.saveEditorNote = function(){
 }
 </script>
 
+<!-- All styles moved to note_shared.css for consistency -->
 <style>
-/* Base theme */
-:root {
-  --bg: radial-gradient(1200px 1200px at 10% 10%, rgba(255,255,255,0.5), rgba(255,255,255,0.35) 40%, rgba(255,255,255,0.25) 70%), linear-gradient(135deg, #8ec5fc 0%, #e0c3fc 100%);
-  --surface: #ffffff;         /* cards/panels */
-  --muted: #eef1f7;           /* subtle separators */
-  --text: #1f2937;            /* primary text */
-  --subtext: #6b7280;         /* secondary text */
-  --border: #e5e7eb;          /* borders */
-  --shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-  --radius: 14px;
-  --accent1: #a78bfa;         /* lavender */
-  --accent2: #60a5fa;         /* blue */
-  --accent-gradient: linear-gradient(135deg, var(--accent1), var(--accent2));
-  --glass-blur: blur(24px);
-  --glass-bg: rgba(255,255,255,0.35);
-  --glass-border: rgba(255,255,255,0.6);
-  --glass-inner: inset 1px 1px 0 rgba(255,255,255,0.6);
+/* Additional styles specific to note editor only */
+#editorSplit { 
+  height: calc(100vh - 120px); 
+  gap: 16px; 
+  padding: 16px; 
 }
 
-/* App background */
-body { background: var(--bg); background-attachment: fixed; }
-.ng-font { font-family: 'Inter', 'SF Pro Text', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif; color: var(--text); }
-
-/* Header */
-.note-header { background: var(--surface); box-shadow: var(--shadow); border-bottom: 1px solid var(--border) !important; border-radius: 0 0 var(--radius) var(--radius); }
-.note-header { position: relative; background: rgba(255,255,255,0.28); border: 1px solid rgba(255,255,255,0.55) !important; backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: 0 0 20px 20px; box-shadow: 0 12px 28px rgba(15,23,42,.08), inset 0 1px 0 rgba(255,255,255,0.6); }
-.note-header:before { content: ""; position:absolute; inset:0; pointer-events:none; background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06)); border-radius: inherit; }
-.note-header .hero-icon { width:36px; height:36px; border-radius:12px; background: rgba(255,255,255,0.55); color: var(--text); display:flex; align-items:center; justify-content:center; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-.ng-title { font-weight: 700; color: var(--text); }
-.ng-subtitle { color: var(--subtext); }
-.note-header .ng-title, .note-header .ng-subtitle { text-shadow: 0 1px 2px rgba(0,0,0,0.08); }
-
-/* Sidebar */
-.glass-panel { background: var(--glass-bg); border-radius: 16px; border: 1px solid var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--shadow), var(--glass-inner); }
-.glass-dark { background: rgba(10,20,60,0.35); border: 1px solid rgba(255,255,255,0.3); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: 0 20px 40px rgba(10,20,60,0.15), inset 0 1px 0 rgba(255,255,255,0.3); }
-.sidebar-panel { background: transparent; }
-.neo-card-lite { background: var(--surface); border-radius: 12px; }
-#note-editor-page .note-row { border-radius: 20px; margin: 8px 10px; padding: 12px 14px !important; border: 1px solid rgba(255,255,255,0.55); background: rgba(255,255,255,0.35); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 8px 20px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.6); transition: transform .25s ease, box-shadow .25s ease, background .25s ease; }
-#note-editor-page .note-row:hover { background: rgba(255,255,255,0.55); box-shadow: 0 14px 28px rgba(15,23,42,0.12), 0 0 0 3px rgba(167,139,250,0.16); transform: translateY(-2px); }
-#note-editor-page .note-row.active { background: linear-gradient(135deg, rgba(167,139,250,0.18), rgba(96,165,250,0.18)); border-color: rgba(167,139,250,0.55); box-shadow: 0 0 0 3px rgba(167,139,250,0.22); }
-
-/* Surfaces */
-.ui-surface { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
-
-/* Toolbar */
-.ui-toolbar { background: rgba(255,255,255,0.28); border: 1px solid rgba(255,255,255,0.5) !important; border-radius: 16px; backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--shadow), var(--glass-inner); transition: box-shadow .3s ease; }
-.ui-toolbar .btn { border-radius: 12px; padding: 6px 10px; border: 1px solid rgba(255,255,255,0.6); color: var(--text); background: rgba(255,255,255,0.5); backdrop-filter: blur(12px); }
-.ui-toolbar .btn i { font-size: 14px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08)); }
-.ui-toolbar .btn:hover { background: rgba(255,255,255,0.7); box-shadow: 0 0 0 3px rgba(255,255,255,0.35), 0 8px 22px rgba(15,23,42,.08); transform: translateY(-1px); }
-.ui-toolbar .btn.active { background: linear-gradient(135deg, rgba(167,139,250,0.25), rgba(96,165,250,0.25)); border-color: rgba(167,139,250,0.6); box-shadow: 0 0 0 3px rgba(167,139,250,0.25), 0 8px 22px rgba(96,165,250,.18); }
-.ui-toolbar .btn.active i { filter: drop-shadow(0 0 6px rgba(167,139,250,0.6)); }
-
-/* Inputs */
-.ng-input { border-radius: 14px; border: 1px solid var(--border); background: linear-gradient(180deg, #fff, #f8fafc); box-shadow: var(--shadow); }
-.ng-input:focus { box-shadow: 0 0 0 3px rgba(96,165,250,0.25), var(--shadow); }
-.section-title { font-weight: 600; color: var(--subtext); }
-
-/* Save button */
-.btn-save-accent, .ng-btn-save { border: none; color: #fff; padding: 8px 14px; border-radius: 20px; background: linear-gradient(90deg, #8ec5fc, #e0c3fc); box-shadow: 0 12px 28px rgba(96,165,250,0.28), 0 0 0 1px rgba(255,255,255,0.6) inset; transition: transform .25s ease, filter .25s ease, box-shadow .3s ease; }
-.btn-save-accent:hover, .ng-btn-save:hover { filter: brightness(1.07); box-shadow: 0 14px 30px rgba(96,165,250,0.35), 0 0 0 2px rgba(255,255,255,0.8) inset; transform: translateY(-1px); }
-
-/* Editor */
-#editorContent { background: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; box-shadow: var(--shadow), var(--glass-inner); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); font-family: 'Inter', system-ui, sans-serif; font-size: 15px; line-height: 1.75; transition: box-shadow .3s ease; }
-#editorContent:focus-within { box-shadow: 0 14px 34px rgba(15,23,42,.12), 0 0 0 3px rgba(167,139,250,0.18); }
-#editorContent h1, #editorContent h2, #editorContent h3 { margin: 1.2em 0 .4em; font-weight: 700; }
-#editorContent p { margin-bottom: 1em; color: var(--text); }
-#editorContent img { max-width: 100%; height: auto; border-radius: 12px; margin: 10px 0; }
-#editorContent table { border-collapse: collapse; margin: 15px 0; }
-#editorContent table td { border: 1px solid var(--border); padding: 10px 12px; min-width: 60px; }
-#editorContent a { color: var(--accent2); text-decoration: underline; }
-#editorContent a:hover { color: #2563eb; }
-
-/* Layout */
-#editorSplit { height: calc(100vh - 120px); gap: 16px; padding: 16px; }
-
-/* Responsive */
 @media (max-width: 992px) {
-  #editorSplit { flex-direction: column; height: auto; }
-  .sidebar-panel { width: 100% !important; min-width: 0 !important; }
+  #editorSplit { 
+    flex-direction: column; 
+    height: auto; 
+  }
 }
 </style>
 

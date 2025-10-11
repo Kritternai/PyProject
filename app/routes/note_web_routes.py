@@ -2,7 +2,7 @@
 Note Web Routes
 Web routes for note fragments and pages (non-API)
 """
-
+# app/routes/note_web_routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, session, g, jsonify, current_app
 from functools import wraps
 from ..services import NoteService
@@ -58,20 +58,57 @@ def notes_page():
 def partial_note():
     """Note fragment"""
     if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
+        return redirect(url_for('auth.login'))
     
     try:
         note_service = NoteService()
         notes = note_service.get_user_notes(g.user.id)
         notes = _enrich_notes_with_status_and_files(notes)
-        return render_template('note_fragment.html', notes=notes, user=g.user)
+        stats = {
+            'completed': sum(1 for n in notes if hasattr(n, 'status') and n.status == 'completed'),
+            'images': 0,  # Can be enhanced later
+            'docs': 0     # Can be enhanced later
+        }
+        return render_template('note_fragment.html', notes=notes, stats=stats, user=g.user)
     except Exception as e:
-        return render_template('note_fragment.html', notes=[], user=g.user)
+        return render_template('note_fragment.html', notes=[], stats={'completed': 0, 'images': 0, 'docs': 0}, user=g.user)
 
 
 # ============================================
 # NOTE CRUD OPERATIONS (Web)
 # ============================================
+
+@note_web_bp.route('/partial/note/add', methods=['GET'])
+def partial_note_add_form():
+    """Show add note form"""
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    return render_template('notes/note_add_fragment.html', user=g.user)
+
+
+@note_web_bp.route('/partial/note/editor', methods=['GET'])
+@note_web_bp.route('/partial/note/editor/<note_id>', methods=['GET'])
+def partial_note_editor(note_id=None):
+    """Show note editor page (split view with list + editor)"""
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    try:
+        note_service = NoteService()
+        notes = note_service.get_user_notes(g.user.id)
+        notes = _enrich_notes_with_status_and_files(notes)
+        
+        return render_template('notes/note_editor_fragment.html', 
+                             notes=notes, 
+                             user=g.user,
+                             selected_note_id=note_id)
+    except Exception as e:
+        return render_template('notes/note_editor_fragment.html', 
+                             notes=[], 
+                             user=g.user,
+                             selected_note_id=note_id)
+
 
 @note_web_bp.route('/partial/note/add', methods=['POST'])
 def partial_note_add():
@@ -105,9 +142,9 @@ def partial_note_add():
         note_service = NoteService()
         note = note_service.create_note(
             user_id=g.user.id,
-            lesson_id=None,
             title=title,
-            content=content
+            content=content,
+            lesson_id=None  # Standalone note (not linked to any lesson/class)
         )
 
         # Handle file uploads (image/file)

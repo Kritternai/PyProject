@@ -1,26 +1,53 @@
-<div class="px-4 container-fluid" id="note-list-container">
-    <div class="">
-      <h1 class="">All note</h1>
-    </div>
-    <div class="mb-3 d-flex justify-content-between align-items-center page-toolbar">
-        <div class="flex-grow-1 me-3" style="max-width: 640px;">
-            <div class="input-group search-bar">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input id="noteSearch" type="text" class="form-control" placeholder="Search">
+<!-- Load shared note styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/note_shared.css') }}">
+
+<div class="px-0 container-fluid ng-font note-section-top-0" id="note-list-container">
+    <!-- Header Section -->
+    <div class="px-4 pt-2 pb-2 mb-3 note-header d-flex align-items-center justify-content-between border-bottom note-header-top-0">
+        <div class="gap-2 d-flex align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="hero-icon me-2"><i class="bi bi-journal-text note-icon-md"></i></div>
+                <div>
+                    <h5 class="mb-0 ng-title">My Notes</h5>
+                    <div class="ng-subtitle">Organize and manage your notes</div>
+                </div>
             </div>
         </div>
-        <a href="#" class="text-decoration-none add-link" onclick="loadPage('note/add'); return false;">
-            <i class="bi bi-plus-circle me-1"></i>Add new note
-        </a>
-    </div>
-    <div class="mb-3 d-flex justify-content-between align-items-center">
-        <div class="gap-2 d-flex chip-group">
-            <button type="button" class="btn btn-light chip active" data-status="">All</button>
-            <button type="button" class="btn btn-light chip" data-status="pending">Pending</button>
-            <button type="button" class="btn btn-light chip" data-status="in-progress">In Progress</button>
-            <button type="button" class="btn btn-light chip" data-status="completed">Completed</button>
+        <div class="gap-2 d-flex align-items-center">
+            <button class="ng-btn-primary" onclick="loadPage('note/add')" title="Create new note">
+                <i class="bi bi-plus-lg"></i>New Note
+            </button>
         </div>
-        <div></div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="px-4 sticky-search-filter">
+        <div class="flex-wrap gap-2 mb-3 d-flex justify-content-between align-items-center">
+            <div class="flex-grow-1 me-3" style="max-width: 640px;">
+                <div class="input-group search-bar-modern">
+                    <span class="bg-white input-group-text border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input id="noteSearch" type="text" class="form-control border-start-0 ng-input" placeholder="Search notes...">
+                </div>
+            </div>
+        </div>
+        <div class="mb-3 d-flex justify-content-between align-items-center">
+            <div class="gap-2 d-flex chip-group">
+                <button type="button" class="btn btn-light chip active" data-status="">
+                    <i class="bi bi-card-list me-1"></i>All
+                </button>
+                <button type="button" class="btn btn-light chip" data-status="pending">
+                    <i class="bi bi-clock me-1"></i>Pending
+                </button>
+                <button type="button" class="btn btn-light chip" data-status="in-progress">
+                    <i class="bi bi-arrow-repeat me-1"></i>In Progress
+                </button>
+                <button type="button" class="btn btn-light chip" data-status="completed">
+                    <i class="bi bi-check-circle me-1"></i>Completed
+                </button>
+            </div>
+        </div>
     </div>
     {% set stats = namespace(images=0, docs=0, completed=0, inprogress=0, pending=0) %}
     {% if notes %}
@@ -37,43 +64,62 @@
         {% endif %}
       {% endfor %}
     {% endif %}
-    <div class="mb-3 row g-3 stats-row">
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="stat-card d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="text-white stat-icon bg-brand me-2"><i class="bi bi-journal-text"></i></div>
-            <div class="small text-muted">Total Notes</div>
-          </div>
-          <div class="m-0 display-6 fw-semibold">{{ notes|length }}</div>
+    <!-- Stats Section -->
+    <div class="px-4">
+        <div class="mb-3 row g-3 stats-row">
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon-modern bg-gradient-primary me-3">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                        <div>
+                            <div class="mb-1 small text-muted">Total Notes</div>
+                            <div class="mb-0 h4 fw-bold">{{ notes|length }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon-modern bg-gradient-success me-3">
+                            <i class="bi bi-check2-circle"></i>
+                        </div>
+                        <div>
+                            <div class="mb-1 small text-muted">Completed</div>
+                            <div class="mb-0 h4 fw-bold">{{ stats.completed }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon-modern bg-gradient-info me-3">
+                            <i class="bi bi-image"></i>
+                        </div>
+                        <div>
+                            <div class="mb-1 small text-muted">Images</div>
+                            <div class="mb-0 h4 fw-bold">{{ stats.images }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon-modern bg-gradient-warning me-3">
+                            <i class="bi bi-paperclip"></i>
+                        </div>
+                        <div>
+                            <div class="mb-1 small text-muted">Files</div>
+                            <div class="mb-0 h4 fw-bold">{{ stats.docs }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="stat-card d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="stat-icon bg-success-subtle text-success me-2"><i class="bi bi-check2-circle"></i></div>
-            <div class="small text-muted">Completed</div>
-          </div>
-          <div class="m-0 display-6 fw-semibold">{{ stats.completed }}</div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="stat-card d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="stat-icon bg-primary-subtle text-primary me-2"><i class="bi bi-image"></i></div>
-            <div class="small text-muted">Images</div>
-          </div>
-          <div class="m-0 display-6 fw-semibold">{{ stats.images }}</div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="stat-card d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="stat-icon bg-info-subtle text-info me-2"><i class="bi bi-paperclip"></i></div>
-            <div class="small text-muted">Files</div>
-          </div>
-          <div class="m-0 display-6 fw-semibold">{{ stats.docs }}</div>
-        </div>
-      </div>
     </div>
     
     <!-- Integration Summary -->
@@ -108,9 +154,12 @@
         </div>
     </div>
     {% endif %}
-    <div class="row">
-        {% if notes %}
-            {% for note in notes %}
+    
+    <!-- Notes List Section -->
+    <div class="px-4">
+        <div class="row g-3">
+            {% if notes %}
+                {% for note in notes %}
                 <div class="mb-4 col-md-6 col-lg-4">
                     <div class="card h-100 neo-card note-card" data-status="{{ (note.status or 'pending') }}" data-note-id="{{ note.id }}" style="cursor:pointer;">
                         {% set first_image = None %}
@@ -151,13 +200,11 @@
                             {% endif %}
                             <div class="mt-auto small text-muted">
                                 <span class="me-2"><i class="bi bi-calendar2-week me-1"></i>{{ note.created_at.strftime('%Y-%m-%d') if note.created_at else '' }}</span>
-                                {% if note.lesson and note.lesson.title %}
-                                <span><i class="bi bi-journal-text me-1"></i>{{ note.lesson.title }}</span>
-                                {% endif %}
+                                <!-- Standalone notes - no lesson/class association -->
                             </div>
                         </div>
                         <div class="gap-2 pt-0 pb-3 bg-white border-0 card-footer d-flex justify-content-end">
-                            <button type="button" class="btn btn-sm btn-outline-primary btn-soft" onclick="openNoteEditor('{{ note.id }}')"
+                            <button type="button" class="ng-btn-outline-primary ng-btn-sm" onclick="openNoteEditor('{{ note.id }}')"
                                 data-note-id="{{ note.id }}"
                                 data-note-title="{{ note.title }}"
                                 data-note-content="{{ note.content or '' }}"
@@ -168,21 +215,28 @@
                                 data-note-external-link="{{ note.external_link or '' }}"
                                 data-note-images='{{ note.files | selectattr("file_type", "equalto", "image") | list | to_json | safe }}'
                                 data-note-files='{{ note.files | selectattr("file_type", "equalto", "document") | list | to_json | safe }}'>
-                                <i class="fas fa-pen me-1"></i>Edit
+                                <i class="bi bi-pencil note-icon-sm"></i>Edit
                             </button>
-                            <button onclick="deleteNote('{{ note.id }}')" class="btn btn-sm btn-outline-danger btn-soft"><i class="fas fa-trash me-1"></i>Delete</button>
+                            <button onclick="deleteNote('{{ note.id }}')" class="ng-btn-outline-danger ng-btn-sm"><i class="bi bi-trash note-icon-sm"></i>Delete</button>
                         </div>
                     </div>
                 </div>
-            {% endfor %}
-        {% else %}
-            <div class="col">
-                <div class="py-5 text-center text-muted">
-                    <p class="mb-2">You don't have any notes yet.</p>
-                    <button type="button" class="btn btn-primary" onclick="loadPage('note/add')"><i class="fas fa-plus me-1"></i>Create your first note</button>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="py-5 text-center empty-state-modern">
+                        <div class="mb-4 empty-state-icon">
+                            <i class="bi bi-journal-x"></i>
+                        </div>
+                        <h4 class="mb-2 text-muted">No notes yet</h4>
+                        <p class="mb-4 text-muted">Start organizing your thoughts and ideas</p>
+                        <button type="button" class="ng-btn-save" onclick="loadPage('note/add')">
+                            <i class="bi bi-plus-lg"></i>Create your first note
+                        </button>
+                    </div>
                 </div>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
 </div>
 
@@ -263,7 +317,7 @@
                 </div>
                 <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
                     <label for="external_link" class="form-label section-title"><i class="bi bi-link-45deg me-1"></i>External Link</label>
-                    <div class="input-group mb-3">
+                    <div class="mb-3 input-group">
                         <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
                         <input type="url" class="form-control" id="external_link" name="external_link" placeholder="https://example.com" aria-describedby="linkHelp">
                     </div>
@@ -282,12 +336,12 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-soft" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i>Close</button>
+                    <button type="button" class="ng-btn-soft" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i>Close</button>
                     <div id="addSavingIndicator" class="me-2 d-none">
                         <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
                         <span class="visually-hidden">Saving...</span>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-soft"><i class="bi bi-save2-fill me-1"></i>Save Note</button>
+                    <button type="submit" class="ng-btn-primary"><i class="bi bi-save2-fill"></i>Save Note</button>
                 </div>
             </form>
         </div>
@@ -394,12 +448,12 @@
 
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-soft" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i>Close</button>
+                    <button type="button" class="ng-btn-soft" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i>Close</button>
                     <div id="editSavingIndicator" class="me-2 d-none">
                         <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
                         <span class="visually-hidden">Saving...</span>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-soft"><i class="bi bi-pencil-square me-1"></i>Update Note</button>
+                    <button type="submit" class="ng-btn-primary"><i class="bi bi-pencil-square"></i>Update Note</button>
                 </div>
             </form>
         </div>
@@ -407,35 +461,16 @@
   </div>
 </div>
 
+<!-- All styles moved to note_shared.css for consistency -->
 <style>
-.root, :root {
-  --slh-primary: #003B8E;
-  --slh-primary-2: #2B6BCF;
-  --slh-primary-3: #002862;
-}
-.text-truncate-3 { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-.min-height-100 { min-height: 100px; }
-.upload-area { 
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-.upload-area:hover {
-  background-color: rgba(0,123,255,0.05);
-  transform: translateY(-2px);
-}
-.card {
-  transition: all 0.3s ease;
-}
-.card:hover {
-  transform: translateY(-2px);
-}
+/* Additional styles specific to note list only */
 .attachment-item {
   background: #f8f9fa;
   border: 1px solid #dee2e6;
-  border-radius: 8px;
+  border-radius: var(--note-radius-sm);
   padding: 12px;
   margin-bottom: 8px;
-  transition: all 0.3s ease;
+  transition: all var(--note-transition);
 }
 .attachment-item:hover {
   background: #e9ecef;
@@ -443,103 +478,19 @@
 }
 .remove-attachment {
   opacity: 0.7;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--note-transition);
 }
 .remove-attachment:hover {
   opacity: 1;
 }
-/* Glassmorphism and Neumorphism for modals */
-.neo-card {
-  border: 1px solid rgba(255,255,255,0.5);
-  border-radius: 16px;
-  background: linear-gradient(145deg, #ffffff, #eef1f6);
-  box-shadow: 8px 8px 20px rgba(0,0,0,0.08), -6px -6px 16px rgba(255,255,255,0.9);
-  transition: transform .2s ease, box-shadow .2s ease;
+.upload-area { 
+  transition: all var(--note-transition-slow);
+  cursor: pointer;
 }
-.neo-card:hover { transform: translateY(-2px); box-shadow: 12px 12px 26px rgba(0,0,0,0.10), -8px -8px 18px rgba(255,255,255,0.95); }
-.status-pill { border-radius: 999px; letter-spacing: .3px; }
-.modal-glass .modal-content {
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(255,255,255,0.35);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15), inset 1px 1px 0 rgba(255,255,255,0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 16px;
+.upload-area:hover {
+  background-color: rgba(0,123,255,0.05);
+  transform: translateY(-2px);
 }
-.modal-glass .modal-header {
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-}
-.modal-glass .modal-header.bg-success { background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3)) !important; }
-.modal-glass .modal-header.bg-warning { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)) !important; }
-.modal-glass .modal-title i { filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
-.modal-glass .modal-body {
-  background: radial-gradient(1200px circle at 10% 10%, rgba(255,255,255,.6), rgba(255,255,255,.4) 40%, rgba(255,255,255,.25) 70%);
-}
-.hero { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); }
-.hero .hero-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; }
-.hero-tabs .nav-link { border-radius: 999px; color: #495057; }
-.hero-tabs .nav-link.active { background: rgba(0,0,0,.08); color: #111; }
-.glass-section {
-  background: rgba(255,255,255,0.55) !important;
-  border: 1px solid rgba(255,255,255,0.35) !important;
-  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.5), 8px 8px 18px rgba(0,0,0,0.05);
-}
-.section-title { font-weight: 600; color: #334155; }
-.modal-glass .form-control,
-.modal-glass .form-select,
-.modal-glass .input-group-text {
-  border-radius: 12px;
-  background: linear-gradient(145deg, #ffffff, #e6e9ef);
-  box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9);
-  border: 1px solid rgba(0,0,0,0.04);
-}
-.modal-glass .form-control:focus,
-.modal-glass .form-select:focus {
-  box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15), inset 4px 4px 8px rgba(0,0,0,0.06), inset -4px -4px 8px rgba(255,255,255,0.8);
-  border-color: rgba(var(--bs-primary-rgb), .35);
-}
-.modal-glass .badge { border-radius: 999px; }
-.modal-glass .btn-primary {
-  background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary));
-  border-color: var(--slh-primary);
-}
-.modal-glass .btn-primary:hover,
-.modal-glass .btn-primary:focus {
-  background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3));
-  border-color: var(--slh-primary-3);
-}
-.btn-soft {
-  border-radius: 12px;
-  box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9);
-  border: 1px solid rgba(0,0,0,0.04);
-}
-.btn-soft:active {
-  box-shadow: inset 4px 4px 8px rgba(0,0,0,0.08), inset -4px -4px 8px rgba(255,255,255,0.8);
-}
-.modal-backdrop.show { backdrop-filter: blur(4px); }
-.page-toolbar .form-control, .page-toolbar .form-select { min-height: 40px; }
-.search-bar .input-group { border-radius: 999px; overflow: hidden; box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9); }
-.search-bar .input-group-text { background: linear-gradient(145deg, #ffffff, #e6e9ef); border-right: 0; }
-.search-bar .form-control { border-left: 0; background: linear-gradient(145deg, #ffffff, #e6e9ef); }
-.search-bar .form-control:focus { box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15), inset 4px 4px 8px rgba(0,0,0,0.06), inset -4px -4px 8px rgba(255,255,255,0.8); border-color: rgba(var(--bs-primary-rgb), .35); }
-.add-link { color: var(--slh-primary-2); font-weight: 600; }
-.add-link:hover { color: var(--slh-primary); }
-.chip-group .chip { border-radius: 999px; padding: 6px 14px; border: 1px solid rgba(0,59,142,.25); box-shadow: 2px 2px 6px rgba(0,0,0,0.06), -2px -2px 6px rgba(255,255,255,.8); background:#fff; color: var(--slh-primary); transition: all .15s ease; }
-.chip-group .chip.active { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); color: #fff; border-color: var(--slh-primary); }
-.stats-row .stat-card { background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%); border:1px solid rgba(0,0,0,.05); border-radius:14px; padding:14px 16px; min-height:72px; box-shadow: 0 6px 18px rgba(0,0,0,.06), 0 1px 0 rgba(255,255,255,.9) inset; transition: transform .15s ease, box-shadow .15s ease; }
-.stats-row .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.08), 0 1px 0 rgba(255,255,255,.95) inset; }
-.stat-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; }
-.bg-brand { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); }
-.bg-success-subtle { background: rgba(25, 135, 84, .12) !important; }
-.bg-primary-subtle { background: rgba(13, 110, 253, .12) !important; }
-.bg-info-subtle { background: rgba(13, 202, 240, .12) !important; }
-.chip-group .chip:hover { background: rgba(0,59,142,.08); color: var(--slh-primary-2); }
-.chip-group .chip:focus-visible { outline: none; box-shadow: 0 0 0 .2rem rgba(0,59,142,.25); }
-.chip-group .chip.active { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); color: #fff; border-color: var(--slh-primary); box-shadow: 0 8px 16px rgba(0,59,142,.18); }
-.neo-card { background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%); }
-.neo-card .card-footer { border-top: 1px solid rgba(0,0,0,.05); }
-.note-cover { height:140px; background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3)); border-top-left-radius: .375rem; border-top-right-radius: .375rem; }
 </style>
 
 <script>
@@ -1043,6 +994,23 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+function openNoteEditor(noteId) {
+  // Open edit modal with note data
+  const modal = new bootstrap.Modal(document.getElementById('editNoteModal'));
+  
+  // Find the edit button for this note to get data attributes
+  const editButton = document.querySelector(`button[data-note-id="${noteId}"]`);
+  if (editButton) {
+    populateEditNoteModal(editButton);
+    modal.show();
+  } else {
+    // Fallback: load editor page
+    if (typeof loadPage === 'function') {
+      loadPage(`note/editor/${noteId}`);
+    }
+  }
+}
+
 function deleteNote(noteId) {
   if (confirm('Are you sure you want to delete this note?')) {
     fetch(`/partial/note/${noteId}/delete`, {
@@ -1059,44 +1027,31 @@ function deleteNote(noteId) {
       console.error('Error deleting note:', error);
       alert('Error deleting note');
     });
-    addNoteForm.addEventListener('keydown', function(e){
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        addNoteForm.requestSubmit();
-      }
-    });
-    // Simple client-side filter for notes
-    const searchInput = document.getElementById('noteSearch');
-    const statusSelect = document.getElementById('noteStatusFilter');
-    function filterNotes(){
-      const term = (searchInput?.value || '').toLowerCase();
-      const status = statusSelect?.value || '';
-      document.querySelectorAll('#note-list-container .neo-card').forEach(card => {
-        const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
-        const body = card.querySelector('.card-text')?.textContent.toLowerCase() || '';
-        const st = card.getAttribute('data-status') || '';
-        const matches = (!term || title.includes(term) || body.includes(term)) && (!status || status===st);
-        card.parentElement.style.display = matches ? '' : 'none';
-      });
-    }
-    if (searchInput) searchInput.addEventListener('input', filterNotes);
-    if (statusSelect) statusSelect.addEventListener('change', filterNotes);
-    // chip status filters
-    document.querySelectorAll('.chip-group .chip').forEach(btn=>{
-      btn.addEventListener('click', function(){
-        document.querySelectorAll('.chip-group .chip').forEach(b=>b.classList.remove('active'));
-        this.classList.add('active');
-        const st = this.getAttribute('data-status') || '';
-        const term = (searchInput?.value || '').toLowerCase();
-        document.querySelectorAll('#note-list-container .neo-card').forEach(card => {
-          const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
-          const body = card.querySelector('.card-text')?.textContent.toLowerCase() || '';
-          const cst = card.getAttribute('data-status') || '';
-          const matches = (!term || title.includes(term) || body.includes(term)) && (!st || st===cst);
-          card.parentElement.style.display = matches ? '' : 'none';
-        });
-      });
-    });
   }
 }
+
+// Script loaded dynamically via main.js for SPA compatibility
+// See: app/static/js/note_js/note_list.js
+
+// Fallback initialization for non-SPA mode
+(function() {
+  console.log('[note_fragment] Script tag executed');
+  
+  // Check if we need to load the script manually (non-SPA mode)
+  if (!window.initializeNoteList) {
+    console.log('[note_fragment] initializeNoteList not found, loading script...');
+    const script = document.createElement('script');
+    script.src = '/static/js/note_js/note_list.js?v=' + Date.now();
+    script.onload = () => {
+      console.log('[note_fragment] Script loaded successfully');
+    };
+    document.head.appendChild(script);
+  } else {
+    console.log('[note_fragment] Functions already loaded');
+    // Re-initialize if already loaded
+    if (window.initializeNoteList) {
+      window.initializeNoteList();
+    }
+  }
+})();
 </script>

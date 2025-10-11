@@ -1,0 +1,1083 @@
+/**
+ * ╔═══════════════════════════════════════════════════════════════╗
+ * ║  UNIFIED NOTE DESIGN SYSTEM                                   ║
+ * ║  Consistent UX/UI across Note List, Add, and Editor          ║
+ * ╚═══════════════════════════════════════════════════════════════╝
+ */
+
+/* ============================================
+   CSS VARIABLES - Design Tokens
+   ============================================ */
+:root {
+  /* ━━━ Color Palette ━━━ */
+  --note-bg: radial-gradient(1200px 1200px at 10% 10%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.35) 40%, rgba(255, 255, 255, 0.25) 70%), linear-gradient(135deg, #8ec5fc 0%, #e0c3fc 100%);
+  --note-surface: #ffffff;
+  --note-muted: #eef1f7;
+  --note-text: #1f2937;
+  --note-subtext: #6b7280;
+  --note-border: #e5e7eb;
+
+  /* ━━━ Brand Colors (Primary) ━━━ */
+  --note-primary: #003B8E;
+  --note-primary-2: #2B6BCF;
+  --note-primary-3: #002862;
+  --note-primary-gradient: linear-gradient(135deg, var(--note-primary-2), var(--note-primary));
+
+  /* ━━━ Accent Colors (Secondary) ━━━ */
+  --note-accent1: #a78bfa;
+  /* lavender */
+  --note-accent2: #60a5fa;
+  /* blue */
+  --note-accent-gradient: linear-gradient(135deg, var(--note-accent1), var(--note-accent2));
+
+  /* ━━━ Status Colors ━━━ */
+  --note-success: #10b981;
+  --note-success-light: rgba(16, 185, 129, 0.1);
+  --note-warning: #f59e0b;
+  --note-warning-light: rgba(245, 158, 11, 0.1);
+  --note-danger: #ef4444;
+  --note-danger-light: rgba(239, 68, 68, 0.1);
+  --note-info: #3b82f6;
+  --note-info-light: rgba(59, 130, 246, 0.1);
+
+  /* ━━━ Glass Effects ━━━ */
+  --note-glass-blur: blur(24px);
+  --note-glass-bg: rgba(255, 255, 255, 0.35);
+  --note-glass-border: rgba(255, 255, 255, 0.6);
+  --note-glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --note-glass-dark-bg: rgba(10, 20, 60, 0.35);
+  --note-glass-dark-border: rgba(255, 255, 255, 0.3);
+
+  /* ━━━ Shadows ━━━ */
+  --note-shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.04);
+  --note-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  --note-shadow-md: 0 12px 28px rgba(15, 23, 42, 0.08);
+  --note-shadow-lg: 0 14px 34px rgba(15, 23, 42, 0.12);
+  --note-shadow-hover: 0 14px 28px rgba(15, 23, 42, 0.12);
+
+  /* ━━━ Border Radius (Unified) ━━━ */
+  --note-radius-sm: 8px;
+  --note-radius: 12px;
+  --note-radius-md: 14px;
+  --note-radius-lg: 16px;
+  --note-radius-xl: 20px;
+  --note-radius-full: 999px;
+  /* Pills */
+
+  /* ━━━ Spacing ━━━ */
+  --note-space-xs: 4px;
+  --note-space-sm: 8px;
+  --note-space: 12px;
+  --note-space-md: 16px;
+  --note-space-lg: 20px;
+  --note-space-xl: 24px;
+
+  /* ━━━ Typography ━━━ */
+  --note-font-family: 'Inter', 'SF Pro Text', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --note-font-size-xs: 11px;
+  --note-font-size-sm: 13px;
+  --note-font-size: 14px;
+  --note-font-size-md: 15px;
+  --note-font-size-lg: 18px;
+  --note-font-weight-normal: 400;
+  --note-font-weight-medium: 500;
+  --note-font-weight-semibold: 600;
+  --note-font-weight-bold: 700;
+
+  /* ━━━ Icon Sizes ━━━ */
+  --note-icon-xs: 12px;
+  --note-icon-sm: 14px;
+  --note-icon: 16px;
+  --note-icon-md: 18px;
+  --note-icon-lg: 20px;
+  --note-icon-xl: 24px;
+
+  /* ━━━ Transitions ━━━ */
+  --note-transition-fast: 0.15s ease;
+  --note-transition: 0.2s ease;
+  --note-transition-slow: 0.3s ease;
+}
+
+/* ============================================
+     BASE STYLES
+     ============================================ */
+.ng-font {
+  font-family: var(--note-font-family);
+  color: var(--note-text);
+}
+
+.ng-title {
+  font-weight: var(--note-font-weight-bold);
+  color: var(--note-text);
+  font-size: var(--note-font-size-lg);
+  line-height: 1.3;
+}
+
+.ng-subtitle {
+  color: var(--note-subtext);
+  font-size: var(--note-font-size);
+  font-weight: var(--note-font-weight-normal);
+}
+
+.ng-body {
+  color: var(--note-subtext);
+  font-size: var(--note-font-size);
+  line-height: 1.6;
+}
+
+/* ============================================
+     HEADER STYLES (Unified)
+     ============================================ */
+.note-header {
+  position: relative;
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid var(--note-glass-border) !important;
+  backdrop-filter: var(--note-glass-blur);
+  -webkit-backdrop-filter: var(--note-glass-blur);
+  border-radius: 0 0 var(--note-radius-xl) var(--note-radius-xl);
+  box-shadow: var(--note-shadow-md), var(--note-glass-inner);
+  margin-top: 0 !important;
+  padding: var(--note-space) var(--note-space-lg);
+  transition: box-shadow var(--note-transition);
+}
+
+/* Sticky header when has note-header-top-0 class */
+.note-header.note-header-top-0 {
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+}
+
+.note-header:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.06));
+  border-radius: inherit;
+}
+
+.note-header .hero-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--note-radius);
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--note-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all var(--note-transition);
+}
+
+.note-header .hero-icon i {
+  font-size: var(--note-icon-md);
+}
+
+.note-header .ng-title,
+.note-header .ng-subtitle {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================
+     BUTTON STYLES (Unified)
+     ============================================ */
+
+/* ━━━ Base Button ━━━ */
+.ng-btn {
+  border-radius: var(--note-radius);
+  padding: 6px 12px;
+  font-size: var(--note-font-size);
+  font-weight: var(--note-font-weight-medium);
+  border: 1px solid var(--note-glass-border);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  color: var(--note-text);
+  transition: all var(--note-transition);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ng-btn:hover {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35), var(--note-shadow-sm);
+  transform: translateY(-1px);
+  color: var(--note-text);
+}
+
+.ng-btn i {
+  font-size: var(--note-icon-sm);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08));
+}
+
+/* ━━━ Button Variants ━━━ */
+
+/* Primary Button (Save, Submit) */
+.ng-btn-primary,
+.ng-btn-save {
+  border: none;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: var(--note-radius-xl);
+  background: linear-gradient(90deg, #8ec5fc, #e0c3fc);
+  box-shadow: 0 12px 28px rgba(96, 165, 250, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  transition: all var(--note-transition-slow);
+  font-weight: var(--note-font-weight-semibold);
+}
+
+.ng-btn-primary:hover,
+.ng-btn-save:hover {
+  filter: brightness(1.07);
+  box-shadow: 0 14px 30px rgba(96, 165, 250, 0.35), 0 0 0 2px rgba(255, 255, 255, 0.8) inset;
+  transform: translateY(-1px);
+  color: #fff;
+}
+
+/* Secondary Button */
+.ng-btn-secondary {
+  background: var(--note-primary-gradient);
+  color: #fff;
+  border: none;
+  font-weight: var(--note-font-weight-semibold);
+}
+
+.ng-btn-secondary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 8px 20px rgba(0, 59, 142, 0.3);
+  color: #fff;
+}
+
+/* Outline Button */
+.ng-btn-outline-primary {
+  background: #fff;
+  border: 1px solid var(--note-primary);
+  color: var(--note-primary);
+  box-shadow: var(--note-shadow-sm);
+}
+
+.ng-btn-outline-primary:hover {
+  background: var(--note-primary);
+  color: #fff;
+  box-shadow: var(--note-shadow);
+}
+
+.ng-btn-outline-danger {
+  background: #fff;
+  border: 1px solid var(--note-danger);
+  color: var(--note-danger);
+  box-shadow: var(--note-shadow-sm);
+}
+
+.ng-btn-outline-danger:hover {
+  background: var(--note-danger);
+  color: #fff;
+  box-shadow: var(--note-shadow);
+}
+
+/* Soft Button (Subtle background) */
+.ng-btn-soft,
+.btn-soft {
+  border-radius: var(--note-radius);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--note-border);
+  box-shadow: var(--note-shadow-sm);
+  transition: all var(--note-transition);
+}
+
+.ng-btn-soft:hover,
+.btn-soft:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--note-shadow);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Chip Button (Toolbar) */
+.ng-chip {
+  border-radius: var(--note-radius);
+  padding: 6px 10px;
+  font-size: var(--note-font-size-sm);
+  border: 1px solid var(--note-glass-border);
+  color: var(--note-text);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  transition: all var(--note-transition);
+  cursor: pointer;
+}
+
+.ng-chip i {
+  font-size: var(--note-icon-sm);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08));
+}
+
+.ng-chip:hover {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35), var(--note-shadow-sm);
+  transform: translateY(-1px);
+}
+
+.ng-chip.active {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.25), rgba(96, 165, 250, 0.25));
+  border-color: rgba(167, 139, 250, 0.6);
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.25), 0 8px 22px rgba(96, 165, 250, .18);
+  color: var(--note-primary);
+}
+
+.ng-chip.active i {
+  filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.6));
+}
+
+/* Button Sizes */
+.ng-btn-sm {
+  padding: 4px 10px;
+  font-size: var(--note-font-size-sm);
+}
+
+.ng-btn-lg {
+  padding: 10px 20px;
+  font-size: var(--note-font-size-md);
+}
+
+/* ============================================
+     INPUT STYLES (Unified)
+     ============================================ */
+.ng-input,
+.ng-input.form-control {
+  border-radius: var(--note-radius-md);
+  border: 1px solid var(--note-border);
+  background: linear-gradient(180deg, #fff, #f8fafc);
+  box-shadow: var(--note-shadow);
+  padding: 8px 12px;
+  font-size: var(--note-font-size);
+  color: var(--note-text);
+  transition: all var(--note-transition);
+}
+
+.ng-input:focus,
+.ng-input.form-control:focus {
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25), var(--note-shadow);
+  border-color: var(--note-accent2);
+  outline: none;
+}
+
+.ng-input.form-control-lg {
+  padding: 12px 16px;
+  font-size: var(--note-font-size-md);
+  border-radius: var(--note-radius-lg);
+}
+
+/* Search Bar */
+.search-bar-modern {
+  border-radius: var(--note-radius-lg);
+  box-shadow: var(--note-shadow);
+  overflow: hidden;
+  background: white;
+  border: 1px solid var(--note-border);
+}
+
+.search-bar-modern .input-group-text {
+  background: white;
+  border: none;
+  border-right: 1px solid var(--note-border);
+  color: var(--note-subtext);
+}
+
+.search-bar-modern .form-control {
+  border: none;
+  box-shadow: none;
+  background: white;
+}
+
+.search-bar-modern .form-control:focus {
+  box-shadow: none;
+  border: none;
+}
+
+.search-bar-modern:focus-within {
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25), var(--note-shadow);
+  border-color: var(--note-accent2);
+}
+
+/* ============================================
+     CHIP/FILTER STYLES (Unified)
+     ============================================ */
+.chip-group {
+  display: flex;
+  gap: var(--note-space-sm);
+  flex-wrap: wrap;
+}
+
+.chip-group .chip {
+  border-radius: var(--note-radius-full);
+  padding: 6px 14px;
+  border: 1px solid rgba(0, 59, 142, .25);
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.06), -2px -2px 6px rgba(255, 255, 255, .8);
+  background: #fff;
+  color: var(--note-primary);
+  transition: all var(--note-transition-fast);
+  font-size: var(--note-font-size);
+  font-weight: var(--note-font-weight-medium);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip-group .chip i {
+  font-size: var(--note-icon-sm);
+}
+
+.chip-group .chip:hover {
+  background: rgba(0, 59, 142, .08);
+  color: var(--note-primary-2);
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.chip-group .chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 59, 142, .25);
+}
+
+.chip-group .chip.active {
+  background: var(--note-primary-gradient);
+  color: #fff;
+  border-color: var(--note-primary);
+  box-shadow: 0 8px 16px rgba(0, 59, 142, .18);
+}
+
+/* ============================================
+     CARD STYLES (Unified)
+     ============================================ */
+
+/* Base Card */
+.ng-card {
+  border: 1px solid var(--note-border);
+  border-radius: var(--note-radius-lg);
+  background: var(--note-surface);
+  box-shadow: var(--note-shadow);
+  transition: all var(--note-transition);
+  overflow: hidden;
+}
+
+.ng-card:hover {
+  box-shadow: var(--note-shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* Neo Card (Neumorphic) */
+.neo-card {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--note-radius-lg);
+  background: linear-gradient(145deg, #ffffff, #eef1f6);
+  box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.08), -6px -6px 16px rgba(255, 255, 255, 0.9);
+  transition: all var(--note-transition);
+}
+
+.neo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 12px 12px 26px rgba(0, 0, 0, 0.10), -8px -8px 18px rgba(255, 255, 255, 0.95);
+}
+
+.neo-card-lite {
+  background: var(--note-surface);
+  border-radius: var(--note-radius);
+  border: 1px solid var(--note-border);
+  box-shadow: var(--note-shadow-sm);
+  transition: all var(--note-transition);
+}
+
+/* Note Card (List Item) */
+.note-card {
+  cursor: pointer;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.note-card .card-title {
+  font-weight: var(--note-font-weight-semibold);
+  color: var(--note-text);
+  font-size: var(--note-font-size-lg);
+  line-height: 1.4;
+}
+
+.note-card .card-text {
+  color: var(--note-subtext);
+  line-height: 1.6;
+  font-size: var(--note-font-size);
+}
+
+.note-card .note-cover {
+  height: 140px;
+  background: var(--note-accent-gradient);
+  border-top-left-radius: var(--note-radius-lg);
+  border-top-right-radius: var(--note-radius-lg);
+}
+
+.note-card .card-footer {
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, .05);
+  padding: 12px 16px;
+}
+
+.note-card .status-pill {
+  border-radius: var(--note-radius-full);
+  letter-spacing: .3px;
+  font-size: var(--note-font-size-xs);
+  padding: 4px 10px;
+  font-weight: var(--note-font-weight-medium);
+}
+
+/* ============================================
+     STAT CARD STYLES
+     ============================================ */
+.stat-card-modern {
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  border: 1px solid rgba(0, 0, 0, .05);
+  border-radius: var(--note-radius-md);
+  padding: 16px;
+  min-height: 80px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .06), 0 1px 0 rgba(255, 255, 255, .9) inset;
+  transition: all var(--note-transition-fast);
+  cursor: default;
+}
+
+.stat-card-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .08), 0 1px 0 rgba(255, 255, 255, .95) inset;
+}
+
+.stat-icon-modern {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--note-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: var(--note-icon-lg);
+  flex-shrink: 0;
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.bg-gradient-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
+}
+
+.bg-gradient-info {
+  background: linear-gradient(135deg, #667eea 0%, #6dd5ed 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.bg-gradient-warning {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 4px 12px rgba(240, 147, 251, 0.4);
+}
+
+/* ============================================
+     GLASS PANEL EFFECTS (Unified)
+     ============================================ */
+.glass-panel {
+  background: var(--note-glass-bg);
+  border-radius: var(--note-radius-lg);
+  border: 1px solid var(--note-glass-border);
+  backdrop-filter: var(--note-glass-blur);
+  -webkit-backdrop-filter: var(--note-glass-blur);
+  box-shadow: var(--note-shadow), var(--note-glass-inner);
+  transition: all var(--note-transition);
+}
+
+.glass-section {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: var(--note-radius);
+  padding: var(--note-space-md);
+}
+
+.glass-dark {
+  background: var(--note-glass-dark-bg);
+  border: 1px solid var(--note-glass-dark-border);
+  backdrop-filter: var(--note-glass-blur);
+  -webkit-backdrop-filter: var(--note-glass-blur);
+  box-shadow: 0 20px 40px rgba(10, 20, 60, 0.15), inset 0 1px 0 var(--note-glass-dark-border);
+}
+
+/* ============================================
+     EDITOR TOOLBAR STYLES (Unified)
+     ============================================ */
+.editor-toolbar,
+.ui-toolbar {
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid var(--note-glass-border) !important;
+  border-radius: var(--note-radius-lg);
+  backdrop-filter: var(--note-glass-blur);
+  -webkit-backdrop-filter: var(--note-glass-blur);
+  box-shadow: var(--note-shadow), var(--note-glass-inner);
+  transition: box-shadow var(--note-transition-slow);
+  padding: var(--note-space-sm);
+}
+
+/* Toolbar buttons inherit from .ng-chip class */
+
+/* ============================================
+     EDITOR CONTENT STYLES (Unified)
+     ============================================ */
+.editor-card,
+#editorContent,
+#addContent {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--note-glass-border);
+  border-radius: var(--note-radius-xl);
+  box-shadow: var(--note-shadow), var(--note-glass-inner);
+  backdrop-filter: var(--note-glass-blur);
+  -webkit-backdrop-filter: var(--note-glass-blur);
+  font-family: var(--note-font-family);
+  font-size: var(--note-font-size-md);
+  line-height: 1.75;
+  transition: box-shadow var(--note-transition-slow);
+  min-height: 400px;
+  padding: var(--note-space-lg);
+  color: var(--note-text);
+}
+
+.editor-card:focus-within,
+#editorContent:focus-within,
+#addContent:focus-within {
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .12), 0 0 0 3px rgba(167, 139, 250, 0.18);
+  outline: none;
+}
+
+.editor-card:empty:before,
+#editorContent:empty:before,
+#addContent:empty:before {
+  content: attr(placeholder);
+  color: var(--note-subtext);
+  opacity: 0.6;
+}
+
+.editor-card h1,
+.editor-card h2,
+.editor-card h3,
+#editorContent h1,
+#editorContent h2,
+#editorContent h3,
+#addContent h1,
+#addContent h2,
+#addContent h3 {
+  margin: 1.2em 0 .4em;
+  font-weight: var(--note-font-weight-bold);
+  color: var(--note-text);
+}
+
+.editor-card p,
+#editorContent p,
+#addContent p {
+  margin-bottom: 1em;
+  color: var(--note-text);
+}
+
+.editor-card img,
+#editorContent img,
+#addContent img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--note-radius);
+  margin: 10px 0;
+}
+
+.editor-card table,
+#editorContent table,
+#addContent table {
+  border-collapse: collapse;
+  margin: 15px 0;
+  width: 100%;
+}
+
+.editor-card table td,
+#editorContent table td,
+#addContent table td {
+  border: 1px solid var(--note-border);
+  padding: 10px 12px;
+  min-width: 60px;
+}
+
+.editor-card a,
+#editorContent a,
+#addContent a {
+  color: var(--note-accent2);
+  text-decoration: underline;
+}
+
+.editor-card a:hover,
+#editorContent a:hover,
+#addContent a:hover {
+  color: var(--note-primary);
+}
+
+/* ============================================
+     SIDEBAR STYLES (Editor Page)
+     ============================================ */
+.sidebar-panel {
+  background: transparent;
+}
+
+.note-row {
+  border-radius: var(--note-radius-xl);
+  margin: var(--note-space-sm) 10px;
+  padding: var(--note-space) var(--note-radius-md) !important;
+  border: 1px solid var(--note-glass-border);
+  background: var(--note-glass-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--note-shadow-sm), var(--note-glass-inner);
+  transition: all var(--note-transition);
+  cursor: pointer;
+}
+
+.note-row:hover {
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: var(--note-shadow-md), 0 0 0 3px rgba(167, 139, 250, 0.16);
+  transform: translateY(-2px);
+}
+
+.note-row.active {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.18), rgba(96, 165, 250, 0.18));
+  border-color: rgba(167, 139, 250, 0.55);
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.22);
+}
+
+.note-row .fw-semibold {
+  font-size: var(--note-font-size);
+  font-weight: var(--note-font-weight-semibold);
+  color: var(--note-text);
+  line-height: 1.4;
+}
+
+.note-row .text-muted {
+  font-size: var(--note-font-size-sm);
+  color: var(--note-subtext);
+  line-height: 1.5;
+}
+
+/* ============================================
+     EMPTY STATE
+     ============================================ */
+.empty-state-modern {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-state-icon {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto var(--note-space-lg);
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(96, 165, 250, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(167, 139, 250, 0.3);
+}
+
+.empty-state-icon i {
+  font-size: 48px;
+  color: rgba(167, 139, 250, 0.6);
+}
+
+.empty-state-modern h4 {
+  color: var(--note-subtext);
+  font-weight: var(--note-font-weight-semibold);
+  margin-bottom: var(--note-space-sm);
+}
+
+.empty-state-modern p {
+  color: var(--note-subtext);
+  margin-bottom: var(--note-space-lg);
+}
+
+/* ============================================
+     SECTION TITLE
+     ============================================ */
+.section-title {
+  font-weight: var(--note-font-weight-semibold);
+  color: var(--note-subtext);
+  font-size: var(--note-font-size);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-title i {
+  font-size: var(--note-icon-sm);
+}
+
+/* ============================================
+     UI SURFACE
+     ============================================ */
+.ui-surface {
+  background: var(--note-surface);
+  border: 1px solid var(--note-border);
+  border-radius: var(--note-radius-md);
+  box-shadow: var(--note-shadow);
+}
+
+/* ============================================
+     UTILITY CLASSES
+     ============================================ */
+/* .ng-space - Consistent spacing marker (utility class) */
+
+.ng-glass {
+  border-top: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+.ng-rounded {
+  border-radius: 0 0 var(--note-radius-xl) var(--note-radius-xl);
+}
+
+/* .ng-neo - Neumorphic marker (utility class) */
+
+/* Top alignment utilities */
+.top-0,
+.note-section-top-0 {
+  margin-top: 0 !important;
+}
+
+.note-header-top-0 {
+  margin-top: 0 !important;
+  padding-top: var(--note-space) !important;
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: var(--note-glass-blur);
+  -webkit-backdrop-filter: var(--note-glass-blur);
+}
+
+.text-truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ============================================
+     ANIMATIONS
+     ============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease;
+}
+
+/* ============================================
+     STICKY SECTIONS
+     ============================================ */
+.sticky-search-filter {
+  position: sticky;
+  top: 80px;
+  z-index: 999;
+  background: #f8f9fa;
+  backdrop-filter: var(--note-glass-blur);
+  -webkit-backdrop-filter: var(--note-glass-blur);
+  padding-top: var(--note-space-md);
+  padding-bottom: var(--note-space-md);
+  margin-top: -var(--note-space-md);
+  margin-bottom: var(--note-space-md);
+}
+
+/* ============================================
+     RESPONSIVE DESIGN
+     ============================================ */
+@media (max-width: 992px) {
+  .note-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: var(--note-space);
+  }
+
+  .note-header>div {
+    width: 100%;
+  }
+
+  .chip-group {
+    flex-wrap: wrap;
+  }
+
+  .search-bar-modern {
+    max-width: 100% !important;
+  }
+
+  .sidebar-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #editorContent,
+  #addContent {
+    min-height: 300px;
+  }
+
+  /* Adjust sticky positioning for mobile */
+  .note-header.note-header-top-0 {
+    position: relative;
+  }
+
+  .sticky-search-filter {
+    position: relative;
+    top: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .chip-group .chip {
+    padding: 4px 10px;
+    font-size: var(--note-font-size-sm);
+  }
+
+  .stat-card-modern {
+    padding: 12px !important;
+  }
+
+  .stat-icon-modern {
+    width: 40px;
+    height: 40px;
+    font-size: var(--note-icon-md);
+  }
+
+  .note-header {
+    padding: var(--note-space-sm) var(--note-space);
+  }
+
+  .ng-btn {
+    padding: 6px 10px;
+    font-size: var(--note-font-size-sm);
+  }
+}
+
+/* ============================================
+     BRAND COLORS (Compatibility)
+     ============================================ */
+.bg-brand {
+  background: var(--note-primary-gradient) !important;
+}
+
+.text-brand {
+  color: var(--note-primary) !important;
+}
+
+/* Bootstrap overrides for consistent styling */
+.modal-glass .modal-content {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), inset 1px 1px 0 rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--note-radius-lg);
+}
+
+.modal-glass .modal-header {
+  border-top-left-radius: var(--note-radius-lg);
+  border-top-right-radius: var(--note-radius-lg);
+}
+
+.modal-glass .modal-header.bg-success {
+  background: var(--note-primary-gradient) !important;
+}
+
+.modal-glass .modal-header.bg-warning {
+  background: linear-gradient(135deg, var(--note-primary-2), var(--note-primary)) !important;
+}
+
+/* ============================================
+     ICON UTILITIES
+     ============================================ */
+.note-icon-xs {
+  font-size: var(--note-icon-xs) !important;
+}
+
+.note-icon-sm {
+  font-size: var(--note-icon-sm) !important;
+}
+
+.note-icon {
+  font-size: var(--note-icon) !important;
+}
+
+.note-icon-md {
+  font-size: var(--note-icon-md) !important;
+}
+
+.note-icon-lg {
+  font-size: var(--note-icon-lg) !important;
+}
+
+.note-icon-xl {
+  font-size: var(--note-icon-xl) !important;
+}
+
+/* Icon colors */
+.note-icon-primary {
+  color: var(--note-primary) !important;
+}
+
+.note-icon-accent {
+  color: var(--note-accent1) !important;
+}
+
+.note-icon-success {
+  color: var(--note-success) !important;
+}
+
+.note-icon-warning {
+  color: var(--note-warning) !important;
+}
+
+.note-icon-danger {
+  color: var(--note-danger) !important;
+}
+
+.note-icon-info {
+  color: var(--note-info) !important;
+}
+
+.note-icon-muted {
+  color: var(--note-subtext) !important;
+}
+
+/* ╔═══════════════════════════════════════════════════════════════╗
+     ║  END OF NOTE DESIGN SYSTEM                                    ║
+     ╚═══════════════════════════════════════════════════════════════╝ */

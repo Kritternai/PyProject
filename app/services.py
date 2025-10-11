@@ -2,7 +2,7 @@
 Simple service classes for MVC architecture.
 Contains business logic for the application.
 """
-
+# app/services.py
 from typing import List, Optional, Dict, Any
 from app.utils.exceptions import (
     ValidationException,
@@ -47,7 +47,7 @@ class UserService:
         
         user = UserModel.query.filter_by(id=user_id).first()
         if not user:
-            raise NotFoundException("User not found")
+            return None  # Return None instead of raising exception
         return user
     
     def get_user_by_email(self, email: str):
@@ -56,12 +56,14 @@ class UserService:
         
         user = UserModel.query.filter_by(email=email).first()
         if not user:
-            raise NotFoundException("User not found")
+            return None  # Return None instead of raising exception
         return user
     
     def authenticate_user(self, email: str, password: str):
         """Authenticate user."""
         user = self.get_user_by_email(email)
+        if not user:
+            raise ValidationException("User not found")
         # In real implementation, check password hash
         if user.password_hash != password:
             raise ValidationException("Invalid password")
@@ -104,14 +106,14 @@ class LessonService:
 class NoteService:
     """Simple note service for business logic."""
     
-    def create_note(self, user_id: str, lesson_id: str, title: str, content: str):
-        """Create a new note."""
+    def create_note(self, user_id: str, title: str, content: str, lesson_id: str = None):
+        """Create a new note (standalone or linked to lesson)."""
         from app.models.note import NoteModel
         from app import db
         
         note = NoteModel(
             user_id=user_id,
-            lesson_id=lesson_id,
+            lesson_id=lesson_id,  # Optional: None for standalone notes
             title=title,
             content=content
         )
@@ -126,9 +128,14 @@ class NoteService:
         return NoteModel.query.filter_by(user_id=user_id).all()
     
     def get_notes_by_lesson(self, lesson_id: str):
-        """Get all notes for a lesson."""
+        """Get all notes for a lesson (optional feature)."""
         from app.models.note import NoteModel
         return NoteModel.query.filter_by(lesson_id=lesson_id).all()
+    
+    def get_standalone_notes(self, user_id: str):
+        """Get all standalone notes (not linked to any lesson) for a user."""
+        from app.models.note import NoteModel
+        return NoteModel.query.filter_by(user_id=user_id, lesson_id=None).all()
     
     def get_note_by_id(self, note_id: str):
         """Get a specific note by ID."""
@@ -160,14 +167,19 @@ class NoteService:
         """Get all notes for a user (alias for get_notes_by_user)."""
         return self.get_notes_by_user(user_id)
     
-    def delete_note(self, note_id: str):
+    def delete_note(self, note_id: str, user_id: str = None):
         """Delete a note."""
         from app.models.note import NoteModel
         from app import db
         
-        note = NoteModel.query.filter_by(id=note_id).first()
+        # Build query
+        if user_id:
+            note = NoteModel.query.filter_by(id=note_id, user_id=user_id).first()
+        else:
+            note = NoteModel.query.filter_by(id=note_id).first()
+        
         if not note:
-            raise NotFoundException("Note not found")
+            return False
         
         db.session.delete(note)
         db.session.commit()
