@@ -16,10 +16,17 @@
                 <button class="btn-icon" onclick="togglePeopleSidebar()" id="people-sidebar-toggle">
                     <i class="bi bi-list"></i>
                 </button>
+                {% if is_owner %}
                 <button class="btn-people-primary" onclick="openAddMemberModal()">
                     <i class="bi bi-person-plus"></i>
                     <span>Add Member</span>
                 </button>
+                {% else %}
+                <span class="badge bg-info px-3 py-2">
+                    <i class="bi bi-eye-fill"></i>
+                    View Only
+                </span>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -162,11 +169,13 @@
     
     // Global variables
     const lessonId = window.location.pathname.split('/')[2];
+    const isOwner = {{ 'true' if is_owner else 'false' }};
     let allMembers = [];
     let addMemberModal;
     let searchTimeout;
     
     console.log('🚀 Initializing People System for lesson:', lessonId);
+    console.log('👤 Is Owner:', isOwner);
 
     // Initialize
     initializePeopleSystem();
@@ -275,41 +284,28 @@
         const container = document.getElementById('viewers-list');
         
         if (members.length === 0) {
+            const addButton = isOwner ? `
+                <button class="btn-people-primary mt-3" onclick="openAddMemberModal()">
+                    <i class="bi bi-person-plus"></i>
+                    Add Member
+                </button>
+            ` : '';
+            
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">
                         <i class="bi bi-people"></i>
                     </div>
                     <div class="empty-title">No viewers yet</div>
-                    <div class="empty-description">Add members to share this class with them</div>
-                    <button class="btn-people-primary mt-3" onclick="openAddMemberModal()">
-                        <i class="bi bi-person-plus"></i>
-                        Add Member
-                    </button>
+                    <div class="empty-description">${isOwner ? 'Add members to share this class with them' : 'No other members in this class'}</div>
+                    ${addButton}
                 </div>
             `;
             return;
         }
         
-        container.innerHTML = members.map(member => `
-            <div class="member-card">
-                <div class="member-avatar">
-                    ${getAvatarHtml(member)}
-                </div>
-                <div class="member-info">
-                    <div class="member-name">${escapeHtml(member.username || 'Unknown')}</div>
-                    <div class="member-email">${escapeHtml(member.email || '')}</div>
-                    <div class="member-meta">
-                        <div class="member-role-badge viewer">
-                            <i class="bi bi-eye-fill"></i>
-                            Viewer
-                        </div>
-                        <div class="member-joined">
-                            <i class="bi bi-calendar"></i>
-                            Joined ${formatDate(member.joined_at)}
-                        </div>
-                    </div>
-                </div>
+        container.innerHTML = members.map(member => {
+            const removeButton = isOwner ? `
                 <div class="member-actions">
                     <button class="btn-icon btn-danger" 
                             onclick="confirmRemoveMember('${member.user_id}', '${escapeHtml(member.username)}')"
@@ -317,8 +313,31 @@
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
-            </div>
-        `).join('');
+            ` : '';
+            
+            return `
+                <div class="member-card">
+                    <div class="member-avatar">
+                        ${getAvatarHtml(member)}
+                    </div>
+                    <div class="member-info">
+                        <div class="member-name">${escapeHtml(member.username || 'Unknown')}</div>
+                        <div class="member-email">${escapeHtml(member.email || '')}</div>
+                        <div class="member-meta">
+                            <div class="member-role-badge viewer">
+                                <i class="bi bi-eye-fill"></i>
+                                Viewer
+                            </div>
+                            <div class="member-joined">
+                                <i class="bi bi-calendar"></i>
+                                Joined ${formatDate(member.joined_at)}
+                            </div>
+                        </div>
+                    </div>
+                    ${removeButton}
+                </div>
+            `;
+        }).join('');
     }
 
     // Update stats

@@ -14,10 +14,17 @@
                 <button class="btn-icon" onclick="toggleSidebar()" id="sidebar-toggle">
                     <i class="bi bi-list"></i>
                 </button>
+                {% if is_owner %}
                 <button class="btn-classwork" id="header-create-btn" onclick="handleHeaderCreate()">
                     <i class="bi bi-plus-lg"></i>
                     <span id="header-create-text">Create Task</span>
                 </button>
+                {% else %}
+                <span class="badge bg-info px-3 py-2">
+                    <i class="bi bi-eye-fill"></i>
+                    View Only
+                </span>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -316,6 +323,7 @@
     
     // Global variables for classwork
     const lessonId = window.location.pathname.split('/')[2];
+    const isOwner = {{ 'true' if is_owner else 'false' }};
     let currentTab = 'all';
     let currentFilter = 'all';
     let allTasks = [];
@@ -324,6 +332,7 @@
     let taskModal, materialModal, taskDetailModal;
     
     console.log('🚀 Initializing Classwork System for lesson:', lessonId);
+    console.log('👤 Is Owner:', isOwner);
 
     // Initialize immediately - script runs after DOM is ready
     initializeClassworkSystem();
@@ -556,16 +565,20 @@ function renderKanbanBoard(tasks) {
     // Render tasks in each column
     Object.keys(grouped).forEach(status => {
         if (grouped[status].length === 0) {
+            const createButton = isOwner ? `
+                <button class="btn btn-outline-primary btn-sm mt-2" onclick="openCreateTaskModal()">
+                    <i class="bi bi-plus me-1"></i>Create Task
+                </button>
+            ` : '';
+            
             columns[status].innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">
                         <i class="bi bi-check-circle"></i>
                     </div>
                     <div class="empty-title">Ready for tasks</div>
-                    <div class="empty-description">Drag tasks here or create new ones</div>
-                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="openCreateTaskModal()">
-                        <i class="bi bi-plus me-1"></i>Create Task
-                    </button>
+                    <div class="empty-description">${isOwner ? 'Drag tasks here or create new ones' : 'No tasks in this column yet'}</div>
+                    ${createButton}
                 </div>
             `;
         } else {
@@ -581,16 +594,20 @@ function renderMaterials(materials) {
     const container = document.getElementById('materials-grid');
     
     if (materials.length === 0) {
+        const uploadButton = isOwner ? `
+            <button class="btn btn-primary btn-sm mt-3" onclick="openCreateMaterialModal()">
+                <i class="bi bi-cloud-upload me-1"></i>Upload Material
+            </button>
+        ` : '';
+        
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">
                     <i class="bi bi-folder-x"></i>
                 </div>
                 <div class="empty-title">No materials yet</div>
-                <div class="empty-description">Upload files and documents to share with your class</div>
-                <button class="btn btn-primary btn-sm mt-3" onclick="openCreateMaterialModal()">
-                    <i class="bi bi-cloud-upload me-1"></i>Upload Material
-                </button>
+                <div class="empty-description">${isOwner ? 'Upload files and documents to share with your class' : 'No materials have been shared yet'}</div>
+                ${uploadButton}
             </div>
         `;
         return;
@@ -824,6 +841,13 @@ function generatePreviewContent(material) {
 // Show empty state
 function showEmptyState(containerId, title, description) {
     const container = document.getElementById(containerId);
+    const createButton = isOwner ? `
+        <button class="btn-classwork" onclick="openCreateTaskModal()">
+            <i class="bi bi-plus-lg"></i>
+            Create Task
+        </button>
+    ` : '';
+    
     container.innerHTML = `
         <div class="empty-state">
             <div class="empty-icon">
@@ -831,10 +855,7 @@ function showEmptyState(containerId, title, description) {
             </div>
             <div class="empty-title">${title}</div>
             <div class="empty-description">${description}</div>
-            <button class="btn-classwork" onclick="openCreateTaskModal()">
-                <i class="bi bi-plus-lg"></i>
-                Create Task
-            </button>
+            ${createButton}
         </div>
     `;
 }
@@ -1135,15 +1156,23 @@ function viewTaskDetail(taskId) {
                 </div>
             </div>
             <div class="col-md-4">
-                <h6 class="text-muted mb-3">Actions</h6>
-                <div class="d-grid gap-2">
-                    <button class="btn btn-outline-primary btn-sm" onclick="openEditTaskModal('${task.id}')">
-                        <i class="bi bi-pencil"></i> Edit Task
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteTask('${task.id}')">
-                        <i class="bi bi-trash"></i> Delete Task
-                    </button>
-                </div>
+                ${isOwner ? `
+                    <h6 class="text-muted mb-3">Actions</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="openEditTaskModal('${task.id}')">
+                            <i class="bi bi-pencil"></i> Edit Task
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteTask('${task.id}')">
+                            <i class="bi bi-trash"></i> Delete Task
+                        </button>
+                    </div>
+                ` : `
+                    <div class="alert alert-info">
+                        <i class="bi bi-eye-fill"></i>
+                        <strong>View Only</strong>
+                        <p class="mb-0 mt-2 small">You can view this task but cannot edit it.</p>
+                    </div>
+                `}
             </div>
         </div>
     `;

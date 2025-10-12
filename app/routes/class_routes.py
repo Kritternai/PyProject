@@ -162,31 +162,41 @@ def get_classwork_data(lesson_id):
         lesson_service = LessonService()
         lesson = lesson_service.get_lesson_by_id(lesson_id)
         
-        if not lesson or lesson.user_id != g.user.id:
-            return jsonify({'error': 'Class not found or no permission'}), 404
+        if not lesson:
+            return jsonify({'error': 'Class not found'}), 404
         
-        # Get classwork tasks
+        # Check permission: must be owner or member
+        is_owner = lesson.user_id == g.user.id
+        member = db.session.execute(
+            text("SELECT * FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
+        ).fetchone()
+        
+        if not is_owner and not member:
+            return jsonify({'error': 'No permission'}), 403
+        
+        # Get classwork tasks (ทุกคนเห็น tasks เดียวกัน - สร้างโดย owner)
         classwork_tasks = db.session.execute(
             text("""
                 SELECT id, title, description, subject, category, priority, status, 
                        due_date, estimated_time, actual_time, created_at, updated_at
                 FROM classwork_task 
-                WHERE lesson_id = :lesson_id AND user_id = :user_id
+                WHERE lesson_id = :lesson_id AND user_id = :owner_id
                 ORDER BY created_at DESC
             """),
-            {'lesson_id': lesson_id, 'user_id': g.user.id}
+            {'lesson_id': lesson_id, 'owner_id': lesson.user_id}
         ).fetchall()
         
-        # Get classwork materials
+        # Get classwork materials (ทุกคนเห็น materials เดียวกัน - สร้างโดย owner)
         classwork_materials = db.session.execute(
             text("""
                 SELECT id, title, description, file_path, file_type, file_size,
                        subject, category, tags, created_at, updated_at
                 FROM classwork_material 
-                WHERE lesson_id = :lesson_id AND user_id = :user_id
+                WHERE lesson_id = :lesson_id AND user_id = :owner_id
                 ORDER BY created_at DESC
             """),
-            {'lesson_id': lesson_id, 'user_id': g.user.id}
+            {'lesson_id': lesson_id, 'owner_id': lesson.user_id}
         ).fetchall()
         
         # Convert to list of dicts
@@ -249,12 +259,24 @@ def partial_classwork(lesson_id):
         lesson_service = LessonService()
         lesson = lesson_service.get_lesson_by_id(lesson_id)
         
-        if not lesson or lesson.user_id != g.user.id:
-            return '<div class="alert alert-danger">Class not found or no permission.</div>', 404
+        if not lesson:
+            return '<div class="alert alert-danger">Class not found.</div>', 404
         
-        return render_template('class_detail/_classwork.html', lesson=lesson)
+        # Check permission: must be owner or member
+        is_owner = lesson.user_id == g.user.id
+        member = db.session.execute(
+            text("SELECT * FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
+        ).fetchone()
+        
+        if not is_owner and not member:
+            return '<div class="alert alert-danger">You do not have permission to view this class.</div>', 403
+        
+        return render_template('class_detail/_classwork.html', lesson=lesson, is_owner=is_owner)
     except Exception as e:
         print(f"Error loading classwork: {e}")
+        import traceback
+        traceback.print_exc()
         return f'<div class="alert alert-danger">Error loading classwork: {str(e)}</div>', 500
 
 
