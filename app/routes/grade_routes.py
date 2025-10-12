@@ -12,9 +12,36 @@ from app.utils.exceptions import (
     NotFoundException,
     BusinessLogicException
 )
+from app import db
+from sqlalchemy import text
 
 # Create blueprint
 grade_bp = Blueprint('grades', __name__, url_prefix='/grades')
+
+
+def check_class_permission(lesson_id, user_id, require_owner=False):
+    """Check if user has permission to access/modify class"""
+    from ..services import LessonService
+    
+    lesson_service = LessonService()
+    lesson = lesson_service.get_lesson_by_id(lesson_id)
+    
+    if not lesson:
+        return False, False
+    
+    is_owner = lesson.user_id == user_id
+    
+    if require_owner:
+        return is_owner, is_owner
+    
+    # Check if member
+    member = db.session.execute(
+        text("SELECT * FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+        {'lesson_id': lesson_id, 'user_id': user_id}
+    ).fetchone()
+    
+    has_permission = is_owner or (member is not None)
+    return has_permission, is_owner
 
 
 @grade_bp.before_request
@@ -56,11 +83,16 @@ def get_grade_config(lesson_id):
 
 @grade_bp.route('/lessons/<lesson_id>/config', methods=['POST'])
 def create_grade_config(lesson_id):
-    """Create grade configuration"""
+    """Create grade configuration (Owner only)"""
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
+        # Check permission - only owner can create config
+        has_permission, is_owner = check_class_permission(lesson_id, g.user.id, require_owner=True)
+        if not is_owner:
+            return jsonify({'error': 'Only owner can create grade configuration'}), 403
+        
         data = request.get_json()
         
         if not data or 'grading_scale' not in data:
@@ -175,11 +207,16 @@ def get_categories(lesson_id):
 
 @grade_bp.route('/lessons/<lesson_id>/categories', methods=['POST'])
 def create_category(lesson_id):
-    """Create a new grade category"""
+    """Create a new grade category (Owner only)"""
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
+        # Check permission - only owner can create category
+        has_permission, is_owner = check_class_permission(lesson_id, g.user.id, require_owner=True)
+        if not is_owner:
+            return jsonify({'error': 'Only owner can create categories'}), 403
+        
         data = request.get_json()
         
         if not data or 'name' not in data or 'weight' not in data:
@@ -264,11 +301,16 @@ def get_grade_items(lesson_id):
 
 @grade_bp.route('/lessons/<lesson_id>/items', methods=['POST'])
 def create_grade_item(lesson_id):
-    """Create a new grade item"""
+    """Create a new grade item (Owner only)"""
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
+        # Check permission - only owner can create items
+        has_permission, is_owner = check_class_permission(lesson_id, g.user.id, require_owner=True)
+        if not is_owner:
+            return jsonify({'error': 'Only owner can create grade items'}), 403
+        
         data = request.get_json()
         
         if not data or 'name' not in data or 'category_id' not in data or 'points_possible' not in data:
@@ -360,6 +402,11 @@ def get_my_grades(lesson_id):
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
+        # Check permission - owner or member can view their grades
+        has_permission, is_owner = check_class_permission(lesson_id, g.user.id)
+        if not has_permission:
+            return jsonify({'error': 'No permission'}), 403
+        
         grades = GradeController.get_student_grades(lesson_id, g.user.id)
         
         return jsonify({
@@ -377,6 +424,11 @@ def get_grade_summary(lesson_id):
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
+        # Check permission - owner or member can view summary
+        has_permission, is_owner = check_class_permission(lesson_id, g.user.id)
+        if not has_permission:
+            return jsonify({'error': 'No permission'}), 403
+        
         summary = GradeController.calculate_grade_summary(lesson_id, g.user.id)
         
         if 'error' in summary:
@@ -505,10 +557,34 @@ def partial_grades(lesson_id):
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
+        from ..services import LessonService
+        from app import db
+        from sqlalchemy import text
+        
+        # Get lesson
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        if not lesson:
+            return '<div class="alert alert-danger">Class not found.</div>', 404
+        
+        # Check permission: must be owner or member
+        is_owner = lesson.user_id == g.user.id
+        member = db.session.execute(
+            text("SELECT * FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
+        ).fetchone()
+        
+        if not is_owner and not member:
+            return '<div class="alert alert-danger">You do not have permission to view this class.</div>', 403
+        
         return render_template('class_detail/_grades.html', 
                              lesson_id=lesson_id,
-                             user=g.user)
+                             user=g.user,
+                             is_owner=is_owner)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return f'<div class="alert alert-danger">Error loading grades: {str(e)}</div>', 500
 
 

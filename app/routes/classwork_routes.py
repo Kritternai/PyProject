@@ -30,6 +30,41 @@ def load_logged_in_user():
         g.user = None
 
 
+def check_class_permission(lesson_id, user_id, require_owner=False):
+    """
+    Check if user has permission to access/modify class
+    
+    Args:
+        lesson_id: Class ID
+        user_id: User ID to check
+        require_owner: If True, only owner has permission
+        
+    Returns:
+        tuple: (has_permission, is_owner)
+    """
+    from ..services import LessonService
+    
+    lesson_service = LessonService()
+    lesson = lesson_service.get_lesson_by_id(lesson_id)
+    
+    if not lesson:
+        return False, False
+    
+    is_owner = lesson.user_id == user_id
+    
+    if require_owner:
+        return is_owner, is_owner
+    
+    # Check if member
+    member = db.session.execute(
+        text("SELECT * FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+        {'lesson_id': lesson_id, 'user_id': user_id}
+    ).fetchone()
+    
+    has_permission = is_owner or (member is not None)
+    return has_permission, is_owner
+
+
 # ============================================
 # CLASSWORK DASHBOARD
 # ============================================
@@ -85,12 +120,17 @@ def get_dashboard(lesson_id):
 
 @classwork_bp.route('/lessons/<lesson_id>/tasks')
 def get_tasks(lesson_id):
-    """Get classwork tasks for a lesson"""
+    """Get classwork tasks for a lesson (แต่ละคนเห็นของตัวเอง)"""
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        # Get classwork tasks from database
+        # Check permission
+        has_permission, is_owner = check_class_permission(lesson_id, g.user.id)
+        if not has_permission:
+            return jsonify({'error': 'No permission'}), 403
+        
+        # Get classwork tasks (ของตัวเอง)
         tasks_data = db.session.execute(
             text("""
                 SELECT id, title, description, subject, category, priority, status, 
@@ -134,11 +174,16 @@ def get_tasks(lesson_id):
 
 @classwork_bp.route('/lessons/<lesson_id>/tasks', methods=['POST'])
 def create_task(lesson_id):
-    """Create a new classwork task"""
+    """Create a new classwork task (ทุกคนสร้างของตัวเองได้)"""
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
+        # Check permission - owner or member can create their own tasks
+        has_permission, is_owner = check_class_permission(lesson_id, g.user.id)
+        if not has_permission:
+            return jsonify({'error': 'No permission to access this class'}), 403
+        
         data = request.get_json()
         
         # Validate required fields
@@ -192,16 +237,32 @@ def create_task(lesson_id):
 
 @classwork_bp.route('/tasks/<task_id>', methods=['PUT'])
 def update_task(task_id):
-    """Update a classwork task"""
+    """Update a classwork task (แก้ไขของตัวเองได้)"""
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
+        # Get task to verify ownership
+        task_data = db.session.execute(
+            text("SELECT lesson_id, user_id FROM classwork_task WHERE id = :task_id"),
+            {'task_id': task_id}
+        ).fetchone()
+        
+        if not task_data:
+            return jsonify({'error': 'Task not found'}), 404
+        
+        lesson_id = task_data[0]
+        task_user_id = task_data[1]
+        
+        # Check permission - can only update own tasks
+        if task_user_id != g.user.id:
+            return jsonify({'error': 'You can only update your own tasks'}), 403
+        
         data = request.get_json()
         
         # Build update query dynamically
         update_fields = []
-        params = {'id': task_id, 'user_id': g.user.id, 'updated_at': datetime.now()}
+        params = {'id': task_id, 'updated_at': datetime.now()}
         
         for field in ['title', 'description', 'subject', 'category', 'priority', 
                       'status', 'due_date', 'estimated_time', 'actual_time']:
@@ -219,14 +280,14 @@ def update_task(task_id):
             text(f"""
                 UPDATE classwork_task 
                 SET {', '.join(update_fields)}
-                WHERE id = :id AND user_id = :user_id
+                WHERE id = :id
             """),
             params
         )
         db.session.commit()
         
         if result.rowcount == 0:
-            return jsonify({'error': 'Task not found or no permission'}), 404
+            return jsonify({'error': 'Task not found'}), 404
         
         return jsonify({
             'success': True,
@@ -239,11 +300,27 @@ def update_task(task_id):
 
 @classwork_bp.route('/tasks/<task_id>', methods=['DELETE'])
 def delete_task(task_id):
-    """Delete a classwork task"""
+    """Delete a classwork task (ลบของตัวเองได้)"""
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
+        # Get task to verify ownership
+        task_data = db.session.execute(
+            text("SELECT lesson_id, user_id FROM classwork_task WHERE id = :task_id"),
+            {'task_id': task_id}
+        ).fetchone()
+        
+        if not task_data:
+            return jsonify({'error': 'Task not found'}), 404
+        
+        lesson_id = task_data[0]
+        task_user_id = task_data[1]
+        
+        # Check permission - can only delete own tasks
+        if task_user_id != g.user.id:
+            return jsonify({'error': 'You can only delete your own tasks'}), 403
+        
         result = db.session.execute(
             text("""
                 DELETE FROM classwork_task 
@@ -254,7 +331,7 @@ def delete_task(task_id):
         db.session.commit()
         
         if result.rowcount == 0:
-            return jsonify({'error': 'Task not found or no permission'}), 404
+            return jsonify({'error': 'Task not found'}), 404
         
         return jsonify({
             'success': True,
@@ -276,16 +353,26 @@ def get_materials(lesson_id):
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        # Get classwork materials from database
+        # Check permission
+        has_permission, is_owner = check_class_permission(lesson_id, g.user.id)
+        if not has_permission:
+            return jsonify({'error': 'No permission'}), 403
+        
+        # Get lesson to find owner
+        from ..services import LessonService
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        # Get classwork materials (shared - created by owner)
         materials_data = db.session.execute(
             text("""
                 SELECT id, title, description, file_path, file_type, file_size,
                        subject, category, tags, created_at, updated_at
                 FROM classwork_material 
-                WHERE lesson_id = :lesson_id AND user_id = :user_id
+                WHERE lesson_id = :lesson_id AND user_id = :owner_id
                 ORDER BY created_at DESC
             """),
-            {'lesson_id': lesson_id, 'user_id': g.user.id}
+            {'lesson_id': lesson_id, 'owner_id': lesson.user_id}
         ).fetchall()
         
         materials = [{
@@ -313,11 +400,15 @@ def get_materials(lesson_id):
 
 @classwork_bp.route('/lessons/<lesson_id>/materials', methods=['POST'])
 def create_material(lesson_id):
-    """Create a new classwork material"""
+    """Create a new classwork material (Owner only)"""
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
+        # Check permission - only owner can create
+        has_permission, is_owner = check_class_permission(lesson_id, g.user.id, require_owner=True)
+        if not is_owner:
+            return jsonify({'error': 'Only owner can create materials'}), 403
         # Check if file upload
         if 'file' in request.files:
             file = request.files['file']
@@ -405,37 +496,42 @@ def create_material(lesson_id):
 
 @classwork_bp.route('/materials/<material_id>', methods=['DELETE'])
 def delete_material(material_id):
-    """Delete a classwork material"""
+    """Delete a classwork material (Owner only)"""
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
     try:
-        # Get file path before deleting
-        material = db.session.execute(
-            text("""
-                SELECT file_path FROM classwork_material 
-                WHERE id = :id AND user_id = :user_id
-            """),
-            {'id': material_id, 'user_id': g.user.id}
+        # Get material to find lesson_id
+        material_data = db.session.execute(
+            text("SELECT lesson_id, file_path FROM classwork_material WHERE id = :id"),
+            {'id': material_id}
         ).fetchone()
         
-        if not material:
-            return jsonify({'error': 'Material not found or no permission'}), 404
+        if not material_data:
+            return jsonify({'error': 'Material not found'}), 404
+        
+        lesson_id = material_data[0]
+        file_path = material_data[1]
+        
+        # Check permission - only owner can delete
+        has_permission, is_owner = check_class_permission(lesson_id, g.user.id, require_owner=True)
+        if not is_owner:
+            return jsonify({'error': 'Only owner can delete materials'}), 403
         
         # Delete from database
         db.session.execute(
             text("""
                 DELETE FROM classwork_material 
-                WHERE id = :id AND user_id = :user_id
+                WHERE id = :id
             """),
-            {'id': material_id, 'user_id': g.user.id}
+            {'id': material_id}
         )
         db.session.commit()
         
         # Delete file if exists
-        if material[0] and os.path.exists(material[0]):
+        if file_path and os.path.exists(file_path):
             try:
-                os.remove(material[0])
+                os.remove(file_path)
             except:
                 pass  # Ignore file deletion errors
         
