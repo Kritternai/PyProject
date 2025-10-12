@@ -175,16 +175,16 @@ def get_classwork_data(lesson_id):
         if not is_owner and not member:
             return jsonify({'error': 'No permission'}), 403
         
-        # Get classwork tasks (ทุกคนเห็น tasks เดียวกัน - สร้างโดย owner)
+        # Get classwork tasks (แต่ละคนมี tasks ของตัวเอง)
         classwork_tasks = db.session.execute(
             text("""
                 SELECT id, title, description, subject, category, priority, status, 
                        due_date, estimated_time, actual_time, created_at, updated_at
                 FROM classwork_task 
-                WHERE lesson_id = :lesson_id AND user_id = :owner_id
+                WHERE lesson_id = :lesson_id AND user_id = :user_id
                 ORDER BY created_at DESC
             """),
-            {'lesson_id': lesson_id, 'owner_id': lesson.user_id}
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
         ).fetchall()
         
         # Get classwork materials (ทุกคนเห็น materials เดียวกัน - สร้างโดย owner)

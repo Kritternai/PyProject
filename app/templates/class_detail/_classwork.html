@@ -8,23 +8,16 @@
         <div class="classwork-header-content">
                 <div>
                 <h2 class="classwork-title">Classwork</h2>
-                <p class="classwork-subtitle">Manage assignments, materials, and track progress</p>
+                <p class="classwork-subtitle">Your personal tasks and shared materials</p>
                 </div>
             <div class="classwork-actions">
                 <button class="btn-icon" onclick="toggleSidebar()" id="sidebar-toggle">
                     <i class="bi bi-list"></i>
                 </button>
-                {% if is_owner %}
                 <button class="btn-classwork" id="header-create-btn" onclick="handleHeaderCreate()">
                     <i class="bi bi-plus-lg"></i>
                     <span id="header-create-text">Create Task</span>
                 </button>
-                {% else %}
-                <span class="badge bg-info px-3 py-2">
-                    <i class="bi bi-eye-fill"></i>
-                    View Only
-                </span>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -323,7 +316,7 @@
     
     // Global variables for classwork
     const lessonId = window.location.pathname.split('/')[2];
-    const isOwner = {{ 'true' if is_owner else 'false' }};
+    const isOwner = {{ 'true' if is_owner else 'false' }};  // For materials only
     let currentTab = 'all';
     let currentFilter = 'all';
     let allTasks = [];
@@ -332,7 +325,7 @@
     let taskModal, materialModal, taskDetailModal;
     
     console.log('🚀 Initializing Classwork System for lesson:', lessonId);
-    console.log('👤 Is Owner:', isOwner);
+    console.log('👤 Is Owner:', isOwner, '(for materials control)');
 
     // Initialize immediately - script runs after DOM is ready
     initializeClassworkSystem();
@@ -504,11 +497,17 @@ function updateHeaderButton(tabName) {
     const headerText = document.getElementById('header-create-text');
     
     if (tabName === 'materials') {
-        headerText.textContent = 'Create Material';
-        headerBtn.setAttribute('onclick', 'openCreateMaterialModal()');
+        if (isOwner) {
+            headerText.textContent = 'Upload Material';
+            headerBtn.setAttribute('onclick', 'openCreateMaterialModal()');
+            headerBtn.style.display = 'flex';
+        } else {
+            headerBtn.style.display = 'none';
+        }
     } else {
         headerText.textContent = 'Create Task';
         headerBtn.setAttribute('onclick', 'openCreateTaskModal()');
+        headerBtn.style.display = 'flex';
     }
 }
 
@@ -565,20 +564,16 @@ function renderKanbanBoard(tasks) {
     // Render tasks in each column
     Object.keys(grouped).forEach(status => {
         if (grouped[status].length === 0) {
-            const createButton = isOwner ? `
-                <button class="btn btn-outline-primary btn-sm mt-2" onclick="openCreateTaskModal()">
-                    <i class="bi bi-plus me-1"></i>Create Task
-                </button>
-            ` : '';
-            
             columns[status].innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">
                         <i class="bi bi-check-circle"></i>
                     </div>
                     <div class="empty-title">Ready for tasks</div>
-                    <div class="empty-description">${isOwner ? 'Drag tasks here or create new ones' : 'No tasks in this column yet'}</div>
-                    ${createButton}
+                    <div class="empty-description">Drag tasks here or create new ones</div>
+                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="openCreateTaskModal()">
+                        <i class="bi bi-plus me-1"></i>Create Task
+                    </button>
                 </div>
             `;
         } else {
@@ -600,13 +595,17 @@ function renderMaterials(materials) {
             </button>
         ` : '';
         
+        const emptyMessage = isOwner 
+            ? 'Upload files and documents to share with class members' 
+            : 'No materials have been shared yet';
+        
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">
                     <i class="bi bi-folder-x"></i>
                 </div>
                 <div class="empty-title">No materials yet</div>
-                <div class="empty-description">${isOwner ? 'Upload files and documents to share with your class' : 'No materials have been shared yet'}</div>
+                <div class="empty-description">${emptyMessage}</div>
                 ${uploadButton}
             </div>
         `;
@@ -841,12 +840,6 @@ function generatePreviewContent(material) {
 // Show empty state
 function showEmptyState(containerId, title, description) {
     const container = document.getElementById(containerId);
-    const createButton = isOwner ? `
-        <button class="btn-classwork" onclick="openCreateTaskModal()">
-            <i class="bi bi-plus-lg"></i>
-            Create Task
-        </button>
-    ` : '';
     
     container.innerHTML = `
         <div class="empty-state">
@@ -855,7 +848,10 @@ function showEmptyState(containerId, title, description) {
             </div>
             <div class="empty-title">${title}</div>
             <div class="empty-description">${description}</div>
-            ${createButton}
+            <button class="btn-classwork" onclick="openCreateTaskModal()">
+                <i class="bi bi-plus-lg"></i>
+                Create Task
+            </button>
         </div>
     `;
 }
@@ -1156,23 +1152,15 @@ function viewTaskDetail(taskId) {
                 </div>
             </div>
             <div class="col-md-4">
-                ${isOwner ? `
-                    <h6 class="text-muted mb-3">Actions</h6>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary btn-sm" onclick="openEditTaskModal('${task.id}')">
-                            <i class="bi bi-pencil"></i> Edit Task
-                        </button>
-                        <button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteTask('${task.id}')">
-                            <i class="bi bi-trash"></i> Delete Task
-                        </button>
-                    </div>
-                ` : `
-                    <div class="alert alert-info">
-                        <i class="bi bi-eye-fill"></i>
-                        <strong>View Only</strong>
-                        <p class="mb-0 mt-2 small">You can view this task but cannot edit it.</p>
-                    </div>
-                `}
+                <h6 class="text-muted mb-3">Actions</h6>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="openEditTaskModal('${task.id}')">
+                        <i class="bi bi-pencil"></i> Edit Task
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteTask('${task.id}')">
+                        <i class="bi bi-trash"></i> Delete Task
+                    </button>
+                </div>
             </div>
         </div>
     `;
