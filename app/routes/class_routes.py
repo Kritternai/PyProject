@@ -51,17 +51,63 @@ def partial_class_list():
     
     try:
         lesson_service = LessonService()
-        lessons = lesson_service.get_lessons_by_user(g.user.id)
         
-        # Sort: Favorites first, then by created_at
-        lessons = sorted(lessons, key=lambda x: (x.is_favorite, x.created_at), reverse=True)
+        # Get classes where user is owner
+        my_lessons = lesson_service.get_lessons_by_user(g.user.id)
+        
+        # Get classes where user is a member (shared with me)
+        shared_lessons_data = db.session.execute(
+            text("""
+                SELECT l.id, l.user_id, l.title, l.description, l.content, 
+                       l.status, l.color_theme, l.is_favorite, l.difficulty_level,
+                       l.estimated_duration, l.author_name, l.tags, l.created_at, l.updated_at,
+                       m.role as member_role
+                FROM member m
+                JOIN lesson l ON m.lesson_id = l.id
+                WHERE m.user_id = :user_id
+                ORDER BY m.joined_at DESC
+            """),
+            {'user_id': g.user.id}
+        ).fetchall()
+        
+        # Convert shared lessons to lesson-like objects
+        shared_lessons = []
+        for row in shared_lessons_data:
+            lesson_dict = {
+                'id': row[0],
+                'user_id': row[1],
+                'title': row[2],
+                'description': row[3],
+                'content': row[4],
+                'status': row[5],
+                'color_theme': row[6] or 1,
+                'is_favorite': row[7] or False,
+                'difficulty_level': row[8],
+                'estimated_duration': row[9],
+                'author_name': row[10],
+                'tags': row[11],
+                'created_at': row[12],
+                'updated_at': row[13],
+                'member_role': row[14],  # 'viewer'
+                'is_shared': True
+            }
+            shared_lessons.append(type('Lesson', (), lesson_dict))
+        
+        # Sort my lessons: Favorites first, then by created_at
+        my_lessons = sorted(my_lessons, key=lambda x: (not x.is_favorite, x.created_at), reverse=True)
+        
+        # Add is_shared flag to my lessons
+        for lesson in my_lessons:
+            lesson.is_shared = False
+            lesson.member_role = 'owner'
         
         # Check Microsoft Teams connection
         microsoft_teams_connected = session.get('microsoft_teams_connected', False)
         microsoft_teams_data = session.get('microsoft_teams_data', None)
         
         return render_template('class_fragment.html', 
-                             lessons=lessons, 
+                             lessons=my_lessons,
+                             shared_lessons=shared_lessons,
                              user=g.user,
                              google_classroom_connected=False,
                              microsoft_teams_connected=microsoft_teams_connected,
@@ -72,6 +118,7 @@ def partial_class_list():
         traceback.print_exc()
         return render_template('class_fragment.html', 
                              lessons=[], 
+                             shared_lessons=[],
                              user=g.user,
                              google_classroom_connected=False,
                              microsoft_teams_connected=False,

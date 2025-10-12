@@ -273,6 +273,35 @@
     padding: 0 2rem 4rem;
 }
 
+/* ===== Sections ===== */
+.lessons-section {
+    margin-bottom: 3rem;
+}
+
+.section-header {
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--lessons-text);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title i {
+    font-size: 1.25rem;
+}
+
+.section-subtitle {
+    font-size: 0.95rem;
+    color: var(--lessons-text-light);
+    margin: 0;
+}
+
 /* ===== Filter Pills (Hidden - Removed) ===== */
 .lessons-filters {
     display: none;
@@ -479,7 +508,38 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 0.5rem;
+    flex-wrap: wrap;
     z-index: 10;
+}
+
+/* Role Badge */
+.lesson-card-role-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    backdrop-filter: blur(10px);
+}
+
+.lesson-card-role-badge.owner {
+    background: linear-gradient(135deg, #FFA500, #FF8C00);
+    color: white;
+}
+
+.lesson-card-role-badge.viewer {
+    background: linear-gradient(135deg, #2B6BCF, #003B8E);
+    color: white;
+}
+
+.lesson-card-role-badge i {
+    font-size: 0.85rem;
 }
 
 .lesson-card-status-badge {
