@@ -5,10 +5,13 @@
     <!-- Header -->
     <div class="grades-header">
         <div class="grades-header-content">
-            <div>
-                <h2 class="grades-title">📊 Grades</h2>
-                <p class="grades-subtitle">Track your academic progress and set goals</p>
-            </div>
+        <div>
+            <h2 class="grades-title">
+                <i class="bi bi-graph-up"></i>
+                Grades
+            </h2>
+            <p class="grades-subtitle">Track your academic progress and set goals</p>
+        </div>
             <div class="grades-actions">
                 <button class="btn-icon" onclick="toggleGradesSidebar()" id="grades-sidebar-toggle">
                     <i class="bi bi-list"></i>
@@ -68,15 +71,15 @@
                 <div class="grades-stats-section">
                     <div class="stats-grid">
                         <div class="stat-item">
-                            <div class="stat-number" id="total-assignments">0</div>
+                            <div class="stat-number" id="total-assignments">--</div>
                             <div class="stat-label">Total</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number" id="graded-assignments">0</div>
+                            <div class="stat-number" id="graded-assignments">--</div>
                             <div class="stat-label">Graded</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number" id="pending-assignments">0</div>
+                            <div class="stat-number" id="pending-assignments">--</div>
                             <div class="stat-label">Pending</div>
                         </div>
                         <div class="stat-item">
@@ -183,7 +186,10 @@
                         <!-- Left: Category Performance -->
                         <div class="overview-section clean">
                             <div class="section-header-compact">
-                                <h3 class="section-title-clean">Category Performance</h3>
+                                <h3 class="section-title-clean">
+                                    <i class="bi bi-bar-chart"></i>
+                                    Category Performance
+                                </h3>
                                 <a href="#" class="section-link-clean" onclick="switchGradesTab('categories'); return false;">
                                     View All <i class="bi bi-arrow-right"></i>
                                 </a>
@@ -196,7 +202,10 @@
                         <!-- Right: Next Goal -->
                         <div class="overview-section clean">
                             <div class="section-header-compact">
-                                <h3 class="section-title-clean">Your Next Goal</h3>
+                                <h3 class="section-title-clean">
+                                    <i class="bi bi-target"></i>
+                                    Your Next Goal
+                                </h3>
                                 <button class="section-link-clean" onclick="openGoalCalculator()">
                                     Calculate <i class="bi bi-calculator"></i>
                                 </button>
@@ -210,7 +219,10 @@
                     <!-- Recent Grades -->
                     <div class="overview-section clean">
                         <div class="section-header-compact">
-                            <h3 class="section-title-clean">Recent Grades</h3>
+                            <h3 class="section-title-clean">
+                                <i class="bi bi-clock-history"></i>
+                                Recent Grades
+                            </h3>
                             <a href="#" class="section-link-clean" onclick="switchGradesTab('assignments'); return false;">
                                 View All <i class="bi bi-arrow-right"></i>
                             </a>
@@ -226,7 +238,10 @@
                     <!-- Detailed Grades Table -->
                     <div class="assignments-section">
                         <div class="assignments-header">
-                            <h3 class="assignments-title">📋 All Assignments</h3>
+                            <h3 class="assignments-title">
+                                <i class="bi bi-list-check"></i>
+                                All Assignments
+                            </h3>
                             <button class="btn-grades-primary" onclick="openCreateGradeItemModal()">
                                 <i class="bi bi-plus-lg"></i>
                                 <span>Add Assignment</span>
@@ -594,6 +609,8 @@
                 updateSidebarStats(summaryData); // Update sidebar stats
             } else {
                 console.error('❌ Failed to load summary:', summaryData);
+                // Update sidebar with empty data
+                updateSidebarStats({ data: {} });
             }
             
             // Load grades table
@@ -608,6 +625,9 @@
                 console.log('📝 Rendering grades table with', gradesData.data.length, 'items');
                 renderGradesTable(gradesData.data);
                 renderRecentGrades(gradesData.data); // New: Recent grades
+                
+                // Update sidebar stats with actual grades data
+                updateSidebarStatsFromGrades(gradesData.data);
             } else {
                 console.error('❌ Failed to load grades:', gradesData);
                 // Show error message in table
@@ -934,26 +954,27 @@
     
     function renderGradeSummary(summary) {
         const html = `
-            <div class="grade-display-clean">
-                <div class="current-grade-clean">
-                    <div class="grade-letter-clean">${summary.letter_grade}</div>
-                    <div class="grade-gpa-clean">GPA: ${summary.gpa.toFixed(2)}</div>
+            <div class="grade-display-unified">
+                <div class="grade-main-info">
+                    <div class="grade-letter-unified">${summary.letter_grade}</div>
+                    <div class="grade-percentage-unified">${summary.percentage}%</div>
                 </div>
-                <div class="grade-details-clean">
-                    <div class="grade-percentage-clean">
-                        <span class="percentage-value-clean">${summary.percentage}%</span>
-                        <div class="progress-bar-container-clean">
-                            <div class="progress-bar-fill-clean" style="width: ${summary.percentage}%"></div>
-                        </div>
+                <div class="grade-secondary-info">
+                    <div class="grade-gpa-unified">
+                        <i class="bi bi-graph-up"></i>
+                        <span>GPA: ${summary.gpa.toFixed(2)}</span>
                     </div>
-                    <div class="grade-points-clean">
+                    <div class="grade-points-unified">
                         <i class="bi bi-trophy"></i>
                         <span id="current-points">${summary.percentage}</span> / 100 points
                     </div>
-                    <div class="grade-status-clean ${summary.is_passing ? 'passing' : 'failing'}">
+                    <div class="grade-status-unified ${summary.is_passing ? 'passing' : 'failing'}">
                         <i class="bi ${summary.is_passing ? 'bi-check-circle' : 'bi-exclamation-triangle'}"></i>
                         <span>${summary.is_passing ? 'Passing' : 'Needs Improvement'}</span>
                     </div>
+                </div>
+                <div class="progress-bar-unified">
+                    <div class="progress-bar-fill-unified" style="width: ${summary.percentage}%"></div>
                 </div>
             </div>
         `;
@@ -1349,6 +1370,10 @@
         }
         
         console.log(`📝 Rendering ${grades.length} grade items...`);
+        
+        // Update sidebar stats when rendering table
+        updateSidebarStatsFromGrades(grades);
+        
         let html = '';
         
         for (const grade of grades) {
@@ -2363,18 +2388,90 @@
     
     // Update sidebar stats
     function updateSidebarStats(summaryData) {
-        if (!summaryData || !summaryData.data) return;
+        console.log('📊 Updating sidebar stats with:', summaryData);
+        
+        if (!summaryData || !summaryData.data) {
+            console.warn('⚠️ No summary data available for sidebar stats');
+            return;
+        }
         
         const data = summaryData.data;
         
-        // Update stats
-        document.getElementById('total-assignments').textContent = data.total_assignments || 0;
-        document.getElementById('graded-assignments').textContent = data.graded_assignments || 0;
-        document.getElementById('pending-assignments').textContent = data.pending_assignments || 0;
-        document.getElementById('current-grade').textContent = data.letter_grade || '--';
+        // Update stats with fallback values
+        updateSidebarStatsDisplay(
+            data.total_assignments || 0,
+            data.graded_assignments || 0,
+            data.pending_assignments || 0,
+            data.letter_grade || '--'
+        );
+        
+        console.log('✅ Sidebar stats updated:', {
+            total: data.total_assignments || 0,
+            graded: data.graded_assignments || 0,
+            pending: data.pending_assignments || 0,
+            current: data.letter_grade || '--'
+        });
         
         // Update category filters
         updateCategoryFilters(data.category_breakdown || {});
+    }
+    
+    // Update sidebar stats from grades data directly
+    function updateSidebarStatsFromGrades(grades) {
+        console.log('📊 Updating sidebar stats from grades data:', grades);
+        
+        if (!grades || !Array.isArray(grades)) {
+            console.warn('⚠️ No grades data available for sidebar stats');
+            // Set to default values
+            updateSidebarStatsDisplay(0, 0, 0, '--');
+            return;
+        }
+        
+        // Calculate stats from grades data
+        const totalAssignments = grades.length;
+        const gradedAssignments = grades.filter(grade => grade.status === 'graded' && grade.score !== null).length;
+        const pendingAssignments = totalAssignments - gradedAssignments;
+        
+        // Calculate current grade from graded assignments
+        let currentGrade = '--';
+        if (gradedAssignments > 0) {
+            const gradedGrades = grades.filter(grade => grade.status === 'graded' && grade.score !== null);
+            const totalPercentage = gradedGrades.reduce((sum, grade) => sum + (grade.percentage || 0), 0);
+            const averagePercentage = totalPercentage / gradedAssignments;
+            
+            // Convert percentage to letter grade
+            if (averagePercentage >= 90) currentGrade = 'A';
+            else if (averagePercentage >= 85) currentGrade = 'B+';
+            else if (averagePercentage >= 80) currentGrade = 'B';
+            else if (averagePercentage >= 75) currentGrade = 'C+';
+            else if (averagePercentage >= 70) currentGrade = 'C';
+            else if (averagePercentage >= 65) currentGrade = 'D+';
+            else if (averagePercentage >= 60) currentGrade = 'D';
+            else currentGrade = 'F';
+        }
+        
+        // Update display
+        updateSidebarStatsDisplay(totalAssignments, gradedAssignments, pendingAssignments, currentGrade);
+        
+        console.log('✅ Sidebar stats updated from grades:', {
+            total: totalAssignments,
+            graded: gradedAssignments,
+            pending: pendingAssignments,
+            current: currentGrade
+        });
+    }
+    
+    // Helper function to update sidebar stats display
+    function updateSidebarStatsDisplay(total, graded, pending, current) {
+        const totalEl = document.getElementById('total-assignments');
+        const gradedEl = document.getElementById('graded-assignments');
+        const pendingEl = document.getElementById('pending-assignments');
+        const currentEl = document.getElementById('current-grade');
+        
+        if (totalEl) totalEl.textContent = total;
+        if (gradedEl) gradedEl.textContent = graded;
+        if (pendingEl) pendingEl.textContent = pending;
+        if (currentEl) currentEl.textContent = current;
     }
     
     // Initialize sidebar search
