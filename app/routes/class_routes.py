@@ -311,6 +311,37 @@ def partial_people(lesson_id):
         return f'<div class="alert alert-danger">Error loading people: {str(e)}</div>', 500
 
 
+@class_bp.route('/partial/class/<lesson_id>/stream')
+def partial_stream(lesson_id):
+    """Stream partial for specific class (Q&A + Announcements)"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        if not lesson:
+            return '<div class="alert alert-danger">Class not found.</div>', 404
+        
+        # Check permission: must be owner or member
+        is_owner = lesson.user_id == g.user.id
+        member = db.session.execute(
+            text("SELECT * FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
+        ).fetchone()
+        
+        if not is_owner and not member:
+            return '<div class="alert alert-danger">You do not have permission to view this class.</div>', 403
+        
+        return render_template('class_detail/_stream.html', lesson=lesson, is_owner=is_owner)
+    except Exception as e:
+        print(f"Error loading stream: {e}")
+        import traceback
+        traceback.print_exc()
+        return f'<div class="alert alert-danger">Error loading stream: {str(e)}</div>', 500
+
+
 # ============================================
 # CRUD OPERATIONS
 # ============================================
