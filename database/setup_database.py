@@ -245,19 +245,32 @@ def create_complete_database_schema():
         """)
         print("✅ Created assignment table")
         
-        # 9. Create member table
+        # 9. Create member table (class_member)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS member (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
                 lesson_id TEXT NOT NULL,
-                role TEXT DEFAULT 'student',
+                role TEXT DEFAULT 'viewer',
+                invited_by TEXT,
                 joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES user(id),
-                FOREIGN KEY (lesson_id) REFERENCES lesson(id)
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (invited_by) REFERENCES user(id),
+                UNIQUE(user_id, lesson_id)
             )
         """)
         print("✅ Created member table")
+        
+        # Add invited_by column if not exists
+        try:
+            cursor.execute("ALTER TABLE member ADD COLUMN invited_by TEXT REFERENCES user(id)")
+            print("✅ Added invited_by column to member table")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e):
+                print("   invited_by column already exists, skipping...")
+            else:
+                print(f"   Warning: {e}")
         
         # 10. Create database indexes
         indexes = [

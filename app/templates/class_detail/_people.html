@@ -1,0 +1,571 @@
+<!-- People Tab - Class Members Management -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/people.css') }}">
+
+<div class="people-container">
+    <!-- Header -->
+    <div class="people-header">
+        <div class="people-header-content">
+            <div>
+                <h2 class="people-title">
+                    <i class="bi bi-people"></i>
+                    People
+                </h2>
+                <p class="people-subtitle">Manage class members and permissions</p>
+            </div>
+            <div class="people-actions">
+                <button class="btn-icon" onclick="togglePeopleSidebar()" id="people-sidebar-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <button class="btn-people-primary" onclick="openAddMemberModal()">
+                    <i class="bi bi-person-plus"></i>
+                    <span>Add Member</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="people-main">
+        <!-- Content Layout -->
+        <div class="people-content-layout">
+            <!-- Sidebar -->
+            <div class="people-sidebar" id="people-sidebar">
+                <!-- Stats Section -->
+                <div class="people-stats-section">
+                    <h4 class="stats-title">Summary</h4>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number" id="owner-count">1</div>
+                            <div class="stat-label">Owner</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="viewer-count">0</div>
+                            <div class="stat-label">Viewers</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="total-members">1</div>
+                            <div class="stat-label">Total</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Section -->
+                <div class="people-info-section">
+                    <h4 class="info-title">
+                        <i class="bi bi-info-circle"></i>
+                        About Roles
+                    </h4>
+                    <div class="info-content">
+                        <div class="role-info">
+                            <div class="role-badge owner">
+                                <i class="bi bi-star-fill"></i>
+                                Owner
+                            </div>
+                            <p class="role-description">Full access to manage class, content, and members</p>
+                        </div>
+                        <div class="role-info">
+                            <div class="role-badge viewer">
+                                <i class="bi bi-eye-fill"></i>
+                                Viewer
+                            </div>
+                            <p class="role-description">Can view all content but cannot edit</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="people-content">
+                <!-- Owner Section -->
+                <div class="members-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            Owner
+                        </h3>
+                    </div>
+                    <div class="members-list" id="owner-list">
+                        <!-- Owner will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Viewers Section -->
+                <div class="members-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="bi bi-eye-fill text-primary"></i>
+                            Viewers
+                            <span class="badge bg-secondary ms-2" id="viewer-badge">0</span>
+                        </h3>
+                    </div>
+                    <div class="members-list" id="viewers-list">
+                        <!-- Viewers will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="people-sidebar-overlay" id="people-sidebar-overlay" onclick="closePeopleSidebar()"></div>
+</div>
+
+<!-- Add Member Modal -->
+<div class="modal fade modal-people" id="addMemberModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus me-2"></i>
+                    Add Member
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Search Input -->
+                <div class="mb-3">
+                    <label class="form-label">Search by username</label>
+                    <div class="search-input-group">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" 
+                               class="form-control" 
+                               id="member-search-input" 
+                               placeholder="Enter username..."
+                               autocomplete="off">
+                        <div class="spinner-border spinner-border-sm search-spinner d-none" role="status">
+                            <span class="visually-hidden">Searching...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Results -->
+                <div id="search-results" class="search-results">
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-search" style="font-size: 2rem;"></i>
+                        <p class="mt-2">Type to search for users</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-people-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Immediately execute when script loads (works with AJAX/HTMX)
+(function() {
+    'use strict';
+    
+    console.log('🎯 People tab script loaded!');
+    
+    // Global variables
+    const lessonId = window.location.pathname.split('/')[2];
+    let allMembers = [];
+    let addMemberModal;
+    let searchTimeout;
+    
+    console.log('🚀 Initializing People System for lesson:', lessonId);
+
+    // Initialize
+    initializePeopleSystem();
+    
+    function initializePeopleSystem() {
+        console.log('📋 Setting up People System...');
+        
+        // Initialize Bootstrap modal
+        try {
+            const modalEl = document.getElementById('addMemberModal');
+            if (modalEl && typeof bootstrap !== 'undefined') {
+                addMemberModal = new bootstrap.Modal(modalEl);
+                console.log('✅ Add Member modal initialized');
+            }
+        } catch (error) {
+            console.error('⚠️ Modal initialization error:', error);
+        }
+        
+        loadMembers();
+        initializeEventListeners();
+        
+        console.log('✅ People System initialized');
+    }
+
+    function initializeEventListeners() {
+        // Search input
+        const searchInput = document.getElementById('member-search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+                
+                if (query.length >= 2) {
+                    // Show loading spinner
+                    document.querySelector('.search-spinner').classList.remove('d-none');
+                    
+                    searchTimeout = setTimeout(() => {
+                        searchUsers(query);
+                    }, 500);
+                } else {
+                    document.getElementById('search-results').innerHTML = `
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-search" style="font-size: 2rem;"></i>
+                            <p class="mt-2">Type to search for users</p>
+                        </div>
+                    `;
+                    document.querySelector('.search-spinner').classList.add('d-none');
+                }
+            });
+        }
+    }
+
+    // Load all members
+    async function loadMembers() {
+        try {
+            const response = await fetch(`/api/class/${lessonId}/members`);
+            const data = await response.json();
+            
+            if (data.success) {
+                allMembers = data.data.members;
+                const owner = data.data.owner;
+                
+                console.log('📊 Loaded members:', allMembers.length);
+                console.log('👑 Owner:', owner);
+                
+                renderOwner(owner);
+                renderViewers(allMembers);
+                updateStats(owner, allMembers);
+            } else {
+                showError('Failed to load members');
+            }
+        } catch (error) {
+            console.error('Error loading members:', error);
+            showError('Error loading members');
+        }
+    }
+
+    // Render owner
+    function renderOwner(owner) {
+        const container = document.getElementById('owner-list');
+        
+        if (!owner) {
+            container.innerHTML = '<div class="text-muted">No owner found</div>';
+            return;
+        }
+        
+        container.innerHTML = `
+            <div class="member-card owner-card">
+                <div class="member-avatar">
+                    ${getAvatarHtml(owner)}
+                </div>
+                <div class="member-info">
+                    <div class="member-name">${escapeHtml(owner.username || 'Unknown')}</div>
+                    <div class="member-email">${escapeHtml(owner.email || '')}</div>
+                    <div class="member-role-badge owner">
+                        <i class="bi bi-star-fill"></i>
+                        Owner
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Render viewers
+    function renderViewers(members) {
+        const container = document.getElementById('viewers-list');
+        
+        if (members.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="empty-title">No viewers yet</div>
+                    <div class="empty-description">Add members to share this class with them</div>
+                    <button class="btn-people-primary mt-3" onclick="openAddMemberModal()">
+                        <i class="bi bi-person-plus"></i>
+                        Add Member
+                    </button>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = members.map(member => `
+            <div class="member-card">
+                <div class="member-avatar">
+                    ${getAvatarHtml(member)}
+                </div>
+                <div class="member-info">
+                    <div class="member-name">${escapeHtml(member.username || 'Unknown')}</div>
+                    <div class="member-email">${escapeHtml(member.email || '')}</div>
+                    <div class="member-meta">
+                        <div class="member-role-badge viewer">
+                            <i class="bi bi-eye-fill"></i>
+                            Viewer
+                        </div>
+                        <div class="member-joined">
+                            <i class="bi bi-calendar"></i>
+                            Joined ${formatDate(member.joined_at)}
+                        </div>
+                    </div>
+                </div>
+                <div class="member-actions">
+                    <button class="btn-icon btn-danger" 
+                            onclick="confirmRemoveMember('${member.user_id}', '${escapeHtml(member.username)}')"
+                            title="Remove member">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Update stats
+    function updateStats(owner, members) {
+        document.getElementById('owner-count').textContent = owner ? 1 : 0;
+        document.getElementById('viewer-count').textContent = members.length;
+        document.getElementById('total-members').textContent = (owner ? 1 : 0) + members.length;
+        document.getElementById('viewer-badge').textContent = members.length;
+    }
+
+    // Search users
+    async function searchUsers(query) {
+        try {
+            const response = await fetch(`/api/users/search?username=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            
+            // Hide spinner
+            document.querySelector('.search-spinner').classList.add('d-none');
+            
+            if (data.success) {
+                renderSearchResults(data.data.users);
+            } else {
+                document.getElementById('search-results').innerHTML = `
+                    <div class="text-center text-danger py-3">
+                        <i class="bi bi-exclamation-circle" style="font-size: 2rem;"></i>
+                        <p class="mt-2">Error searching users</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error searching users:', error);
+            document.querySelector('.search-spinner').classList.add('d-none');
+            document.getElementById('search-results').innerHTML = `
+                <div class="text-center text-danger py-3">
+                    <i class="bi bi-exclamation-circle" style="font-size: 2rem;"></i>
+                    <p class="mt-2">Error searching users</p>
+                </div>
+            `;
+        }
+    }
+
+    // Render search results
+    function renderSearchResults(users) {
+        const container = document.getElementById('search-results');
+        
+        if (users.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                    <p class="mt-2">No users found</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Filter out already added members and owner
+        const currentUserIds = allMembers.map(m => m.user_id);
+        const availableUsers = users.filter(u => !currentUserIds.includes(u.id));
+        
+        if (availableUsers.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                    <p class="mt-2">All found users are already members</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = availableUsers.map(user => `
+            <div class="search-result-item">
+                <div class="search-result-avatar">
+                    ${getAvatarHtml(user)}
+                </div>
+                <div class="search-result-info">
+                    <div class="search-result-name">${escapeHtml(user.username)}</div>
+                    <div class="search-result-email">${escapeHtml(user.email)}</div>
+                </div>
+                <button class="btn-people-primary btn-sm" onclick="addMember('${user.id}')">
+                    <i class="bi bi-plus-lg"></i>
+                    Add
+                </button>
+            </div>
+        `).join('');
+    }
+
+    // Add member
+    async function addMember(userId) {
+        try {
+            const response = await fetch(`/api/class/${lessonId}/members`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showSuccess('Member added successfully');
+                addMemberModal.hide();
+                loadMembers(); // Reload members
+            } else {
+                showError(data.error || 'Failed to add member');
+            }
+        } catch (error) {
+            console.error('Error adding member:', error);
+            showError('Error adding member');
+        }
+    }
+
+    // Remove member
+    async function removeMember(userId) {
+        try {
+            const response = await fetch(`/api/class/${lessonId}/members/${userId}`, {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showSuccess('Member removed successfully');
+                loadMembers(); // Reload members
+            } else {
+                showError(data.error || 'Failed to remove member');
+            }
+        } catch (error) {
+            console.error('Error removing member:', error);
+            showError('Error removing member');
+        }
+    }
+
+    // Confirm remove member
+    async function confirmRemoveMember(userId, username) {
+        if (typeof window.confirmDelete === 'function') {
+            const confirmed = await window.confirmDelete(
+                `Remove "${username}" from this class? They will lose access to all content.`,
+                'Remove Member'
+            );
+            if (confirmed) {
+                removeMember(userId);
+            }
+        } else if (confirm(`Remove "${username}" from this class?`)) {
+            removeMember(userId);
+        }
+    }
+
+    // Helper functions
+    function getAvatarHtml(user) {
+        if (user.profile_image) {
+            return `<img src="${user.profile_image}" alt="${escapeHtml(user.username)}">`;
+        }
+        
+        const initial = (user.username || 'U')[0].toUpperCase();
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
+        const colorIndex = (user.username || '').charCodeAt(0) % colors.length;
+        const bgColor = colors[colorIndex];
+        
+        return `<div class="avatar-placeholder" style="background-color: ${bgColor}">${initial}</div>`;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return 'Recently';
+        
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+        
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function showSuccess(message) {
+        if (typeof window.showSuccess === 'function') {
+            window.showSuccess(message);
+        } else {
+            console.log('✅', message);
+        }
+    }
+
+    function showError(message) {
+        if (typeof window.showError === 'function') {
+            window.showError(message);
+        } else {
+            console.error('❌', message);
+        }
+    }
+
+    // Modal functions
+    function openAddMemberModal() {
+        document.getElementById('member-search-input').value = '';
+        document.getElementById('search-results').innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-search" style="font-size: 2rem;"></i>
+                <p class="mt-2">Type to search for users</p>
+            </div>
+        `;
+        addMemberModal.show();
+    }
+
+    // Sidebar functions
+    function togglePeopleSidebar() {
+        const sidebar = document.getElementById('people-sidebar');
+        const overlay = document.getElementById('people-sidebar-overlay');
+        
+        if (window.innerWidth <= 768) {
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+    }
+
+    function closePeopleSidebar() {
+        const sidebar = document.getElementById('people-sidebar');
+        const overlay = document.getElementById('people-sidebar-overlay');
+        
+        sidebar.classList.remove('show');
+        overlay.classList.remove('show');
+    }
+
+    // Expose functions to global scope
+    window.peopleTab = {
+        openAddMemberModal: openAddMemberModal,
+        togglePeopleSidebar: togglePeopleSidebar,
+        closePeopleSidebar: closePeopleSidebar,
+        addMember: addMember,
+        confirmRemoveMember: confirmRemoveMember
+    };
+
+    // Also expose directly for backward compatibility
+    window.openAddMemberModal = openAddMemberModal;
+    window.togglePeopleSidebar = togglePeopleSidebar;
+    window.closePeopleSidebar = closePeopleSidebar;
+    window.addMember = addMember;
+    window.confirmRemoveMember = confirmRemoveMember;
+
+    console.log('✅ People functions exposed to global scope');
+
+})(); // End IIFE
+</script>
+

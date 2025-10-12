@@ -211,6 +211,37 @@ def partial_classwork(lesson_id):
         return f'<div class="alert alert-danger">Error loading classwork: {str(e)}</div>', 500
 
 
+@class_bp.route('/partial/class/<lesson_id>/people')
+def partial_people(lesson_id):
+    """People partial for specific class"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        if not lesson:
+            return '<div class="alert alert-danger">Class not found.</div>', 404
+        
+        # Check permission: must be owner or member
+        is_owner = lesson.user_id == g.user.id
+        member = db.session.execute(
+            text("SELECT * FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
+        ).fetchone()
+        
+        if not is_owner and not member:
+            return '<div class="alert alert-danger">You do not have permission to view this class.</div>', 403
+        
+        return render_template('class_detail/_people.html', lesson=lesson, is_owner=is_owner)
+    except Exception as e:
+        print(f"Error loading people: {e}")
+        import traceback
+        traceback.print_exc()
+        return f'<div class="alert alert-danger">Error loading people: {str(e)}</div>', 500
+
+
 # ============================================
 # CRUD OPERATIONS
 # ============================================
@@ -353,6 +384,248 @@ def delete_lesson(lesson_id):
     except Exception as e:
         print(f"Error deleting lesson: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ============================================
+# PEOPLE / MEMBERS API
+# ============================================
+
+@class_bp.route('/api/class/<lesson_id>/members', methods=['GET'])
+def get_members(lesson_id):
+    """Get all members of a class"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        if not lesson:
+            return jsonify({'error': 'Class not found'}), 404
+        
+        # Check permission
+        is_owner = lesson.user_id == g.user.id
+        member = db.session.execute(
+            text("SELECT * FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
+        ).fetchone()
+        
+        if not is_owner and not member:
+            return jsonify({'error': 'No permission'}), 403
+        
+        # Get owner info
+        owner_data = db.session.execute(
+            text("SELECT id, username, email, profile_image FROM user WHERE id = :user_id"),
+            {'user_id': lesson.user_id}
+        ).fetchone()
+        
+        owner = {
+            'id': owner_data[0],
+            'user_id': owner_data[0],
+            'username': owner_data[1],
+            'email': owner_data[2],
+            'profile_image': owner_data[3],
+            'role': 'owner'
+        } if owner_data else None
+        
+        # Get members
+        members_data = db.session.execute(
+            text("""
+                SELECT m.id, m.user_id, m.role, m.joined_at,
+                       u.username, u.email, u.profile_image
+                FROM member m
+                JOIN user u ON m.user_id = u.id
+                WHERE m.lesson_id = :lesson_id
+                ORDER BY m.joined_at DESC
+            """),
+            {'lesson_id': lesson_id}
+        ).fetchall()
+        
+        members = [{
+            'id': row[0],
+            'user_id': row[1],
+            'role': row[2],
+            'joined_at': row[3],
+            'username': row[4],
+            'email': row[5],
+            'profile_image': row[6]
+        } for row in members_data]
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'owner': owner,
+                'members': members,
+                'total': len(members) + (1 if owner else 0)
+            }
+        })
+    except Exception as e:
+        print(f"Error getting members: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@class_bp.route('/api/users/search', methods=['GET'])
+def search_users():
+    """Search users by username"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        query = request.args.get('username', '').strip()
+        
+        if len(query) < 2:
+            return jsonify({
+                'success': True,
+                'data': {'users': []}
+            })
+        
+        # Search users (exclude current user)
+        users_data = db.session.execute(
+            text("""
+                SELECT id, username, email, profile_image
+                FROM user
+                WHERE (username LIKE :query OR email LIKE :query)
+                AND id != :current_user_id
+                AND is_active = 1
+                LIMIT 10
+            """),
+            {'query': f'%{query}%', 'current_user_id': g.user.id}
+        ).fetchall()
+        
+        users = [{
+            'id': row[0],
+            'username': row[1],
+            'email': row[2],
+            'profile_image': row[3]
+        } for row in users_data]
+        
+        return jsonify({
+            'success': True,
+            'data': {'users': users}
+        })
+    except Exception as e:
+        print(f"Error searching users: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@class_bp.route('/api/class/<lesson_id>/members', methods=['POST'])
+def add_member(lesson_id):
+    """Add a member to a class"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        if not lesson:
+            return jsonify({'error': 'Class not found'}), 404
+        
+        # Check permission: only owner can add members
+        if lesson.user_id != g.user.id:
+            return jsonify({'error': 'Only owner can add members'}), 403
+        
+        data = request.get_json()
+        new_user_id = data.get('user_id')
+        
+        if not new_user_id:
+            return jsonify({'error': 'user_id is required'}), 400
+        
+        # Check if user exists
+        user_exists = db.session.execute(
+            text("SELECT id FROM user WHERE id = :user_id"),
+            {'user_id': new_user_id}
+        ).fetchone()
+        
+        if not user_exists:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Check if already a member
+        existing = db.session.execute(
+            text("SELECT id FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+            {'lesson_id': lesson_id, 'user_id': new_user_id}
+        ).fetchone()
+        
+        if existing:
+            return jsonify({'error': 'User is already a member'}), 409
+        
+        # Add member
+        import uuid
+        from datetime import datetime
+        
+        member_id = str(uuid.uuid4())
+        db.session.execute(
+            text("""
+                INSERT INTO member (id, lesson_id, user_id, role, invited_by, joined_at)
+                VALUES (:id, :lesson_id, :user_id, :role, :invited_by, :joined_at)
+            """),
+            {
+                'id': member_id,
+                'lesson_id': lesson_id,
+                'user_id': new_user_id,
+                'role': 'viewer',
+                'invited_by': g.user.id,
+                'joined_at': datetime.utcnow()
+            }
+        )
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Member added successfully',
+            'data': {'member_id': member_id}
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding member: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@class_bp.route('/api/class/<lesson_id>/members/<user_id>', methods=['DELETE'])
+def remove_member(lesson_id, user_id):
+    """Remove a member from a class"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        if not lesson:
+            return jsonify({'error': 'Class not found'}), 404
+        
+        # Check permission: only owner can remove members
+        if lesson.user_id != g.user.id:
+            return jsonify({'error': 'Only owner can remove members'}), 403
+        
+        # Cannot remove owner
+        if user_id == lesson.user_id:
+            return jsonify({'error': 'Cannot remove owner'}), 400
+        
+        # Remove member
+        result = db.session.execute(
+            text("DELETE FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+            {'lesson_id': lesson_id, 'user_id': user_id}
+        )
+        db.session.commit()
+        
+        if result.rowcount == 0:
+            return jsonify({'error': 'Member not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'Member removed successfully'
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error removing member: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 
 # ============================================
