@@ -310,7 +310,8 @@
             console.error('Error loading posts:', error);
             showError('Error loading posts');
         } finally {
-            document.getElementById('stream-loading').style.display = 'none';
+            const loadingEl = document.getElementById('stream-loading');
+            if (loadingEl) loadingEl.style.display = 'none';
         }
     }
 

@@ -33,7 +33,7 @@ class StreamController:
             query = """
                 SELECT 
                     sp.*,
-                    u.name as author_name,
+                    COALESCE(u.first_name || ' ' || u.last_name, u.first_name, u.username) as author_name,
                     u.email as author_email,
                     (SELECT COUNT(*) FROM stream_comment WHERE post_id = sp.id) as comments_count,
                     (SELECT COUNT(*) FROM stream_attachment WHERE post_id = sp.id) as attachments_count
@@ -93,7 +93,7 @@ class StreamController:
             query = """
                 SELECT 
                     sp.*,
-                    u.name as author_name,
+                    COALESCE(u.first_name || ' ' || u.last_name, u.first_name, u.username) as author_name,
                     u.email as author_email
                 FROM stream_post sp
                 LEFT JOIN user u ON sp.user_id = u.id
@@ -292,7 +292,7 @@ class StreamController:
             query = """
                 SELECT 
                     sc.*,
-                    u.name as author_name,
+                    COALESCE(u.first_name || ' ' || u.last_name, u.first_name, u.username) as author_name,
                     u.email as author_email
                 FROM stream_comment sc
                 LEFT JOIN user u ON sc.user_id = u.id
