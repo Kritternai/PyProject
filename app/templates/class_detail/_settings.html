@@ -665,10 +665,27 @@
             
             if (data.success) {
                 showSuccess('Class deleted successfully');
-                // Redirect to class list after 2 seconds
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+                if (modal) modal.hide();
+                
+                // Redirect to class list after 1.5 seconds
                 setTimeout(() => {
-                    window.location.href = '/class';
-                }, 2000);
+                    // Use loadPage if available (SPA mode)
+                    if (typeof loadPage === 'function') {
+                        console.log('🔄 Redirecting to class list via loadPage');
+                        loadPage('class');
+                        
+                        // Also update active navigation
+                        if (typeof setActiveNav === 'function') {
+                            const classNavLink = document.querySelector('.enchat-sidebar__nav-link[data-page="class"]');
+                            if (classNavLink) setActiveNav(classNavLink);
+                        }
+                    } else {
+                        console.log('🔄 Redirecting to dashboard via window.location');
+                        window.location.href = '/dashboard';
+                    }
+                }, 1500);
             } else {
                 showError(data.error || 'Failed to delete class');
             }
@@ -701,10 +718,27 @@
             
             if (data.success) {
                 showSuccess('You have left the class');
-                // Redirect to class list after 2 seconds
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+                if (modal) modal.hide();
+                
+                // Redirect to class list after 1.5 seconds
                 setTimeout(() => {
-                    window.location.href = '/class';
-                }, 2000);
+                    // Use loadPage if available (SPA mode)
+                    if (typeof loadPage === 'function') {
+                        console.log('🔄 Redirecting to class list via loadPage');
+                        loadPage('class');
+                        
+                        // Also update active navigation
+                        if (typeof setActiveNav === 'function') {
+                            const classNavLink = document.querySelector('.enchat-sidebar__nav-link[data-page="class"]');
+                            if (classNavLink) setActiveNav(classNavLink);
+                        }
+                    } else {
+                        console.log('🔄 Redirecting to dashboard via window.location');
+                        window.location.href = '/dashboard';
+                    }
+                }, 1500);
             } else {
                 showError(data.error || 'Failed to leave class');
             }
