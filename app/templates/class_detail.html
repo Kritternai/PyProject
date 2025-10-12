@@ -5,6 +5,7 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/class-header.css') }}">
 <!-- Preload tab CSS to prevent flash -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stream.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/classwork.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/grades.css') }}">
@@ -60,7 +61,6 @@
                             role="tab"
                             onclick="loadTabContent('stream')">
                         <i class="bi bi-megaphone me-2"></i>Stream
-                        <span class="badge bg-secondary ms-2">Coming Soon</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -193,17 +193,51 @@ function loadTabContent(tabName) {
     const contentDiv = document.getElementById(`${tabName}-tab-content`);
     
     if (tabName === 'stream' && contentDiv) {
-        // Stream tab - Coming Soon
-        contentDiv.innerHTML = `
-            <div class="container py-5">
-                <div class="text-center">
-                    <i class="bi bi-megaphone" style="font-size: 4rem; color: #dee2e6;"></i>
-                    <h4 class="mt-3 text-muted">Stream</h4>
-                    <p class="text-muted">Class announcements and updates will appear here.</p>
-                    <span class="badge bg-info">Coming Soon</span>
-                </div>
-            </div>
-        `;
+        // Load stream content
+        fetch(`/partial/class/${lessonId}/stream`)
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to load stream');
+                return response.text();
+            })
+            .then(html => {
+                contentDiv.innerHTML = html;
+                console.log('✅ Stream template loaded');
+                
+                // Extract and execute scripts manually
+                const scripts = contentDiv.querySelectorAll('script');
+                console.log(`🔍 Found ${scripts.length} script(s) to execute`);
+                
+                scripts.forEach((oldScript, index) => {
+                    console.log(`⚙️ Executing script ${index + 1}/${scripts.length}`);
+                    const newScript = document.createElement('script');
+                    
+                    // Copy attributes
+                    Array.from(oldScript.attributes).forEach(attr => {
+                        newScript.setAttribute(attr.name, attr.value);
+                    });
+                    
+                    // Copy inline code
+                    if (oldScript.textContent) {
+                        newScript.textContent = oldScript.textContent;
+                    }
+                    
+                    // Replace old script with new one (triggers execution)
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+                
+                console.log('✅ All stream scripts executed');
+            })
+            .catch(err => {
+                console.error('Error loading stream:', err);
+                contentDiv.innerHTML = `
+                    <div class="container py-5 text-center">
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Error loading stream content. Please try again.
+                        </div>
+                    </div>
+                `;
+            });
     } else if (tabName === 'grades' && contentDiv) {
         // Load grades content
         contentDiv.innerHTML = `

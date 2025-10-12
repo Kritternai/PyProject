@@ -327,6 +327,20 @@ def create_grade_item(lesson_id):
             classwork_task_id=data.get('classwork_task_id')  # Link to task
         )
         
+        # Auto-generate activity
+        try:
+            from ..controllers.stream_views import StreamController
+            from flask import g
+            stream_controller = StreamController()
+            stream_controller.create_activity(
+                lesson_id=lesson_id,
+                user_id=g.user.id,
+                activity_type='grade_added',
+                title=f'{g.user.name} added grade item: {data["name"]}'
+            )
+        except Exception as e:
+            print(f"Warning: Failed to create activity: {e}")
+        
         return jsonify({
             'success': True,
             'message': 'Grade item created successfully',

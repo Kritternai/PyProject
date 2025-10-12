@@ -672,6 +672,27 @@ def add_member(lesson_id):
         )
         db.session.commit()
         
+        # Auto-generate activity
+        try:
+            from ..controllers.stream_views import StreamController
+            stream_controller = StreamController()
+            
+            # Get new member info
+            new_member = db.session.execute(
+                text("SELECT name FROM user WHERE id = :user_id"),
+                {'user_id': new_user_id}
+            ).fetchone()
+            
+            if new_member:
+                stream_controller.create_activity(
+                    lesson_id=lesson_id,
+                    user_id=new_user_id,
+                    activity_type='member_joined',
+                    title=f'{new_member.name} joined the class'
+                )
+        except Exception as e:
+            print(f"Warning: Failed to create activity: {e}")
+        
         return jsonify({
             'success': True,
             'message': 'Member added successfully',
@@ -904,6 +925,19 @@ def leave_class(lesson_id):
         
         if not member:
             return jsonify({'error': 'You are not a member of this class'}), 400
+        
+        # Auto-generate activity before removing
+        try:
+            from ..controllers.stream_views import StreamController
+            stream_controller = StreamController()
+            stream_controller.create_activity(
+                lesson_id=lesson_id,
+                user_id=g.user.id,
+                activity_type='member_left',
+                title=f'{g.user.name} left the class'
+            )
+        except Exception as e:
+            print(f"Warning: Failed to create activity: {e}")
         
         # Remove member
         db.session.execute(
