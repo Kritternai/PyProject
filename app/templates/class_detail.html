@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/grades.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/people.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
 {% endblock %}
 
 {% set skip_auto_load = true %}
@@ -37,7 +38,7 @@
                         <i class="bi bi-arrow-left"></i>
                         <span>Back</span>
                     </button>
-                    <button class="class-header-btn primary" onclick="alert('Settings coming soon!')">
+                    <button class="class-header-btn primary" onclick="openSettingsModal()">
                         <i class="bi bi-gear"></i>
                         <span>Settings</span>
                     </button>
@@ -149,6 +150,31 @@
                         <span class="visually-hidden">Loading...</span>
                     </div>
                     <p class="text-muted mt-2">Loading grades...</p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="settingsModalLabel">
+                    <i class="bi bi-gear me-2"></i>
+                    Class Settings
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="settings-modal-body">
+                <!-- Settings content will be loaded here -->
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-muted mt-2">Loading settings...</p>
                 </div>
             </div>
         </div>
@@ -356,6 +382,69 @@ function loadTabContent(tabName) {
         // Other tabs coming soon
         console.log(`${tabName} tab coming soon!`);
     }
+}
+
+// Settings Modal
+function openSettingsModal() {
+    const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
+    const modalBody = document.getElementById('settings-modal-body');
+    
+    // Show loading
+    modalBody.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mt-2">Loading settings...</p>
+        </div>
+    `;
+    
+    // Show modal
+    modal.show();
+    
+    // Load settings content
+    fetch(`/partial/class/${lessonId}/settings`)
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to load settings');
+            return response.text();
+        })
+        .then(html => {
+            modalBody.innerHTML = html;
+            console.log('✅ Settings modal content loaded');
+            
+            // Extract and execute scripts manually
+            const scripts = modalBody.querySelectorAll('script');
+            console.log(`🔍 Found ${scripts.length} script(s) to execute`);
+            
+            scripts.forEach((oldScript, index) => {
+                console.log(`⚙️ Executing script ${index + 1}/${scripts.length}`);
+                const newScript = document.createElement('script');
+                
+                // Copy attributes
+                Array.from(oldScript.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+                
+                // Copy inline code
+                if (oldScript.textContent) {
+                    newScript.textContent = oldScript.textContent;
+                }
+                
+                // Replace old script with new one (triggers execution)
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
+            
+            console.log('✅ All settings modal scripts executed');
+        })
+        .catch(err => {
+            console.error('Error loading settings modal:', err);
+            modalBody.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Error loading settings. Please try again.
+                </div>
+            `;
+        });
 }
 
 // Load stream content on page load
