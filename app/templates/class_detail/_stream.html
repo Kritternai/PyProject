@@ -1015,7 +1015,8 @@
     }
 
     function getTimeAgo(dateString) {
-        const date = new Date(dateString);
+        // Parse as UTC and convert to local time
+        const date = new Date(dateString + (dateString.includes('Z') ? '' : 'Z'));
         const now = new Date();
         const seconds = Math.floor((now - date) / 1000);
         
