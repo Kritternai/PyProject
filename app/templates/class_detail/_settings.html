@@ -1,211 +1,519 @@
 <!-- Settings Modal Content - Class Settings Management -->
 <div class="settings-modal-content">
-                <!-- General Settings -->
-                <div class="settings-card">
-                    <div class="settings-card-header">
-                        <h3 class="settings-card-title">
-                            <i class="bi bi-info-circle"></i>
-                            General Information
-                        </h3>
-                        <p class="settings-card-description">Basic information about your class</p>
+    <!-- Tabs Navigation -->
+    <div class="settings-tabs-nav">
+        <button class="settings-tab-btn active" onclick="switchSettingsTab('general')" data-tab="general">
+            <i class="bi bi-gear"></i>
+            <span>General</span>
+        </button>
+        <button class="settings-tab-btn" onclick="switchSettingsTab('members')" data-tab="members">
+            <i class="bi bi-people"></i>
+            <span>Members</span>
+        </button>
+        {% if is_owner %}
+        <button class="settings-tab-btn" onclick="switchSettingsTab('advanced')" data-tab="advanced">
+            <i class="bi bi-sliders"></i>
+            <span>Advanced</span>
+        </button>
+        <button class="settings-tab-btn danger-tab" onclick="switchSettingsTab('danger')" data-tab="danger">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span>Danger Zone</span>
+        </button>
+        {% else %}
+        <button class="settings-tab-btn danger-tab" onclick="switchSettingsTab('danger')" data-tab="danger">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Leave Class</span>
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Tab Content -->
+    <div class="settings-tabs-content">
+        <!-- General Settings Tab -->
+        <div class="settings-tab-pane active" id="settings-tab-general">
+            <!-- Class Information Section -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <div class="settings-section-icon">
+                        <i class="bi bi-info-circle-fill"></i>
                     </div>
-                    <div class="settings-card-body">
-                        <div class="form-group">
-                            <label class="form-label" for="class-name">Class Name</label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="class-name" 
-                                   value="{{ lesson.title }}"
-                                   placeholder="Enter class name">
-                            <div class="form-text">This is the name that will be displayed to all members</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="class-description">Description</label>
-                            <textarea class="form-control" 
-                                      id="class-description" 
-                                      rows="3" 
-                                      placeholder="Enter class description">{{ lesson.description or '' }}</textarea>
-                            <div class="form-text">Optional description to help members understand the class</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="class-code">Class Code</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="class-code" 
-                                       value="{{ lesson.id }}"
-                                       readonly
-                                       style="background: #f8f9fa;">
-                                <button class="btn-settings-secondary" onclick="copyClassCode()">
-                                    <i class="bi bi-copy"></i>
-                                    Copy
-                                </button>
-                            </div>
-                            <div class="form-text">Share this code with others to let them join your class</div>
-                        </div>
-                        
-                        <button class="btn-settings-primary" onclick="saveGeneralSettings()">
-                            <i class="bi bi-check-lg"></i>
-                            Save Changes
-                        </button>
+                    <div>
+                        <h3 class="settings-section-title">Class Information</h3>
+                        <p class="settings-section-description">Manage your class name and description</p>
                     </div>
                 </div>
-
-                <!-- Member Management -->
-                <div class="settings-card">
-                    <div class="settings-card-header">
-                        <h3 class="settings-card-title">
-                            <i class="bi bi-people"></i>
-                            Member Management
-                        </h3>
-                        <p class="settings-card-description">Control how members can join and participate</p>
-                    </div>
-                    <div class="settings-card-body">
-                        <div class="form-group">
-                            <label class="form-label">Class Visibility</label>
-                            <div style="display: flex; gap: 16px; margin-top: 8px;">
-                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="radio" name="visibility" value="private" checked>
-                                    <span>Private</span>
-                                    <small class="text-muted">Only invited members can join</small>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="radio" name="visibility" value="public">
-                                    <span>Public</span>
-                                    <small class="text-muted">Anyone with the class code can join</small>
-                                </label>
-                            </div>
+                <div class="settings-section-body">
+                    <div class="form-group">
+                        <label class="form-label" for="class-name">
+                            <i class="bi bi-mortarboard me-2"></i>Class Name
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="class-name" 
+                               value="{{ lesson.title }}"
+                               placeholder="Enter class name"
+                               maxlength="100">
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            This name will be displayed to all members
                         </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Member Permissions</label>
-                            <div style="display: flex; gap: 16px; margin-top: 8px;">
-                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="checkbox" checked>
-                                    <span>Members can view class content</span>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <button class="btn-settings-primary" onclick="saveMemberSettings()">
-                            <i class="bi bi-check-lg"></i>
-                            Save Changes
-                        </button>
                     </div>
-                </div>
-
-                <!-- Danger Zone -->
-                {% if is_owner %}
-                <div class="danger-zone">
-                    <div class="danger-zone-header">
-                        <i class="bi bi-exclamation-triangle" style="color: #dc3545;"></i>
-                        <h3 class="danger-zone-title">Danger Zone</h3>
-                    </div>
-                    <p class="danger-zone-description">
-                        These actions are permanent and cannot be undone. Please be careful.
-                    </p>
                     
-                    <!-- Delete Class -->
-                    <div class="danger-action">
-                        <div class="danger-action-header">
-                            <div>
-                                <h4 class="danger-action-title">Delete Class</h4>
-                                <p class="danger-action-description">
-                                    Permanently delete this class and all its content. This action cannot be undone.
-                                    All members will lose access to this class immediately.
-                                </p>
+                    <div class="form-group">
+                        <label class="form-label" for="class-description">
+                            <i class="bi bi-file-text me-2"></i>Description
+                        </label>
+                        <textarea class="form-control" 
+                                  id="class-description" 
+                                  rows="4" 
+                                  placeholder="Describe your class purpose, goals, or any important information..."
+                                  maxlength="500">{{ lesson.description or '' }}</textarea>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Optional - Help members understand what this class is about
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Class Code Section -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <div class="settings-section-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="bi bi-key-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="settings-section-title">Class Code</h3>
+                        <p class="settings-section-description">Share this code to invite members</p>
+                    </div>
+                </div>
+                <div class="settings-section-body">
+                    <div class="class-code-display">
+                        <div class="class-code-box">
+                            <div class="class-code-label">Your Class Code</div>
+                            <div class="class-code-value" id="class-code-display">{{ lesson.id }}</div>
+                            <button class="btn-copy-code" onclick="copyClassCode()">
+                                <i class="bi bi-copy"></i>
+                                Copy Code
+                            </button>
+                        </div>
+                        <div class="class-code-info">
+                            <div class="info-item">
+                                <i class="bi bi-shield-check"></i>
+                                <span>Share this code with people you want to invite</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="bi bi-people"></i>
+                                <span>They can join using the "Join Class" feature</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="bi bi-eye"></i>
+                                <span>New members will have Viewer access</span>
                             </div>
                         </div>
-                        
-                        <div class="confirmation-text">
-                            To confirm, type <strong>{{ lesson.title }}</strong> in the box below:
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="settings-section-footer">
+                <button class="btn-settings-primary btn-large" onclick="saveGeneralSettings()">
+                    <i class="bi bi-check-circle"></i>
+                    <span>Save Changes</span>
+                </button>
+                <button class="btn-settings-cancel" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i>
+                    <span>Cancel</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Members Settings Tab -->
+        <div class="settings-tab-pane" id="settings-tab-members">
+            <!-- Member Statistics -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <div class="settings-section-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                    <div>
+                        <h3 class="settings-section-title">Member Overview</h3>
+                        <p class="settings-section-description">Current membership statistics</p>
+                    </div>
+                </div>
+                <div class="settings-section-body">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
+                                <i class="bi bi-star-fill"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="owner-count">1</div>
+                                <div class="stat-label">Owner</div>
+                            </div>
                         </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #0d6efd 0%, #0052cc 100%);">
+                                <i class="bi bi-eye-fill"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="viewer-count">0</div>
+                                <div class="stat-label">Viewers</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: linear-gradient(135deg, #28a745 0%, #198754 100%);">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="total-members">1</div>
+                                <div class="stat-label">Total Members</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Member Permissions -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <div class="settings-section-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="settings-section-title">Member Permissions</h3>
+                        <p class="settings-section-description">Control what members can do in this class</p>
+                    </div>
+                </div>
+                <div class="settings-section-body">
+                    <div class="permission-list">
+                        <div class="permission-item">
+                            <div class="permission-info">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                <div>
+                                    <div class="permission-title">View Class Content</div>
+                                    <div class="permission-desc">All members can view materials and assignments</div>
+                                </div>
+                            </div>
+                            <span class="badge badge-success">Enabled</span>
+                        </div>
+                        <div class="permission-item">
+                            <div class="permission-info">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                <div>
+                                    <div class="permission-title">Personal Tasks</div>
+                                    <div class="permission-desc">Members can create and edit their own tasks</div>
+                                </div>
+                            </div>
+                            <span class="badge badge-success">Enabled</span>
+                        </div>
+                        <div class="permission-item">
+                            <div class="permission-info">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                <div>
+                                    <div class="permission-title">Personal Grades</div>
+                                    <div class="permission-desc">Members can track and manage their own grades</div>
+                                </div>
+                            </div>
+                            <span class="badge badge-success">Enabled</span>
+                        </div>
+                        <div class="permission-item">
+                            <div class="permission-info">
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                                <div>
+                                    <div class="permission-title">Edit Materials</div>
+                                    <div class="permission-desc">Only owner can create or edit materials</div>
+                                </div>
+                            </div>
+                            <span class="badge badge-secondary">Owner Only</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manage Members Link -->
+            <div class="settings-section-footer">
+                <button class="btn-settings-primary btn-large" onclick="openPeopleTab()">
+                    <i class="bi bi-people"></i>
+                    <span>Manage Members</span>
+                </button>
+                <div class="form-text text-center mt-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Go to People tab to add or remove members
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Settings Tab (Owner Only) -->
+        {% if is_owner %}
+        <div class="settings-tab-pane" id="settings-tab-advanced">
+            <!-- Class Visibility -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <div class="settings-section-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="bi bi-eye-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="settings-section-title">Class Visibility</h3>
+                        <p class="settings-section-description">Control how people can join your class</p>
+                    </div>
+                </div>
+                <div class="settings-section-body">
+                    <div class="visibility-options">
+                        <div class="visibility-option selected">
+                            <input type="radio" name="visibility" value="private" id="visibility-private" checked>
+                            <label for="visibility-private">
+                                <div class="option-icon">
+                                    <i class="bi bi-lock-fill"></i>
+                                </div>
+                                <div class="option-content">
+                                    <div class="option-title">Private</div>
+                                    <div class="option-desc">Only people with the class code can join</div>
+                                </div>
+                                <div class="option-check">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="visibility-option">
+                            <input type="radio" name="visibility" value="public" id="visibility-public">
+                            <label for="visibility-public">
+                                <div class="option-icon">
+                                    <i class="bi bi-globe"></i>
+                                </div>
+                                <div class="option-content">
+                                    <div class="option-title">Public</div>
+                                    <div class="option-desc">Anyone with the link can join (Coming Soon)</div>
+                                </div>
+                                <div class="option-check">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Class Settings -->
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <div class="settings-section-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="bi bi-sliders"></i>
+                    </div>
+                    <div>
+                        <h3 class="settings-section-title">Additional Settings</h3>
+                        <p class="settings-section-description">Customize your class behavior</p>
+                    </div>
+                </div>
+                <div class="settings-section-body">
+                    <div class="settings-toggle-list">
+                        <div class="settings-toggle-item">
+                            <div class="toggle-info">
+                                <div class="toggle-title">Enable Notifications</div>
+                                <div class="toggle-desc">Receive updates when members join or complete tasks</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-toggle-item">
+                            <div class="toggle-info">
+                                <div class="toggle-title">Allow Member Comments</div>
+                                <div class="toggle-desc">Let members comment on materials and assignments</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="settings-toggle-item">
+                            <div class="toggle-info">
+                                <div class="toggle-title">Show Grade Statistics</div>
+                                <div class="toggle-desc">Display class-wide grade averages and statistics</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="settings-section-footer">
+                <button class="btn-settings-primary btn-large" onclick="saveAdvancedSettings()">
+                    <i class="bi bi-check-circle"></i>
+                    <span>Save Advanced Settings</span>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Danger Zone Tab -->
+        <div class="settings-tab-pane" id="settings-tab-danger">
+            {% if is_owner %}
+            <!-- Delete Class Section -->
+            <div class="danger-section">
+                <div class="danger-section-header">
+                    <div class="danger-icon">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="danger-section-title">Delete This Class</h3>
+                        <p class="danger-section-description">Permanently remove this class and all its content</p>
+                    </div>
+                </div>
+                <div class="danger-section-body">
+                    <div class="danger-warning">
+                        <div class="warning-icon">
+                            <i class="bi bi-shield-exclamation"></i>
+                        </div>
+                        <div class="warning-content">
+                            <h4>⚠️ This action cannot be undone</h4>
+                            <p>Deleting this class will permanently remove:</p>
+                            <ul>
+                                <li><i class="bi bi-x-circle"></i> All class materials and resources</li>
+                                <li><i class="bi bi-x-circle"></i> All member data and progress</li>
+                                <li><i class="bi bi-x-circle"></i> All grades and assignments</li>
+                                <li><i class="bi bi-x-circle"></i> All classwork tasks and submissions</li>
+                                <li><i class="bi bi-x-circle"></i> All member access immediately</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="confirmation-box">
+                        <div class="confirmation-header">
+                            <i class="bi bi-keyboard"></i>
+                            <span>Type Confirmation Required</span>
+                        </div>
+                        <p class="confirmation-instruction">
+                            To confirm deletion, type the class name <strong>"{{ lesson.title }}"</strong> below:
+                        </p>
                         <input type="text" 
                                class="confirmation-input" 
                                id="delete-confirmation"
-                               placeholder="Type class name to confirm">
-                        
-                        <button class="btn-settings-danger" 
-                                id="delete-class-btn"
-                                onclick="confirmDeleteClass()"
-                                disabled>
-                            <i class="bi bi-trash"></i>
-                            Delete Class
-                        </button>
-                    </div>
-                </div>
-                {% else %}
-                <!-- Leave Class for Viewers -->
-                <div class="danger-zone">
-                    <div class="danger-zone-header">
-                        <i class="bi bi-exclamation-triangle" style="color: #ffc107;"></i>
-                        <h3 class="danger-zone-title">Leave Class</h3>
-                    </div>
-                    <p class="danger-zone-description">
-                        You can leave this class at any time. You will lose access to all class content.
-                    </p>
-                    
-                    <div class="danger-action">
-                        <div class="danger-action-header">
-                            <div>
-                                <h4 class="danger-action-title">Leave This Class</h4>
-                                <p class="danger-action-description">
-                                    Remove yourself from this class. You will no longer have access to any content
-                                    and will need to be re-invited to join again.
-                                </p>
-                            </div>
+                               placeholder="Type class name here..."
+                               autocomplete="off">
+                        <div class="confirmation-match" id="delete-match-status">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Class name must match exactly</span>
                         </div>
-                        
-                        <button class="btn-settings-warning" onclick="confirmLeaveClass()">
-                            <i class="bi bi-box-arrow-right"></i>
-                            Leave Class
-                        </button>
+                    </div>
+
+                    <button class="btn-danger-action btn-large" 
+                            id="delete-class-btn"
+                            onclick="confirmDeleteClass()"
+                            disabled>
+                        <i class="bi bi-trash-fill"></i>
+                        <span>Delete Class Forever</span>
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <!-- Leave Class Section -->
+            <div class="danger-section leave-section">
+                <div class="danger-section-header">
+                    <div class="danger-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </div>
+                    <div>
+                        <h3 class="danger-section-title">Leave This Class</h3>
+                        <p class="danger-section-description">Remove yourself from this class</p>
                     </div>
                 </div>
-                {% endif %}
+                <div class="danger-section-body">
+                    <div class="danger-warning leave-warning">
+                        <div class="warning-icon">
+                            <i class="bi bi-info-circle"></i>
+                        </div>
+                        <div class="warning-content">
+                            <h4>What happens when you leave?</h4>
+                            <p>If you leave this class:</p>
+                            <ul>
+                                <li><i class="bi bi-x-circle text-warning"></i> You'll lose access to all class content</li>
+                                <li><i class="bi bi-x-circle text-warning"></i> Your personal grades and progress will be removed</li>
+                                <li><i class="bi bi-x-circle text-warning"></i> Your tasks and submissions will be deleted</li>
+                                <li><i class="bi bi-info-circle text-info"></i> You'll need to be re-invited to join again</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <button class="btn-warning-action btn-large" onclick="confirmLeaveClass()">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Leave Class</span>
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 <script>
-// Immediately execute when script loads (works with AJAX/HTMX)
+// Settings Modal System
 (function() {
     'use strict';
     
-    console.log('⚙️ Settings tab script loaded!');
+    console.log('⚙️ Settings modal script loaded!');
     
     // Global variables
     const lessonId = window.location.pathname.split('/')[2];
     const isOwner = {{ 'true' if is_owner else 'false' }};
     const className = '{{ lesson.title }}';
     
+    let currentSettingsTab = 'general';
+    
     console.log('🚀 Initializing Settings System for lesson:', lessonId);
     console.log('👤 Is Owner:', isOwner);
 
     // Initialize
     initializeSettingsSystem();
+    loadMemberStats();
     
     function initializeSettingsSystem() {
         console.log('📋 Setting up Settings System...');
-        
         initializeEventListeners();
-        
+        initializeDeleteConfirmation();
         console.log('✅ Settings System initialized');
     }
 
     function initializeEventListeners() {
-        // Delete confirmation input
+        // Visibility radio buttons
+        const visibilityOptions = document.querySelectorAll('.visibility-option');
+        visibilityOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                visibilityOptions.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input[type="radio"]').checked = true;
+            });
+        });
+    }
+
+    function initializeDeleteConfirmation() {
         const deleteConfirmation = document.getElementById('delete-confirmation');
         const deleteBtn = document.getElementById('delete-class-btn');
+        const matchStatus = document.getElementById('delete-match-status');
         
-        if (deleteConfirmation && deleteBtn) {
+        if (deleteConfirmation && deleteBtn && matchStatus) {
             deleteConfirmation.addEventListener('input', function(e) {
-                const isValid = e.target.value === className;
-                deleteBtn.disabled = !isValid;
+                const inputValue = e.target.value;
+                const isMatch = inputValue === className;
                 
-                if (isValid) {
+                deleteBtn.disabled = !isMatch;
+                
+                if (inputValue.length === 0) {
+                    matchStatus.innerHTML = '<i class="bi bi-info-circle"></i><span>Class name must match exactly</span>';
+                    matchStatus.className = 'confirmation-match';
+                } else if (isMatch) {
+                    matchStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i><span>Class name matches! You can now delete</span>';
+                    matchStatus.className = 'confirmation-match match-success';
                     deleteBtn.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+                    deleteBtn.style.cursor = 'pointer';
                 } else {
+                    matchStatus.innerHTML = '<i class="bi bi-x-circle-fill"></i><span>Class name does not match</span>';
+                    matchStatus.className = 'confirmation-match match-error';
                     deleteBtn.style.background = '#6c757d';
                     deleteBtn.style.cursor = 'not-allowed';
                 }
@@ -213,8 +521,47 @@
         }
     }
 
+    // Switch settings tabs
+    window.switchSettingsTab = function(tabName) {
+        console.log('🔄 Switching to settings tab:', tabName);
+        
+        // Update tab buttons
+        document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        
+        // Update tab panes
+        document.querySelectorAll('.settings-tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+        });
+        document.getElementById(`settings-tab-${tabName}`).classList.add('active');
+        
+        currentSettingsTab = tabName;
+    };
+
+    // Load member statistics
+    async function loadMemberStats() {
+        try {
+            const response = await fetch(`/api/class/${lessonId}/members`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const members = data.members;
+                const ownerCount = members.filter(m => m.role === 'owner').length;
+                const viewerCount = members.filter(m => m.role === 'viewer').length;
+                
+                document.getElementById('owner-count').textContent = ownerCount;
+                document.getElementById('viewer-count').textContent = viewerCount;
+                document.getElementById('total-members').textContent = members.length;
+            }
+        } catch (error) {
+            console.error('Error loading member stats:', error);
+        }
+    }
+
     // Save general settings
-    async function saveGeneralSettings() {
+    window.saveGeneralSettings = async function() {
         const name = document.getElementById('class-name').value.trim();
         const description = document.getElementById('class-description').value.trim();
         
@@ -244,6 +591,11 @@
                 if (headerTitle) {
                     headerTitle.textContent = name;
                 }
+                
+                // Close modal after short delay
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
+                }, 1500);
             } else {
                 showError(data.error || 'Failed to save settings');
             }
@@ -251,55 +603,37 @@
             console.error('Error saving settings:', error);
             showError('Error saving settings');
         }
-    }
+    };
 
-    // Save member settings
-    async function saveMemberSettings() {
-        const visibility = document.querySelector('input[name="visibility"]:checked').value;
-        
-        try {
-            const response = await fetch(`/api/class/${lessonId}/settings`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    visibility: visibility
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                showSuccess('Member settings saved successfully');
-            } else {
-                showError(data.error || 'Failed to save member settings');
-            }
-        } catch (error) {
-            console.error('Error saving member settings:', error);
-            showError('Error saving member settings');
-        }
-    }
+    // Save advanced settings
+    window.saveAdvancedSettings = function() {
+        showSuccess('Advanced settings saved (feature coming soon)');
+    };
 
     // Copy class code
-    function copyClassCode() {
-        const classCode = document.getElementById('class-code');
-        classCode.select();
-        classCode.setSelectionRange(0, 99999); // For mobile devices
+    window.copyClassCode = function() {
+        const classCode = document.getElementById('class-code-display').textContent;
         
-        try {
-            document.execCommand('copy');
+        navigator.clipboard.writeText(classCode).then(() => {
             showSuccess('Class code copied to clipboard!');
-        } catch (err) {
-            // Fallback for modern browsers
-            navigator.clipboard.writeText(classCode.value).then(() => {
-                showSuccess('Class code copied to clipboard!');
-            }).catch(() => {
-                showError('Failed to copy class code');
-            });
-        }
-    }
+            
+            // Visual feedback
+            const btn = event.target.closest('.btn-copy-code');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
+            btn.style.background = 'linear-gradient(135deg, #28a745, #198754)';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.background = '';
+            }, 2000);
+        }).catch(err => {
+            showError('Failed to copy class code');
+        });
+    };
 
     // Confirm delete class
-    async function confirmDeleteClass() {
+    window.confirmDeleteClass = async function() {
         const confirmation = document.getElementById('delete-confirmation').value.trim();
         
         if (confirmation !== className) {
@@ -309,13 +643,15 @@
         
         // Show final confirmation
         const confirmed = confirm(
+            `⚠️ FINAL CONFIRMATION ⚠️\n\n` +
             `Are you absolutely sure you want to delete "${className}"?\n\n` +
-            'This will permanently delete:\n' +
-            '- All class content\n' +
-            '- All member data\n' +
-            '- All grades and assignments\n' +
-            '- All classwork and materials\n\n' +
-            'This action CANNOT be undone!'
+            `This will permanently delete:\n` +
+            `• All class content\n` +
+            `• All member data\n` +
+            `• All grades and assignments\n` +
+            `• All classwork and materials\n\n` +
+            `This action CANNOT be undone!\n\n` +
+            `Click OK to delete forever, or Cancel to go back.`
         );
         
         if (!confirmed) return;
@@ -340,17 +676,18 @@
             console.error('Error deleting class:', error);
             showError('Error deleting class');
         }
-    }
+    };
 
     // Confirm leave class
-    async function confirmLeaveClass() {
+    window.confirmLeaveClass = async function() {
         const confirmed = confirm(
             `Are you sure you want to leave "${className}"?\n\n` +
-            'You will lose access to:\n' +
-            '- All class content\n' +
-            '- Your grades and assignments\n' +
-            '- Your classwork progress\n\n' +
-            'You will need to be re-invited to join again.'
+            `You will lose access to:\n` +
+            `• All class content\n` +
+            `• Your grades and assignments\n` +
+            `• Your classwork progress\n\n` +
+            `You will need to be re-invited to join again.\n\n` +
+            `Click OK to leave, or Cancel to stay.`
         );
         
         if (!confirmed) return;
@@ -375,28 +712,42 @@
             console.error('Error leaving class:', error);
             showError('Error leaving class');
         }
-    }
+    };
+
+    // Open People tab
+    window.openPeopleTab = function() {
+        // Close settings modal
+        bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
+        
+        // Switch to People tab
+        setTimeout(() => {
+            if (typeof loadTabContent === 'function') {
+                loadTabContent('people');
+                
+                // Click People tab button
+                const peopleTab = document.getElementById('people-tab');
+                if (peopleTab) {
+                    peopleTab.click();
+                }
+            }
+        }, 300);
+    };
 
     // Helper functions
     function showSuccess(message) {
         if (typeof window.showSuccess === 'function') {
             window.showSuccess(message);
         } else {
-            // Fallback notification
             const notification = document.createElement('div');
-            notification.className = 'success-message';
-            notification.innerHTML = `<i class="bi bi-check-circle me-2"></i>${message}`;
-            notification.style.position = 'fixed';
-            notification.style.top = '20px';
-            notification.style.right = '20px';
-            notification.style.zIndex = '9999';
-            notification.style.maxWidth = '300px';
-            
+            notification.className = 'settings-notification success';
+            notification.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>${message}`;
             document.body.appendChild(notification);
             
+            setTimeout(() => notification.classList.add('show'), 10);
             setTimeout(() => {
-                notification.remove();
-            }, 5000);
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
     }
 
@@ -404,47 +755,18 @@
         if (typeof window.showError === 'function') {
             window.showError(message);
         } else {
-            // Fallback notification
             const notification = document.createElement('div');
-            notification.className = 'error-message';
-            notification.innerHTML = `<i class="bi bi-exclamation-circle me-2"></i>${message}`;
-            notification.style.position = 'fixed';
-            notification.style.top = '20px';
-            notification.style.right = '20px';
-            notification.style.zIndex = '9999';
-            notification.style.maxWidth = '300px';
-            
+            notification.className = 'settings-notification error';
+            notification.innerHTML = `<i class="bi bi-exclamation-circle-fill me-2"></i>${message}`;
             document.body.appendChild(notification);
             
+            setTimeout(() => notification.classList.add('show'), 10);
             setTimeout(() => {
-                notification.remove();
-            }, 5000);
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
     }
-
-    // Sidebar functions (placeholder)
-    function toggleSettingsSidebar() {
-        console.log('Settings sidebar toggle clicked');
-        // Implement sidebar if needed
-    }
-
-    // Expose functions to global scope
-    window.settingsTab = {
-        saveGeneralSettings: saveGeneralSettings,
-        saveMemberSettings: saveMemberSettings,
-        copyClassCode: copyClassCode,
-        confirmDeleteClass: confirmDeleteClass,
-        confirmLeaveClass: confirmLeaveClass,
-        toggleSettingsSidebar: toggleSettingsSidebar
-    };
-
-    // Also expose directly for backward compatibility
-    window.saveGeneralSettings = saveGeneralSettings;
-    window.saveMemberSettings = saveMemberSettings;
-    window.copyClassCode = copyClassCode;
-    window.confirmDeleteClass = confirmDeleteClass;
-    window.confirmLeaveClass = confirmLeaveClass;
-    window.toggleSettingsSidebar = toggleSettingsSidebar;
 
     console.log('✅ Settings functions exposed to global scope');
 

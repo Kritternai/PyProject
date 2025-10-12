@@ -5,7 +5,6 @@ Routes for class/lesson management including pages, fragments, and CRUD operatio
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, g, jsonify
 from functools import wraps
-from datetime import datetime
 from ..middleware.auth_middleware import login_required
 from ..services import LessonService
 from app import db
@@ -706,11 +705,9 @@ def remove_member(lesson_id, user_id):
 @login_required_web
 def partial_settings(lesson_id):
     """Settings fragment for a specific class"""
-    print(f"DEBUG: Settings route called with lesson_id: {lesson_id}")
     try:
         lesson_service = LessonService()
         lesson = lesson_service.get_lesson_by_id(lesson_id)
-        print(f"DEBUG: Lesson found: {lesson is not None}")
         
         if not lesson:
             return jsonify({'error': 'Class not found'}), 404
@@ -902,25 +899,6 @@ def leave_class(lesson_id):
 # ============================================
 # DEBUG ROUTES
 # ============================================
-
-@class_bp.route('/debug/settings/<lesson_id>')
-def debug_settings_route(lesson_id):
-    """Debug route to test settings route"""
-    return jsonify({
-        'lesson_id': lesson_id,
-        'lesson_id_type': type(lesson_id).__name__,
-        'route_exists': True
-    })
-
-@class_bp.route('/debug/partial/settings/<lesson_id>')
-def debug_partial_settings(lesson_id):
-    """Debug route to test partial settings without auth"""
-    print(f"DEBUG: Partial settings route called with lesson_id: {lesson_id}")
-    return jsonify({
-        'lesson_id': lesson_id,
-        'message': 'Partial settings route works',
-        'timestamp': str(datetime.now())
-    })
 
 @class_bp.route('/debug/class/lessons')
 def debug_lessons():
