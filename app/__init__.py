@@ -11,6 +11,9 @@ from .middleware.auth_middleware import load_user
 # Initialize extensions
 db = SQLAlchemy()
 
+# Initialize Flask-Migrate
+from flask_migrate import Migrate
+migrate = Migrate()
 
 def create_app(config_name=None):
     """
@@ -30,6 +33,7 @@ def create_app(config_name=None):
     
     # Initialize extensions
     db.init_app(app)
+    migrate.init_app(app, db)
     
     # No dependency injection needed for simple MVC
     

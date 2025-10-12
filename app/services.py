@@ -207,3 +207,134 @@ class TaskService:
         if not task:
             raise NotFoundException("Task not found")
         return task
+
+
+class PomodoroSessionService:
+    """Service layer for Pomodoro session management"""
+
+    def create_session(self, user_id: str, session_type: str, duration: int, task: Optional[str] = None):
+        """Create a new Pomodoro session"""
+        from app import db
+        try:
+            from app.models.pomodoro_session import PomodoroSessionModel
+            
+            if not user_id:
+                raise ValidationException("User ID is required")
+            
+            if session_type not in ['focus', 'short_break', 'long_break']:
+                raise ValidationException("Invalid session type")
+            
+            if duration <= 0:
+                raise ValidationException("Duration must be positive")
+
+            session = PomodoroSessionModel(
+                user_id=user_id,
+                session_type=session_type,
+                duration=duration,
+                start_time=datetime.utcnow(),
+                task=task,
+                status='active'
+            )
+
+            db.session.add(session)
+            db.session.commit()
+            
+            return session
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error creating session: {str(e)}")
+            raise
+
+    def get_session(self, session_id: str):
+        """Get a specific session by ID"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        return PomodoroSessionModel.query.get(session_id)
+
+    def get_user_sessions(self, user_id: str):
+        """Get all sessions for a user"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        return PomodoroSessionModel.query.filter_by(user_id=user_id).all()
+
+    def update_session(self, session_id: str, data: Dict):
+        """Update a session"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        from app.models.task import TaskModel
+        from app import db
+        
+        session = self.get_session(session_id)
+        if not session:
+            return None
+
+        # Update allowed fields
+        if 'actual_duration' in data:
+            session.actual_duration = data['actual_duration']
+        if 'end_time' in data:
+            session.end_time = data['end_time']
+        if 'status' in data:
+            session.status = data['status']
+        if 'productivity_score' in data:
+            session.productivity_score = data['productivity_score']
+
+        # Handle task update
+        if 'task' in data:
+            task_name = data['task']
+            if task_name:
+                # Try to find existing task first
+                task_obj = TaskModel.query.filter_by(user_id=session.user_id, title=task_name).first()
+                if not task_obj:
+                    # Create new task if it doesn't exist
+                    task_obj = TaskModel(
+                        user_id=session.user_id,
+                        title=task_name
+                    )
+                    db.session.add(task_obj)
+                    db.session.flush()  # Flush to get the task ID
+                
+                session.task_id = task_obj.id
+            else:
+                session.task_id = None
+
+        db.session.commit()
+        return session
+
+    def end_session(self, session_id: str, status: str = 'completed'):
+        """End a Pomodoro session"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        from app import db
+        
+        session = self.get_session(session_id)
+        if not session:
+            return None
+
+        session.end_time = datetime.utcnow()
+        session.status = status
+        if session.start_time:
+            session.actual_duration = int((session.end_time - session.start_time).total_seconds() / 60)
+
+        db.session.commit()
+        return session
+
+    def get_active_session(self, user_id: str):
+        """Get user's active session if exists"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        return PomodoroSessionModel.query.filter_by(
+            user_id=user_id,
+            status='active'
+        ).first()
+
+    def interrupt_session(self, session_id: str):
+        """Mark a session as interrupted"""
+        return self.end_session(session_id, status='interrupted')
+
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a session"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        from app import db
+        
+        session = self.get_session(session_id)
+        if not session:
+            return False
+
+        db.session.delete(session)
+        db.session.commit()
+        return True

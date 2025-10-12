@@ -310,8 +310,12 @@ def create_complete_database_schema():
                 start_time TIMESTAMP NOT NULL,        -- เวลาที่เริ่ม session
                 end_time TIMESTAMP,                   -- เวลาที่จบ session
                 status TEXT DEFAULT 'active',         -- สถานะ: active, completed, interrupted
+                is_completed BOOLEAN DEFAULT FALSE,   -- สถานะเสร็จสมบูรณ์
+                is_interrupted BOOLEAN DEFAULT FALSE, -- สถานะถูกขัดจังหวะ
+                interruption_count INTEGER DEFAULT 0, -- จำนวนครั้งที่ถูกขัดจังหวะ
+                interruption_reasons TEXT,            -- เหตุผลที่ถูกขัดจังหวะ
                 productivity_score INTEGER,           -- คะแนนประสิทธิภาพของ session
-                task TEXT,                            -- งานที่ทำใน session นี้
+                task TEXT,                           -- งานที่ทำใน session นี้
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่สร้าง
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่อัพเดต
                 FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE -- ลบ user แล้ว session หายด้วย

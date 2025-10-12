@@ -5,7 +5,7 @@ Follows Clean Architecture principles for separation of concerns.
 
 from flask import jsonify, request, g
 from typing import Dict, Any
-from app.services.pomodoro_session_service import PomodoroSessionService
+from app.services import PomodoroSessionService
 from app.utils.exceptions import ValidationException
 
 class PomodoroSessionViews:
@@ -17,19 +17,30 @@ class PomodoroSessionViews:
     def create_session(self) -> Dict[str, Any]:
         """Create a new Pomodoro session"""
         try:
-            if not g.user:
-                return jsonify({'error': 'Authentication required'}), 401
+            # Get user_id from g.user or use 'anonymous'
+            user_id = 'anonymous'
+            if hasattr(g, 'user') and g.user and hasattr(g.user, 'id'):
+                user_id = g.user.id
 
             data = request.get_json()
             if not data:
-                return jsonify({'error': 'Request data is required'}), 400
+                return jsonify({
+                    'error': 'Bad Request',
+                    'message': 'Request data is required',
+                    'code': 'MISSING_DATA'
+                }), 400
 
             required_fields = ['session_type', 'duration']
-            if not all(field in data for field in required_fields):
-                return jsonify({'error': 'Missing required fields'}), 400
+            missing_fields = [field for field in required_fields if field not in data]
+            if missing_fields:
+                return jsonify({
+                    'error': 'Bad Request', 
+                    'message': f'Missing required fields: {", ".join(missing_fields)}',
+                    'code': 'MISSING_FIELDS'
+                }), 400
 
             session = self._session_service.create_session(
-                user_id=g.user.id,
+                user_id=user_id,
                 session_type=data['session_type'],
                 duration=data['duration'],
                 task=data.get('task')
@@ -41,9 +52,21 @@ class PomodoroSessionViews:
             }), 201
 
         except ValidationException as e:
-            return jsonify({'error': str(e)}), 400
+            return jsonify({
+                'error': 'Validation Error',
+                'message': str(e),
+                'code': 'VALIDATION_ERROR'
+            }), 400
         except Exception as e:
-            return jsonify({'error': 'Internal server error'}), 500
+            import traceback
+            print(f"Error creating session: {str(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
+            return jsonify({
+                'error': 'Internal Server Error',
+                'message': str(e),
+                'code': 'INTERNAL_ERROR',
+                'traceback': traceback.format_exc()
+            }), 500
 
     def get_session(self, session_id: str) -> Dict[str, Any]:
         """Get session details"""

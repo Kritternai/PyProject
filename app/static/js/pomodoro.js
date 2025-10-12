@@ -1,3 +1,57 @@
+// ---------- API Service ----------
+const PomodoroAPI = {
+  // Create new session
+  async createSession(sessionData) {
+      try {
+          const response = await fetch('/api/pomodoro/session', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(sessionData)
+          });
+          return await response.json();
+      } catch (error) {
+          console.error('Error creating session:', error);
+          throw error;
+      }
+  },
+
+  // End session
+  async endSession(sessionId, data) {
+      try {
+          const response = await fetch(`/api/pomodoro/session/${sessionId}/end`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(data)
+          });
+          return await response.json();
+      } catch (error) {
+          console.error('Error ending session:', error);
+          throw error;
+      }
+  },
+
+  // Update session
+  async updateSession(sessionId, data) {
+      try {
+          const response = await fetch(`/api/pomodoro/session/${sessionId}`, {
+              method: 'PUT',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(data)
+          });
+          return await response.json();
+      } catch (error) {
+          console.error('Error updating session:', error);
+          throw error;
+      }
+  }
+};
+
 // ---------- State ----------
 const state = {
   mode: 'pomodoro',
@@ -6,6 +60,7 @@ const state = {
   totalTime: 25 * 60,
   cycle: 1,
   completedPomodoros: 0,
+  currentSessionId: null,
   tasks: [],
   settings: {
     pomodoro: 25,
@@ -74,11 +129,26 @@ function updateDisplay() {
   document.title = `${formatTime(state.timeLeft)} - Focus Timer`;
 }
 
-function switchMode(mode) {
+async function switchMode(mode) {
+  // End current session if switching from Pomodoro mode
+  if (state.mode === 'pomodoro' && state.currentSessionId) {
+    try {
+      await PomodoroAPI.endSession(state.currentSessionId, {
+        status: 'interrupted',
+        is_interrupted: true,
+        actual_duration: Math.floor((state.totalTime - state.timeLeft) / 60),
+        interruption_count: 1,
+        interruption_reasons: 'Mode switched'
+      });
+      state.currentSessionId = null;
+    } catch (error) {
+      console.error('Failed to end session:', error);
+    }
+  }
+  
   state.mode = mode;
   state.isRunning = false;
   clearInterval(interval);
-  
   const times = {
     pomodoro: state.settings.pomodoro * 60,
     short: state.settings.shortBreak * 60,
@@ -101,16 +171,57 @@ function switchMode(mode) {
 
 let lastTick = Date.now();
 
-function startTimer() {
+async function startTimer() {
   if (state.isRunning) {
     state.isRunning = false;
     clearInterval(interval);
     updateDisplay();
+    
+    // If stopping a Pomodoro session, update the session
+    if (state.mode === 'pomodoro' && state.currentSessionId) {
+      try {
+        const elapsedMinutes = Math.floor((state.totalTime - state.timeLeft) / 60);
+        await PomodoroAPI.updateSession(state.currentSessionId, {
+          actual_duration: elapsedMinutes,
+          status: 'paused'
+        });
+      } catch (error) {
+        console.error('Failed to update session:', error);
+      }
+    }
     return;
   }
   
   state.isRunning = true;
   lastTick = Date.now();
+  
+  // Create new session if starting a Pomodoro
+  if (state.mode === 'pomodoro' && !state.currentSessionId) {
+    try {
+      // Map frontend mode to backend session_type
+      const sessionType = state.mode === 'pomodoro' ? 'focus' : 
+                         state.mode === 'short' ? 'short_break' : 'long_break';
+                         
+      console.log('Creating session with type:', sessionType);
+      
+      const response = await PomodoroAPI.createSession({
+        session_type: sessionType,
+        duration: Math.floor(state.totalTime / 60), // Convert seconds to minutes
+        task: state.currentTask ? state.currentTask.text : null
+      });
+      
+      if (response.success) {
+        state.currentSessionId = response.session.id;
+        console.log('Created new session:', response.session);
+      } else {
+        console.error('Failed to create session - response:', response);
+      }
+    } catch (error) {
+      console.error('Failed to create session:', error);
+      showNotification('⚠️ เกิดข้อผิดพลาดในการสร้าง session');
+    }
+  }
+  
   updateDisplay();
   
   interval = setInterval(() => {
@@ -131,11 +242,26 @@ function startTimer() {
   }, 100); // Run every 100ms for more accurate timing
 }
 
-function timerComplete() {
+async function timerComplete() {
   state.isRunning = false;
   clearInterval(interval);
   
   if (state.mode === 'pomodoro') {
+    // End current Pomodoro session if exists
+    if (state.currentSessionId) {
+      try {
+        const response = await PomodoroAPI.endSession(state.currentSessionId, {
+          status: 'completed',
+          is_completed: true,
+          actual_duration: state.settings.pomodoro,
+          productivity_score: 10 // สามารถปรับตามความเหมาะสม
+        });
+        state.currentSessionId = null;
+      } catch (error) {
+        console.error('Failed to end session:', error);
+      }
+    }
+    
     state.completedPomodoros++;
     state.stats.todayPomodoros++;
     state.stats.totalPomodoros++;
@@ -182,6 +308,7 @@ function updateTaskList() {
       <input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''}>
       <span class="task-text">${task.text}</span>
       <span class="task-pomodoros">${task.pomodoros} 🍅</span>
+      <button class="select-btn" ${task.completed ? 'disabled' : ''}>เลือก</button>
       <button class="delete-btn">×</button>
     `;
     
@@ -191,6 +318,10 @@ function updateTaskList() {
     
     li.querySelector('.delete-btn').addEventListener('click', () => {
       deleteTask(task.id);
+    });
+
+    li.querySelector('.select-btn').addEventListener('click', () => {
+      selectCurrentTask(task.id);
     });
     
     list.appendChild(li);
@@ -222,14 +353,39 @@ function toggleTask(id) {
       state.stats.todayTasks++;
       state.stats.totalTasks++;
       updateStats();
+    } else {
+      // เมื่อ uncheck task ให้กำหนดเป็น current task
+      state.currentTask = task;
     }
     updateTaskList();
+    updateCurrentTaskDisplay();
   }
 }
 
 function deleteTask(id) {
   state.tasks = state.tasks.filter(t => t.id !== id);
+  if (state.currentTask && state.currentTask.id === id) {
+    state.currentTask = null;
+  }
   updateTaskList();
+  updateCurrentTaskDisplay();
+}
+
+function selectCurrentTask(id) {
+  const task = state.tasks.find(t => t.id === id);
+  if (task && !task.completed) {
+    state.currentTask = task;
+    updateCurrentTaskDisplay();
+  }
+}
+
+function updateCurrentTaskDisplay() {
+  const currentTaskDisplay = document.getElementById('currentTaskDisplay');
+  if (currentTaskDisplay) {
+    currentTaskDisplay.textContent = state.currentTask 
+      ? `กำลังทำ: ${state.currentTask.text}` 
+      : 'ไม่ได้เลือกงาน';
+  }
 }
 
 // ---------- Stats & Settings ----------
