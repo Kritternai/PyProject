@@ -1,71 +1,65 @@
 /* ========================================
    People Tab - Class Members Management
-   สีน้ำเงิน Design System
+   Matching Classwork & Grades Design System
    ======================================== */
 
-/* Color Variables */
-:root {
-    --people-primary: #003B8E;
-    --people-primary-light: #2B6BCF;
-    --people-primary-lighter: #e8f0fe;
-    --people-success: #28a745;
-    --people-danger: #dc3545;
-    --people-warning: #ffc107;
-    --people-text: #2c3e50;
-    --people-text-muted: #6c757d;
-    --people-border: #dee2e6;
-    --people-bg: #f8f9fa;
-    --people-white: #ffffff;
-}
-
-/* Container */
+/* Container - เหมือน Classwork/Grades */
 .people-container {
-    background: var(--people-bg);
+    background: #f2f2f7;
     min-height: 100vh;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Header */
+/* Header - เหมือน Classwork/Grades */
 .people-header {
-    background: linear-gradient(135deg, var(--people-primary-light) 0%, var(--people-primary) 100%);
-    color: var(--people-white);
-    padding: 2rem 0;
-    box-shadow: 0 2px 12px rgba(0, 59, 142, 0.15);
+    background: white;
+    border-bottom: 1px solid #e5e5ea;
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .people-header-content {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .people-title {
-    font-size: 1.75rem;
-    font-weight: 700;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1d1d1f;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 8px;
+}
+
+.people-title i {
+    color: #3b82f6;
+    font-size: 1.25rem;
 }
 
 .people-subtitle {
-    font-size: 0.95rem;
-    margin: 0.5rem 0 0 0;
-    opacity: 0.9;
+    font-size: 0.875rem;
+    color: #8e8e93;
+    margin: 4px 0 0 0;
 }
 
 .people-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: 12px;
+    align-items: center;
 }
 
 .btn-icon {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: var(--people-white);
+    background: transparent;
+    border: 1px solid #e5e5ea;
+    color: #1d1d1f;
     width: 40px;
     height: 40px;
     border-radius: 8px;
@@ -73,168 +67,188 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .btn-icon:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
+    background: #f2f2f7;
+    border-color: #d1d1d6;
 }
 
 .btn-people-primary {
-    background: var(--people-white);
-    color: var(--people-primary);
+    background: #007aff;
+    color: white;
     border: none;
-    padding: 0.6rem 1.5rem;
+    padding: 10px 20px;
     border-radius: 8px;
     font-weight: 600;
+    font-size: 0.9375rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
 }
 
 .btn-people-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: #0051d5;
 }
 
 .btn-people-secondary {
     background: transparent;
-    color: var(--people-primary);
-    border: 2px solid var(--people-primary);
-    padding: 0.5rem 1.25rem;
+    color: #007aff;
+    border: 1px solid #007aff;
+    padding: 8px 16px;
     border-radius: 8px;
     font-weight: 600;
+    font-size: 0.9375rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .btn-people-secondary:hover {
-    background: var(--people-primary);
-    color: var(--people-white);
+    background: #007aff;
+    color: white;
 }
 
-/* Main Content */
+/* Main Content - เหมือน Classwork/Grades */
 .people-main {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 2rem;
+    display: flex;
+    height: calc(100vh - 80px);
+    width: 100%;
+    margin: 0;
+    max-width: none;
 }
 
 .people-content-layout {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 2rem;
+    display: flex;
+    gap: 0;
+    padding: 0;
+    flex: 1;
+    width: 100%;
 }
 
-/* Sidebar */
+/* Sidebar - เหมือน Classwork/Grades */
 .people-sidebar {
-    background: var(--people-white);
-    border-radius: 12px;
-    padding: 1.5rem;
-    height: fit-content;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    position: sticky;
-    top: 2rem;
+    width: 320px;
+    background: white;
+    border-right: 1px solid #e5e5ea;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    height: 100%;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
+    overflow-y: auto;
 }
 
 .people-stats-section {
-    margin-bottom: 2rem;
+    padding: 20px;
+    border-bottom: 1px solid #e5e5ea;
 }
 
 .stats-title {
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    color: var(--people-text);
-    margin-bottom: 1rem;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
 }
 
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
+    gap: 12px;
 }
 
 .stat-item {
     text-align: center;
-    padding: 0.75rem;
-    background: var(--people-primary-lighter);
+    padding: 12px 8px;
+    background: #f2f2f7;
     border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+    background: #e5e5ea;
 }
 
 .stat-number {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--people-primary);
+    color: #1d1d1f;
 }
 
 .stat-label {
     font-size: 0.75rem;
-    color: var(--people-text-muted);
-    margin-top: 0.25rem;
+    color: #8e8e93;
+    margin-top: 4px;
 }
 
 /* Info Section */
 .people-info-section {
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--people-border);
+    padding: 20px;
+    border-bottom: 1px solid #e5e5ea;
 }
 
 .info-title {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    color: var(--people-text);
-    margin-bottom: 1rem;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
 }
 
 .role-info {
-    margin-bottom: 1rem;
+    margin-bottom: 16px;
+}
+
+.role-info:last-child {
+    margin-bottom: 0;
 }
 
 .role-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.35rem 0.75rem;
+    gap: 6px;
+    padding: 6px 12px;
     border-radius: 6px;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin-bottom: 8px;
 }
 
 .role-badge.owner {
-    background: linear-gradient(135deg, #FFA500, #FF8C00);
-    color: var(--people-white);
+    background: #FFA500;
+    color: white;
 }
 
 .role-badge.viewer {
-    background: linear-gradient(135deg, var(--people-primary-light), var(--people-primary));
-    color: var(--people-white);
+    background: #007aff;
+    color: white;
 }
 
 .role-description {
-    font-size: 0.8rem;
-    color: var(--people-text-muted);
+    font-size: 0.8125rem;
+    color: #8e8e93;
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
-/* Content Area */
+/* Content Area - เหมือน Classwork/Grades */
 .people-content {
-    background: var(--people-white);
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    flex: 1;
+    background: #f2f2f7;
+    padding: 24px;
+    overflow-y: auto;
 }
 
 .members-section {
-    margin-bottom: 2.5rem;
+    margin-bottom: 24px;
 }
 
 .members-section:last-child {
@@ -245,58 +259,61 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--people-primary);
+    margin-bottom: 16px;
 }
 
 .section-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--people-text);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1d1d1f;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 8px;
+}
+
+.section-title i {
+    font-size: 1rem;
 }
 
 .members-list {
     display: grid;
-    gap: 1rem;
+    gap: 12px;
 }
 
-/* Member Card */
+/* Member Card - เหมือน Task Card */
 .member-card {
     display: grid;
     grid-template-columns: auto 1fr auto;
-    gap: 1rem;
-    padding: 1.25rem;
-    background: var(--people-white);
-    border: 1px solid var(--people-border);
-    border-radius: 10px;
-    transition: all 0.3s ease;
+    gap: 16px;
+    padding: 16px 20px;
+    background: white;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    transition: all 0.2s ease;
 }
 
 .member-card:hover {
-    border-color: var(--people-primary-light);
-    box-shadow: 0 4px 12px rgba(43, 107, 207, 0.1);
-    transform: translateY(-2px);
+    border-color: #d1d1d6;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
 }
 
 .member-card.owner-card {
-    background: linear-gradient(135deg, #FFF8E1 0%, #FFE082 100%);
-    border-color: #FFA500;
+    background: #fffbf0;
+    border-color: #ffd966;
 }
 
 .member-avatar {
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--people-primary-lighter);
+    background: #f2f2f7;
+    border: 2px solid #e5e5ea;
 }
 
 .member-avatar img {
@@ -311,133 +328,164 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--people-white);
-    font-size: 1.5rem;
+    color: white;
+    font-size: 1.25rem;
     font-weight: 700;
 }
 
 .member-info {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 4px;
+    justify-content: center;
 }
 
 .member-name {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--people-text);
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1d1d1f;
 }
 
 .member-email {
-    font-size: 0.9rem;
-    color: var(--people-text-muted);
+    font-size: 0.8125rem;
+    color: #8e8e93;
 }
 
 .member-meta {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-top: 0.5rem;
+    gap: 12px;
+    margin-top: 6px;
 }
 
 .member-role-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.25rem 0.6rem;
-    border-radius: 6px;
-    font-size: 0.8rem;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.6875rem;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .member-role-badge.owner {
-    background: linear-gradient(135deg, #FFA500, #FF8C00);
-    color: var(--people-white);
+    background: #FFA500;
+    color: white;
 }
 
 .member-role-badge.viewer {
-    background: linear-gradient(135deg, var(--people-primary-light), var(--people-primary));
-    color: var(--people-white);
+    background: #007aff;
+    color: white;
+}
+
+.member-role-badge i {
+    font-size: 0.65rem;
 }
 
 .member-joined {
-    font-size: 0.8rem;
-    color: var(--people-text-muted);
+    font-size: 0.75rem;
+    color: #8e8e93;
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 4px;
+}
+
+.member-joined i {
+    font-size: 0.7rem;
 }
 
 .member-actions {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
 }
 
 .btn-danger {
-    background: var(--people-danger);
-    color: var(--people-white);
+    background: #ff3b30;
+    color: white;
+    border: none;
 }
 
 .btn-danger:hover {
-    background: #c82333;
+    background: #d70015;
 }
 
-/* Empty State */
+/* Empty State - เหมือน Classwork/Grades */
 .empty-state {
     text-align: center;
-    padding: 3rem 2rem;
+    padding: 60px 40px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e5ea;
 }
 
 .empty-icon {
-    font-size: 4rem;
-    color: var(--people-border);
-    margin-bottom: 1rem;
+    font-size: 3.5rem;
+    color: #d1d1d6;
+    margin-bottom: 16px;
 }
 
 .empty-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--people-text);
-    margin-bottom: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin-bottom: 8px;
 }
 
 .empty-description {
-    font-size: 0.95rem;
-    color: var(--people-text-muted);
-    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    color: #8e8e93;
+    margin-bottom: 24px;
+    line-height: 1.5;
 }
 
-/* Modal */
+/* Modal - เหมือน Classwork/Grades */
 .modal-people .modal-content {
     border-radius: 12px;
-    border: none;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e5e5ea;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 .modal-people .modal-header {
-    background: linear-gradient(135deg, var(--people-primary-light) 0%, var(--people-primary) 100%);
-    color: var(--people-white);
-    border-radius: 12px 12px 0 0;
-    padding: 1.25rem 1.5rem;
+    background: white;
+    border-bottom: 1px solid #e5e5ea;
+    padding: 20px 24px;
 }
 
 .modal-people .modal-title {
-    font-weight: 700;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1d1d1f;
     display: flex;
     align-items: center;
+    gap: 8px;
+}
+
+.modal-people .modal-title i {
+    color: #007aff;
+}
+
+.modal-people .modal-body {
+    padding: 24px;
+}
+
+.modal-people .modal-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #e5e5ea;
+    padding: 16px 24px;
 }
 
 .modal-people .btn-close {
-    filter: brightness(0) invert(1);
-    opacity: 0.8;
+    opacity: 0.5;
 }
 
 .modal-people .btn-close:hover {
     opacity: 1;
 }
 
-/* Search Input */
+/* Search Input - เหมือน Classwork/Grades */
 .search-input-group {
     position: relative;
     display: flex;
@@ -446,63 +494,71 @@
 
 .search-input-group .search-icon {
     position: absolute;
-    left: 1rem;
-    color: var(--people-text-muted);
-    font-size: 1.1rem;
+    left: 16px;
+    color: #8e8e93;
+    font-size: 1rem;
+    pointer-events: none;
 }
 
 .search-input-group .form-control {
-    padding-left: 3rem;
-    padding-right: 3rem;
-    border: 2px solid var(--people-border);
-    border-radius: 8px;
-    height: 48px;
-    font-size: 1rem;
+    width: 100%;
+    padding: 12px 48px 12px 44px;
+    border: 1px solid #e5e5ea;
+    border-radius: 10px;
+    background: #f2f2f7;
+    font-size: 0.9375rem;
+    color: #1d1d1f;
+    transition: all 0.2s ease;
+}
+
+.search-input-group .form-control::placeholder {
+    color: #8e8e93;
 }
 
 .search-input-group .form-control:focus {
-    border-color: var(--people-primary);
-    box-shadow: 0 0 0 0.2rem rgba(43, 107, 207, 0.15);
+    outline: none;
+    border-color: #007aff;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
 .search-spinner {
     position: absolute;
-    right: 1rem;
-    color: var(--people-primary);
+    right: 16px;
+    color: #007aff;
 }
 
 /* Search Results */
 .search-results {
     max-height: 400px;
     overflow-y: auto;
+    margin-top: 16px;
 }
 
 .search-result-item {
     display: grid;
     grid-template-columns: auto 1fr auto;
-    gap: 1rem;
-    padding: 1rem;
-    border-bottom: 1px solid var(--people-border);
-    transition: all 0.3s ease;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
 }
 
 .search-result-item:hover {
-    background: var(--people-bg);
-}
-
-.search-result-item:last-child {
-    border-bottom: none;
+    background: #f2f2f7;
 }
 
 .search-result-avatar {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--people-primary-lighter);
+    background: #f2f2f7;
+    border: 2px solid #e5e5ea;
 }
 
 .search-result-avatar img {
@@ -515,58 +571,45 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 0.25rem;
+    gap: 2px;
 }
 
 .search-result-name {
-    font-weight: 700;
-    color: var(--people-text);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1d1d1f;
 }
 
 .search-result-email {
-    font-size: 0.875rem;
-    color: var(--people-text-muted);
+    font-size: 0.8125rem;
+    color: #8e8e93;
 }
 
-/* Responsive Design */
-@media (max-width: 992px) {
-    .people-content-layout {
-        grid-template-columns: 1fr;
-    }
-    
-    .people-sidebar {
-        position: static;
-    }
+.btn-people-primary.btn-sm {
+    padding: 6px 16px;
+    font-size: 0.8125rem;
 }
 
+/* Responsive Design - เหมือน Classwork/Grades */
 @media (max-width: 768px) {
-    .people-header-content {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .people-actions {
-        width: 100%;
-        justify-content: flex-end;
-    }
-    
     .people-main {
-        padding: 1rem;
+        height: auto;
     }
     
-    .people-content {
-        padding: 1.5rem;
+    .people-content-layout {
+        flex-direction: column;
     }
     
     .people-sidebar {
         position: fixed;
         top: 0;
-        left: -100%;
-        width: 280px;
+        left: -320px;
+        width: 320px;
         height: 100vh;
         z-index: 1000;
         transition: left 0.3s ease;
         border-radius: 0;
+        border-right: none;
     }
     
     .people-sidebar.show {
@@ -588,41 +631,51 @@
         display: block;
     }
     
+    .people-content {
+        padding: 16px;
+    }
+    
     .member-card {
         grid-template-columns: auto 1fr;
-        gap: 0.75rem;
+        gap: 12px;
+        padding: 12px 16px;
     }
     
     .member-actions {
         grid-column: 2;
         justify-content: flex-end;
-        margin-top: 0.5rem;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-    .people-title {
-        font-size: 1.5rem;
+        margin-top: 8px;
     }
     
     .btn-people-primary span {
         display: none;
     }
+}
+
+@media (max-width: 480px) {
+    .people-title {
+        font-size: 1.25rem;
+    }
     
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    
+    .stat-item {
+        padding: 10px 6px;
+    }
+    
+    .stat-number {
+        font-size: 1.25rem;
     }
 }
 
-/* Animations */
+/* Animations - subtle */
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(8px);
     }
     to {
         opacity: 1;
@@ -631,24 +684,32 @@
 }
 
 .member-card {
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.2s ease;
 }
 
-/* Scrollbar */
-.search-results::-webkit-scrollbar {
+/* Scrollbar - เหมือน Classwork/Grades */
+.people-sidebar::-webkit-scrollbar,
+.search-results::-webkit-scrollbar,
+.people-content::-webkit-scrollbar {
     width: 8px;
 }
 
-.search-results::-webkit-scrollbar-track {
-    background: var(--people-bg);
+.people-sidebar::-webkit-scrollbar-track,
+.search-results::-webkit-scrollbar-track,
+.people-content::-webkit-scrollbar-track {
+    background: transparent;
 }
 
-.search-results::-webkit-scrollbar-thumb {
-    background: var(--people-border);
+.people-sidebar::-webkit-scrollbar-thumb,
+.search-results::-webkit-scrollbar-thumb,
+.people-content::-webkit-scrollbar-thumb {
+    background: #d1d1d6;
     border-radius: 4px;
 }
 
-.search-results::-webkit-scrollbar-thumb:hover {
-    background: var(--people-text-muted);
+.people-sidebar::-webkit-scrollbar-thumb:hover,
+.search-results::-webkit-scrollbar-thumb:hover,
+.people-content::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a6;
 }
 

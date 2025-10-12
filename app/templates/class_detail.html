@@ -4,6 +4,11 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/class-header.css') }}">
+<!-- Preload tab CSS to prevent flash -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/classwork.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/grades.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/people.css') }}">
 {% endblock %}
 
 {% set skip_auto_load = true %}

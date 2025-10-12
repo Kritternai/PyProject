@@ -1,7 +1,4 @@
 <!-- Classwork Tab - Professional Design (Full Functionality) -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/classwork.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
-
 <div class="classwork-container">
     <!-- Header -->
     <div class="classwork-header">
@@ -377,11 +374,6 @@ function initializeEventListeners() {
 // Load classwork data from API
 async function loadClassworkData() {
     try {
-        // Check if loading functions exist
-        if (typeof window.showLoading === 'function') {
-            window.showLoading();
-        }
-        
         const response = await fetch(`/class/${lessonId}/classwork`);
         const data = await response.json();
         
@@ -389,36 +381,19 @@ async function loadClassworkData() {
             allTasks = data.data.classwork.tasks || [];
             allMaterials = data.data.classwork.materials || [];
             
-            console.log('📊 Loaded tasks:', allTasks.length, allTasks);
-            console.log('📁 Loaded materials:', allMaterials.length, allMaterials);
+            console.log('📊 Loaded tasks:', allTasks.length);
+            console.log('📁 Loaded materials:', allMaterials.length);
             
-            // Debug: Check first task structure
-            if (allTasks.length > 0) {
-                console.log('🔍 First task structure:', allTasks[0]);
-                console.log('🔍 First task status:', allTasks[0].status, 'Type:', typeof allTasks[0].status);
-            }
-            
+            // Render content immediately without flash
             updateStats(allTasks);
             renderAllContent(allTasks);
             renderKanbanBoard(allTasks);
             renderMaterials(allMaterials);
         } else {
-            if (typeof window.showError === 'function') {
-                window.showError('Failed to load classwork data');
-            } else {
-                console.error('Failed to load classwork data');
-            }
+            console.error('Failed to load classwork data');
         }
     } catch (error) {
         console.error('Error loading classwork:', error);
-        if (typeof window.showError === 'function') {
-            window.showError('Error loading classwork data');
-        }
-    } finally {
-        // Check if loading functions exist
-        if (typeof window.hideLoading === 'function') {
-            window.hideLoading();
-        }
     }
 }
 
