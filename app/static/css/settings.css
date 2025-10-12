@@ -1,6 +1,6 @@
 /* ========================================
-   Settings Modal - Full Featured UI
-   Modern, Beautiful, Professional Design
+   Settings Modal - Matching Project Design System
+   Consistent with Classwork, Grades, People tabs
    ======================================== */
 
 /* Modal Content Container */
@@ -10,41 +10,40 @@
     min-height: 500px;
 }
 
-/* Modal Styling */
+/* Modal Styling - เหมือน tabs อื่นๆ */
 #settingsModal .modal-dialog {
     max-width: 900px;
 }
 
 #settingsModal .modal-content {
-    border-radius: 16px;
+    border-radius: 12px;
     border: 1px solid #e5e5ea;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     overflow: hidden;
 }
 
 #settingsModal .modal-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-bottom: none;
-    border-radius: 16px 16px 0 0;
+    background: white;
+    border-bottom: 1px solid #e5e5ea;
     padding: 20px 24px;
 }
 
 #settingsModal .modal-title {
     font-size: 1.25rem;
-    font-weight: 700;
-    color: white;
+    font-weight: 600;
+    color: #1d1d1f;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
 #settingsModal .modal-title i {
-    font-size: 1.5rem;
+    color: #2B6BCF;
+    font-size: 1.25rem;
 }
 
 #settingsModal .btn-close {
-    filter: brightness(0) invert(1);
-    opacity: 0.8;
+    opacity: 0.6;
 }
 
 #settingsModal .btn-close:hover {
@@ -77,13 +76,13 @@
 }
 
 /* ========================================
-   Tabs Navigation
+   Tabs Navigation - เหมือน Design System
    ======================================== */
 
 .settings-tabs-nav {
     display: flex;
     background: white;
-    border-bottom: 2px solid #e5e5ea;
+    border-bottom: 1px solid #e5e5ea;
     padding: 0;
     overflow-x: auto;
 }
@@ -93,13 +92,13 @@
     min-width: 140px;
     background: transparent;
     border: none;
-    border-bottom: 3px solid transparent;
+    border-bottom: 2px solid transparent;
     padding: 16px 20px;
     font-size: 0.9375rem;
     font-weight: 600;
     color: #8e8e93;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -107,18 +106,18 @@
 }
 
 .settings-tab-btn i {
-    font-size: 1.125rem;
+    font-size: 1rem;
 }
 
 .settings-tab-btn:hover {
     background: #f8f9fa;
-    color: #667eea;
+    color: #2B6BCF;
 }
 
 .settings-tab-btn.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
-    background: #f8fbff;
+    color: #2B6BCF;
+    border-bottom-color: #2B6BCF;
+    background: transparent;
 }
 
 .settings-tab-btn.danger-tab:hover {
@@ -128,7 +127,6 @@
 .settings-tab-btn.danger-tab.active {
     color: #dc3545;
     border-bottom-color: #dc3545;
-    background: #fff5f5;
 }
 
 /* ========================================
@@ -142,7 +140,7 @@
 .settings-tab-pane {
     display: none;
     padding: 24px;
-    animation: fadeInSettings 0.3s ease;
+    animation: fadeInSettings 0.2s ease;
 }
 
 .settings-tab-pane.active {
@@ -152,7 +150,7 @@
 @keyframes fadeInSettings {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(5px);
     }
     to {
         opacity: 1;
@@ -161,50 +159,43 @@
 }
 
 /* ========================================
-   Settings Section
+   Settings Section - เหมือน tabs อื่นๆ
    ======================================== */
 
 .settings-section {
     background: white;
-    border-radius: 16px;
+    border-radius: 12px;
     border: 1px solid #e5e5ea;
     margin-bottom: 20px;
     overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-    transition: all 0.3s ease;
-}
-
-.settings-section:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .settings-section-header {
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    padding: 24px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    padding: 20px 24px;
+    background: #f8f9fa;
     border-bottom: 1px solid #e5e5ea;
 }
 
 .settings-section-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #2B6BCF 0%, #003B8E 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .settings-section-title {
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-size: 1.125rem;
+    font-weight: 600;
     color: #1d1d1f;
     margin: 0 0 4px 0;
 }
@@ -230,11 +221,11 @@
 }
 
 /* ========================================
-   Form Elements
+   Form Elements - เหมือน Design System
    ======================================== */
 
 .form-group {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .form-group:last-child {
@@ -242,7 +233,7 @@
 }
 
 .form-label {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: #1d1d1f;
     margin-bottom: 8px;
@@ -253,9 +244,9 @@
 .form-control {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid #e5e5ea;
-    border-radius: 10px;
-    background: white;
+    border: 1px solid #e5e5ea;
+    border-radius: 8px;
+    background: #f8f9fa;
     font-size: 0.9375rem;
     color: #1d1d1f;
     transition: all 0.2s ease;
@@ -264,18 +255,19 @@
 
 .form-control:focus {
     outline: none;
-    border-color: #667eea;
-    background: #f8fbff;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    border-color: #2B6BCF;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(43, 107, 207, 0.1);
 }
 
 .form-control::placeholder {
-    color: #c7c7cc;
+    color: #8e8e93;
 }
 
 .form-control[readonly] {
     background: #f8f9fa;
     cursor: not-allowed;
+    color: #8e8e93;
 }
 
 .form-text {
@@ -299,43 +291,43 @@ textarea.form-control {
 
 .class-code-display {
     display: flex;
-    gap: 24px;
+    gap: 20px;
 }
 
 .class-code-box {
     flex: 1;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 2px solid #e5e5ea;
+    border-radius: 12px;
     padding: 24px;
-    color: white;
     text-align: center;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
 }
 
 .class-code-label {
     font-size: 0.875rem;
     font-weight: 600;
-    opacity: 0.9;
+    color: #8e8e93;
     margin-bottom: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .class-code-value {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 700;
     font-family: 'Courier New', monospace;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     margin-bottom: 16px;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.15);
+    background: white;
+    border: 1px solid #e5e5ea;
     border-radius: 8px;
-    backdrop-filter: blur(10px);
+    color: #2B6BCF;
 }
 
 .btn-copy-code {
-    background: white;
-    color: #667eea;
+    background: linear-gradient(135deg, #2B6BCF 0%, #003B8E 100%);
+    color: white;
     border: none;
     border-radius: 8px;
     padding: 10px 20px;
@@ -346,12 +338,13 @@ textarea.form-control {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    box-shadow: 0 4px 12px rgba(0, 59, 142, 0.2);
 }
 
 .btn-copy-code:hover {
-    background: #f0f4ff;
+    background: linear-gradient(135deg, #003B8E 0%, #002456 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(0, 59, 142, 0.35);
 }
 
 .class-code-info {
@@ -366,14 +359,14 @@ textarea.form-control {
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    border-left: 3px solid #667eea;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e5ea;
 }
 
 .info-item i {
-    font-size: 1.25rem;
-    color: #667eea;
+    font-size: 1.125rem;
+    color: #2B6BCF;
 }
 
 .info-item span {
@@ -383,7 +376,7 @@ textarea.form-control {
 }
 
 /* ========================================
-   Statistics Grid
+   Statistics Grid - เหมือน People tab
    ======================================== */
 
 .stats-grid {
@@ -393,32 +386,30 @@ textarea.form-control {
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border-radius: 12px;
+    background: white;
+    border-radius: 10px;
     border: 1px solid #e5e5ea;
     padding: 20px;
     display: flex;
     align-items: center;
     gap: 16px;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .stat-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .stat-info {
@@ -426,7 +417,7 @@ textarea.form-control {
 }
 
 .stat-value {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: #1d1d1f;
     line-height: 1;
@@ -457,12 +448,6 @@ textarea.form-control {
     background: #f8f9fa;
     border-radius: 10px;
     border: 1px solid #e5e5ea;
-    transition: all 0.2s ease;
-}
-
-.permission-item:hover {
-    background: #f0f4ff;
-    border-color: #667eea;
 }
 
 .permission-info {
@@ -473,7 +458,7 @@ textarea.form-control {
 }
 
 .permission-info > i {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
 }
 
 .permission-title {
@@ -489,16 +474,16 @@ textarea.form-control {
 }
 
 .badge {
-    padding: 6px 12px;
-    border-radius: 20px;
+    padding: 4px 12px;
+    border-radius: 12px;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .badge-success {
-    background: linear-gradient(135deg, #28a745 0%, #198754 100%);
+    background: #28a745;
     color: white;
 }
 
@@ -519,9 +504,10 @@ textarea.form-control {
 
 .visibility-option {
     position: relative;
-    border-radius: 12px;
-    border: 2px solid #e5e5ea;
-    transition: all 0.3s ease;
+    border-radius: 10px;
+    border: 1px solid #e5e5ea;
+    background: white;
+    transition: all 0.2s ease;
     overflow: hidden;
 }
 
@@ -533,32 +519,31 @@ textarea.form-control {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 20px;
+    padding: 16px;
     cursor: pointer;
     margin: 0;
 }
 
 .visibility-option:hover {
-    border-color: #667eea;
-    background: #f8fbff;
+    border-color: #2B6BCF;
+    background: #f8f9fa;
 }
 
 .visibility-option.selected {
-    border-color: #667eea;
-    background: linear-gradient(135deg, #f8fbff 0%, #ffffff 100%);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    border-color: #2B6BCF;
+    background: #f8fbff;
 }
 
 .option-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #2B6BCF 0%, #003B8E 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     flex-shrink: 0;
 }
 
@@ -567,7 +552,7 @@ textarea.form-control {
 }
 
 .option-title {
-    font-size: 1rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: #1d1d1f;
     margin-bottom: 4px;
@@ -579,25 +564,24 @@ textarea.form-control {
 }
 
 .option-check {
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     background: #e5e5ea;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.125rem;
-    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
 }
 
 .visibility-option.selected .option-check {
-    background: linear-gradient(135deg, #28a745 0%, #198754 100%);
-    transform: scale(1.1);
+    background: #28a745;
 }
 
 /* ========================================
-   Toggle Switch
+   Toggle Switch - iOS Style
    ======================================== */
 
 .settings-toggle-list {
@@ -614,12 +598,6 @@ textarea.form-control {
     background: #f8f9fa;
     border-radius: 10px;
     border: 1px solid #e5e5ea;
-    transition: all 0.2s ease;
-}
-
-.settings-toggle-item:hover {
-    background: #f0f4ff;
-    border-color: #667eea;
 }
 
 .toggle-info {
@@ -677,7 +655,7 @@ textarea.form-control {
 }
 
 .toggle-switch input:checked + .toggle-slider {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2B6BCF 0%, #003B8E 100%);
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
@@ -685,53 +663,50 @@ textarea.form-control {
 }
 
 /* ========================================
-   Danger Zone
+   Danger Zone - เหมือน Design System
    ======================================== */
 
 .danger-section {
     background: white;
-    border-radius: 16px;
+    border-radius: 12px;
     border: 2px solid #dc3545;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(220, 53, 69, 0.15);
 }
 
 .danger-section.leave-section {
     border-color: #ffc107;
-    box-shadow: 0 4px 20px rgba(255, 193, 7, 0.15);
 }
 
 .danger-section-header {
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    padding: 24px;
-    background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
-    border-bottom: 2px solid #dc3545;
+    padding: 20px 24px;
+    background: #fff5f5;
+    border-bottom: 1px solid #dc3545;
 }
 
 .leave-section .danger-section-header {
-    background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+    background: #fff9e6;
     border-bottom-color: #ffc107;
 }
 
 .danger-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
 .danger-section-title {
-    font-size: 1.375rem;
-    font-weight: 700;
+    font-size: 1.125rem;
+    font-weight: 600;
     color: #dc3545;
     margin: 0 0 4px 0;
 }
@@ -751,40 +726,38 @@ textarea.form-control {
 }
 
 .danger-warning {
-    background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
-    border: 2px solid #ffcccc;
-    border-radius: 12px;
+    background: #fff5f5;
+    border: 1px solid #ffcccc;
+    border-radius: 10px;
     padding: 20px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .leave-warning {
-    background: linear-gradient(135deg, #fff9e6 0%, #ffeed9 100%);
+    background: #fff9e6;
     border-color: #ffe0b3;
 }
 
 .danger-warning .warning-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     margin-bottom: 16px;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
 .leave-warning .warning-icon {
     background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
 }
 
 .warning-content h4 {
-    font-size: 1.125rem;
-    font-weight: 700;
+    font-size: 1rem;
+    font-weight: 600;
     color: #dc3545;
     margin: 0 0 12px 0;
 }
@@ -794,7 +767,7 @@ textarea.form-control {
 }
 
 .warning-content p {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     color: #721c24;
     margin: 0 0 12px 0;
 }
@@ -813,7 +786,7 @@ textarea.form-control {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 0;
+    padding: 6px 0;
     font-size: 0.875rem;
     color: #721c24;
 }
@@ -832,8 +805,8 @@ textarea.form-control {
 
 .confirmation-box {
     background: white;
-    border: 2px solid #dc3545;
-    border-radius: 12px;
+    border: 1px solid #dc3545;
+    border-radius: 10px;
     padding: 20px;
     margin-bottom: 20px;
 }
@@ -842,7 +815,7 @@ textarea.form-control {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: #dc3545;
     margin-bottom: 12px;
@@ -861,10 +834,10 @@ textarea.form-control {
 
 .confirmation-input {
     width: 100%;
-    padding: 14px 16px;
-    border: 2px solid #e5e5ea;
-    border-radius: 10px;
-    background: white;
+    padding: 12px 16px;
+    border: 1px solid #e5e5ea;
+    border-radius: 8px;
+    background: #f8f9fa;
     font-size: 0.9375rem;
     font-family: 'Courier New', monospace;
     color: #1d1d1f;
@@ -874,8 +847,8 @@ textarea.form-control {
 .confirmation-input:focus {
     outline: none;
     border-color: #dc3545;
-    background: #fff5f5;
-    box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.1);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
 }
 
 .confirmation-match {
@@ -902,15 +875,15 @@ textarea.form-control {
 }
 
 /* ========================================
-   Buttons
+   Buttons - เหมือน Design System
    ======================================== */
 
 .btn-settings-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2B6BCF 0%, #003B8E 100%);
     color: white;
     border: none;
     border-radius: 10px;
-    padding: 12px 24px;
+    padding: 12px 20px;
     font-size: 0.9375rem;
     font-weight: 600;
     display: inline-flex;
@@ -918,17 +891,22 @@ textarea.form-control {
     gap: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 59, 142, 0.2);
 }
 
 .btn-settings-primary:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: linear-gradient(135deg, #003B8E 0%, #002456 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 59, 142, 0.35);
+}
+
+.btn-settings-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 59, 142, 0.3);
 }
 
 .btn-settings-primary.btn-large {
-    padding: 14px 28px;
+    padding: 14px 24px;
     font-size: 1rem;
     width: 100%;
     justify-content: center;
@@ -936,10 +914,10 @@ textarea.form-control {
 
 .btn-settings-secondary {
     background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
+    color: #2B6BCF;
+    border: 2px solid #2B6BCF;
     border-radius: 10px;
-    padding: 10px 22px;
+    padding: 10px 18px;
     font-size: 0.9375rem;
     font-weight: 600;
     display: inline-flex;
@@ -950,25 +928,25 @@ textarea.form-control {
 }
 
 .btn-settings-secondary:hover {
-    background: #667eea;
+    background: #2B6BCF;
     color: white;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(43, 107, 207, 0.2);
 }
 
 .btn-settings-cancel {
     background: transparent;
     color: #8e8e93;
-    border: 2px solid #e5e5ea;
+    border: 1px solid #e5e5ea;
     border-radius: 10px;
-    padding: 12px 24px;
+    padding: 12px 20px;
     font-size: 0.9375rem;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .btn-settings-cancel:hover {
@@ -981,7 +959,7 @@ textarea.form-control {
     color: white;
     border: none;
     border-radius: 10px;
-    padding: 14px 28px;
+    padding: 14px 24px;
     font-size: 1rem;
     font-weight: 600;
     display: inline-flex;
@@ -990,14 +968,19 @@ textarea.form-control {
     gap: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
     width: 100%;
 }
 
 .btn-danger-action:hover:not(:disabled) {
     background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.35);
+}
+
+.btn-danger-action:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
 }
 
 .btn-danger-action:disabled {
@@ -1011,7 +994,7 @@ textarea.form-control {
     color: white;
     border: none;
     border-radius: 10px;
-    padding: 14px 28px;
+    padding: 14px 24px;
     font-size: 1rem;
     font-weight: 600;
     display: inline-flex;
@@ -1020,14 +1003,19 @@ textarea.form-control {
     gap: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
     width: 100%;
 }
 
 .btn-warning-action:hover {
     background: linear-gradient(135deg, #ff9800 0%, #ff8c00 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+    box-shadow: 0 6px 20px rgba(255, 193, 7, 0.35);
+}
+
+.btn-warning-action:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
 }
 
 /* ========================================
@@ -1038,9 +1026,9 @@ textarea.form-control {
     position: fixed;
     top: 20px;
     right: 20px;
-    padding: 16px 20px;
+    padding: 14px 20px;
     border-radius: 10px;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -1049,7 +1037,7 @@ textarea.form-control {
     opacity: 0;
     transform: translateX(100px);
     transition: all 0.3s ease;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .settings-notification.show {
@@ -1058,12 +1046,12 @@ textarea.form-control {
 }
 
 .settings-notification.success {
-    background: linear-gradient(135deg, #28a745 0%, #198754 100%);
+    background: #28a745;
     color: white;
 }
 
 .settings-notification.error {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background: #dc3545;
     color: white;
 }
 
@@ -1097,8 +1085,7 @@ textarea.form-control {
     
     .settings-section-header {
         flex-direction: column;
-        text-align: center;
-        padding: 20px;
+        padding: 16px;
     }
     
     .settings-section-body {
@@ -1126,17 +1113,17 @@ textarea.form-control {
 
 @media (max-width: 480px) {
     .settings-section-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.25rem;
-    }
-    
-    .settings-section-title {
+        width: 36px;
+        height: 36px;
         font-size: 1.125rem;
     }
     
+    .settings-section-title {
+        font-size: 1rem;
+    }
+    
     .class-code-value {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
     }
     
     .stat-card {
