@@ -35,9 +35,33 @@
         <div class="people-content-layout">
             <!-- Sidebar -->
             <div class="people-sidebar" id="people-sidebar">
+                <!-- Navigation Section -->
+                <div class="people-nav-section">
+                    <a href="#" class="people-nav-item active" data-tab="all" onclick="switchPeopleTab('all'); return false;">
+                        <i class="bi bi-people people-nav-item-icon"></i>
+                        All Members
+                    </a>
+                    <a href="#" class="people-nav-item" data-tab="owner" onclick="switchPeopleTab('owner'); return false;">
+                        <i class="bi bi-star-fill people-nav-item-icon"></i>
+                        Owner
+                    </a>
+                    <a href="#" class="people-nav-item" data-tab="viewers" onclick="switchPeopleTab('viewers'); return false;">
+                        <i class="bi bi-eye-fill people-nav-item-icon"></i>
+                        Viewers
+                    </a>
+                </div>
+
+                <!-- Search Section -->
+                <div class="people-search-section">
+                    <div class="search-container">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="Search members..." 
+                               id="people-search-input">
+                    </div>
+                </div>
+
                 <!-- Stats Section -->
                 <div class="people-stats-section">
-                    <h4 class="stats-title">Summary</h4>
                     <div class="stats-grid">
                         <div class="stat-item">
                             <div class="stat-number" id="owner-count">1</div>
@@ -51,6 +75,29 @@
                             <div class="stat-number" id="total-members">1</div>
                             <div class="stat-label">Total</div>
                         </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="recent-joined">0</div>
+                            <div class="stat-label">Recent</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="people-filter-section">
+                    <h4 class="filter-title">Filter by Role</h4>
+                    <div class="filter-options">
+                        <button class="filter-option active" data-filter="all" onclick="setPeopleFilter('all')">
+                            <span class="role-dot all"></span>
+                            <span>All</span>
+                        </button>
+                        <button class="filter-option" data-filter="owner" onclick="setPeopleFilter('owner')">
+                            <span class="role-dot owner"></span>
+                            <span>Owner</span>
+                        </button>
+                        <button class="filter-option" data-filter="viewer" onclick="setPeopleFilter('viewer')">
+                            <span class="role-dot viewer"></span>
+                            <span>Viewers</span>
+                        </button>
                     </div>
                 </div>
 
@@ -81,30 +128,10 @@
 
             <!-- Content Area -->
             <div class="people-content">
-                <!-- Owner Section -->
-                <div class="members-section">
-                    <div class="section-header">
-                        <h3 class="section-title">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            Owner
-                        </h3>
-                    </div>
-                    <div class="members-list" id="owner-list">
-                        <!-- Owner will be loaded here -->
-                    </div>
-                </div>
-
-                <!-- Viewers Section -->
-                <div class="members-section">
-                    <div class="section-header">
-                        <h3 class="section-title">
-                            <i class="bi bi-eye-fill text-primary"></i>
-                            Viewers
-                            <span class="badge bg-secondary ms-2" id="viewer-badge">0</span>
-                        </h3>
-                    </div>
-                    <div class="members-list" id="viewers-list">
-                        <!-- Viewers will be loaded here -->
+                <!-- Members List -->
+                <div class="members-container">
+                    <div class="members-list" id="members-list">
+                        <!-- All members will be loaded here -->
                     </div>
                 </div>
             </div>
@@ -169,8 +196,12 @@
     const lessonId = window.location.pathname.split('/')[2];
     const isOwner = {{ 'true' if is_owner else 'false' }};
     let allMembers = [];
+    let allMembersData = { owner: null, viewers: [] };
     let addMemberModal;
     let searchTimeout;
+    let currentTab = 'all';
+    let currentFilter = 'all';
+    let searchQuery = '';
     
     console.log('🚀 Initializing People System for lesson:', lessonId);
     console.log('👤 Is Owner:', isOwner);
@@ -199,7 +230,20 @@
     }
 
     function initializeEventListeners() {
-        // Search input
+        // People search input
+        const peopleSearchInput = document.getElementById('people-search-input');
+        if (peopleSearchInput) {
+            peopleSearchInput.addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                searchQuery = e.target.value.trim();
+                
+                searchTimeout = setTimeout(() => {
+                    renderAllMembers();
+                }, 300);
+            });
+        }
+        
+        // Modal search input
         const searchInput = document.getElementById('member-search-input');
         if (searchInput) {
             searchInput.addEventListener('input', function(e) {
@@ -234,14 +278,14 @@
             
             if (data.success) {
                 allMembers = data.data.members;
-                const owner = data.data.owner;
+                allMembersData.owner = data.data.owner;
+                allMembersData.viewers = data.data.members;
                 
                 console.log('📊 Loaded members:', allMembers.length);
-                console.log('👑 Owner:', owner);
+                console.log('👑 Owner:', allMembersData.owner);
                 
-                renderOwner(owner);
-                renderViewers(allMembers);
-                updateStats(owner, allMembers);
+                renderAllMembers();
+                updateStats();
             } else {
                 showError('Failed to load members');
             }
@@ -251,59 +295,20 @@
         }
     }
 
-    // Render owner
-    function renderOwner(owner) {
-        const container = document.getElementById('owner-list');
+    // Render all members based on current tab, filter, and search
+    function renderAllMembers() {
+        const container = document.getElementById('members-list');
         
-        if (!owner) {
-            container.innerHTML = '<div class="text-muted">No owner found</div>';
+        let filteredMembers = getFilteredMembers();
+        
+        if (filteredMembers.length === 0) {
+            container.innerHTML = getEmptyStateHtml();
             return;
         }
         
-        container.innerHTML = `
-            <div class="member-card owner-card">
-                <div class="member-avatar">
-                    ${getAvatarHtml(owner)}
-                </div>
-                <div class="member-info">
-                    <div class="member-name">${escapeHtml(owner.username || 'Unknown')}</div>
-                    <div class="member-email">${escapeHtml(owner.email || '')}</div>
-                    <div class="member-role-badge owner">
-                        <i class="bi bi-star-fill"></i>
-                        Owner
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    // Render viewers
-    function renderViewers(members) {
-        const container = document.getElementById('viewers-list');
-        
-        if (members.length === 0) {
-            const addButton = isOwner ? `
-                <button class="btn-people-primary mt-3" onclick="openAddMemberModal()">
-                    <i class="bi bi-person-plus"></i>
-                    Add Member
-                </button>
-            ` : '';
-            
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="bi bi-people"></i>
-                    </div>
-                    <div class="empty-title">No viewers yet</div>
-                    <div class="empty-description">${isOwner ? 'Add members to share this class with them' : 'No other members in this class'}</div>
-                    ${addButton}
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = members.map(member => {
-            const removeButton = isOwner ? `
+        let html = filteredMembers.map(member => {
+            const isOwnerMember = member.role === 'owner';
+            const removeButton = (isOwner && !isOwnerMember) ? `
                 <div class="member-actions">
                     <button class="btn-icon btn-danger" 
                             onclick="confirmRemoveMember('${member.user_id}', '${escapeHtml(member.username)}')"
@@ -314,7 +319,7 @@
             ` : '';
             
             return `
-                <div class="member-card">
+                <div class="member-card ${isOwnerMember ? 'owner-card' : ''}">
                     <div class="member-avatar">
                         ${getAvatarHtml(member)}
                     </div>
@@ -322,28 +327,119 @@
                         <div class="member-name">${escapeHtml(member.username || 'Unknown')}</div>
                         <div class="member-email">${escapeHtml(member.email || '')}</div>
                         <div class="member-meta">
-                            <div class="member-role-badge viewer">
-                                <i class="bi bi-eye-fill"></i>
-                                Viewer
+                            <div class="member-role-badge ${isOwnerMember ? 'owner' : 'viewer'}">
+                                <i class="bi bi-${isOwnerMember ? 'star-fill' : 'eye-fill'}"></i>
+                                ${isOwnerMember ? 'Owner' : 'Viewer'}
                             </div>
-                            <div class="member-joined">
-                                <i class="bi bi-calendar"></i>
-                                Joined ${formatDate(member.joined_at)}
-                            </div>
+                            ${!isOwnerMember ? `
+                                <div class="member-joined">
+                                    <i class="bi bi-calendar"></i>
+                                    Joined ${formatDate(member.joined_at)}
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                     ${removeButton}
                 </div>
             `;
         }).join('');
+        
+        container.innerHTML = html;
+    }
+    
+    // Get filtered members based on current tab, filter, and search
+    function getFilteredMembers() {
+        let members = [];
+        
+        // Get members based on current tab
+        if (currentTab === 'owner' && allMembersData.owner) {
+            members = [allMembersData.owner];
+        } else if (currentTab === 'viewers') {
+            members = allMembersData.viewers;
+        } else {
+            // 'all' tab
+            members = [];
+            if (allMembersData.owner) members.push(allMembersData.owner);
+            members = members.concat(allMembersData.viewers);
+        }
+        
+        // Apply role filter
+        if (currentFilter === 'owner') {
+            members = members.filter(m => m.role === 'owner');
+        } else if (currentFilter === 'viewer') {
+            members = members.filter(m => m.role === 'viewer');
+        }
+        
+        // Apply search filter
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            members = members.filter(m => 
+                (m.username && m.username.toLowerCase().includes(query)) ||
+                (m.email && m.email.toLowerCase().includes(query))
+            );
+        }
+        
+        return members;
+    }
+    
+    // Get empty state HTML
+    function getEmptyStateHtml() {
+        if (searchQuery) {
+            return `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <div class="empty-title">No members found</div>
+                    <div class="empty-description">Try adjusting your search or filter</div>
+                </div>
+            `;
+        } else if (currentTab === 'viewers' && allMembersData.viewers.length === 0) {
+            return `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="empty-title">No viewers yet</div>
+                    <div class="empty-description">${isOwner ? 'Add members to share this class with them' : 'No other members in this class'}</div>
+                    ${isOwner ? `
+                        <button class="btn-people-primary mt-3" onclick="openAddMemberModal()">
+                            <i class="bi bi-person-plus"></i>
+                            Add Member
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            return `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="empty-title">No members found</div>
+                    <div class="empty-description">Try adjusting your filter</div>
+                </div>
+            `;
+        }
     }
 
     // Update stats
-    function updateStats(owner, members) {
-        document.getElementById('owner-count').textContent = owner ? 1 : 0;
-        document.getElementById('viewer-count').textContent = members.length;
-        document.getElementById('total-members').textContent = (owner ? 1 : 0) + members.length;
-        document.getElementById('viewer-badge').textContent = members.length;
+    function updateStats() {
+        const ownerCount = allMembersData.owner ? 1 : 0;
+        const viewerCount = allMembersData.viewers.length;
+        const totalCount = ownerCount + viewerCount;
+        const recentCount = allMembersData.viewers.filter(m => {
+            if (!m.joined_at) return false;
+            const joinedDate = new Date(m.joined_at);
+            const now = new Date();
+            const diffDays = Math.floor((now - joinedDate) / (1000 * 60 * 60 * 24));
+            return diffDays <= 7; // Joined within last 7 days
+        }).length;
+        
+        document.getElementById('owner-count').textContent = ownerCount;
+        document.getElementById('viewer-count').textContent = viewerCount;
+        document.getElementById('total-members').textContent = totalCount;
+        document.getElementById('recent-joined').textContent = recentCount;
     }
 
     // Search users
@@ -565,13 +661,44 @@
         overlay.classList.remove('show');
     }
 
+    // Navigation functions
+    function switchPeopleTab(tab) {
+        currentTab = tab;
+        
+        // Update navigation UI
+        document.querySelectorAll('.people-nav-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.tab === tab) {
+                item.classList.add('active');
+            }
+        });
+        
+        renderAllMembers();
+    }
+    
+    function setPeopleFilter(filter) {
+        currentFilter = filter;
+        
+        // Update filter UI
+        document.querySelectorAll('.filter-option').forEach(option => {
+            option.classList.remove('active');
+            if (option.dataset.filter === filter) {
+                option.classList.add('active');
+            }
+        });
+        
+        renderAllMembers();
+    }
+
     // Expose functions to global scope
     window.peopleTab = {
         openAddMemberModal: openAddMemberModal,
         togglePeopleSidebar: togglePeopleSidebar,
         closePeopleSidebar: closePeopleSidebar,
         addMember: addMember,
-        confirmRemoveMember: confirmRemoveMember
+        confirmRemoveMember: confirmRemoveMember,
+        switchPeopleTab: switchPeopleTab,
+        setPeopleFilter: setPeopleFilter
     };
 
     // Also expose directly for backward compatibility
@@ -580,6 +707,8 @@
     window.closePeopleSidebar = closePeopleSidebar;
     window.addMember = addMember;
     window.confirmRemoveMember = confirmRemoveMember;
+    window.switchPeopleTab = switchPeopleTab;
+    window.setPeopleFilter = setPeopleFilter;
 
     console.log('✅ People functions exposed to global scope');
 
