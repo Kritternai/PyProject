@@ -193,7 +193,7 @@
                     <textarea class="form-control" 
                               id="post-content" 
                               rows="6" 
-                              placeholder="Write your {{ 'post' if is_owner else 'question' }}..."
+                              placeholder="Write your {% if is_owner %}post{% else %}question{% endif %}..."
                               required></textarea>
                     <div class="form-text">
                         <i class="bi bi-info-circle me-1"></i>
@@ -242,6 +242,8 @@
     // Global variables
     const lessonId = window.location.pathname.split('/')[2];
     const isOwner = {{ 'true' if is_owner else 'false' }};
+    const currentUserId = '{{ current_user.id }}';
+    const currentUserName = '{{ current_user.name }}';
     
     let allPosts = [];
     let currentTab = 'all';
@@ -349,35 +351,35 @@
     }
 
     function createPostCard(post) {
-        const isAuthor = post.user_id === {{ g.user.id }};
+        const isAuthor = post.user_id === currentUserId;
         const canEdit = isAuthor || isOwner;
         const timeAgo = getTimeAgo(post.created_at);
         
         // Post type styling
         let typeBadge = '';
         if (post.type === 'announcement') {
-            typeBadge = '<span class="post-type-badge announcement"><i class="bi bi-megaphone-fill"></i> Announcement</span>';
+            typeBadge = `<span class="post-type-badge announcement"><i class="bi bi-megaphone-fill"></i> Announcement</span>`;
         } else if (post.type === 'question') {
-            typeBadge = '<span class="post-type-badge question"><i class="bi bi-question-circle-fill"></i> Question</span>';
+            typeBadge = `<span class="post-type-badge question"><i class="bi bi-question-circle-fill"></i> Question</span>`;
         } else if (post.type === 'activity') {
-            typeBadge = '<span class="post-type-badge activity"><i class="bi bi-clock-history"></i> Activity</span>';
+            typeBadge = `<span class="post-type-badge activity"><i class="bi bi-clock-history"></i> Activity</span>`;
         }
         
         // Role badge
         let roleBadge = '';
-        if (post.user_id === {{ g.user.id }}) {
-            roleBadge = '<span class="author-badge me">You</span>';
+        if (post.user_id === currentUserId) {
+            roleBadge = `<span class="author-badge me">You</span>`;
         } else if (isOwner && post.type !== 'activity') {
             // Show if post author is owner
-            roleBadge = '<span class="author-badge owner">Owner</span>';
+            roleBadge = `<span class="author-badge owner">Owner</span>`;
         }
         
         // Pin indicator
-        const pinIndicator = post.is_pinned ? '<span class="pin-indicator"><i class="bi bi-pin-angle-fill"></i> Pinned</span>' : '';
+        const pinIndicator = post.is_pinned ? `<span class="pin-indicator"><i class="bi bi-pin-angle-fill"></i> Pinned</span>` : '';
         
         // Accepted answer indicator
         const acceptedIndicator = post.has_accepted_answer && post.type === 'question' ? 
-            '<span class="accepted-indicator"><i class="bi bi-check-circle-fill"></i> Answered</span>' : '';
+            `<span class="accepted-indicator"><i class="bi bi-check-circle-fill"></i> Answered</span>` : '';
         
         return `
             <div class="post-card ${post.is_pinned ? 'pinned' : ''}" data-post-id="${post.id}">
@@ -455,7 +457,7 @@
                     
                     ${post.allow_comments ? `
                     <div class="comment-input-box">
-                        <div class="comment-avatar">${getAvatarHtml('{{ g.user.name }}')}</div>
+                        <div class="comment-avatar">${getAvatarHtml(currentUserName)}</div>
                         <input type="text" 
                                class="comment-input" 
                                id="comment-input-${post.id}"
@@ -728,7 +730,7 @@
     }
 
     function createCommentHtml(postId, comment) {
-        const isAuthor = comment.user_id === {{ g.user.id }};
+        const isAuthor = comment.user_id === currentUserId;
         const canDelete = isAuthor || isOwner;
         const timeAgo = getTimeAgo(comment.created_at);
         

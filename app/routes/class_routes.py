@@ -334,7 +334,24 @@ def partial_stream(lesson_id):
         if not is_owner and not member:
             return '<div class="alert alert-danger">You do not have permission to view this class.</div>', 403
         
-        return render_template('class_detail/_stream.html', lesson=lesson, is_owner=is_owner)
+        # Pass user info to template (as dict to avoid serialization issues)
+        user_name = g.user.username
+        if g.user.first_name and g.user.last_name:
+            user_name = f"{g.user.first_name} {g.user.last_name}"
+        elif g.user.first_name:
+            user_name = g.user.first_name
+        
+        user_data = {
+            'id': g.user.id,
+            'name': user_name,
+            'email': g.user.email,
+            'username': g.user.username
+        }
+        
+        return render_template('class_detail/_stream.html', 
+                             lesson=lesson, 
+                             is_owner=is_owner,
+                             current_user=user_data)
     except Exception as e:
         print(f"Error loading stream: {e}")
         import traceback
