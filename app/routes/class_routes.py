@@ -698,6 +698,205 @@ def remove_member(lesson_id, user_id):
 
 
 # ============================================
+# SETTINGS ROUTES
+# ============================================
+
+@class_bp.route('/partial/class/<lesson_id>/settings')
+@login_required_web
+def partial_settings(lesson_id):
+    """Settings fragment for a specific class"""
+    try:
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        if not lesson:
+            return jsonify({'error': 'Class not found'}), 404
+        
+        # Check permission
+        is_owner = lesson.user_id == g.user.id
+        if not is_owner:
+            # Check if user is a member
+            member = db.session.execute(
+                text("SELECT * FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+                {'lesson_id': lesson_id, 'user_id': g.user.id}
+            ).fetchone()
+            
+            if not member:
+                return jsonify({'error': 'Access denied'}), 403
+        
+        return render_template('class_detail/_settings.html', 
+                             lesson=lesson, 
+                             is_owner=is_owner)
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@class_bp.route('/api/class/<lesson_id>/settings', methods=['PUT'])
+@login_required_web
+def update_class_settings(lesson_id):
+    """Update class settings"""
+    try:
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        if not lesson:
+            return jsonify({'error': 'Class not found'}), 404
+        
+        # Only owner can update settings
+        if lesson.user_id != g.user.id:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        data = request.get_json()
+        
+        # Update lesson fields
+        if 'title' in data:
+            lesson.title = data['title'].strip()
+        if 'description' in data:
+            lesson.description = data['description'].strip()
+        if 'visibility' in data:
+            # Store visibility in lesson metadata or separate table
+            # For now, we'll skip this as it requires schema changes
+            pass
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Settings updated successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@class_bp.route('/api/class/<lesson_id>', methods=['DELETE'])
+@login_required_web
+def delete_class(lesson_id):
+    """Delete a class (owner only)"""
+    try:
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        if not lesson:
+            return jsonify({'error': 'Class not found'}), 404
+        
+        # Only owner can delete class
+        if lesson.user_id != g.user.id:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        # Delete all related data
+        # 1. Delete members
+        db.session.execute(
+            text("DELETE FROM member WHERE lesson_id = :lesson_id"),
+            {'lesson_id': lesson_id}
+        )
+        
+        # 2. Delete classwork tasks
+        db.session.execute(
+            text("DELETE FROM classwork_task WHERE lesson_id = :lesson_id"),
+            {'lesson_id': lesson_id}
+        )
+        
+        # 3. Delete classwork materials
+        db.session.execute(
+            text("DELETE FROM classwork_material WHERE lesson_id = :lesson_id"),
+            {'lesson_id': lesson_id}
+        )
+        
+        # 4. Delete grades (cascade should handle this, but let's be explicit)
+        db.session.execute(
+            text("DELETE FROM grade_entry WHERE lesson_id = :lesson_id"),
+            {'lesson_id': lesson_id}
+        )
+        db.session.execute(
+            text("DELETE FROM grade_item WHERE lesson_id = :lesson_id"),
+            {'lesson_id': lesson_id}
+        )
+        db.session.execute(
+            text("DELETE FROM grade_category WHERE lesson_id = :lesson_id"),
+            {'lesson_id': lesson_id}
+        )
+        db.session.execute(
+            text("DELETE FROM grade_config WHERE lesson_id = :lesson_id"),
+            {'lesson_id': lesson_id}
+        )
+        
+        # 5. Delete lesson itself
+        db.session.delete(lesson)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Class deleted successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@class_bp.route('/api/class/<lesson_id>/leave', methods=['POST'])
+@login_required_web
+def leave_class(lesson_id):
+    """Leave a class (viewers only)"""
+    try:
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        if not lesson:
+            return jsonify({'error': 'Class not found'}), 404
+        
+        # Owner cannot leave their own class
+        if lesson.user_id == g.user.id:
+            return jsonify({'error': 'Owner cannot leave their own class'}), 400
+        
+        # Check if user is a member
+        member = db.session.execute(
+            text("SELECT * FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
+        ).fetchone()
+        
+        if not member:
+            return jsonify({'error': 'You are not a member of this class'}), 400
+        
+        # Remove member
+        db.session.execute(
+            text("DELETE FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
+        )
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Successfully left the class'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+# ============================================
 # DEBUG ROUTES
 # ============================================
 
