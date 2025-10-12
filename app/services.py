@@ -212,8 +212,12 @@ class TaskService:
 class PomodoroSessionService:
     """Service layer for Pomodoro session management"""
 
-    def create_session(self, user_id: str, session_type: str, duration: int, task: Optional[str] = None):
-        """Create a new Pomodoro session"""
+    def create_session(self, user_id: str, session_type: str, duration: int, task: Optional[str] = None, 
+                    lesson_id: Optional[str] = None, section_id: Optional[str] = None,
+                    mood_before: Optional[str] = None, energy_level: Optional[int] = None,
+                    auto_start_next: bool = True, notification_enabled: bool = True,
+                    sound_enabled: bool = True):
+        """Create a new Pomodoro session with all optional parameters"""
         from app import db
         try:
             from app.models.pomodoro_session import PomodoroSessionModel
@@ -233,7 +237,17 @@ class PomodoroSessionService:
                 duration=duration,
                 start_time=datetime.utcnow(),
                 task=task,
-                status='active'
+                status='active',
+                lesson_id=lesson_id,
+                section_id=section_id,
+                mood_before=mood_before,
+                energy_level=energy_level,
+                auto_start_next=auto_start_next,
+                notification_enabled=notification_enabled,
+                sound_enabled=sound_enabled,
+                is_completed=False,
+                is_interrupted=False,
+                interruption_count=0
             )
 
             db.session.add(session)
@@ -256,7 +270,7 @@ class PomodoroSessionService:
         return PomodoroSessionModel.query.filter_by(user_id=user_id).all()
 
     def update_session(self, session_id: str, data: Dict):
-        """Update a session"""
+        """Update a session with all possible fields"""
         from app.models.pomodoro_session import PomodoroSessionModel
         from app.models.task import TaskModel
         from app import db
@@ -265,16 +279,52 @@ class PomodoroSessionService:
         if not session:
             return None
 
-        # Update allowed fields
+        # Update timing fields
         if 'actual_duration' in data:
             session.actual_duration = data['actual_duration']
         if 'end_time' in data:
             session.end_time = data['end_time']
+        
+        # Update status fields
         if 'status' in data:
             session.status = data['status']
+            if data['status'] == 'completed':
+                session.is_completed = True
+            elif data['status'] == 'interrupted':
+                session.is_interrupted = True
+        
+        # Update scoring and feedback
         if 'productivity_score' in data:
             session.productivity_score = data['productivity_score']
+        if 'mood_after' in data:
+            session.mood_after = data['mood_after']
+        if 'focus_score' in data:
+            session.focus_score = data['focus_score']
+        if 'difficulty_level' in data:
+            session.difficulty_level = data['difficulty_level']
+        if 'energy_level' in data:
+            session.energy_level = data['energy_level']
 
+        # Update interruption data
+        if 'interruption_count' in data:
+            session.interruption_count = data['interruption_count']
+        if 'interruption_reasons' in data:
+            session.interruption_reasons = data['interruption_reasons']
+
+        # Update settings
+        if 'auto_start_next' in data:
+            session.auto_start_next = data['auto_start_next']
+        if 'notification_enabled' in data:
+            session.notification_enabled = data['notification_enabled']
+        if 'sound_enabled' in data:
+            session.sound_enabled = data['sound_enabled']
+
+        # Update related entities
+        if 'lesson_id' in data:
+            session.lesson_id = data['lesson_id']
+        if 'section_id' in data:
+            session.section_id = data['section_id']
+        
         # Handle task update
         if 'task' in data:
             task_name = data['task']
@@ -291,8 +341,10 @@ class PomodoroSessionService:
                     db.session.flush()  # Flush to get the task ID
                 
                 session.task_id = task_obj.id
+                session.task = task_name
             else:
                 session.task_id = None
+                session.task = None
 
         db.session.commit()
         return session
@@ -323,8 +375,22 @@ class PomodoroSessionService:
         ).first()
 
     def interrupt_session(self, session_id: str):
-        """Mark a session as interrupted"""
-        return self.end_session(session_id, status='interrupted')
+        """Mark a session as interrupted and increment counter"""
+        session = self.get_session(session_id)
+        if not session:
+            return None
+
+        session.status = 'interrupted'
+        session.is_interrupted = True
+        session.interruption_count += 1
+        
+        session.end_time = datetime.utcnow()
+        if session.start_time:
+            session.actual_duration = int((session.end_time - session.start_time).total_seconds() / 60)
+
+        from app import db
+        db.session.commit()
+        return session
 
     def delete_session(self, session_id: str) -> bool:
         """Delete a session"""

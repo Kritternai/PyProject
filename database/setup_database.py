@@ -303,7 +303,10 @@ def create_complete_database_schema():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS pomodoro_session (
                 id TEXT PRIMARY KEY,                  -- UUID ของ session
-                user_id TEXT NOT NULL,                -- อ้างอิงผู้ใช้, ลบ user แล้ว session หายด้วย
+                user_id TEXT NOT NULL,                -- อ้างอิงผู้ใช้
+                lesson_id TEXT,                       -- อ้างอิงบทเรียน (ถ้ามี)
+                section_id TEXT,                      -- อ้างอิงส่วนของบทเรียน (ถ้ามี)
+                task_id TEXT,                         -- อ้างอิงงาน (ถ้ามี)
                 session_type TEXT NOT NULL,           -- ประเภท session: focus, short_break, long_break
                 duration INTEGER NOT NULL,            -- ระยะเวลาที่ตั้งไว้ (นาที)
                 actual_duration INTEGER,              -- ระยะเวลาที่ใช้จริง (นาที)
@@ -316,9 +319,20 @@ def create_complete_database_schema():
                 interruption_reasons TEXT,            -- เหตุผลที่ถูกขัดจังหวะ
                 productivity_score INTEGER,           -- คะแนนประสิทธิภาพของ session
                 task TEXT,                           -- งานที่ทำใน session นี้
+                auto_start_next BOOLEAN DEFAULT TRUE,  -- เริ่ม session ถัดไปอัตโนมัติ
+                notification_enabled BOOLEAN DEFAULT TRUE, -- เปิดการแจ้งเตือน
+                sound_enabled BOOLEAN DEFAULT TRUE,    -- เปิดเสียง
+                notes TEXT,                           -- โน้ตเพิ่มเติม
+                mood_before TEXT,                     -- อารมณ์ก่อนเริ่ม session
+                mood_after TEXT,                      -- อารมณ์หลังจบ session
+                focus_score INTEGER,                  -- คะแนนสมาธิ
+                energy_level INTEGER,                 -- ระดับพลังงาน
+                difficulty_level TEXT,                -- ระดับความยาก
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่สร้าง
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- เวลาที่อัพเดต
-                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE -- ลบ user แล้ว session หายด้วย
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE, -- ลบ user แล้ว session หายด้วย
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id) ON DELETE SET NULL, -- ลบบทเรียนแล้วให้เป็น NULL
+                FOREIGN KEY (task_id) REFERENCES task(id) ON DELETE SET NULL  -- ลบงานแล้วให้เป็น NULL
             )
         """)
 

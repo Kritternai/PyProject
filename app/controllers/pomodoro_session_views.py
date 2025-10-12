@@ -39,11 +39,19 @@ class PomodoroSessionViews:
                     'code': 'MISSING_FIELDS'
                 }), 400
 
+            # Create session with all available data
             session = self._session_service.create_session(
                 user_id=user_id,
                 session_type=data['session_type'],
                 duration=data['duration'],
-                task=data.get('task')
+                task=data.get('task'),
+                lesson_id=data.get('lesson_id'),
+                section_id=data.get('section_id'),
+                mood_before=data.get('mood_before'),
+                energy_level=data.get('energy_level'),
+                auto_start_next=data.get('auto_start_next', True),
+                notification_enabled=data.get('notification_enabled', True),
+                sound_enabled=data.get('sound_enabled', True)
             )
 
             return jsonify({
@@ -186,6 +194,7 @@ class PomodoroSessionViews:
                 return jsonify({'error': 'Unauthorized access'}), 403
 
             interrupted_session = self._session_service.interrupt_session(session_id)
+            
             return jsonify({
                 'success': True,
                 'session': interrupted_session.to_dict()

@@ -137,8 +137,7 @@ async function switchMode(mode) {
         status: 'interrupted',
         is_interrupted: true,
         actual_duration: Math.floor((state.totalTime - state.timeLeft) / 60),
-        interruption_count: 1,
-        interruption_reasons: 'Mode switched'
+        interruption_count: 1
       });
       state.currentSessionId = null;
     } catch (error) {
@@ -207,7 +206,13 @@ async function startTimer() {
       const response = await PomodoroAPI.createSession({
         session_type: sessionType,
         duration: Math.floor(state.totalTime / 60), // Convert seconds to minutes
-        task: state.currentTask ? state.currentTask.text : null
+        task: state.currentTask ? state.currentTask.text : null,
+        // Add additional data
+        mood_before: getMoodState(), // เพิ่มฟังก์ชันใหม่
+        energy_level: getEnergyLevel(), // เพิ่มฟังก์ชันใหม่
+        auto_start_next: state.settings.autoStartBreaks,
+        notification_enabled: true,
+        sound_enabled: state.settings.soundEnabled
       });
       
       if (response.success) {
@@ -250,11 +255,14 @@ async function timerComplete() {
     // End current Pomodoro session if exists
     if (state.currentSessionId) {
       try {
+        // Get session feedback from user before ending
+        const feedback = getSessionFeedback();
+        
         const response = await PomodoroAPI.endSession(state.currentSessionId, {
           status: 'completed',
           is_completed: true,
           actual_duration: state.settings.pomodoro,
-          productivity_score: 10 // สามารถปรับตามความเหมาะสม
+          ...feedback // Include all feedback data
         });
         state.currentSessionId = null;
       } catch (error) {
@@ -450,6 +458,29 @@ function playSound() {
   } catch (e) {
     console.error('Sound playback failed:', e);
   }
+}
+
+// ---------- Session Feedback ----------
+function getMoodState() {
+  // สามารถเพิ่ม UI ให้ผู้ใช้เลือกอารมณ์ได้
+  // ตัวอย่างค่าที่เป็นไปได้: 'energetic', 'focused', 'tired', 'distracted'
+  return document.querySelector('input[name="mood"]:checked')?.value || 'neutral';
+}
+
+function getEnergyLevel() {
+  // สามารถเพิ่ม UI ให้ผู้ใช้เลือกระดับพลังงานได้
+  // ค่าระหว่าง 1-10
+  return parseInt(document.querySelector('input[name="energy"]')?.value || '5');
+}
+
+function getSessionFeedback() {
+  return {
+    mood_after: getMoodState(),
+    focus_score: parseInt(document.querySelector('input[name="focus"]')?.value || '5'),
+    productivity_score: parseInt(document.querySelector('input[name="productivity"]')?.value || '5'),
+    energy_level: getEnergyLevel(),
+    difficulty_level: parseInt(document.querySelector('input[name="difficulty"]')?.value || '5')
+  };
 }
 
 // ---------- Initialize ----------
