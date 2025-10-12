@@ -6,6 +6,31 @@
 // Global variables
 window.currentEditingNoteId = null;
 
+// Save status updater
+window.updateEditorSaveStatus = function(status) {
+  const statusEl = document.getElementById('editorSaveStatus');
+  if (!statusEl) return;
+  
+  statusEl.className = `save-status ${status}`;
+  
+  const icons = {
+    unsaved: 'exclamation-circle',
+    saving: 'arrow-repeat',
+    saved: 'check-circle'
+  };
+  
+  const texts = {
+    unsaved: 'Unsaved changes',
+    saving: 'Saving...',
+    saved: 'All changes saved'
+  };
+  
+  statusEl.innerHTML = `
+    <i class="bi bi-${icons[status]}"></i>
+    <span>${texts[status]}</span>
+  `;
+};
+
 // Clear editor to create new note
 window.clearEditorForNew = function() {
   console.log('Clearing editor for new note...');
@@ -61,11 +86,26 @@ window.initializeNoteEditor = function() {
     editor.addEventListener('focus', window.updateToolbarStates);
     editor.addEventListener('input', window.updateToolbarStates);
     
+    // Add listener for content changes to update save status
+    editor.addEventListener('input', () => {
+      window.updateEditorSaveStatus('unsaved');
+    });
+    
     console.log('Editor event listeners attached');
   }
+  
+  // Also track title changes
+  const titleInput = document.getElementById('editorTitle');
+  if (titleInput) {
+    titleInput.addEventListener('input', () => {
+      window.updateEditorSaveStatus('unsaved');
+    });
+  }
 
-  // Search filter
-  setupEditorSearch();
+  // Search filter - delay to ensure DOM is ready
+  setTimeout(() => {
+    setupEditorSearch();
+  }, 100);
 
   // Setup Ctrl+S to save
   if (!window._noteEditorKeySaveAttached) {
@@ -73,6 +113,110 @@ window.initializeNoteEditor = function() {
     window._noteEditorKeySaveAttached = true;
     console.log('Keyboard shortcut attached');
   }
+  
+  // Setup file upload handler
+  setupEditorFileUpload();
+};
+
+// File upload handler for editor
+window.setupEditorFileUpload = function() {
+  const fileInput = document.getElementById('editorFileInput');
+  const previewContainer = document.getElementById('editorFilePreviewContainer');
+  
+  if (!fileInput || !previewContainer) return;
+  
+  let selectedFiles = [];
+  
+  fileInput.addEventListener('change', function(e) {
+    const files = Array.from(e.target.files || []);
+    selectedFiles = selectedFiles.concat(files);
+    renderEditorFilePreview();
+  });
+  
+  function renderEditorFilePreview() {
+    if (selectedFiles.length === 0) {
+      previewContainer.innerHTML = '';
+      return;
+    }
+    
+    previewContainer.innerHTML = '';
+    
+    selectedFiles.forEach((file, index) => {
+      const fileItem = document.createElement('div');
+      fileItem.className = 'file-preview-item';
+      
+      // Determine file type
+      const ext = file.name.split('.').pop().toLowerCase();
+      let fileType = 'document';
+      let iconClass = 'bi-file-earmark';
+      
+      if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+        fileType = 'image';
+        iconClass = 'bi-file-image';
+      } else if (ext === 'pdf') {
+        fileType = 'pdf';
+        iconClass = 'bi-file-pdf';
+      }
+      
+      fileItem.innerHTML = `
+        <div class="d-flex align-items-center flex-grow-1">
+          <div class="file-icon ${fileType}">
+            <i class="bi ${iconClass}"></i>
+          </div>
+          <div>
+            <div class="fw-semibold">${file.name}</div>
+            <div class="small text-muted">${(file.size / 1024).toFixed(1)} KB</div>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-outline-danger btn-rounded-25" onclick="window.removeEditorFile(${index})">
+          <i class="bi bi-x"></i>
+        </button>
+      `;
+      
+      previewContainer.appendChild(fileItem);
+      
+      // Show PDF preview if PDF file
+      if (ext === 'pdf') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const pdfPreview = document.createElement('div');
+          pdfPreview.className = 'pdf-preview-container';
+          pdfPreview.innerHTML = `
+            <div class="mb-2 d-flex justify-content-between align-items-center">
+              <strong>PDF Preview:</strong>
+              <button class="btn btn-sm btn-outline-secondary btn-rounded-25" onclick="this.parentElement.parentElement.remove()">
+                <i class="bi bi-x"></i>Close Preview
+              </button>
+            </div>
+            <iframe src="${e.target.result}"></iframe>
+          `;
+          previewContainer.appendChild(pdfPreview);
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      // Show image preview
+      if (fileType === 'image') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imgPreview = document.createElement('div');
+          imgPreview.className = 'mt-2 mb-2';
+          imgPreview.innerHTML = `<img src="${e.target.result}" class="img-fluid" style="max-height: 200px; border-radius: 12px; box-shadow: var(--note-shadow);" alt="Preview">`;
+          fileItem.appendChild(imgPreview);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+  
+  window.removeEditorFile = function(index) {
+    selectedFiles.splice(index, 1);
+    renderEditorFilePreview();
+  };
+  
+  window.getEditorSelectedFiles = function() {
+    return selectedFiles;
+  };
 };
 
 // Setup editor search functionality
@@ -372,8 +516,23 @@ window.loadEditorNote = function(noteId){
         if (titleInput) titleInput.value = j.data.title || '';
         if (contentEditor) contentEditor.innerHTML = j.data.content || '';
         
+        // Load status and tags if available
+        const statusSelect = document.getElementById('editorNoteStatus');
+        const tagsInput = document.getElementById('editorNoteTags');
+        if (statusSelect && j.data.status) statusSelect.value = j.data.status;
+        if (tagsInput && j.data.tags) {
+          tagsInput.value = Array.isArray(j.data.tags) ? j.data.tags.join(', ') : j.data.tags;
+        }
+        
+        // Load existing files if available
+        if (j.data.files && Array.isArray(j.data.files)) {
+          console.log('Loading existing files:', j.data.files);
+          window.loadExistingFiles(j.data.files);
+        }
+        
         if (status) status.textContent = 'Loaded';
         window.currentEditingNoteId = j.data.id;
+        window.updateEditorSaveStatus('saved');
         
         // Highlight active note in list
         document.querySelectorAll('#editorNotesList .note-row').forEach(row => {
@@ -425,14 +584,29 @@ window.saveEditorNote = function(){
     return;
   }
   
+  // Get status and tags
+  const statusSelect = document.getElementById('editorNoteStatus');
+  const tagsInput = document.getElementById('editorNoteTags');
+  const status_value = statusSelect?.value || 'pending';
+  const tags = tagsInput?.value || '';
+  
   const form = new FormData(); 
   form.append('title', title); 
   form.append('content', content);
+  form.append('status', status_value);
+  if (tags) form.append('tags', tags);
+  
+  // Append files if any
+  const files = window.getEditorSelectedFiles ? window.getEditorSelectedFiles() : [];
+  files.forEach((file, index) => {
+    form.append(`files[${index}]`, file);
+  });
   
   if (!id) {
     // Create new note
     console.log('Creating new note...');
     if (status) status.textContent = 'Creating...';
+    window.updateEditorSaveStatus('saving');
     
     fetch('/partial/note/add', { 
       method: 'POST', 
@@ -444,6 +618,7 @@ window.saveEditorNote = function(){
         console.log('Create response:', j);
         if (j && j.success){ 
           if (status) status.textContent = 'Saved'; 
+          window.updateEditorSaveStatus('saved');
           if (j.note_id){ 
             window.currentEditingNoteId = j.note_id; 
             console.log('Note created with ID:', j.note_id);
@@ -457,16 +632,19 @@ window.saveEditorNote = function(){
         } else { 
           console.error('Save failed:', j);
           if (status) status.textContent = j.message || 'Save failed'; 
+          window.updateEditorSaveStatus('unsaved');
         } 
       })
       .catch((err)=>{ 
         console.error('Save error:', err);
         if (status) status.textContent = 'Save error'; 
+        window.updateEditorSaveStatus('unsaved');
       });
   } else {
     // Update existing note
     console.log('Updating note:', id);
     if (status) status.textContent = 'Saving...';
+    window.updateEditorSaveStatus('saving');
     
     fetch(`/partial/note/${id}/edit`, { 
       method:'POST', 
@@ -478,18 +656,126 @@ window.saveEditorNote = function(){
         console.log('Update response:', j);
         if (j && j.success){ 
           if (status) status.textContent = 'Saved'; 
+          window.updateEditorSaveStatus('saved');
           console.log('Note updated successfully');
         } else { 
           console.error('Update failed:', j);
           if (status) status.textContent = j.message || 'Save failed'; 
+          window.updateEditorSaveStatus('unsaved');
         } 
       })
       .catch((err)=>{ 
         console.error('Update error:', err);
         if (status) status.textContent = 'Save error'; 
+        window.updateEditorSaveStatus('unsaved');
       });
   }
 };
+
+// Load existing files for editing
+window.loadExistingFiles = function(files) {
+  console.log('Loading existing files:', files);
+  
+  const container = document.getElementById('editorFilePreviewContainer');
+  if (!container) {
+    console.error('File preview container not found');
+    return;
+  }
+  
+  // Clear existing previews
+  container.innerHTML = '';
+  
+  files.forEach(file => {
+    if (file && file.file_path) {
+      const fileElement = createFilePreviewElement(file);
+      if (fileElement) {
+        container.appendChild(fileElement);
+      }
+    }
+  });
+  
+  console.log('Existing files loaded:', files.length);
+};
+
+// Create file preview element
+function createFilePreviewElement(file) {
+  const div = document.createElement('div');
+  div.className = 'file-preview-item';
+  
+  // Create file icon based on type
+  const icon = document.createElement('div');
+  icon.className = `file-icon ${file.file_type || 'document'}`;
+  
+  // Create file info
+  const info = document.createElement('div');
+  info.className = 'file-info';
+  
+  const name = document.createElement('div');
+  name.className = 'file-name';
+  name.textContent = file.filename || 'Unknown file';
+  
+  const size = document.createElement('div');
+  size.className = 'file-size';
+  if (file.size) {
+    size.textContent = formatFileSize(file.size);
+  }
+  
+  info.appendChild(name);
+  info.appendChild(size);
+  
+  // Create preview based on file type
+  const preview = document.createElement('div');
+  preview.className = 'file-preview';
+  
+  if (file.file_type === 'image') {
+    const img = document.createElement('img');
+    img.src = `/static/${file.file_path}`;
+    img.alt = file.filename;
+    img.style.maxWidth = '100px';
+    img.style.maxHeight = '100px';
+    img.style.objectFit = 'cover';
+    preview.appendChild(img);
+  } else if (file.file_type === 'pdf') {
+    const iframe = document.createElement('iframe');
+    iframe.src = `/static/${file.file_path}`;
+    iframe.style.width = '100px';
+    iframe.style.height = '100px';
+    iframe.style.border = '1px solid #ddd';
+    preview.appendChild(iframe);
+  } else {
+    // Generic document icon
+    const docIcon = document.createElement('div');
+    docIcon.className = 'document-icon';
+    docIcon.innerHTML = '📄';
+    docIcon.style.fontSize = '24px';
+    preview.appendChild(docIcon);
+  }
+  
+  // Create remove button
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'btn btn-sm btn-outline-danger remove-file';
+  removeBtn.innerHTML = '×';
+  removeBtn.title = 'Remove file';
+  removeBtn.onclick = () => {
+    div.remove();
+  };
+  
+  div.appendChild(icon);
+  div.appendChild(info);
+  div.appendChild(preview);
+  div.appendChild(removeBtn);
+  
+  return div;
+}
+
+// Format file size
+function formatFileSize(bytes) {
+  if (!bytes) return '';
+  
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+}
 
 // Initialize when script loads
 console.log('note_editor.js loaded - Functions defined:', {
@@ -497,7 +783,8 @@ console.log('note_editor.js loaded - Functions defined:', {
   saveEditorNote: typeof window.saveEditorNote,
   formatText: typeof window.formatText,
   insertImage: typeof window.insertImage,
-  initializeNoteEditor: typeof window.initializeNoteEditor
+  initializeNoteEditor: typeof window.initializeNoteEditor,
+  loadExistingFiles: typeof window.loadExistingFiles
 });
 
 // Auto-initialize if page is ready

@@ -5,6 +5,31 @@
 
 // app/static/js/note_js
 
+// Save status updater
+window.updateAddSaveStatus = function(status) {
+  const statusEl = document.getElementById('addSaveStatus');
+  if (!statusEl) return;
+  
+  statusEl.className = `save-status ${status}`;
+  
+  const icons = {
+    unsaved: 'exclamation-circle',
+    saving: 'arrow-repeat',
+    saved: 'check-circle'
+  };
+  
+  const texts = {
+    unsaved: 'Unsaved changes',
+    saving: 'Saving...',
+    saved: 'All changes saved'
+  };
+  
+  statusEl.innerHTML = `
+    <i class="bi bi-${icons[status]}"></i>
+    <span>${texts[status]}</span>
+  `;
+};
+
 // Define all functions globally first
 window.initializeNoteAdd = function() {
   console.log('Initializing note add page...');
@@ -24,12 +49,24 @@ window.initializeNoteAdd = function() {
     editor.addEventListener('focus', window.updateToolbarStates);
     editor.addEventListener('input', window.updateToolbarStates);
     
+    // Add listener for content changes to update save status
+    editor.addEventListener('input', () => {
+      window.updateAddSaveStatus('unsaved');
+    });
+    
     console.log('Editor event listeners attached');
+  }
+  
+  // Also track title changes
+  const titleInput = document.getElementById('addTitle');
+  if (titleInput) {
+    titleInput.addEventListener('input', () => {
+      window.updateAddSaveStatus('unsaved');
+    });
   }
 
   // Focus on editor when loaded
   setTimeout(() => {
-    const titleInput = document.getElementById('addTitle');
     if (titleInput) {
       titleInput.focus();
       console.log('Title input focused');
@@ -42,6 +79,110 @@ window.initializeNoteAdd = function() {
     window._noteAddKeySaveAttached = true;
     console.log('Keyboard shortcut attached');
   }
+  
+  // Setup file upload handler
+  setupAddFileUpload();
+};
+
+// File upload handler
+window.setupAddFileUpload = function() {
+  const fileInput = document.getElementById('addFileInput');
+  const previewContainer = document.getElementById('addFilePreviewContainer');
+  
+  if (!fileInput || !previewContainer) return;
+  
+  let selectedFiles = [];
+  
+  fileInput.addEventListener('change', function(e) {
+    const files = Array.from(e.target.files || []);
+    selectedFiles = selectedFiles.concat(files);
+    renderFilePreview();
+  });
+  
+  function renderFilePreview() {
+    if (selectedFiles.length === 0) {
+      previewContainer.innerHTML = '';
+      return;
+    }
+    
+    previewContainer.innerHTML = '';
+    
+    selectedFiles.forEach((file, index) => {
+      const fileItem = document.createElement('div');
+      fileItem.className = 'file-preview-item';
+      
+      // Determine file type
+      const ext = file.name.split('.').pop().toLowerCase();
+      let fileType = 'document';
+      let iconClass = 'bi-file-earmark';
+      
+      if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+        fileType = 'image';
+        iconClass = 'bi-file-image';
+      } else if (ext === 'pdf') {
+        fileType = 'pdf';
+        iconClass = 'bi-file-pdf';
+      }
+      
+      fileItem.innerHTML = `
+        <div class="d-flex align-items-center flex-grow-1">
+          <div class="file-icon ${fileType}">
+            <i class="bi ${iconClass}"></i>
+          </div>
+          <div>
+            <div class="fw-semibold">${file.name}</div>
+            <div class="small text-muted">${(file.size / 1024).toFixed(1)} KB</div>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-outline-danger btn-rounded-25" onclick="window.removeAddFile(${index})">
+          <i class="bi bi-x"></i>
+        </button>
+      `;
+      
+      previewContainer.appendChild(fileItem);
+      
+      // Show PDF preview if PDF file
+      if (ext === 'pdf') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const pdfPreview = document.createElement('div');
+          pdfPreview.className = 'pdf-preview-container';
+          pdfPreview.innerHTML = `
+            <div class="mb-2 d-flex justify-content-between align-items-center">
+              <strong>PDF Preview:</strong>
+              <button class="btn btn-sm btn-outline-secondary btn-rounded-25" onclick="this.parentElement.parentElement.remove()">
+                <i class="bi bi-x"></i>Close Preview
+              </button>
+            </div>
+            <iframe src="${e.target.result}"></iframe>
+          `;
+          previewContainer.appendChild(pdfPreview);
+        };
+        reader.readAsDataURL(file);
+      }
+      
+      // Show image preview
+      if (fileType === 'image') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imgPreview = document.createElement('div');
+          imgPreview.className = 'mt-2 mb-2';
+          imgPreview.innerHTML = `<img src="${e.target.result}" class="img-fluid" style="max-height: 200px; border-radius: 12px; box-shadow: var(--note-shadow);" alt="Preview">`;
+          fileItem.appendChild(imgPreview);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+  
+  window.removeAddFile = function(index) {
+    selectedFiles.splice(index, 1);
+    renderFilePreview();
+  };
+  
+  window.getAddSelectedFiles = function() {
+    return selectedFiles;
+  };
 };
 
 // Named function for keyboard shortcut
@@ -253,11 +394,26 @@ window.saveNewNote = function() {
   }
   
   if (status) status.textContent = 'Saving...';
+  window.updateAddSaveStatus('saving');
+  
+  // Get status and tags
+  const statusSelect = document.getElementById('addNoteStatus');
+  const tagsInput = document.getElementById('addNoteTags');
+  const status_value = statusSelect?.value || 'pending';
+  const tags = tagsInput?.value || '';
   
   // Prepare form data
   const form = new FormData(); 
   form.append('title', title); 
   form.append('content', content);
+  form.append('status', status_value);
+  if (tags) form.append('tags', tags);
+  
+  // Append files if any
+  const files = window.getAddSelectedFiles ? window.getAddSelectedFiles() : [];
+  files.forEach((file, index) => {
+    form.append(`files[${index}]`, file);
+  });
   
   console.log('FormData prepared:', {
     title: form.get('title'),
@@ -285,6 +441,7 @@ window.saveNewNote = function() {
     
     if (j && j.success) { 
       if (status) status.textContent = 'Saved successfully!'; 
+      window.updateAddSaveStatus('saved');
       
       // Auto redirect back to note list after successful save
       setTimeout(() => {
@@ -300,12 +457,14 @@ window.saveNewNote = function() {
       const errorMsg = j?.message || 'Save failed';
       console.error('Save failed:', errorMsg);
       if (status) status.textContent = errorMsg; 
+      window.updateAddSaveStatus('unsaved');
       alert(errorMsg);
     } 
   })
   .catch(err => { 
     console.error('Save error:', err);
     if (status) status.textContent = 'Save error'; 
+    window.updateAddSaveStatus('unsaved');
     alert('An error occurred while saving. Please check console for details.');
   });
 };

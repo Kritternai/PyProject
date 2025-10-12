@@ -1,10 +1,11 @@
 <!-- Load shared note styles -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/note_shared.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/tag_badges.css') }}">
 
 <div class="container-fluid ng-font note-section-top-0" id="note-add-page" style="padding-left: 1.5rem; padding-right: 1.5rem; max-width: 1200px; margin: 0 auto;">
   <div class="px-4 pt-2 pb-2 note-header d-flex align-items-center justify-content-between border-bottom note-header-top-0">
     <div class="gap-2 d-flex align-items-center">
-      <button class="ng-btn ng-btn-sm" onclick="loadPage('note')" aria-label="Back to notes">
+      <button class="ng-btn ng-btn-sm btn-rounded-25" onclick="loadPage('note')" aria-label="Back to notes">
         <i class="bi bi-arrow-left"></i>
       </button>
       <div class="d-flex align-items-center">
@@ -15,37 +16,41 @@
         </div>
       </div>
     </div>
-    <div class="gap-2 d-flex align-items-center">
-      <button class="ng-btn ng-btn-sm" onclick="clearNote()" title="Clear all">
-        <i class="bi bi-x-circle"></i>Clear
-      </button>
-      <button class="ng-btn-save" onclick="saveNewNote()">
-        <i class="bi bi-save"></i>Save Note
-      </button>
-    </div>
   </div>
 
   <!-- Main Content Area -->
   <div class="bg-white d-flex flex-column ng-space" style="margin-left: 0.5rem; margin-right: 0.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
     <!-- Title Input Section -->
-    <div class="gap-3 p-4 border-bottom d-flex align-items-center ui-surface glass-panel" style="border-radius: 12px 12px 0 0;">
-      <div class="w-100">
-        <label class="mb-2 form-label section-title"><i class="bi bi-type"></i>Title</label>
-        <input type="text" 
-               class="form-control form-control-lg ng-input" 
-               id="addTitle" 
-               name="title" 
-               placeholder="Enter note title..." 
-               maxlength="200" 
-               required>
-      </div>
-      <div class="gap-2 d-flex align-items-end">
-        <button class="ng-chip" onclick="clearNote()" title="Clear All" aria-label="Clear All">
-          <i class="bi bi-eraser"></i>
-        </button>
-        <button class="ng-btn-save" onclick="saveNewNote()">
-          <i class="bi bi-save"></i>Save
-        </button>
+    <div class="p-4 border-bottom ui-surface glass-panel" style="border-radius: 12px 12px 0 0;">
+      <label class="mb-2 form-label section-title"><i class="bi bi-type"></i>Title</label>
+      <input type="text" 
+             class="form-control form-control-lg ng-input" 
+             id="addTitle" 
+             name="title" 
+             placeholder="Enter note title..." 
+             maxlength="200" 
+             required>
+      
+      <!-- Status and Tags Section -->
+      <div class="row mt-3 g-3">
+        <div class="col-md-6">
+          <label class="mb-2 form-label section-title"><i class="bi bi-ui-checks-grid"></i>Status</label>
+          <select class="form-select ng-input" id="addNoteStatus" name="status">
+            <option value="pending">Pending</option>
+            <option value="in-progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="mb-2 form-label section-title"><i class="bi bi-tags"></i>Tags</label>
+          <input type="text" 
+                 class="form-control ng-input" 
+                 id="addNoteTags" 
+                 name="tags" 
+                 placeholder="e.g. work, study, important" 
+                 maxlength="100">
+          <div class="form-text small">Separate tags with commas</div>
+        </div>
       </div>
     </div>
     
@@ -109,16 +114,44 @@
     <!-- Editor Content -->
     <div id="addContent" class="p-5 mx-4 mb-3 overflow-auto flex-grow-1 editor-card glass-panel" contenteditable="true" style="outline:none; border-radius: 8px; min-height: 400px;"
          aria-label="Note content editor" role="textbox" data-placeholder="Start writing your note here...">
-      <em class="text-muted">Start writing your note here...</em>
+      <em class="text-muted"></em>
+    </div>
+    
+    <!-- File Upload Section -->
+    <div class="p-4 mx-4 mb-3 border-top border-bottom ui-surface glass-panel">
+      <label class="mb-2 form-label section-title"><i class="bi bi-paperclip"></i>Attachments</label>
+      <div class="file-upload-section" onclick="document.getElementById('addFileInput').click()">
+        <i class="bi bi-cloud-upload note-icon-xl mb-2 d-block"></i>
+        <p class="mb-2"><strong>Click to upload</strong> or drag and drop</p>
+        <p class="small text-muted mb-0">PDF, DOC, DOCX, JPG, PNG, GIF (Max 10MB)</p>
+      </div>
+      <input type="file" id="addFileInput" class="d-none" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif" multiple>
+      <div id="addFilePreviewContainer" class="mt-3"></div>
+    </div>
+    
+    <!-- Action Buttons Section -->
+    <div class="p-3 mx-4 mb-3 d-flex justify-content-between align-items-center glass-section">
+      <button class="ng-btn ng-btn-sm btn-rounded-25" onclick="clearNote()" title="Clear all">
+        <i class="bi bi-x-circle"></i>Clear
+      </button>
+      <button class="ng-btn-save btn-rounded-25" onclick="saveNewNote()">
+        <i class="bi bi-save"></i>Save Note
+      </button>
     </div>
     
     <!-- Status Bar -->
-    <div class="p-3 mx-4 mb-4 border-top small text-muted d-flex justify-content-between glass-section ng-glass ng-rounded" style="border-radius: 0 0 12px 12px;">
-      <span id="addStatus" aria-live="polite">Ready to write</span>
+    <div class="p-3 mx-4 mb-4 border-top small text-muted d-flex justify-content-between align-items-center glass-section ng-glass ng-rounded" style="border-radius: 0 0 12px 12px;">
+      <div class="save-status unsaved" id="addSaveStatus">
+        <i class="bi bi-exclamation-circle"></i>
+        <span>Unsaved changes</span>
+      </div>
       <span class="ng-body">Ctrl+S to save</span>
     </div>
   </div>
 </div>
+
+<!-- Script loaded dynamically via main.js for SPA compatibility -->
+<!-- See: app/static/js/note_js/note_add.js -->
 
 <script>
 // Fallback initialization for non-SPA mode
@@ -142,175 +175,4 @@
     }
   }
 })();
-
-// Initialize editor functionality (similar to note_editor)
-document.addEventListener('DOMContentLoaded', function() {
-  if (typeof initializeNoteAdd === 'function') {
-    initializeNoteAdd();
-  }
-});
-
-function initializeNoteAdd() {
-  // Setup editor placeholder
-  const editor = getAddEditor();
-  if (editor) {
-    editor.addEventListener('focus', function() {
-      if (this.innerHTML.includes('text-muted')) {
-        this.innerHTML = '';
-      }
-    });
-    
-    editor.addEventListener('blur', function() {
-      if (this.textContent.trim() === '' || this.innerHTML.trim() === '') {
-        this.innerHTML = '<em class="text-muted">Start writing your note here...</em>';
-      }
-    });
-    
-    // Setup toolbar state tracking
-    editor.addEventListener('mouseup', updateAddToolbarStates);
-    editor.addEventListener('keyup', updateAddToolbarStates);
-    editor.addEventListener('focus', updateAddToolbarStates);
-    editor.addEventListener('input', updateAddToolbarStates);
-  }
-
-  // Ctrl+S to save
-  document.addEventListener('keydown', function(e){
-    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-      e.preventDefault();
-      saveNewNote();
-    }
-  });
-}
-
-function getAddEditor() { 
-  return document.getElementById('addContent'); 
-}
-
-function execAddCommand(command, value = null) {
-  const editor = getAddEditor(); 
-  if (!editor) return false;
-  editor.focus();
-  const result = document.execCommand(command, false, value);
-  setTimeout(updateAddToolbarStates, 10);
-  return result;
-}
-
-function updateAddToolbarStates() {
-  const toolbar = document.querySelector('.editor-toolbar'); 
-  if (!toolbar) return;
-  const commandMap = { 
-    bold: "formatText('bold')", 
-    italic: "formatText('italic')", 
-    underline: "formatText('underline')", 
-    strikeThrough: "formatText('strikeThrough')" 
-  };
-  Object.keys(commandMap).forEach(cmd => {
-    try {
-      const isActive = document.queryCommandState(cmd);
-      const button = toolbar.querySelector(`[onclick="${commandMap[cmd]}"]`);
-      if (button) button.classList.toggle('active', isActive);
-    } catch(_) {}
-  });
-}
-
-function addClickFeedback(buttonSelector) {
-  const button = document.querySelector(buttonSelector);
-  if (button) {
-    button.style.transform = 'scale(0.96)';
-    button.style.transition = 'transform 0.12s ease';
-    setTimeout(() => { button.style.transform = ''; }, 100);
-  }
-}
-
-// Formatting functions
-function formatText(command) { 
-  addClickFeedback(`[onclick="formatText('${command}')"]`); 
-  execAddCommand(command); 
-}
-
-function insertList(type) { 
-  addClickFeedback(`[onclick="insertList('${type}')"]`); 
-  execAddCommand(type === 'ul' ? 'insertUnorderedList' : 'insertOrderedList'); 
-}
-
-function alignText(alignment) { 
-  addClickFeedback(`[onclick="alignText('${alignment}')"]`); 
-  execAddCommand(alignment); 
-}
-
-function insertImage() {
-  addClickFeedback('[onclick="insertImage()"]');
-  const fileInput = document.createElement('input'); 
-  fileInput.type = 'file'; 
-  fileInput.accept = 'image/*';
-  fileInput.onchange = function(){
-    const file = fileInput.files?.[0]; 
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(){ 
-      execAddCommand('insertHTML', `<img src="${reader.result}" style="max-width:100%;height:auto;border-radius:12px" alt="Image">`); 
-      const status = document.getElementById('addStatus'); 
-      if (status) status.textContent = 'Image inserted'; 
-    };
-    reader.readAsDataURL(file);
-  };
-  fileInput.click();
-}
-
-function insertLink() {
-  addClickFeedback('[onclick="insertLink()"]');
-  const url = prompt('Enter URL:');
-  if (url) {
-    const text = prompt('Enter link text:', url);
-    execAddCommand('insertHTML', `<a href="${url}" target="_blank">${text || url}</a>`);
-  }
-}
-
-function insertTable() {
-  addClickFeedback('[onclick="insertTable()"]');
-  const rows = prompt('Number of rows:', '3');
-  const cols = prompt('Number of columns:', '3');
-  if (rows && cols) {
-    let table = '<table class="table table-bordered"><tbody>';
-    for (let i = 0; i < parseInt(rows); i++) {
-      table += '<tr>';
-      for (let j = 0; j < parseInt(cols); j++) {
-        table += '<td>&nbsp;</td>';
-      }
-      table += '</tr>';
-    }
-    table += '</tbody></table>';
-    execAddCommand('insertHTML', table);
-  }
-}
-
-function undoAction() {
-  addClickFeedback('[onclick="undoAction()"]');
-  execAddCommand('undo');
-}
-
-function redoAction() {
-  addClickFeedback('[onclick="redoAction()"]');
-  execAddCommand('redo');
-}
-
-function clearNoteContent() {
-  const editor = getAddEditor();
-  if (editor) {
-    editor.innerHTML = '<em class="text-muted">Start writing your note here...</em>';
-    editor.focus();
-  }
-}
-
-function clearNote() {
-  // Clear all form fields
-  document.getElementById('addTitle').value = '';
-  document.getElementById('addContent').innerHTML = '<em class="text-muted">Start writing your note here...</em>';
-  document.getElementById('addStatus').textContent = 'Ready to write';
-  
-  // Focus on title input after clearing
-  setTimeout(() => {
-    document.getElementById('addTitle').focus();
-  }, 100);
-}
 </script>

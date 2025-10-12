@@ -56,7 +56,7 @@ def notes_page():
 
 @note_web_bp.route('/partial/note')
 def partial_note():
-    """Note fragment"""
+    """Note fragment with backend-calculated statistics"""
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
     
@@ -64,14 +64,33 @@ def partial_note():
         note_service = NoteService()
         notes = note_service.get_user_notes(g.user.id)
         notes = _enrich_notes_with_status_and_files(notes)
+        
+        # Calculate statistics in Python (backend)
         stats = {
-            'completed': sum(1 for n in notes if hasattr(n, 'status') and n.status == 'completed'),
-            'images': 0,  # Can be enhanced later
-            'docs': 0     # Can be enhanced later
+            'total': len(notes),
+            'completed': 0,
+            'images': 0,
+            'docs': 0
         }
+        
+        # Count statistics
+        for note in notes:
+            # Count completed notes
+            if hasattr(note, 'status') and note.status == 'completed':
+                stats['completed'] += 1
+            
+            # Count images and documents
+            if hasattr(note, 'files') and note.files:
+                for file in note.files:
+                    if file and hasattr(file, 'file_type'):
+                        if file.file_type == 'image':
+                            stats['images'] += 1
+                        elif file.file_type in ['document', 'pdf']:
+                            stats['docs'] += 1
+        
         return render_template('note_fragment.html', notes=notes, stats=stats, user=g.user)
     except Exception as e:
-        return render_template('note_fragment.html', notes=[], stats={'completed': 0, 'images': 0, 'docs': 0}, user=g.user)
+        return render_template('note_fragment.html', notes=[], stats={'total': 0, 'completed': 0, 'images': 0, 'docs': 0}, user=g.user)
 
 
 # ============================================
@@ -144,15 +163,37 @@ def partial_note_add():
             user_id=g.user.id,
             title=title,
             content=content,
-            lesson_id=None  # Standalone note (not linked to any lesson/class)
+            lesson_id=None,  # Standalone note (not linked to any lesson/class)
+            status=status,
+            tags=tags,
+            note_type=note_type,
+            is_public=is_public,
+            external_link=external_link
         )
 
-        # Handle file uploads (image/file)
+        # Handle file uploads (multiple files from new UI)
         try:
-            uploaded_image = request.files.get('image')
-            uploaded_file = request.files.get('file')
-            _save_note_uploads(note.id, uploaded_image, uploaded_file, g.user.id)
-        except Exception:
+            # Handle new file upload format (files[0], files[1], etc.)
+            uploaded_files = []
+            for key in request.files:
+                if key.startswith('files['):
+                    uploaded_files.append(request.files[key])
+            
+            # Fallback to old format (image, file)
+            if not uploaded_files:
+                uploaded_image = request.files.get('image')
+                uploaded_file = request.files.get('file')
+                if uploaded_image:
+                    uploaded_files.append(uploaded_image)
+                if uploaded_file:
+                    uploaded_files.append(uploaded_file)
+            
+            # Save all uploaded files
+            for file in uploaded_files:
+                _save_single_file(note.id, file, g.user.id)
+                
+        except Exception as e:
+            print(f"File upload error: {e}")
             db.session.rollback()
 
         # If AJAX request, return JSON
@@ -160,7 +201,28 @@ def partial_note_add():
             # Return updated HTML
             notes = note_service.get_user_notes(g.user.id)
             notes = _enrich_notes_with_status_and_files(notes)
-            html = render_template('note_fragment.html', notes=notes, user=g.user)
+            
+            # Calculate statistics for the returned HTML
+            stats = {
+                'total': len(notes),
+                'completed': 0,
+                'images': 0,
+                'docs': 0
+            }
+            
+            # Count statistics
+            for note in notes:
+                if hasattr(note, 'status') and note.status == 'completed':
+                    stats['completed'] += 1
+                if hasattr(note, 'files') and note.files:
+                    for file in note.files:
+                        if file and hasattr(file, 'file_type'):
+                            if file.file_type == 'image':
+                                stats['images'] += 1
+                            elif file.file_type in ['document', 'pdf']:
+                                stats['docs'] += 1
+            
+            html = render_template('note_fragment.html', notes=notes, stats=stats, user=g.user)
             return jsonify(success=True, html=html)
 
         # Non-AJAX fallback: redirect
@@ -185,7 +247,28 @@ def partial_note_delete(note_id):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             notes = note_service.get_user_notes(g.user.id)
             notes = _enrich_notes_with_status_and_files(notes)
-            return render_template('note_fragment.html', notes=notes, user=g.user)
+            
+            # Calculate statistics for the returned HTML
+            stats = {
+                'total': len(notes),
+                'completed': 0,
+                'images': 0,
+                'docs': 0
+            }
+            
+            # Count statistics
+            for note in notes:
+                if hasattr(note, 'status') and note.status == 'completed':
+                    stats['completed'] += 1
+                if hasattr(note, 'files') and note.files:
+                    for file in note.files:
+                        if file and hasattr(file, 'file_type'):
+                            if file.file_type == 'image':
+                                stats['images'] += 1
+                            elif file.file_type in ['document', 'pdf']:
+                                stats['docs'] += 1
+            
+            return render_template('note_fragment.html', notes=notes, stats=stats, user=g.user)
         return redirect(url_for('note_web.notes_page'))
     except Exception as e:
         return jsonify(success=False, message=str(e)), 500
@@ -229,10 +312,27 @@ def partial_note_edit(note_id):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             # Handle file uploads/removals here if needed
             try:
-                uploaded_image = request.files.get('image')
-                uploaded_file = request.files.get('file')
-                _save_note_uploads(note_id, uploaded_image, uploaded_file, g.user.id)
-            except Exception:
+                # Handle new file upload format (files[0], files[1], etc.)
+                uploaded_files = []
+                for key in request.files:
+                    if key.startswith('files['):
+                        uploaded_files.append(request.files[key])
+                
+                # Fallback to old format (image, file)
+                if not uploaded_files:
+                    uploaded_image = request.files.get('image')
+                    uploaded_file = request.files.get('file')
+                    if uploaded_image:
+                        uploaded_files.append(uploaded_image)
+                    if uploaded_file:
+                        uploaded_files.append(uploaded_file)
+                
+                # Save all uploaded files
+                for file in uploaded_files:
+                    _save_single_file(note_id, file, g.user.id)
+                    
+            except Exception as e:
+                print(f"File upload error in edit: {e}")
                 db.session.rollback()
 
             return jsonify(success=True)
@@ -255,17 +355,29 @@ def partial_note_data(note_id):
         if not note:
             return jsonify(success=False, message='Note not found or permission denied'), 404
 
+        # Parse tags from JSON
+        tags = []
+        if note.tags:
+            try:
+                import json
+                tags = json.loads(note.tags) if isinstance(note.tags, str) else note.tags
+            except (json.JSONDecodeError, TypeError):
+                tags = []
+
+        # Get files from file system
+        note_files = _get_note_files_from_fs(note.id)
+        
         data = {
             'id': note.id,
             'title': note.title,
             'content': note.content,
             'created_at': note.created_at.isoformat() if note.created_at else None,
-            'status': 'pending',
-            'external_link': '',
-            'tags': '',
-            'note_type': 'text',
-            'is_public': False,
-            'files': []
+            'status': note.status or 'pending',
+            'external_link': note.external_link or '',
+            'tags': ', '.join(tags) if tags else '',
+            'note_type': note.note_type or 'text',
+            'is_public': note.is_public or False,
+            'files': note_files
         }
 
         return jsonify(success=True, data=data)
@@ -298,19 +410,103 @@ def _enrich_notes_with_status_and_files(notes):
         ).fetchall()
         meta_by_id = {row[0]: {'status': row[1], 'external_link': row[2]} for row in rows}
 
+        # Get files for each note from file system
         for n in notes:
             meta = meta_by_id.get(getattr(n, 'id', None))
             if meta is not None:
                 setattr(n, 'status', meta.get('status'))
                 setattr(n, 'external_link', meta.get('external_link'))
-            setattr(n, 'files', [])
+            
+            # Parse tags from JSON string to list
+            if hasattr(n, 'tags') and n.tags:
+                try:
+                    import json
+                    if isinstance(n.tags, str):
+                        parsed_tags = json.loads(n.tags)
+                        if isinstance(parsed_tags, list):
+                            setattr(n, 'tags', parsed_tags)
+                        else:
+                            setattr(n, 'tags', [])
+                    else:
+                        setattr(n, 'tags', n.tags if isinstance(n.tags, list) else [])
+                except (json.JSONDecodeError, TypeError):
+                    # Fallback: try to split by comma if it's a string
+                    if isinstance(n.tags, str):
+                        setattr(n, 'tags', [tag.strip() for tag in n.tags.split(',') if tag.strip()])
+                    else:
+                        setattr(n, 'tags', [])
+            else:
+                setattr(n, 'tags', [])
+            
+            # Get files for this note from file system
+            note_files = _get_note_files_from_fs(n.id)
+            setattr(n, 'files', note_files)
         return notes
     except Exception:
         return notes
 
 
+def _get_note_files_from_fs(note_id):
+    """Get files for a note from file system"""
+    try:
+        files = []
+        static_dir = current_app.static_folder
+        uploads_dir = os.path.join(static_dir, 'uploads', 'notes')
+        
+        # Look for note-specific directory
+        note_dir = os.path.join(uploads_dir, str(note_id))
+        if os.path.exists(note_dir):
+            for filename in os.listdir(note_dir):
+                file_path = os.path.join(note_dir, filename)
+                if os.path.isfile(file_path):
+                    # Determine file type from extension
+                    ext = os.path.splitext(filename)[1].lower()
+                    file_type = 'document'
+                    
+                    if ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']:
+                        file_type = 'image'
+                    elif ext in ['.pdf']:
+                        file_type = 'pdf'
+                    elif ext in ['.doc', '.docx', '.txt', '.rtf']:
+                        file_type = 'document'
+                    
+                    # Create file object
+                    file_obj = type('File', (), {})()
+                    file_obj.file_path = f"uploads/notes/{note_id}/{filename}"
+                    file_obj.filename = filename
+                    file_obj.file_type = file_type
+                    file_obj.size = os.path.getsize(file_path)
+                    
+                    files.append(file_obj)
+        
+        return files
+    except Exception as e:
+        print(f"Error getting files for note {note_id}: {e}")
+        return []
+
+
+def _save_single_file(note_id, file, user_id):
+    """Save a single uploaded file to static/uploads"""
+    if not file or not getattr(file, 'filename', ''):
+        return False
+        
+    static_dir = current_app.static_folder
+    subdir = os.path.join('uploads', 'notes', str(user_id))
+    target_dir = os.path.join(static_dir, subdir)
+    os.makedirs(target_dir, exist_ok=True)
+
+    filename = secure_filename(file.filename)
+    name, ext = os.path.splitext(filename)
+    unique_name = f"{int(time.time())}_{secure_filename(name)}{ext}"
+    abs_path = os.path.join(target_dir, unique_name)
+    file.save(abs_path)
+    
+    db.session.commit()
+    return True
+
+
 def _save_note_uploads(note_id, image_file, other_file, user_id):
-    """Save uploaded files to static/uploads"""
+    """Save uploaded files to static/uploads (legacy function)"""
     saved_any = False
     static_dir = current_app.static_folder
     subdir = os.path.join('uploads', 'notes', str(user_id))
