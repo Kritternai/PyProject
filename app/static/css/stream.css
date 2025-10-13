@@ -140,8 +140,6 @@
     background: #f8f9fa;
     padding: 24px;
     overflow-y: auto;
-    max-width: 680px;
-    margin: 0 auto;
 }
 
 /* Create Post Box (Facebook style) */
