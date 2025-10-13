@@ -2,8 +2,10 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/note_shared.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/tag_badges.css') }}">
 
-<div class="container-fluid ng-font note-section-top-0" id="note-add-page" style="padding-left: 1.5rem; padding-right: 1.5rem; max-width: 1200px; margin: 0 auto;">
-  <div class="px-4 pt-2 pb-2 note-header d-flex align-items-center justify-content-between border-bottom note-header-top-0">
+<div class="container-fluid ng-font note-section-top-0 note-sticky-container" id="note-add-page"
+  style="padding-left: 1.5rem; padding-right: 1.5rem; max-width: 1200px; margin: 0 auto; padding-top: 0;">
+  <!-- Header Section -->
+  <div class="px-4 pb-2 note-header d-flex align-items-center justify-content-between border-bottom note-sticky-header">
     <div class="gap-2 d-flex align-items-center">
       <button class="ng-btn ng-btn-sm btn-rounded-25" onclick="loadPage('note')" aria-label="Back to notes">
         <i class="bi bi-arrow-left"></i>
@@ -19,20 +21,16 @@
   </div>
 
   <!-- Main Content Area -->
-  <div class="bg-white d-flex flex-column ng-space" style="margin-left: 0.5rem; margin-right: 0.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+  <div class="bg-white d-flex flex-column ng-space"
+    style="margin-left: 0.5rem; margin-right: 0.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
     <!-- Title Input Section -->
-    <div class="p-4 border-bottom ui-surface glass-panel" style="border-radius: 12px 12px 0 0;">
+    <div class="p-4 mt-16 border-bottom ui-surface glass-panel" style="border-radius: 12px 12px 0 0;">
       <label class="mb-2 form-label section-title"><i class="bi bi-type"></i>Title</label>
-      <input type="text" 
-             class="form-control form-control-lg ng-input" 
-             id="addTitle" 
-             name="title" 
-             placeholder="Enter note title..." 
-             maxlength="200" 
-             required>
-      
+      <input type="text" class="form-control form-control-lg ng-input" id="addTitle" name="title"
+        placeholder="Enter note title..." maxlength="200" required>
+
       <!-- Status and Tags Section -->
-      <div class="row mt-3 g-3">
+      <div class="mt-3 row g-3">
         <div class="col-md-6">
           <label class="mb-2 form-label section-title"><i class="bi bi-ui-checks-grid"></i>Status</label>
           <select class="form-select ng-input" id="addNoteStatus" name="status">
@@ -43,17 +41,13 @@
         </div>
         <div class="col-md-6">
           <label class="mb-2 form-label section-title"><i class="bi bi-tags"></i>Tags</label>
-          <input type="text" 
-                 class="form-control ng-input" 
-                 id="addNoteTags" 
-                 name="tags" 
-                 placeholder="e.g. work, study, important" 
-                 maxlength="100">
+          <input type="text" class="form-control ng-input" id="addNoteTags" name="tags"
+            placeholder="e.g. work, study, important" maxlength="100">
           <div class="form-text small">Separate tags with commas</div>
         </div>
       </div>
     </div>
-    
+
     <!-- Rich Text Toolbar -->
     <div class="p-3 mx-4 mt-3 mb-2 border-0 editor-toolbar ui-toolbar glass-panel" style="border-radius: 8px;">
       <div class="flex-wrap gap-2 d-flex align-items-center">
@@ -110,25 +104,26 @@
         </button>
       </div>
     </div>
-    
+
     <!-- Editor Content -->
-    <div id="addContent" class="p-5 mx-4 mb-3 overflow-auto flex-grow-1 editor-card glass-panel" contenteditable="true" style="outline:none; border-radius: 8px; min-height: 400px;"
-         aria-label="Note content editor" role="textbox" data-placeholder="Start writing your note here...">
+    <div id="addContent" class="p-5 mx-4 mb-3 overflow-auto flex-grow-1 editor-card glass-panel" contenteditable="true"
+      style="outline:none; border-radius: 8px; min-height: 400px;" aria-label="Note content editor" role="textbox"
+      data-placeholder="Start writing your note here...">
       <em class="text-muted"></em>
     </div>
-    
+
     <!-- File Upload Section -->
     <div class="p-4 mx-4 mb-3 border-top border-bottom ui-surface glass-panel">
       <label class="mb-2 form-label section-title"><i class="bi bi-paperclip"></i>Attachments</label>
       <div class="file-upload-section" onclick="document.getElementById('addFileInput').click()">
-        <i class="bi bi-cloud-upload note-icon-xl mb-2 d-block"></i>
+        <i class="mb-2 bi bi-cloud-upload note-icon-xl d-block"></i>
         <p class="mb-2"><strong>Click to upload</strong> or drag and drop</p>
-        <p class="small text-muted mb-0">PDF, DOC, DOCX, JPG, PNG, GIF (Max 10MB)</p>
+        <p class="mb-0 small text-muted">PDF, DOC, DOCX, JPG, PNG, GIF (Max 10MB)</p>
       </div>
       <input type="file" id="addFileInput" class="d-none" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif" multiple>
       <div id="addFilePreviewContainer" class="mt-3"></div>
     </div>
-    
+
     <!-- Action Buttons Section -->
     <div class="p-3 mx-4 mb-3 d-flex justify-content-between align-items-center glass-section">
       <button class="ng-btn ng-btn-sm btn-rounded-25" onclick="clearNote()" title="Clear all">
@@ -138,9 +133,11 @@
         <i class="bi bi-save"></i>Save Note
       </button>
     </div>
-    
+
     <!-- Status Bar -->
-    <div class="p-3 mx-4 mb-4 border-top small text-muted d-flex justify-content-between align-items-center glass-section ng-glass ng-rounded" style="border-radius: 0 0 12px 12px;">
+    <div
+      class="p-3 mx-4 mb-4 border-top small text-muted d-flex justify-content-between align-items-center glass-section ng-glass ng-rounded"
+      style="border-radius: 0 0 12px 12px;">
       <div class="save-status unsaved" id="addSaveStatus">
         <i class="bi bi-exclamation-circle"></i>
         <span>Unsaved changes</span>
@@ -154,25 +151,25 @@
 <!-- See: app/static/js/note_js/note_add.js -->
 
 <script>
-// Fallback initialization for non-SPA mode
-(function() {
-  console.log('[note_add_fragment] Script tag executed');
-  
-  // Check if we need to load the script manually (non-SPA mode)
-  if (!window.saveNewNote) {
-    console.log('[note_add_fragment] saveNewNote not found, loading script...');
-    const script = document.createElement('script');
-    script.src = '/static/js/note_js/note_add.js?v=' + Date.now();
-    script.onload = () => {
-      console.log('[note_add_fragment] Script loaded successfully');
-    };
-    document.head.appendChild(script);
-  } else {
-    console.log('[note_add_fragment] Functions already loaded');
-    // Re-initialize if already loaded
-    if (window.initializeNoteAdd) {
-      window.initializeNoteAdd();
+  // Fallback initialization for non-SPA mode
+  (function () {
+    console.log('[note_add_fragment] Script tag executed');
+
+    // Check if we need to load the script manually (non-SPA mode)
+    if (!window.saveNewNote) {
+      console.log('[note_add_fragment] saveNewNote not found, loading script...');
+      const script = document.createElement('script');
+      script.src = '/static/js/note_js/note_add.js?v=' + Date.now();
+      script.onload = () => {
+        console.log('[note_add_fragment] Script loaded successfully');
+      };
+      document.head.appendChild(script);
+    } else {
+      console.log('[note_add_fragment] Functions already loaded');
+      // Re-initialize if already loaded
+      if (window.initializeNoteAdd) {
+        window.initializeNoteAdd();
+      }
     }
-  }
-})();
+  })();
 </script>

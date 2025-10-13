@@ -6,6 +6,50 @@
  */
 
 /* ============================================
+   STICKY HEADER FIXES
+   ============================================ */
+html, body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+body {
+  position: relative;
+}
+
+/* ============================================
+   STICKY HEADER CLASSES
+   ============================================ */
+
+/* Main sticky header class */
+.note-sticky-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1002 !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  margin-top: 0 !important;
+  padding-top: 0.5rem !important;
+}
+
+/* Container for sticky headers */
+.note-sticky-container {
+  position: relative !important;
+  overflow: visible !important;
+  height: auto !important;
+}
+
+/* Override for main content area */
+.enchat-main-content .note-sticky-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1002 !important;
+}
+
+/* ============================================
    CSS VARIABLES - Design Tokens
    ============================================ */
 :root {
@@ -849,17 +893,39 @@
 .top-0,
 .note-section-top-0 {
   margin-top: 0 !important;
+  scroll-behavior: smooth;
+  overflow: visible !important;
+  position: relative;
+}
+
+#note-list-container,
+#note-add-page,
+#note-editor-page {
+  position: relative;
+  overflow: visible !important;
+  height: auto !important;
+}
+
+/* Ensure containers don't interfere with sticky positioning */
+.enchat-main-content #note-list-container,
+.enchat-main-content #note-add-page,
+.enchat-main-content #note-editor-page {
+  position: relative !important;
+  overflow: visible !important;
+  height: auto !important;
 }
 
 .note-header-top-0 {
   margin-top: 0 !important;
-  padding-top: var(--note-space) !important;
-  position: sticky;
-  top: 0;
-  z-index: 1001;
-  background: rgba(255, 255, 255, 0.28);
-  backdrop-filter: var(--note-glass-blur);
-  -webkit-backdrop-filter: var(--note-glass-blur);
+  padding-top: 0.5rem !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1001 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: var(--note-glass-blur) !important;
+  -webkit-backdrop-filter: var(--note-glass-blur) !important;
+  border-bottom: 1px solid var(--note-border) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 .text-truncate-3 {
@@ -912,13 +978,18 @@
   position: sticky;
   top: 80px;
   z-index: 999;
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: var(--note-glass-blur);
+  border-bottom: 1px solid var(--note-border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   -webkit-backdrop-filter: var(--note-glass-blur);
   padding-top: var(--note-space-md);
   padding-bottom: var(--note-space-md);
   margin-top: -var(--note-space-md);
   margin-bottom: var(--note-space-md);
+  border-radius: 25px;
+  margin-left: 24px;
+  margin-right: 24px;
 }
 
 /* ============================================
