@@ -221,6 +221,19 @@ def create_task(lesson_id):
         )
         db.session.commit()
         
+        # Auto-generate activity
+        try:
+            from ..controllers.stream_views import StreamController
+            stream_controller = StreamController()
+            stream_controller.create_activity(
+                lesson_id=lesson_id,
+                user_id=g.user.id,
+                activity_type='task_created',
+                title=f'{g.user.name} created a task: {data.get("title")}'
+            )
+        except Exception as e:
+            print(f"Warning: Failed to create activity: {e}")
+        
         return jsonify({
             'success': True,
             'message': 'Task created successfully',
@@ -479,6 +492,19 @@ def create_material(lesson_id):
             }
         )
         db.session.commit()
+        
+        # Auto-generate activity
+        try:
+            from ..controllers.stream_views import StreamController
+            stream_controller = StreamController()
+            stream_controller.create_activity(
+                lesson_id=lesson_id,
+                user_id=g.user.id,
+                activity_type='material_uploaded',
+                title=f'{g.user.name} uploaded material: {title}'
+            )
+        except Exception as e:
+            print(f"Warning: Failed to create activity: {e}")
         
         return jsonify({
             'success': True,

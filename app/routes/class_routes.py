@@ -311,6 +311,54 @@ def partial_people(lesson_id):
         return f'<div class="alert alert-danger">Error loading people: {str(e)}</div>', 500
 
 
+@class_bp.route('/partial/class/<lesson_id>/stream')
+def partial_stream(lesson_id):
+    """Stream partial for specific class (Q&A + Announcements)"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        lesson_service = LessonService()
+        lesson = lesson_service.get_lesson_by_id(lesson_id)
+        
+        if not lesson:
+            return '<div class="alert alert-danger">Class not found.</div>', 404
+        
+        # Check permission: must be owner or member
+        is_owner = lesson.user_id == g.user.id
+        member = db.session.execute(
+            text("SELECT * FROM member WHERE lesson_id = :lesson_id AND user_id = :user_id"),
+            {'lesson_id': lesson_id, 'user_id': g.user.id}
+        ).fetchone()
+        
+        if not is_owner and not member:
+            return '<div class="alert alert-danger">You do not have permission to view this class.</div>', 403
+        
+        # Pass user info to template (as dict to avoid serialization issues)
+        user_name = g.user.username
+        if g.user.first_name and g.user.last_name:
+            user_name = f"{g.user.first_name} {g.user.last_name}"
+        elif g.user.first_name:
+            user_name = g.user.first_name
+        
+        user_data = {
+            'id': g.user.id,
+            'name': user_name,
+            'email': g.user.email,
+            'username': g.user.username
+        }
+        
+        return render_template('class_detail/_stream.html', 
+                             lesson=lesson, 
+                             is_owner=is_owner,
+                             current_user=user_data)
+    except Exception as e:
+        print(f"Error loading stream: {e}")
+        import traceback
+        traceback.print_exc()
+        return f'<div class="alert alert-danger">Error loading stream: {str(e)}</div>', 500
+
+
 # ============================================
 # CRUD OPERATIONS
 # ============================================
@@ -641,6 +689,27 @@ def add_member(lesson_id):
         )
         db.session.commit()
         
+        # Auto-generate activity
+        try:
+            from ..controllers.stream_views import StreamController
+            stream_controller = StreamController()
+            
+            # Get new member info
+            new_member = db.session.execute(
+                text("SELECT name FROM user WHERE id = :user_id"),
+                {'user_id': new_user_id}
+            ).fetchone()
+            
+            if new_member:
+                stream_controller.create_activity(
+                    lesson_id=lesson_id,
+                    user_id=new_user_id,
+                    activity_type='member_joined',
+                    title=f'{new_member.name} joined the class'
+                )
+        except Exception as e:
+            print(f"Warning: Failed to create activity: {e}")
+        
         return jsonify({
             'success': True,
             'message': 'Member added successfully',
@@ -873,6 +942,19 @@ def leave_class(lesson_id):
         
         if not member:
             return jsonify({'error': 'You are not a member of this class'}), 400
+        
+        # Auto-generate activity before removing
+        try:
+            from ..controllers.stream_views import StreamController
+            stream_controller = StreamController()
+            stream_controller.create_activity(
+                lesson_id=lesson_id,
+                user_id=g.user.id,
+                activity_type='member_left',
+                title=f'{g.user.name} left the class'
+            )
+        except Exception as e:
+            print(f"Warning: Failed to create activity: {e}")
         
         # Remove member
         db.session.execute(
