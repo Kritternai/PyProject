@@ -178,9 +178,21 @@ def callback():
         return redirect(url_for("main_routes.index"))
 
     # ค้นหาหรือสร้างผู้ใช้ใหม่ในฐานข้อมูล
+    user = None
     try:
+        # Health check database connection first
+        with db.engine.connect() as conn:
+            conn.execute(db.text('SELECT 1'))
+        current_app.logger.info("Database connection health check passed")
+        
+        # Ensure we're in the correct app context
+        current_app.logger.info(f"Attempting to find/create user for email: {email}")
+        
         user = UserModel.query.filter_by(email=email).first()
+        current_app.logger.info(f"User query result: {'Found' if user else 'Not found'}")
+        
         if not user:
+            current_app.logger.info("Creating new user from Google OAuth")
             user = UserModel(
                 id=str(uuid.uuid4()),
                 username=name or email.split("@")[0],
@@ -192,9 +204,24 @@ def callback():
             )
             db.session.add(user)
             db.session.commit()
+            current_app.logger.info(f"New user created with ID: {user.id}")
+        else:
+            current_app.logger.info(f"Existing user found with ID: {user.id}")
+            
     except Exception as db_error:
         current_app.logger.exception("Database error during Google OAuth: %s", db_error)
+        # Rollback any pending transactions
+        try:
+            db.session.rollback()
+        except:
+            pass
         flash("Database connection error. Please try again later.", "danger")
+        return redirect(url_for("main_routes.index"))
+
+    # Ensure user exists before setting session
+    if not user or not user.id:
+        current_app.logger.error("User creation/retrieval failed - user object is None or missing ID")
+        flash("User authentication failed. Please try again.", "danger")
         return redirect(url_for("main_routes.index"))
 
     session["user_id"] = user.id
