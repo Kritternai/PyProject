@@ -167,9 +167,12 @@ external_data/
 
 # Google OAuth credentials
 google_credentials.json
-client_secret.json
+client_secret*.json
+client_secrets.json
 credentials.json
 token.json
+
+# API keys and secrets (moved up for priority)
 
 # API keys and secrets
 *.key
@@ -387,3 +390,11 @@ settings.local.py
 !*.ini
 !*.cfg
 !*.conf
+
+# =============================================================================
+# SENSITIVE FILES TO IGNORE
+# =============================================================================
+
+# All Google OAuth client secret files
+client_secret*.json
+client_secrets.json
