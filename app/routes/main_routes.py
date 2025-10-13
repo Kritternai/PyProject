@@ -17,7 +17,7 @@ def login_required_web(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('web_auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -55,7 +55,7 @@ def index():
 def dashboard():
     """Dashboard page"""
     if 'user_id' not in session:
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('web_auth.login'))
     
     user_id = session.get('user_id')
     if user_id:
@@ -64,9 +64,9 @@ def dashboard():
             user = user_service.get_user_by_id(user_id)
             return render_template('base.html', user=user)
         except Exception:
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('web_auth.login'))
     else:
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('web_auth.login'))
 
 
 @main_routes_bp.route('/partial/dashboard')

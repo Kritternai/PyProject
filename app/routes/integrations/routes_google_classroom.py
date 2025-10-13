@@ -35,7 +35,7 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             flash('Please log in to access this page.', 'warning')
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('web_auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -162,7 +162,7 @@ def oauth2callback():
         print(f"DEBUG: OAuth2 callback completed for user {user_id}")
         
         # Redirect to class page
-        return redirect(url_for('main.index') + '#class')
+        return redirect(url_for('main_routes.index') + '#class')
         
     except Exception as e:
         print(f"ERROR: Failed to save Google Classroom credentials: {e}")
@@ -176,5 +176,5 @@ def oauth2callback():
 def fetch_courses():
     """Fetch Google Classroom courses (placeholder)"""
     flash('Google Classroom course fetching is under development.', 'info')
-    return redirect(url_for('main.index') + '#class')
+    return redirect(url_for('main_routes.index') + '#class')
 

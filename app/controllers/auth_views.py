@@ -37,7 +37,7 @@ class AuthController:
                     }), 400
                 else:
                     flash('Please provide login credentials.', 'error')
-                    return redirect(url_for('auth.login'))
+                    return redirect(url_for('web_auth.login'))
 
             # Validate required fields
             required_fields = ['email', 'password']

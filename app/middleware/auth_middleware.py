@@ -31,7 +31,7 @@ def login_required(f):
             else:
                 from flask import redirect, url_for, flash
                 flash('Please log in to access this page.', 'warning')
-                return redirect(url_for('auth.login'))
+                return redirect(url_for('web_auth.login'))
         
         # User is already loaded by middleware, proceed with the function
         return f(*args, **kwargs)
@@ -61,7 +61,7 @@ def admin_required(f):
             else:
                 from flask import redirect, url_for, flash
                 flash('Please log in to access this page.', 'warning')
-                return redirect(url_for('auth.login'))
+                return redirect(url_for('web_auth.login'))
         
         # Check if user has admin privileges
         if not g.user.role == 'admin':
@@ -113,7 +113,7 @@ def require_user_ownership(user_id: str):
                 else:
                     from flask import redirect, url_for, flash
                     flash('Please log in to access this page.', 'warning')
-                    return redirect(url_for('auth.login'))
+                    return redirect(url_for('web_auth.login'))
             
             # Check if user owns the resource
             if g.user.id != user_id and g.user.role != 'admin':

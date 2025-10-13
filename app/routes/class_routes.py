@@ -34,7 +34,7 @@ def login_required_web(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('web_auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -133,7 +133,7 @@ def partial_class_list():
 def view_detail(lesson_id):
     """View class detail page with tabs"""
     if 'user_id' not in session:
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('web_auth.login'))
     
     try:
         lesson_service = LessonService()

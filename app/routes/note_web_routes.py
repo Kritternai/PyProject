@@ -35,7 +35,7 @@ def login_required_web(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('web_auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -48,7 +48,7 @@ def login_required_web(f):
 def notes_page():
     """Full page Notes view with CSS/JS via base layout"""
     if 'user_id' not in session:
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('web_auth.login'))
     
     # Render base and let SPA load note partial by default
     return render_template('base.html', user=g.user, initial_page='note')

@@ -158,7 +158,7 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             flash('Please log in to access this page.', 'warning')
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('web_auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -196,7 +196,7 @@ def oauth2callback():
     
     if not user_id:
         flash('Please log in first.', 'warning')
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('web_auth.login'))
     
     # Simulate successful OAuth
     auth_code = request.args.get('code')
