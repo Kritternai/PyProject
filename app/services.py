@@ -21,19 +21,30 @@ class UserService:
         """Create a new user."""
         from app.models.user import UserModel
         from app import db
+        from werkzeug.security import generate_password_hash
+        
+        # Validate input
+        if not email or not password:
+            raise ValidationException("Email and password are required")
+        
+        if len(password) < 8:
+            raise ValidationException("Password must be at least 8 characters long")
         
         # Check if user already exists
         if UserModel.query.filter_by(email=email).first():
-            raise BusinessLogicException("Email already exists")
+            raise BusinessLogicException("อีเมลนี้มีผู้ใช้แล้ว")
         
         if UserModel.query.filter_by(username=username).first():
-            raise BusinessLogicException("Username already exists")
+            raise BusinessLogicException("ชื่อผู้ใช้นี้มีคนใช้แล้ว")
+        
+        # Hash password
+        password_hash = generate_password_hash(password)
         
         # Create new user
         user = UserModel(
             username=username,
             email=email,
-            password_hash=password,  # Should be hashed in real implementation
+            password_hash=password_hash,
             first_name=first_name,
             last_name=last_name,
             role=role
@@ -63,10 +74,12 @@ class UserService:
     
     def authenticate_user(self, email: str, password: str):
         """Authenticate user."""
+        from werkzeug.security import check_password_hash
+        
         user = self.get_user_by_email(email)
-        # In real implementation, check password hash
-        if user.password_hash != password:
-            raise ValidationException("Invalid password")
+        # Check password hash
+        if not check_password_hash(user.password_hash, password):
+            raise ValidationException("รหัสผ่านไม่ถูกต้อง")
         return user
 
 

@@ -10,189 +10,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        :root {
-            --primary-color-start: #667eea;
-            --primary-color-end: #764ba2;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, var(--primary-color-start), var(--primary-color-end), #6b5b95, #8774b8);
-            background-size: 400% 400%;
-            animation: gradientAnimation 15s ease infinite;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        @keyframes gradientAnimation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .register-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease-in-out;
-        }
-
-        .register-container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-        }
-
-        .register-header {
-            background: linear-gradient(135deg, var(--primary-color-start), var(--primary-color-end));
-            color: white;
-            padding: 2.5rem 2rem;
-            text-align: center;
-        }
-
-        .register-header h2 {
-            font-weight: 700;
-        }
-        
-        .register-form {
-            padding: 2.5rem;
-        }
-
-        .btn-register {
-            background: linear-gradient(135deg, var(--primary-color-start), var(--primary-color-end));
-            border: none;
-            border-radius: 50px;
-            padding: 12px 30px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-register:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 7px 20px rgba(102, 126, 234, 0.5);
-        }
-        
-        .input-group-icon {
-            position: relative;
-        }
-
-        .input-group-icon .form-control {
-            padding-left: 2.75rem;
-        }
-
-        .input-group-icon .input-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #adb5bd;
-            transition: color 0.3s ease;
-        }
-        
-        .form-control {
-            border-radius: 10px;
-            border: 1px solid #dee2e6;
-            padding: 1rem 1rem;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color-start);
-            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
-            background-color: #fff;
-        }
-
-        .form-control:focus ~ .input-icon {
-            color: var(--primary-color-start);
-        }
-        
-        .form-floating > .form-control {
-            height: calc(3.5rem + 2px);
-            padding: 1rem 1rem 1rem 2.75rem;
-        }
-        .form-floating > label {
-            padding: 1rem 1rem 1rem 2.75rem;
-            color: #6c757d;
-        }
-        
-        .divider-text {
-            position: relative;
-            text-align: center;
-            margin: 1.5rem 0;
-            color: #adb5bd;
-            font-weight: 500;
-        }
-
-        .divider-text::before,
-        .divider-text::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 38%;
-            height: 1px;
-            background-color: #dee2e6;
-        }
-
-        .divider-text::before { left: 0; }
-        .divider-text::after { right: 0; }
-        
-        /* ----- NEW: Updated Google Button Style ----- */
-        .btn-google {
-            background-color: #ffffff;
-            color: #424242; /* Changed color for better contrast */
-            border: 1px solid #dcdcdc; /* Subtle border */
-            border-radius: 50px;
-            padding: 12px 25px;
-            font-weight: 500; /* Adjusted font weight */
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-        }
-
-        .btn-google:hover {
-            background-color: #f7f7f7;
-            border-color: #c5c5c5;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            color: #212529;
-        }
-
-        .btn-google svg {
-            height: 20px;
-            width: 20px;
-            margin-right: 12px;
-        }
-        /* ----- End of Updated Style ----- */
-
-        .signin-link a {
-            color: var(--primary-color-end);
-            font-weight: 600;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .signin-link a:hover {
-            color: var(--primary-color-start);
-            text-decoration: underline;
-        }
-        
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
 </head>
 <body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-7 col-lg-5 col-xl-4">
+    <div class="auth-page">
+        <div class="auth-container">
+            <aside class="auth-sidebar" aria-hidden="false">
+                <div class="auth-sidebar__brand">
+                    <div class="auth-sidebar__icon"><i class="fas fa-graduation-cap"></i></div>
+                    <h3>Smart Learning Hub</h3>
+                    <p class="muted">Join thousands of learners — track progress, organize notes, and connect with Google Classroom & Teams.</p>
+                </div>
+
+                <ul class="auth-features list-unstyled mt-4">
+                    <li><i class="fas fa-check-circle me-2"></i>Free account setup</li>
+                    <li><i class="fas fa-check-circle me-2"></i>Sync with Google & Teams</li>
+                    <li><i class="fas fa-check-circle me-2"></i>Track your learning journey</li>
+                </ul>
+
+                <div class="auth-sidebar__footer mt-4">
+                    <small>© {{ current_year or 2025 }} Smart Learning Hub</small>
+                </div>
+            </aside>
+
+            <main class="auth-main">
                 <div class="register-container">
                     <div class="register-header">
                         <h2><i class="fas fa-user-plus me-2"></i>Create Account</h2>
@@ -210,7 +51,7 @@
                             {% endif %}
                         {% endwith %}
                         
-                        <form method="POST" action="{{ url_for('auth.register') }}">
+                        <form method="POST" action="{{ url_for('web_auth.register') }}">
                             <div class="form-floating mb-3 input-group-icon">
                                 <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required>
                                 <label for="email">Email Address</label>
@@ -241,31 +82,134 @@
                         </div>
 
                         <div class="d-grid">
-                            <a href="{{ url_for('google_auth.login') }}" class="btn-google" id="google-signin-register" aria-label="Sign up with Google">
-                                <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style="display: block;">
-                                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.42-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-                                    <path fill="none" d="M0 0h48v48H0z"></path>
-                                </svg>
-                                <span class="label-small">เข้าสู่ระบบด้วย Google</span>
+                            <a href="{{ url_for('google_auth.login') }}" class="btn btn-google btn-google--blue btn-google--full" id="google-signin-register" aria-label="Sign up with Google">
+                                <i class="fab fa-google"></i>
+                                <span class="label-small">สมัครด้วย Google</span>
                                 <span class="spinner" aria-hidden="true"></span>
                             </a>
                         </div>
                         <div class="text-center mt-4 signin-link">
                             <p class="mb-0 text-muted">Already have an account? 
-                                <a href="{{ url_for('auth.login') }}">
+                                <a href="{{ url_for('web_auth.login') }}">
                                     Sign in here
                                 </a>
                             </p>
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Password confirmation validation
+        const passwordField = document.getElementById('password');
+        const confirmPasswordField = document.getElementById('confirm_password');
+        const submitButton = document.querySelector('.btn-register');
+        
+        function validatePasswords() {
+            const password = passwordField.value;
+            const confirmPassword = confirmPasswordField.value;
+            
+            // Remove existing validation classes
+            confirmPasswordField.classList.remove('is-valid', 'is-invalid');
+            
+            if (confirmPassword.length === 0) {
+                return;
+            }
+            
+            if (password === confirmPassword) {
+                confirmPasswordField.classList.add('is-valid');
+                confirmPasswordField.setCustomValidity('');
+            } else {
+                confirmPasswordField.classList.add('is-invalid');
+                confirmPasswordField.setCustomValidity('Passwords do not match');
+            }
+        }
+        
+        // Real-time validation
+        passwordField.addEventListener('input', validatePasswords);
+        confirmPasswordField.addEventListener('input', validatePasswords);
+        
+        // Form submission validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password = passwordField.value;
+            const confirmPassword = confirmPasswordField.value;
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                confirmPasswordField.classList.add('is-invalid');
+                confirmPasswordField.focus();
+                
+                // Show alert
+                const existingAlert = document.querySelector('.password-mismatch-alert');
+                if (existingAlert) {
+                    existingAlert.remove();
+                }
+                
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger password-mismatch-alert mt-3';
+                alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>รหัสผ่านไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง';
+                confirmPasswordField.parentNode.appendChild(alertDiv);
+                
+                // Auto-remove alert after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+        });
+        
+        // Password strength indicator (optional)
+        passwordField.addEventListener('input', function() {
+            const password = this.value;
+            const strengthText = document.getElementById('password-strength');
+            
+            if (!strengthText) {
+                const strengthDiv = document.createElement('div');
+                strengthDiv.id = 'password-strength';
+                strengthDiv.className = 'password-strength mt-1';
+                this.parentNode.appendChild(strengthDiv);
+            }
+            
+            let strength = 0;
+            let text = '';
+            let className = '';
+            
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            if (password.length === 0) {
+                document.getElementById('password-strength').innerHTML = '';
+                return;
+            }
+            
+            switch (strength) {
+                case 0:
+                case 1:
+                    text = 'รหัสผ่านอ่อน';
+                    className = 'text-danger';
+                    break;
+                case 2:
+                case 3:
+                    text = 'รหัสผ่านปานกลาง';
+                    className = 'text-warning';
+                    break;
+                case 4:
+                case 5:
+                    text = 'รหัสผ่านแข็งแรง';
+                    className = 'text-success';
+                    break;
+            }
+            
+            document.getElementById('password-strength').innerHTML = 
+                `<small class="${className}"><i class="fas fa-shield-alt me-1"></i>${text}</small>`;
+        });
+    </script>
 </body>
 </html>
