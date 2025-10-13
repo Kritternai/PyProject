@@ -129,16 +129,37 @@ def login():
         prompt="select_account"
     )
 
-    # เก็บ state ไว้ใน session เพื่อใช้ตรวจสอบใน callback
+    # เก็บ state ไว้ใน session เพื่อใช้ตรวจสอบใน callback พร้อม timestamp
+    import time
     session['oauth_state'] = state
+    session['oauth_timestamp'] = time.time()
+    session.permanent = True  # Make session permanent to avoid early expiry
+    current_app.logger.info(f"OAuth state stored in session: {state[:10]}...")
     return redirect(authorization_url)
 
 
 @google_auth_bp.route('/callback')
 def callback():
+    # Enhanced session validation
+    current_app.logger.info("Google OAuth callback initiated")
+    
     state = session.pop('oauth_state', None)
+    oauth_timestamp = session.pop('oauth_timestamp', None)
+    request_state = request.args.get('state')
+    
+    current_app.logger.info(f"Session state: {'Present' if state else 'Missing'}")
+    current_app.logger.info(f"Request state: {'Present' if request_state else 'Missing'}")
+    
+    # Check session timeout (10 minutes max)
+    import time
+    if oauth_timestamp and (time.time() - oauth_timestamp) > 600:
+        current_app.logger.warning("OAuth session expired (timeout)")
+        flash("OAuth session expired. Please try logging in again.", "warning")
+        return redirect(url_for("main_routes.index"))
+    
     # เพิ่มการตรวจสอบ state กับที่ได้จาก request.args
-    if not state or state != request.args.get('state'):
+    if not state or state != request_state:
+        current_app.logger.warning(f"OAuth state validation failed - Session: {state}, Request: {request_state}")
         flash("Invalid state or session expired. Please try logging in again.", "warning")
         return redirect(url_for("main_routes.index"))
 
@@ -177,21 +198,48 @@ def callback():
         flash("Could not get email from Google account.", "danger")
         return redirect(url_for("main_routes.index"))
 
-    # ค้นหาหรือสร้างผู้ใช้ใหม่ในฐานข้อมูล
+    # ค้นหาหรือสร้างผู้ใช้ใหม่ในฐานข้อมูล - with retry mechanism
     user = None
-    try:
-        # Health check database connection first
-        with db.engine.connect() as conn:
-            conn.execute(db.text('SELECT 1'))
-        current_app.logger.info("Database connection health check passed")
-        
-        # Ensure we're in the correct app context
-        current_app.logger.info(f"Attempting to find/create user for email: {email}")
-        
-        user = UserModel.query.filter_by(email=email).first()
-        current_app.logger.info(f"User query result: {'Found' if user else 'Not found'}")
-        
-        if not user:
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            # Health check database connection first
+            with db.engine.connect() as conn:
+                conn.execute(db.text('SELECT 1'))
+            current_app.logger.info(f"Database connection health check passed (attempt {retry_count + 1})")
+            
+            # Ensure we're in the correct app context
+            current_app.logger.info(f"Attempting to find/create user for email: {email} (attempt {retry_count + 1})")
+            
+            user = UserModel.query.filter_by(email=email).first()
+            current_app.logger.info(f"User query result: {'Found' if user else 'Not found'}")
+            
+            # If we get here, database operation succeeded
+            break
+            
+        except Exception as db_error:
+            retry_count += 1
+            current_app.logger.warning(f"Database operation attempt {retry_count} failed: {str(db_error)}")
+            
+            if retry_count >= max_retries:
+                current_app.logger.exception("Database error during Google OAuth after all retries")
+                # Rollback any pending transactions
+                try:
+                    db.session.rollback()
+                except:
+                    pass
+                flash("Database connection error. Please try again later.", "danger")
+                return redirect(url_for("main_routes.index"))
+            
+            # Brief pause before retry
+            import time
+            time.sleep(0.1)
+    
+    # Create user if not found (outside retry loop)
+    if not user:
+        try:
             current_app.logger.info("Creating new user from Google OAuth")
             user = UserModel(
                 id=str(uuid.uuid4()),
@@ -205,18 +253,16 @@ def callback():
             db.session.add(user)
             db.session.commit()
             current_app.logger.info(f"New user created with ID: {user.id}")
-        else:
-            current_app.logger.info(f"Existing user found with ID: {user.id}")
-            
-    except Exception as db_error:
-        current_app.logger.exception("Database error during Google OAuth: %s", db_error)
-        # Rollback any pending transactions
-        try:
-            db.session.rollback()
-        except:
-            pass
-        flash("Database connection error. Please try again later.", "danger")
-        return redirect(url_for("main_routes.index"))
+        except Exception as creation_error:
+            current_app.logger.exception("User creation failed: %s", creation_error)
+            try:
+                db.session.rollback()
+            except:
+                pass
+            flash("Failed to create user account. Please try again.", "danger")
+            return redirect(url_for("main_routes.index"))
+    else:
+        current_app.logger.info(f"Existing user found with ID: {user.id}")
 
     # Ensure user exists before setting session
     if not user or not user.id:
