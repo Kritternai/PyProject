@@ -1,16 +1,16 @@
-<!-- Stream Tab - Q&A + Announcements (Clean & Simple) -->
+<!-- Stream Tab - Facebook-style Feed with Real-time Updates -->
 <div class="stream-container">
-    <!-- Header -->
+    <!-- Header (เหมือน tabs อื่น) -->
     <div class="stream-header">
         <div class="stream-header-content">
             <div>
-                <h2 class="stream-title">
-                    <i class="bi bi-megaphone"></i>
-                    Stream
-                </h2>
+                <h2 class="stream-title">Stream</h2>
                 <p class="stream-subtitle">Class updates and Q&A</p>
             </div>
             <div class="stream-actions">
+                <button class="btn-icon" onclick="toggleStreamSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
                 <button class="btn-stream-primary" onclick="openCreatePostModal()">
                     <i class="bi bi-plus-lg"></i>
                     <span>{{ 'New Post' if is_owner else 'Ask Question' }}</span>
@@ -21,32 +21,46 @@
 
     <!-- Main Content -->
     <div class="stream-main">
-        <div class="stream-content">
-            <!-- Quick Filters -->
-            <div class="stream-quick-filters">
-                <button class="filter-btn active" data-filter="all" onclick="quickFilter('all')">
-                    <i class="bi bi-grid-3x3"></i>
-                    All
-                </button>
-                <button class="filter-btn" data-filter="questions" onclick="quickFilter('questions')">
-                    <i class="bi bi-question-circle"></i>
-                    Questions
-                </button>
-                <button class="filter-btn" data-filter="announcements" onclick="quickFilter('announcements')">
-                    <i class="bi bi-megaphone"></i>
-                    Announcements
-                </button>
-                <button class="filter-btn" data-filter="activity" onclick="quickFilter('activity')">
-                    <i class="bi bi-clock-history"></i>
-                    Activity
-                </button>
+        <div class="stream-content-layout">
+            <!-- Sidebar -->
+            <div class="stream-sidebar" id="stream-sidebar">
+                <!-- Navigation -->
+                <div class="stream-nav-section">
+                    <a href="#" class="stream-nav-item active" data-filter="all" onclick="quickFilter('all'); return false;">
+                        <i class="bi bi-grid-3x3"></i>
+                        All Posts
+                    </a>
+                    <a href="#" class="stream-nav-item" data-filter="questions" onclick="quickFilter('questions'); return false;">
+                        <i class="bi bi-question-circle"></i>
+                        Questions
+                    </a>
+                    <a href="#" class="stream-nav-item" data-filter="announcements" onclick="quickFilter('announcements'); return false;">
+                        <i class="bi bi-megaphone"></i>
+                        Announcements
+                    </a>
+                    <a href="#" class="stream-nav-item" data-filter="activity" onclick="quickFilter('activity'); return false;">
+                        <i class="bi bi-clock-history"></i>
+                        Activity
+                    </a>
+                </div>
             </div>
 
-            <!-- Posts Container -->
-            <div id="posts-container">
-                <div class="loading-state" id="stream-loading">
-                    <div class="spinner-border text-primary"></div>
-                    <p>Loading posts...</p>
+            <!-- Main Feed -->
+            <div class="stream-content">
+                <!-- Create Post Box (Facebook style) -->
+                <div class="create-post-box">
+                    <div class="create-post-avatar" id="create-post-avatar"></div>
+                    <div class="create-post-input" onclick="openCreatePostModal()">
+                        <span>{{ "What's on your mind?" if is_owner else "Ask a question..." }}</span>
+                    </div>
+                </div>
+
+                <!-- Posts Feed -->
+                <div id="posts-container">
+                    <div class="loading-state" id="stream-loading">
+                        <div class="spinner-border text-primary"></div>
+                        <p>Loading posts...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -55,17 +69,13 @@
 
 <!-- Create/Edit Post Modal -->
 <div class="modal fade" id="createPostModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="bi bi-plus-circle me-2"></i>
-                    <span id="modal-title-text">{{ 'Create Post' if is_owner else 'Ask Question' }}</span>
-                </h5>
+                <h5 class="modal-title" id="modal-title-text">{{ 'Create Post' if is_owner else 'Ask Question' }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <!-- Type Selector (Owner only) -->
                 {% if is_owner %}
                 <div class="mb-3">
                     <div class="post-type-selector">
@@ -81,17 +91,14 @@
                 </div>
                 {% endif %}
 
-                <!-- Title (Optional) -->
                 <div class="mb-3">
                     <input type="text" class="form-control" id="post-title" 
                            placeholder="Title (optional)" maxlength="200">
                 </div>
 
-                <!-- Content -->
                 <div class="mb-3">
-                    <textarea class="form-control" id="post-content" rows="6" 
-                              placeholder="Write your {% if is_owner %}post{% else %}question{% endif %}..." 
-                              required></textarea>
+                    <textarea class="form-control" id="post-content" rows="5" 
+                              placeholder="What do you want to share?" required></textarea>
                 </div>
 
                 {% if is_owner %}
@@ -123,9 +130,19 @@
     
     let allPosts = [];
     let currentFilter = 'all';
+    let updateInterval;
     
     // Initialize
+    renderCreatePostAvatar();
     loadPosts();
+    startRealTimeUpdates();
+    
+    function renderCreatePostAvatar() {
+        const avatarContainer = document.getElementById('create-post-avatar');
+        if (avatarContainer) {
+            avatarContainer.innerHTML = getAvatar(currentUserName);
+        }
+    }
     
     // Type selector
     document.querySelectorAll('.type-option').forEach(opt => {
@@ -137,10 +154,27 @@
     });
 
     // ============================================
-    // Load & Render Posts
+    // Real-time Updates (Auto-refresh every 10s)
     // ============================================
 
-    async function loadPosts() {
+    function startRealTimeUpdates() {
+        updateInterval = setInterval(() => {
+            loadPosts(true); // Silent reload
+        }, 10000); // 10 seconds
+        
+        console.log('🔄 Real-time updates enabled (10s interval)');
+    }
+
+    // Stop updates when leaving tab
+    window.addEventListener('beforeunload', () => {
+        if (updateInterval) clearInterval(updateInterval);
+    });
+
+    // ============================================
+    // Load & Render
+    // ============================================
+
+    async function loadPosts(silent = false) {
         try {
             const params = new URLSearchParams();
             if (currentFilter === 'questions') params.append('type', 'question');
@@ -151,8 +185,16 @@
             const data = await response.json();
             
             if (data.success) {
+                const oldCount = allPosts.length;
                 allPosts = data.posts;
                 renderPosts();
+                
+                // Show notification for new posts (only if not silent and not first load)
+                if (!silent && oldCount > 0 && allPosts.length > oldCount) {
+                    if (typeof window.showSuccess === 'function') {
+                        window.showSuccess('New post available');
+                    }
+                }
             }
         } catch (error) {
             console.error('Error:', error);
@@ -162,6 +204,7 @@
         }
     }
 
+
     function renderPosts() {
         const container = document.getElementById('posts-container');
         
@@ -170,29 +213,34 @@
                 <div class="empty-state">
                     <i class="bi bi-inbox"></i>
                     <p>No posts yet</p>
-                    <small>${isOwner ? 'Create your first post' : 'Check back later'}</small>
+                    <small>${isOwner ? 'Share something with your class' : 'Check back later for updates'}</small>
                 </div>
             `;
             return;
         }
         
-        // Sort: pinned first
         const sorted = [...allPosts].sort((a, b) => {
             if (a.is_pinned && !b.is_pinned) return -1;
             if (!a.is_pinned && b.is_pinned) return 1;
             return new Date(b.created_at) - new Date(a.created_at);
         });
         
-        container.innerHTML = sorted.map(post => `
-            <div class="post-card ${post.is_pinned ? 'pinned' : ''}">
-                <!-- Header -->
+        container.innerHTML = sorted.map(post => createPostCard(post)).join('');
+    }
+
+    function createPostCard(post) {
+        const isAuthor = post.user_id === currentUserId;
+        const canEdit = isAuthor || isOwner;
+        
+        return `
+            <div class="post-card ${post.is_pinned ? 'pinned' : ''}" data-post-id="${post.id}">
                 <div class="post-header">
                     <div class="post-author">
                         ${getAvatar(post.author.name)}
                         <div>
                             <div class="author-name">
                                 ${post.author.name}
-                                ${post.user_id === currentUserId ? '<span class="badge-me">You</span>' : ''}
+                                ${isAuthor ? '<span class="badge-me">You</span>' : ''}
                             </div>
                             <div class="post-meta">
                                 ${getTimeAgo(post.created_at)}
@@ -201,12 +249,12 @@
                             </div>
                         </div>
                     </div>
-                    ${(post.user_id === currentUserId || isOwner) ? `
+                    ${canEdit ? `
                     <div class="dropdown">
                         <button class="btn-icon-sm" data-bs-toggle="dropdown">
-                            <i class="bi bi-three-dots-vertical"></i>
+                            <i class="bi bi-three-dots"></i>
                         </button>
-                        <ul class="dropdown-menu">
+                        <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" onclick="editPost('${post.id}')"><i class="bi bi-pencil"></i> Edit</a></li>
                             ${isOwner ? `<li><a class="dropdown-item" onclick="togglePin('${post.id}')"><i class="bi bi-pin"></i> ${post.is_pinned ? 'Unpin' : 'Pin'}</a></li>` : ''}
                             <li><hr class="dropdown-divider"></li>
@@ -216,23 +264,20 @@
                     ` : ''}
                 </div>
 
-                <!-- Type Badge -->
                 ${getTypeBadge(post.type)}
 
-                <!-- Content -->
                 <div class="post-body">
                     ${post.title ? `<h4>${escapeHtml(post.title)}</h4>` : ''}
                     <p>${formatContent(post.content)}</p>
                 </div>
 
-                <!-- Footer -->
                 <div class="post-footer">
                     <button class="post-action" onclick="toggleComments('${post.id}')">
-                        <i class="bi bi-chat"></i> ${post.comments_count} Comments
+                        <i class="bi bi-chat"></i> 
+                        <span>${post.comments_count} ${post.comments_count === 1 ? 'Comment' : 'Comments'}</span>
                     </button>
                 </div>
 
-                <!-- Comments -->
                 <div class="comments-section" id="comments-${post.id}" style="display:none">
                     <div class="comments-list" id="comments-list-${post.id}"></div>
                     ${post.allow_comments !== false ? `
@@ -240,19 +285,19 @@
                         ${getAvatar(currentUserName)}
                         <input type="text" placeholder="Write a comment..." 
                                id="input-${post.id}" 
-                               onkeypress="if(event.key==='Enter') addComment('${post.id}')">
-                        <button onclick="addComment('${post.id}')"><i class="bi bi-send"></i></button>
+                               onkeypress="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); addComment('${post.id}'); }">
+                        <button onclick="addComment('${post.id}')"><i class="bi bi-send-fill"></i></button>
                     </div>
-                    ` : ''}
+                    ` : '<div class="comments-disabled"><i class="bi bi-lock"></i> Comments disabled</div>'}
                 </div>
             </div>
-        `).join('');
+        `;
     }
 
     function getTypeBadge(type) {
-        if (type === 'announcement') return `<span class="type-badge announcement"><i class="bi bi-megaphone-fill"></i> Announcement</span>`;
-        if (type === 'question') return `<span class="type-badge question"><i class="bi bi-question-circle-fill"></i> Question</span>`;
-        if (type === 'activity') return `<span class="type-badge activity"><i class="bi bi-clock-history"></i> Activity</span>`;
+        if (type === 'announcement') return `<div class="type-badge announcement"><i class="bi bi-megaphone-fill"></i> Announcement</div>`;
+        if (type === 'question') return `<div class="type-badge question"><i class="bi bi-question-circle-fill"></i> Question</div>`;
+        if (type === 'activity') return `<div class="type-badge activity"><i class="bi bi-clock-history"></i> Activity</div>`;
         return '';
     }
 
@@ -268,9 +313,9 @@
         const seconds = Math.floor((new Date() - date) / 1000);
         
         if (seconds < 60) return 'Just now';
-        if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
-        if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
-        if (seconds < 604800) return Math.floor(seconds / 86400) + 'd ago';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+        if (seconds < 86400) return Math.floor(seconds / 3600) + 'h';
+        if (seconds < 604800) return Math.floor(seconds / 86400) + 'd';
         return date.toLocaleDateString();
     }
 
@@ -291,12 +336,16 @@
     window.quickFilter = function(filter) {
         currentFilter = filter;
         
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.remove('active');
+        document.querySelectorAll('.stream-nav-item').forEach(item => {
+            item.classList.remove('active');
         });
         document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
         
         loadPosts();
+    };
+
+    window.toggleStreamSidebar = function() {
+        document.getElementById('stream-sidebar').classList.toggle('show');
     };
 
     // ============================================
@@ -377,6 +426,7 @@
             if (result.success) {
                 bootstrap.Modal.getInstance(document.getElementById('createPostModal')).hide();
                 await loadPosts();
+                
                 if (typeof window.showSuccess === 'function') {
                     window.showSuccess(postId ? 'Post updated' : 'Post created');
                 }
@@ -397,6 +447,7 @@
             
             if (data.success) {
                 await loadPosts();
+                
                 if (typeof window.showSuccess === 'function') {
                     window.showSuccess('Post deleted');
                 }
@@ -457,7 +508,7 @@
         const post = allPosts.find(p => p.id === postId);
         
         if (comments.length === 0) {
-            list.innerHTML = '<div class="no-comments">No comments yet</div>';
+            list.innerHTML = '<div class="no-comments">No comments yet. Be the first!</div>';
             return;
         }
         
@@ -478,7 +529,7 @@
                         ` : ''}
                         ${isOwner && post.type === 'question' && !c.is_accepted ? `
                         <button class="text-success" onclick="acceptAnswer('${postId}', '${c.id}')">
-                            <i class="bi bi-check-circle"></i> Accept
+                            <i class="bi bi-check-circle"></i> Accept Answer
                         </button>
                         ` : ''}
                     </div>
@@ -504,12 +555,34 @@
             
             if (data.success) {
                 input.value = '';
+                
+                // Show comments section if hidden
+                const section = document.getElementById(`comments-${postId}`);
+                if (section.style.display === 'none') {
+                    section.style.display = 'block';
+                }
+                
+                // Render comments
                 renderComments(postId, data.comments);
                 
-                // Update count
+                // Mark as loaded
+                const list = document.getElementById(`comments-list-${postId}`);
+                if (list) list.dataset.loaded = 'true';
+                
+                // Update count in post card
                 const post = allPosts.find(p => p.id === postId);
-                if (post) post.comments_count = data.comments.length;
-                renderPosts();
+                if (post) {
+                    post.comments_count = data.comments.length;
+                    
+                    // Update count display
+                    const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+                    if (postCard) {
+                        const countSpan = postCard.querySelector('.post-action span');
+                        if (countSpan) {
+                            countSpan.textContent = `${post.comments_count} ${post.comments_count === 1 ? 'Comment' : 'Comments'}`;
+                        }
+                    }
+                }
             }
         } catch (error) {
             alert('Error adding comment');
@@ -543,14 +616,17 @@
             if (data.success) {
                 await loadComments(postId);
                 await loadPosts();
+                
                 if (typeof window.showSuccess === 'function') {
-                    window.showSuccess('Answer accepted');
+                    window.showSuccess('Answer accepted!');
                 }
             }
         } catch (error) {
             alert('Error accepting answer');
         }
     };
+
+    console.log('✅ Stream system loaded');
 
 })();
 </script>

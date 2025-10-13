@@ -1,4 +1,4 @@
-/* Stream Tab - Clean & Simple Design */
+/* Stream Tab - Facebook-style Feed */
 
 .stream-container {
     background: #f2f2f7;
@@ -6,7 +6,7 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Header */
+/* Header (เหมือน tabs อื่น) */
 .stream-header {
     background: white;
     border-bottom: 1px solid #e5e5ea;
@@ -20,7 +20,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 900px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -29,19 +29,36 @@
     font-weight: 600;
     color: #1d1d1f;
     margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.stream-title i {
-    color: #2B6BCF;
 }
 
 .stream-subtitle {
     font-size: 0.875rem;
     color: #8e8e93;
     margin: 4px 0 0 0;
+}
+
+.stream-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-icon {
+    background: transparent;
+    border: 1px solid #e5e5ea;
+    color: #1d1d1f;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    background: #f2f2f7;
 }
 
 .btn-stream-primary {
@@ -51,65 +68,118 @@
     border-radius: 10px;
     padding: 12px 20px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(0, 59, 142, 0.2);
 }
 
 .btn-stream-primary:hover {
+    background: linear-gradient(135deg, #003B8E 0%, #002456 100%);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 59, 142, 0.35);
 }
 
-/* Main Content */
+/* Main Layout */
 .stream-main {
+    display: flex;
+    height: calc(100vh - 80px);
+}
+
+.stream-content-layout {
+    display: flex;
+    gap: 0;
+    flex: 1;
     width: 100%;
 }
 
-.stream-content {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 24px 20px;
-}
-
-/* Quick Filters */
-.stream-quick-filters {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 20px;
+/* Sidebar (เหมือน tabs อื่น) */
+.stream-sidebar {
+    width: 320px;
     background: white;
-    padding: 12px;
-    border-radius: 12px;
-    border: 1px solid #e5e5ea;
+    border-right: 1px solid #e5e5ea;
+    flex-shrink: 0;
+    overflow-y: auto;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
 }
 
-.filter-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    color: #8e8e93;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
+.stream-nav-section {
+    padding: 20px 0;
+    border-bottom: 1px solid #e5e5ea;
+}
+
+.stream-nav-item {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
+    gap: 12px;
+    padding: 12px 20px;
+    color: #1d1d1f;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
 }
 
-.filter-btn:hover {
+.stream-nav-item:hover {
     background: #f8f9fa;
     color: #2B6BCF;
 }
 
-.filter-btn.active {
-    background: linear-gradient(135deg, #2B6BCF 0%, #003B8E 100%);
-    color: white;
+.stream-nav-item.active {
+    background: linear-gradient(90deg, rgba(43, 107, 207, 0.1) 0%, transparent 100%);
+    color: #2B6BCF;
+    border-left-color: #2B6BCF;
+    font-weight: 600;
 }
 
-/* Post Card */
+/* Main Content */
+.stream-content {
+    flex: 1;
+    background: #f8f9fa;
+    padding: 24px;
+    overflow-y: auto;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+/* Create Post Box (Facebook style) */
+.create-post-box {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e5ea;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.create-post-avatar .avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.create-post-input {
+    flex: 1;
+    background: #f8f9fa;
+    border-radius: 20px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.create-post-input:hover {
+    background: #e5e5ea;
+}
+
+.create-post-input span {
+    color: #8e8e93;
+    font-size: 0.9375rem;
+}
+
+/* Post Card (Facebook style) */
 .post-card {
     background: white;
     border-radius: 12px;
@@ -119,10 +189,6 @@
     transition: all 0.2s ease;
 }
 
-.post-card:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
 .post-card.pinned {
     border-left: 4px solid #ffc107;
 }
@@ -130,9 +196,7 @@
 .post-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    padding: 16px 20px 12px;
-    border-bottom: 1px solid #f8f9fa;
+    padding: 16px;
 }
 
 .post-author {
@@ -160,13 +224,14 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    font-size: 0.9375rem;
 }
 
 .badge-me {
     background: #2B6BCF;
     color: white;
-    padding: 2px 8px;
-    border-radius: 10px;
+    padding: 2px 6px;
+    border-radius: 8px;
     font-size: 0.6875rem;
     font-weight: 600;
 }
@@ -176,17 +241,21 @@
     color: #8e8e93;
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 2px;
+    gap: 6px;
 }
 
 .btn-icon-sm {
     background: transparent;
     border: none;
-    padding: 6px;
+    padding: 8px;
     color: #8e8e93;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-icon-sm:hover {
@@ -199,7 +268,7 @@
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    margin: 0 20px 12px;
+    margin: 0 16px 12px;
     border-radius: 6px;
     font-size: 0.8125rem;
     font-weight: 600;
@@ -222,13 +291,13 @@
 
 /* Post Body */
 .post-body {
-    padding: 0 20px 16px;
+    padding: 0 16px 16px;
 }
 
 .post-body h4 {
     font-size: 1.125rem;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin: 0 0 8px 0;
     color: #1d1d1f;
 }
 
@@ -241,8 +310,7 @@
 
 /* Post Footer */
 .post-footer {
-    padding: 12px 20px;
-    background: #f8f9fa;
+    padding: 8px 16px;
     border-top: 1px solid #e5e5ea;
 }
 
@@ -250,21 +318,25 @@
     background: transparent;
     border: none;
     color: #8e8e93;
-    padding: 6px 12px;
+    padding: 8px 12px;
     border-radius: 6px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
 }
 
 .post-action:hover {
-    background: #e5e5ea;
+    background: #f8f9fa;
     color: #2B6BCF;
 }
 
-/* Comments */
+/* Comments Section */
 .comments-section {
-    padding: 16px 20px;
+    padding: 16px;
     background: #f8f9fa;
     border-top: 1px solid #e5e5ea;
 }
@@ -277,11 +349,6 @@
     display: flex;
     gap: 12px;
     padding: 12px 0;
-    border-bottom: 1px solid #e5e5ea;
-}
-
-.comment:last-child {
-    border-bottom: none;
 }
 
 .comment.accepted {
@@ -293,8 +360,8 @@
 }
 
 .comment .avatar {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     font-size: 0.875rem;
 }
 
@@ -305,21 +372,21 @@
 .comment-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
+    gap: 6px;
+    margin-bottom: 4px;
     flex-wrap: wrap;
 }
 
 .comment-header strong {
     font-size: 0.875rem;
-    color: #1d1d1f;
+    font-weight: 600;
 }
 
 .badge-accepted {
     background: #28a745;
     color: white;
-    padding: 2px 8px;
-    border-radius: 10px;
+    padding: 2px 6px;
+    border-radius: 8px;
     font-size: 0.6875rem;
     font-weight: 600;
 }
@@ -332,8 +399,7 @@
 .comment-text {
     font-size: 0.875rem;
     line-height: 1.5;
-    color: #1d1d1f;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .comment-actions {
@@ -366,28 +432,22 @@
     font-size: 0.875rem;
 }
 
-/* Comment Input */
+/* Comment Input (Facebook style) */
 .comment-input {
     display: flex;
     align-items: center;
     gap: 12px;
     background: white;
-    padding: 12px;
-    border-radius: 10px;
+    padding: 8px 12px;
+    border-radius: 20px;
     border: 1px solid #e5e5ea;
-}
-
-.comment-input .avatar {
-    width: 32px;
-    height: 32px;
-    font-size: 0.75rem;
 }
 
 .comment-input input {
     flex: 1;
     border: none;
     background: transparent;
-    padding: 8px;
+    padding: 6px 12px;
     font-size: 0.875rem;
 }
 
@@ -404,20 +464,35 @@
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .comment-input button:hover {
     transform: scale(1.1);
 }
 
+.comments-disabled {
+    text-align: center;
+    padding: 12px;
+    color: #8e8e93;
+    font-size: 0.875rem;
+}
+
 /* Modal */
+.modal-content {
+    border-radius: 12px;
+    border: 1px solid #e5e5ea;
+}
+
 .modal-header {
     background: white;
     border-bottom: 1px solid #e5e5ea;
 }
 
-.modal-title i {
-    color: #2B6BCF;
+.modal-title {
+    font-weight: 600;
 }
 
 .post-type-selector {
@@ -444,6 +519,8 @@
     border-radius: 8px;
     background: white;
     transition: all 0.2s ease;
+    font-weight: 600;
+    font-size: 0.875rem;
 }
 
 .type-option:hover span {
@@ -470,12 +547,18 @@
     gap: 6px;
     cursor: pointer;
     margin: 0;
+    font-size: 0.875rem;
 }
 
 /* States */
 .loading-state {
     text-align: center;
     padding: 60px 20px;
+}
+
+.loading-state p {
+    margin-top: 16px;
+    color: #8e8e93;
 }
 
 .empty-state {
@@ -502,15 +585,25 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .stream-sidebar {
+        position: fixed;
+        left: -320px;
+        top: 0;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease;
+    }
+    
+    .stream-sidebar.show {
+        left: 0;
+    }
+    
     .stream-content {
         padding: 16px;
+        max-width: 100%;
     }
     
-    .filter-btn span {
+    .btn-stream-primary span {
         display: none;
-    }
-    
-    .post-card {
-        margin-bottom: 12px;
     }
 }
