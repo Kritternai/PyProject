@@ -14,12 +14,30 @@ class Config:
     SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', 'your_fallback_secret_key')
     
     # Database settings
-    # Create absolute path to database file
+    # Create absolute path to database file with validation
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     PROJECT_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))
-    DB_PATH = os.path.join(PROJECT_ROOT, 'instance', 'site.db')
+    DB_DIR = os.path.join(PROJECT_ROOT, 'instance')
+    DB_PATH = os.path.join(DB_DIR, 'site.db')
+    
+    # Ensure database directory exists
+    if not os.path.exists(DB_DIR):
+        os.makedirs(DB_DIR, exist_ok=True)
+    
+    # Use environment variable or fallback to absolute path
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', f'sqlite:///{DB_PATH}')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # SQLite specific settings for better concurrency handling
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_timeout': 20,
+        'pool_recycle': -1,
+        'pool_pre_ping': True,
+        'connect_args': {
+            'timeout': 20,
+            'check_same_thread': False
+        }
+    }
     
     # Google OAuth settings
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')

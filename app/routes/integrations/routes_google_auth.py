@@ -178,19 +178,24 @@ def callback():
         return redirect(url_for("main_routes.index"))
 
     # ค้นหาหรือสร้างผู้ใช้ใหม่ในฐานข้อมูล
-    user = UserModel.query.filter_by(email=email).first()
-    if not user:
-        user = UserModel(
-            id=str(uuid.uuid4()),
-            username=name or email.split("@")[0],
-            email=email,
-            password_hash="oauth_google", # ระบุว่าเป็นผู้ใช้จาก Google
-            first_name=name or "",
-            profile_image=picture,
-            email_verified=True
-        )
-        db.session.add(user)
-        db.session.commit()
+    try:
+        user = UserModel.query.filter_by(email=email).first()
+        if not user:
+            user = UserModel(
+                id=str(uuid.uuid4()),
+                username=name or email.split("@")[0],
+                email=email,
+                password_hash="oauth_google", # ระบุว่าเป็นผู้ใช้จาก Google
+                first_name=name or "",
+                profile_image=picture,
+                email_verified=True
+            )
+            db.session.add(user)
+            db.session.commit()
+    except Exception as db_error:
+        current_app.logger.exception("Database error during Google OAuth: %s", db_error)
+        flash("Database connection error. Please try again later.", "danger")
+        return redirect(url_for("main_routes.index"))
 
     session["user_id"] = user.id
     flash("Logged in successfully with Google!", "success")
