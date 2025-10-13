@@ -14,5 +14,9 @@ class Config:
     PORT = int(os.getenv("PORT", 5003))
     
     # Database Configuration
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///instance/site.db")
+    # Create absolute path to database file
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(BASE_DIR))
+    DB_PATH = os.path.join(PROJECT_ROOT, 'instance', 'site.db')
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
