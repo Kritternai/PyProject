@@ -1,8 +1,37 @@
-function loadPage(page) {
-  // Show loading indicator
-  const mainContent = document.getElementById('main-content');
-  mainContent.innerHTML = '<div class="text-center py-5 text-secondary" id="loading-indicator">Loading...</div>';
+function loadPage(page, updateHistory = true) {
   console.log('🔄 Loading page:', page);
+  
+  const mainContent = document.getElementById('main-content');
+  
+  // Update URL in address bar
+  if (updateHistory && window.history && window.history.pushState) {
+    const newUrl = '/' + page;
+    window.history.pushState({ page: page }, '', newUrl);
+    console.log('📍 Updated URL to:', newUrl);
+  }
+  
+  // Add loading class for smooth transition
+  mainContent.classList.add('loading');
+  
+  // Show loading indicator immediately with better styling
+  mainContent.innerHTML = `
+    <div class="loading-container" style="
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      padding: 2rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+      margin: 1rem;
+    ">
+      <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div class="text-secondary">Loading ${page.charAt(0).toUpperCase() + page.slice(1)}...</div>
+    </div>
+  `;
   
   fetch('/partial/' + page)
     .then(response => {
@@ -17,7 +46,9 @@ function loadPage(page) {
         console.log('🔄 Handling HTML response');
         return response.text().then(html => {
           console.log('📝 Updating main-content');
-        document.getElementById('main-content').innerHTML = html;
+          // Remove loading class and update content
+          mainContent.classList.remove('loading');
+          mainContent.innerHTML = html;
         
         if (page === 'dashboard') {
           console.log('📅 Setting up calendar...');
@@ -169,11 +200,35 @@ function loadPage(page) {
     })
     .catch(error => {
       console.error('Error loading page:', error);
-      // Show error message
+      // Show error message and remove loading state
       const mainContent = document.getElementById('main-content');
+      mainContent.classList.remove('loading');
       mainContent.innerHTML = '<div class="text-center py-5"><div class="alert alert-danger">Error loading page. Please try again.</div></div>';
     });
 }
+// Preload function for faster navigation
+function preloadPage(page) {
+  // Prefetch the page content without displaying it
+  fetch(`/partial/${page}`)
+    .then(response => {
+      if (response.ok) {
+        console.log(`✅ Preloaded: ${page}`);
+      }
+    })
+    .catch(error => {
+      console.log(`⚠️ Preload failed for: ${page}`, error);
+    });
+}
+
+// Preload common pages on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Preload dashboard and class pages
+  setTimeout(() => {
+    preloadPage('dashboard');
+    preloadPage('class');
+  }, 1000);
+});
+
 // Open full-page note editor (fragment) with optional selected note
 window.openNoteEditor = function(noteId) {
   const target = noteId ? `note/editor/${noteId}` : 'note/editor';
@@ -1429,6 +1484,13 @@ window.toggleAdvancedSearch = function() {
 function setupLessonSearchAndFilter() {
   console.log('setupLessonSearchAndFilter called');
   
+  // Check if we're on the new All Classes page (lessons-page class)
+  if (document.querySelector('.lessons-page')) {
+    console.log('New All Classes page detected - initializing real-time search');
+    initializeClassesRealtimeSearch();
+    return;
+  }
+  
   // Add a small delay to ensure DOM is ready
   setTimeout(() => {
     const searchInput = document.getElementById('lessonSearch');
@@ -1800,6 +1862,543 @@ window.selectColor = function(element, colorId) {
     console.error('❌ Error in selectColor:', error);
   }
 }
+
+// Modal Color Selection (for new modal design)
+window.selectModalColor = function(element, colorId) {
+    console.log('🎨 Modal selectColor called:', colorId);
+    
+    // Prevent event bubbling
+    if (typeof event !== 'undefined') {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    try {
+        // Find the modal container
+        const modal = element.closest('.modal');
+        if (!modal) {
+            console.error('❌ Modal not found');
+            return;
+        }
+        
+        // Remove selected class from all modal-color-box in modal
+        const colorOptions = modal.querySelectorAll('.modal-color-box');
+        console.log('Found color options:', colorOptions.length);
+        
+        colorOptions.forEach(option => {
+            option.classList.remove('selected');
+            // Add a small shrink animation to deselected items
+            option.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                option.style.transform = '';
+            }, 200);
+        });
+        
+        // Add selected class to clicked option with delay for animation
+        setTimeout(() => {
+            element.classList.add('selected');
+            console.log('✅ Color selected:', colorId);
+        }, 100);
+        
+        // Update hidden input
+        const hiddenInput = modal.querySelector('#selectedColor');
+        if (hiddenInput) {
+            hiddenInput.value = colorId;
+            console.log('✅ Hidden input updated:', colorId);
+        } else {
+            console.error('❌ Hidden input not found');
+        }
+        
+        // Add ripple effect
+        const ripple = document.createElement('div');
+        ripple.style.cssText = `
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            animation: ripple 0.6s ease-out;
+            pointer-events: none;
+        `;
+        element.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+        
+    } catch (error) {
+        console.error('❌ Error in selectModalColor:', error);
+    }
+};
+
+// Character counter for modals
+window.updateCharCount = function(input, counterId, maxLength) {
+    const counter = document.getElementById(counterId);
+    if (counter) {
+        counter.textContent = input.value.length;
+    }
+};
+
+console.log('✅ selectModalColor and updateCharCount functions loaded');
+
+// ============================================
+// ALL CLASSES PAGE FUNCTIONS
+// ============================================
+
+// Initialize Real-time Search for All Classes
+function initializeClassesRealtimeSearch() {
+    console.log('='.repeat(60));
+    console.log('🎓 INITIALIZING REAL-TIME SEARCH FOR ALL CLASSES');
+    console.log('='.repeat(60));
+    
+    // Set initial filter state
+    window.currentLessonFilter = 'all';
+    
+    // Get elements
+    const searchInput = document.getElementById('lessonSearch');
+    const clearButton = document.getElementById('clearSearch');
+    const lessonsGrid = document.getElementById('lessons-grid');
+    
+    console.log('📋 Elements Check:');
+    console.log('  searchInput:', !!searchInput);
+    console.log('  clearButton:', !!clearButton);
+    console.log('  lessonsGrid:', !!lessonsGrid);
+    
+    if (!searchInput) {
+        console.error('❌ Search input not found!');
+        return;
+    }
+    
+    // Check if already initialized
+    if (searchInput.dataset.searchInitialized === 'true') {
+        console.log('⚠️ Already initialized');
+        return;
+    }
+    
+    // Real-time search function
+    function performRealtimeSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const lessonCards = document.querySelectorAll('.lesson-card-modern');
+        let visibleCount = 0;
+        
+        console.log(`🔍 Real-time search: "${searchTerm}"`);
+        
+        // Show/hide clear button
+        if (clearButton) {
+            clearButton.style.display = searchTerm.length > 0 ? 'flex' : 'none';
+        }
+        
+        // Filter cards
+        lessonCards.forEach((card) => {
+            const title = (card.querySelector('.lesson-card-title')?.textContent || '').toLowerCase();
+            const description = (card.querySelector('.lesson-card-description')?.textContent || '').toLowerCase();
+            
+            const matchesSearch = searchTerm === '' || 
+                                 title.includes(searchTerm) || 
+                                 description.includes(searchTerm);
+            
+            const matchesFilter = window.checkFilterMatch ? 
+                                 window.checkFilterMatch(card, window.currentLessonFilter) : 
+                                 true;
+            
+            const shouldShow = matchesSearch && matchesFilter;
+            card.style.display = shouldShow ? '' : 'none';
+            
+            if (shouldShow) visibleCount++;
+        });
+        
+        console.log(`✅ Results: ${visibleCount}/${lessonCards.length} visible`);
+        
+        // Show/hide empty state
+        if (lessonsGrid) {
+            let emptyState = lessonsGrid.querySelector('.lessons-search-empty');
+            
+            if (visibleCount === 0 && lessonCards.length > 0) {
+                if (!emptyState) {
+                    emptyState = document.createElement('div');
+                    emptyState.className = 'lessons-search-empty';
+                    emptyState.innerHTML = `
+                        <div class="lessons-empty">
+                            <div class="lessons-empty-icon">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <h3>No Results Found</h3>
+                            <p>Try adjusting your search term or filter</p>
+                        </div>
+                    `;
+                    lessonsGrid.appendChild(emptyState);
+                }
+                emptyState.style.display = 'block';
+            } else if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+        }
+    }
+    
+    // Attach event listeners
+    console.log('⚡ Attaching event listeners...');
+    
+    // INPUT event - REAL-TIME
+    searchInput.addEventListener('input', function(e) {
+        console.log('⌨️ INPUT:', e.target.value);
+        performRealtimeSearch();
+    });
+    
+    // KEYUP event - backup
+    searchInput.addEventListener('keyup', function() {
+        performRealtimeSearch();
+    });
+    
+    // Clear button
+    if (clearButton) {
+        clearButton.addEventListener('click', function(e) {
+            console.log('🗑️ Clear clicked');
+            e.preventDefault();
+            e.stopPropagation();
+            searchInput.value = '';
+            clearButton.style.display = 'none';
+            searchInput.focus();
+            performRealtimeSearch();
+        });
+    }
+    
+    // Keyboard shortcuts
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchInput.blur();
+        } else if (e.key === 'Escape') {
+            searchInput.value = '';
+            if (clearButton) clearButton.style.display = 'none';
+            performRealtimeSearch();
+        }
+    });
+    
+    // Mark as initialized
+    searchInput.dataset.searchInitialized = 'true';
+    
+    // Initial setup
+    if (clearButton) {
+        clearButton.style.display = 'none';
+    }
+    
+    // Sort by favorites
+    setTimeout(() => {
+        if (typeof window.sortLessonsByFavorite === 'function') {
+            window.sortLessonsByFavorite();
+            console.log('✓ Sorted by favorites');
+        }
+    }, 100);
+    
+    console.log('✅ REAL-TIME SEARCH READY!');
+    console.log('='.repeat(60));
+    
+    // Test immediately
+    performRealtimeSearch();
+}
+
+// Helper function to check filter match
+window.checkFilterMatch = function(card, filter) {
+    if (filter === 'all') return true;
+    if (filter === 'favorites') return card.dataset.isFavorite === 'true';
+    
+    const status = card.dataset.status || 'active';
+    
+    if (filter === 'active') {
+        // Active includes: active, not_started, in_progress, or empty
+        return status === 'active' || status === 'not_started' || status === 'in_progress' || status === '';
+    }
+    
+    if (filter === 'completed') {
+        return status === 'completed';
+    }
+    
+    if (filter === 'archived') {
+        return status === 'archived';
+    }
+    
+    return card.dataset.status === filter;
+};
+
+// Filter lessons function
+window.filterLessons = function(filter, buttonElement) {
+    console.log('🔍 Filtering by:', filter);
+    window.currentLessonFilter = filter;
+    
+    // Update button states
+    const filterButtons = document.querySelectorAll('.filter-compact-btn');
+    filterButtons.forEach(btn => btn.classList.remove('active'));
+    if (buttonElement) {
+        buttonElement.classList.add('active');
+    }
+    
+    // Apply filter
+    const lessonCards = document.querySelectorAll('.lesson-card-modern');
+    const searchInput = document.getElementById('lessonSearch');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    
+    let visibleCount = 0;
+    lessonCards.forEach(card => {
+        const title = card.querySelector('.lesson-card-title')?.textContent.toLowerCase() || '';
+        const description = card.querySelector('.lesson-card-description')?.textContent.toLowerCase() || '';
+        
+        // Check search match
+        const matchesSearch = searchTerm === '' || title.includes(searchTerm) || description.includes(searchTerm);
+        
+        // Check filter match
+        const matchesFilter = window.checkFilterMatch(card, filter);
+        
+        const shouldShow = matchesSearch && matchesFilter;
+        card.style.display = shouldShow ? '' : 'none';
+        
+        if (shouldShow) visibleCount++;
+    });
+    
+    console.log(`✅ Filter applied: ${visibleCount}/${lessonCards.length} cards visible`);
+    
+    // Show/hide empty state
+    const lessonsGrid = document.getElementById('lessons-grid');
+    if (lessonsGrid) {
+        let emptyState = lessonsGrid.querySelector('.lessons-search-empty');
+        
+        if (visibleCount === 0 && lessonCards.length > 0) {
+            if (!emptyState) {
+                emptyState = document.createElement('div');
+                emptyState.className = 'lessons-search-empty';
+                emptyState.innerHTML = `
+                    <div class="lessons-empty">
+                        <div class="lessons-empty-icon">
+                            <i class="bi bi-funnel"></i>
+                        </div>
+                        <h3>No Classes Match Filter</h3>
+                        <p>Try selecting a different filter or search term</p>
+                    </div>
+                `;
+                lessonsGrid.appendChild(emptyState);
+            }
+            emptyState.style.display = 'block';
+        } else if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+    }
+};
+
+// Navigate to class
+window.navigateToClass = function(lessonId, event) {
+    // Don't navigate if clicking on favorite button
+    if (event && event.target.closest('.lesson-card-favorite')) {
+        console.log('🚫 Ignoring click on favorite button');
+        return;
+    }
+    
+    console.log('🔗 Navigating to class:', lessonId);
+    
+    // Direct navigation to class detail page
+    window.location.href = '/class/' + lessonId;
+};
+
+// Sort lessons by favorites (favorites first) - REAL-TIME
+window.sortLessonsByFavorite = function() {
+    const grid = document.getElementById('lessons-grid');
+    if (!grid) {
+        console.warn('⚠️ Grid not found for sorting');
+        return;
+    }
+    
+    const cards = Array.from(grid.querySelectorAll('.lesson-card-modern'));
+    
+    if (cards.length === 0) {
+        console.warn('⚠️ No cards to sort');
+        return;
+    }
+    
+    console.log('🔄 REAL-TIME Sorting by favorites...');
+    console.log(`  → Total cards: ${cards.length}`);
+    
+    // Count favorites before sort
+    const favoritesBefore = cards.filter(c => c.dataset.isFavorite === 'true').length;
+    console.log(`  → Favorites: ${favoritesBefore}`);
+    
+    // Sort: favorites first (0), non-favorites last (1)
+    cards.sort((a, b) => {
+        const aFav = a.dataset.isFavorite === 'true' ? 0 : 1;
+        const bFav = b.dataset.isFavorite === 'true' ? 0 : 1;
+        const result = aFav - bFav;
+        
+        // Debug first few
+        if (cards.indexOf(a) < 3 || cards.indexOf(b) < 3) {
+            const aTitle = a.querySelector('.lesson-card-title')?.textContent.substring(0, 20);
+            const bTitle = b.querySelector('.lesson-card-title')?.textContent.substring(0, 20);
+            console.log(`  → Compare: "${aTitle}" (${aFav}) vs "${bTitle}" (${bFav}) = ${result}`);
+        }
+        
+        return result;
+    });
+    
+    // Clear grid first
+    while (grid.firstChild) {
+        // Keep empty state if exists
+        if (grid.firstChild.classList?.contains('lessons-empty') || 
+            grid.firstChild.classList?.contains('lessons-search-empty')) {
+            break;
+        }
+        grid.removeChild(grid.firstChild);
+    }
+    
+    // Re-append in sorted order
+    cards.forEach((card, index) => {
+        grid.insertBefore(card, grid.firstChild?.classList?.contains('lessons-empty') ? grid.firstChild : null);
+        
+        // Log first 3 cards
+        if (index < 3) {
+            const title = card.querySelector('.lesson-card-title')?.textContent.substring(0, 30);
+            const isFav = card.dataset.isFavorite === 'true';
+            console.log(`  → Card ${index + 1}: ${isFav ? '⭐' : '☆'} "${title}"`);
+        }
+    });
+    
+    console.log('✅ Sorting complete!');
+};
+
+// Toggle favorite function - REAL-TIME with immediate sorting
+window.toggleFavorite = function(lessonId, element) {
+    console.log('='.repeat(60));
+    console.log('⭐ REAL-TIME FAVORITE TOGGLE');
+    console.log('='.repeat(60));
+    console.log(`Lesson ID: ${lessonId}`);
+    
+    const icon = element.querySelector('i');
+    const card = element.closest('.lesson-card-modern');
+    
+    if (!card) {
+        console.error('❌ Card not found!');
+        return;
+    }
+    
+    // Get current state
+    const currentFavorite = card.dataset.isFavorite === 'true';
+    const newFavorite = !currentFavorite;
+    
+    console.log(`Current state: ${currentFavorite} → New state: ${newFavorite}`);
+    
+    // Step 1: Update UI immediately (Optimistic Update)
+    console.log('📝 Step 1: Updating UI...');
+    if (newFavorite) {
+        element.classList.add('active');
+        icon.className = 'bi bi-star-fill';
+        card.dataset.isFavorite = 'true';
+        console.log('  ✓ Set to favorite');
+    } else {
+        element.classList.remove('active');
+        icon.className = 'bi bi-star';
+        card.dataset.isFavorite = 'false';
+        console.log('  ✓ Removed from favorites');
+    }
+    
+    // Step 2: Force a delay to ensure DOM is updated
+    setTimeout(() => {
+        console.log('📝 Step 2: Sorting cards...');
+        
+        // Verify the dataset was updated
+        const verifyFavorite = card.dataset.isFavorite === 'true';
+        console.log(`  → Verified dataset: ${verifyFavorite}`);
+        
+        // Sort immediately
+        if (typeof window.sortLessonsByFavorite === 'function') {
+            window.sortLessonsByFavorite();
+        } else {
+            console.error('❌ sortLessonsByFavorite function not found!');
+        }
+    }, 50); // Small delay to ensure DOM update
+    
+    // Step 3: Send to server
+    console.log('📝 Step 3: Sending to server...');
+    fetch(`/partial/class/${lessonId}/favorite`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('✅ Server response:', data);
+        
+        if (data.success) {
+            const serverFavorite = data.is_favorite;
+            console.log(`  → Server state: ${serverFavorite}`);
+            
+            // Verify server state matches our optimistic update
+            if (serverFavorite !== newFavorite) {
+                console.warn('⚠️ Server state mismatch! Correcting...');
+                // Update to match server
+                if (serverFavorite) {
+                    element.classList.add('active');
+                    icon.className = 'bi bi-star-fill';
+                    card.dataset.isFavorite = 'true';
+                } else {
+                    element.classList.remove('active');
+                    icon.className = 'bi bi-star';
+                    card.dataset.isFavorite = 'false';
+                }
+                
+                // Re-sort with corrected state
+                setTimeout(() => {
+                    window.sortLessonsByFavorite();
+                }, 50);
+            }
+            
+            // Show notification
+            if (typeof window.showSuccess === 'function') {
+                window.showSuccess(serverFavorite ? '⭐ Added to favorites' : 'Removed from favorites');
+            }
+        } else {
+            // Rollback on error
+            console.error('❌ Server error! Rolling back...');
+            if (currentFavorite) {
+                element.classList.add('active');
+                icon.className = 'bi bi-star-fill';
+                card.dataset.isFavorite = 'true';
+            } else {
+                element.classList.remove('active');
+                icon.className = 'bi bi-star';
+                card.dataset.isFavorite = 'false';
+            }
+            
+            setTimeout(() => {
+                window.sortLessonsByFavorite();
+            }, 50);
+            
+            if (typeof window.showError === 'function') {
+                window.showError('Failed to update favorite');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('❌ Network error! Rolling back...', error);
+        
+        // Rollback on network error
+        if (currentFavorite) {
+            element.classList.add('active');
+            icon.className = 'bi bi-star-fill';
+            card.dataset.isFavorite = 'true';
+        } else {
+            element.classList.remove('active');
+            icon.className = 'bi bi-star';
+            card.dataset.isFavorite = 'false';
+        }
+        
+        setTimeout(() => {
+            window.sortLessonsByFavorite();
+        }, 50);
+        
+        if (typeof window.showError === 'function') {
+            window.showError('Network error. Please try again.');
+        }
+    });
+    
+    console.log('='.repeat(60));
+};
+
+console.log('✅ All Classes page functions loaded');
 
 // Class Notes System Functions
 window.openNoteModal = function() {
@@ -2833,3 +3432,50 @@ window.insertHTMLAtCursor = function(html) {
 };
 
 console.log('✅ Note Editor global functions loaded');
+
+// ========================================
+// Browser History Navigation (Back/Forward)
+// ========================================
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', function(event) {
+  console.log('🔙 Browser navigation detected:', event.state);
+  
+  if (event.state && event.state.page) {
+    // Load the page without updating history (to avoid duplicate entries)
+    loadPage(event.state.page, false);
+    
+    // Update active nav
+    if (typeof setActiveNav === 'function') {
+      const navLink = document.querySelector(`.enchat-sidebar__nav-link[data-page="${event.state.page}"]`);
+      if (navLink) {
+        setActiveNav(navLink);
+      }
+    }
+  } else {
+    // No state, try to detect from URL
+    const path = window.location.pathname;
+    if (path && path !== '/') {
+      const page = path.substring(1); // Remove leading slash
+      loadPage(page, false);
+      
+      // Update active nav
+      if (typeof setActiveNav === 'function') {
+        const navLink = document.querySelector(`.enchat-sidebar__nav-link[data-page="${page}"]`);
+        if (navLink) {
+          setActiveNav(navLink);
+        }
+      }
+    }
+  }
+});
+
+// Save initial state on page load
+if (window.history && window.history.replaceState) {
+  const currentPath = window.location.pathname;
+  const currentPage = currentPath === '/' || currentPath === '/dashboard' ? 'dashboard' : currentPath.substring(1);
+  window.history.replaceState({ page: currentPage }, '', currentPath);
+  console.log('📍 Initial history state saved:', currentPage);
+}
+
+console.log('✅ Browser history navigation enabled');
