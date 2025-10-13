@@ -87,6 +87,11 @@ def register_blueprints(app):
     from .routes.integrations.routes_google_classroom import google_classroom_bp
     from .routes.integrations.routes_google_auth import google_auth_bp
     from .routes.integrations.routes_microsoft_teams import microsoft_teams_bp
+    
+    # ============================================ 
+    # WEB AUTH ROUTES (HTML pages)
+    # ============================================
+    from .routes_web_auth import web_auth_bp
 
     # ============================================
     # REGISTER MAIN WEB ROUTES
@@ -96,6 +101,7 @@ def register_blueprints(app):
     app.register_blueprint(note_web_bp)     # /partial/note, note fragments & CRUD
     app.register_blueprint(classwork_bp)    # /classwork/* tasks & materials
     app.register_blueprint(api_bp)          # /api/* general data endpoints
+    app.register_blueprint(web_auth_bp)     # /login, /register, /logout HTML pages
     
     # ============================================
     # REGISTER API BLUEPRINTS

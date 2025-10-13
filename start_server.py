@@ -298,7 +298,7 @@ def start_flask_server() -> None:
     """Start Flask development server"""
     print_header("Starting Smart Learning Hub MVC Architecture Flask Application")
     
-    # Prefer explicit PORT env var if set and free, else fall back to 5003/5004
+    # Prefer explicit PORT env var if set and free, else fall back to 5004/5003
     env_port = None
     try:
         env_port = int(os.environ.get('PORT', 0))
@@ -308,7 +308,7 @@ def start_flask_server() -> None:
     if env_port and try_port(env_port):
         port = env_port
     else:
-        port = 5003 if try_port(5003) else 5004
+        port = 5004 if try_port(5004) else 5003
     print_status(f"Application will be available at: http://localhost:{port}")
     print_status("Architecture: MVC (Model-View-Controller)")
     print_status("Features: User, Lesson, Note, Task, Pomodoro Management")

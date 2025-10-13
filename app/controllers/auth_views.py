@@ -43,14 +43,15 @@ class AuthController:
             required_fields = ['email', 'password']
             for field in required_fields:
                 if field not in data or not data[field]:
+                    field_name = 'อีเมล' if field == 'email' else 'รหัสผ่าน'
                     if request.is_json:
                         return jsonify({
                             'success': False,
-                            'message': f'{field} is required'
+                            'message': f'กรุณากรอก{field_name}'
                         }), 400
                     else:
-                        flash(f'{field.title()} is required.', 'error')
-                        return redirect(url_for('auth.login'))
+                        flash(f'กรุณากรอก{field_name}', 'error')
+                        return redirect(url_for('web_auth.login'))
 
             user = self._user_service.authenticate_user(
                 email=data['email'],
@@ -63,7 +64,7 @@ class AuthController:
             if request.is_json:
                 return jsonify({
                     'success': True,
-                    'message': 'Login successful',
+                    'message': 'เข้าสู่ระบบสำเร็จ',
                     'data': {
                         'user': {
                             'id': user.id,
@@ -77,7 +78,7 @@ class AuthController:
                     }
                 }), 200
             else:
-                flash(f'Welcome back, {user.username}!', 'success')
+                # No flash message - just redirect silently
                 return redirect(url_for('main_routes.dashboard'))
 
         except ValidationException as e:
@@ -90,18 +91,18 @@ class AuthController:
                 }), 400
             else:
                 flash(e.message, 'error')
-                return redirect(url_for('auth.login'))
+                return redirect(url_for('web_auth.login'))
 
         except Exception as e:
             if request.is_json:
                 return jsonify({
                     'success': False,
-                    'message': 'Login failed',
+                    'message': 'เข้าสู่ระบบล้มเหลว',
                     'error': str(e)
                 }), 500
             else:
-                flash('Login failed. Please try again.', 'error')
-                return redirect(url_for('auth.login'))
+                flash('เข้าสู่ระบบล้มเหลว กรุณาลองใหม่อีกครั้ง', 'error')
+                return redirect(url_for('web_auth.login'))
 
     def register(self) -> Any:
         """
@@ -123,7 +124,7 @@ class AuthController:
                     }), 400
                 else:
                     flash('Please provide registration information.', 'error')
-                    return redirect(url_for('auth.register'))
+                    return redirect(url_for('web_auth.register'))
 
             # Validate required fields
             required_fields = ['email', 'password']
@@ -136,7 +137,7 @@ class AuthController:
                         }), 400
                     else:
                         flash(f'{field.title()} is required.', 'error')
-                        return redirect(url_for('auth.register'))
+                        return redirect(url_for('web_auth.register'))
 
             # Create user (username will be auto-generated from email)
             username = data.get('username') or data['email'].split('@')[0]
@@ -155,12 +156,12 @@ class AuthController:
                     'success': True,
                     'message': 'Registration successful. Please login.',
                     'data': {
-                        'redirect_url': url_for('auth.login')
+                        'redirect_url': url_for('web_auth.login')
                     }
                 }), 201
             else:
-                flash(f'Registration successful! Please login with your credentials.', 'success')
-                return redirect(url_for('auth.login'))
+                # Silent success - no flash message
+                return {'success': True, 'message': 'Registration successful'}
 
         except ValidationException as e:
             if request.is_json:
@@ -172,7 +173,7 @@ class AuthController:
                 }), 400
             else:
                 flash(e.message, 'error')
-                return redirect(url_for('auth.register'))
+                return {'success': False, 'message': e.message}
 
         except BusinessLogicException as e:
             if request.is_json:
@@ -184,7 +185,7 @@ class AuthController:
                 }), 409 # Conflict
             else:
                 flash(e.message, 'error')
-                return redirect(url_for('auth.register'))
+                return {'success': False, 'message': e.message}
 
         except Exception as e:
             if request.is_json:
@@ -194,8 +195,9 @@ class AuthController:
                     'error': str(e)
                 }), 500
             else:
-                flash('Registration failed. Please try again.', 'error')
-                return redirect(url_for('auth.register'))
+                # Don't add extra "เกิดข้อผิดพลาด" prefix - just show the actual error
+                flash(str(e), 'error')
+                return {'success': False, 'message': str(e)}
 
     def logout(self) -> Any:
         """
@@ -204,5 +206,4 @@ class AuthController:
             Redirect to login page
         """
         session.pop('user_id', None)
-        flash('You have been logged out.', 'info')
-        return redirect(url_for('main_routes.index'))
+        return redirect(url_for('web_auth.login'))
