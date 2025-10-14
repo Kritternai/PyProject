@@ -3764,3 +3764,34 @@ if (window.history && window.history.replaceState) {
 }
 
 console.log('✅ Browser history navigation enabled');
+// Google Classroom Import - New System
+window.openGoogleClassroomImportNew = function() {
+    console.log('🚀 Opening Google Classroom Import Modal (New System)...');
+    
+    // Check if modal exists
+    const modal = document.getElementById('googleClassroomImportModalNew');
+    if (!modal) {
+        console.error('❌ Google Classroom modal not found');
+        return;
+    }
+    
+    // Show modal
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+    
+    // Initialize modal if function exists
+    if (typeof initGoogleClassroomImportModal === 'function') {
+        initGoogleClassroomImportModal();
+    }
+};
+
+// Update existing Google Classroom button to use new system
+document.addEventListener('DOMContentLoaded', function() {
+    // Find all Google Classroom import buttons and update them
+    const googleButtons = document.querySelectorAll('[onclick*="openGoogleClassroomModal"], [onclick*="openGoogleClassroomImport"]');
+    
+    googleButtons.forEach(button => {
+        button.setAttribute('onclick', 'openGoogleClassroomImportNew()');
+        console.log('✅ Updated Google Classroom button to use new system');
+    });
+});

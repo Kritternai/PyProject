@@ -1,0 +1,641 @@
+<!-- Google Classroom Import Modal - New Complete Implementation -->
+<div class="modal fade" id="googleClassroomImportModalNew" tabindex="-1" aria-labelledby="googleClassroomImportModalNewLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="googleClassroomImportModalNewLabel">
+                    <i class="fab fa-google me-2"></i>
+                    Import from Google Classroom
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Connection Status -->
+                <div id="google-connection-status" class="mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status" id="connection-spinner">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span id="connection-status-text">Checking Google Classroom connection...</span>
+                    </div>
+                </div>
+
+                <!-- Not Connected State -->
+                <div id="google-not-connected" style="display: none;">
+                    <div class="text-center py-5">
+                        <i class="fab fa-google fa-3x text-muted mb-3"></i>
+                        <h4>Connect to Google Classroom</h4>
+                        <p class="text-muted">Connect your Google Classroom account to import courses, assignments, and materials.</p>
+                        <button type="button" class="btn btn-primary" id="connect-google-btn">
+                            <i class="fab fa-google me-2"></i>
+                            Connect Google Classroom
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Connected State -->
+                <div id="google-connected" style="display: none;">
+                    <!-- Connection Info -->
+                    <div class="alert alert-success d-flex align-items-center mb-4">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <div>
+                            <strong>Connected to Google Classroom</strong>
+                            <div class="small">You can now import your courses and materials.</div>
+                        </div>
+                        <button type="button" class="btn btn-outline-danger btn-sm ms-auto" id="disconnect-google-btn">
+                            <i class="fas fa-unlink me-1"></i>
+                            Disconnect
+                        </button>
+                    </div>
+
+                    <!-- Courses Loading -->
+                    <div id="courses-loading" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading courses...</span>
+                        </div>
+                        <div class="mt-2">Loading your Google Classroom courses...</div>
+                    </div>
+
+                    <!-- Courses List -->
+                    <div id="courses-list" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Select Course to Import</h6>
+                            <div class="text-muted small" id="courses-count">0 courses found</div>
+                        </div>
+                        
+                        <div class="row g-3" id="courses-grid">
+                            <!-- Courses will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- No Courses -->
+                    <div id="no-courses" style="display: none;" class="text-center py-5">
+                        <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+                        <h5>No Courses Found</h5>
+                        <p class="text-muted">You don't have any active courses in Google Classroom.</p>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="courses-error" style="display: none;" class="text-center py-5">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <h5>Error Loading Courses</h5>
+                        <p class="text-muted" id="courses-error-message">Failed to load courses from Google Classroom.</p>
+                        <button type="button" class="btn btn-outline-primary" id="retry-load-courses">
+                            <i class="fas fa-redo me-2"></i>
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="import-selected-course" style="display: none;">
+                    <i class="fas fa-download me-2"></i>
+                    Import Selected Course
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Selection Modal -->
+<div class="modal fade" id="courseSelectionModal" tabindex="-1" aria-labelledby="courseSelectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="courseSelectionModalLabel">
+                    <i class="fas fa-cog me-2"></i>
+                    Import Settings
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="selected-course-info" class="mb-4">
+                    <!-- Selected course info will be shown here -->
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Import Options</h6>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="import-students" checked>
+                            <label class="form-check-label" for="import-students">
+                                Import Students
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="import-assignments" checked>
+                            <label class="form-check-label" for="import-assignments">
+                                Import Assignments
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="import-materials" checked>
+                            <label class="form-check-label" for="import-materials">
+                                Import Materials
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="import-announcements" checked>
+                            <label class="form-check-label" for="import-announcements">
+                                Import Announcements
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Course Settings</h6>
+                        <div class="mb-3">
+                            <label for="course-title" class="form-label">Course Title</label>
+                            <input type="text" class="form-control" id="course-title" placeholder="Enter course title">
+                        </div>
+                        <div class="mb-3">
+                            <label for="course-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="course-description" rows="3" placeholder="Enter course description"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-import">
+                    <i class="fas fa-download me-2"></i>
+                    Import Course
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Progress Modal -->
+<div class="modal fade" id="importProgressModal" tabindex="-1" aria-labelledby="importProgressModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importProgressModalLabel">
+                    <i class="fas fa-download me-2"></i>
+                    Importing Course
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Importing...</span>
+                    </div>
+                    <h6 id="import-status">Preparing import...</h6>
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" style="width: 0%" id="import-progress-bar"></div>
+                    </div>
+                    <div class="small text-muted" id="import-details">Initializing...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Google Classroom Import Modal Styles */
+.google-course-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 100%;
+}
+
+.google-course-card:hover {
+    border-color: #4285f4;
+    box-shadow: 0 2px 8px rgba(66, 133, 244, 0.15);
+    transform: translateY(-2px);
+}
+
+.google-course-card.selected {
+    border-color: #4285f4;
+    background-color: #f8f9ff;
+}
+
+.google-course-card h6 {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.google-course-card .course-meta {
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.google-course-card .course-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.course-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.import-option {
+    margin-bottom: 0.75rem;
+}
+
+.import-option .form-check-input {
+    margin-top: 0.125rem;
+}
+
+.import-option .form-check-label {
+    font-weight: 500;
+}
+
+#google-connection-status {
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+#google-connected .alert {
+    border-radius: 8px;
+}
+
+.course-preview {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.course-preview h6 {
+    color: #4285f4;
+    margin-bottom: 0.5rem;
+}
+
+.course-preview .preview-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #666;
+}
+</style>
+
+<script>
+// Google Classroom Import Modal JavaScript
+let selectedCourse = null;
+let googleCourses = [];
+
+// Initialize Google Classroom Import Modal
+function initGoogleClassroomImportModal() {
+    console.log('🚀 Initializing Google Classroom Import Modal...');
+    
+    // Event listeners
+    document.getElementById('connect-google-btn').addEventListener('click', connectGoogleClassroom);
+    document.getElementById('disconnect-google-btn').addEventListener('click', disconnectGoogleClassroom);
+    document.getElementById('retry-load-courses').addEventListener('click', loadGoogleCourses);
+    document.getElementById('import-selected-course').addEventListener('click', showImportSettings);
+    document.getElementById('confirm-import').addEventListener('click', confirmImport);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('googleClassroomImportModalNew'));
+    modal.show();
+    
+    // Check connection status
+    checkGoogleConnection();
+}
+
+// Check Google Classroom connection
+async function checkGoogleConnection() {
+    try {
+        console.log('🔍 Checking Google Classroom connection...');
+        
+        const response = await fetch('/google_classroom/test_connection');
+        
+        if (response.status === 401) {
+            showNotConnected();
+        } else if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                showConnected();
+                loadGoogleCourses();
+            } else {
+                showNotConnected();
+            }
+        } else {
+            showNotConnected();
+        }
+    } catch (error) {
+        console.error('❌ Error checking connection:', error);
+        showNotConnected();
+    }
+}
+
+// Show not connected state
+function showNotConnected() {
+    console.log('📱 Showing not connected state');
+    
+    document.getElementById('google-connection-status').style.display = 'none';
+    document.getElementById('google-not-connected').style.display = 'block';
+    document.getElementById('google-connected').style.display = 'none';
+}
+
+// Show connected state
+function showConnected() {
+    console.log('✅ Showing connected state');
+    
+    document.getElementById('google-connection-status').style.display = 'none';
+    document.getElementById('google-not-connected').style.display = 'none';
+    document.getElementById('google-connected').style.display = 'block';
+}
+
+// Connect to Google Classroom
+function connectGoogleClassroom() {
+    console.log('🔗 Connecting to Google Classroom...');
+    
+    window.location.href = '/google_classroom/authorize?return_to_import=true';
+}
+
+// Disconnect from Google Classroom
+async function disconnectGoogleClassroom() {
+    try {
+        console.log('🔌 Disconnecting from Google Classroom...');
+        
+        const response = await fetch('/google_classroom/disconnect');
+        
+        if (response.ok) {
+            showNotConnected();
+            showSuccessMessage('Google Classroom disconnected successfully');
+        } else {
+            showErrorMessage('Failed to disconnect from Google Classroom');
+        }
+    } catch (error) {
+        console.error('❌ Error disconnecting:', error);
+        showErrorMessage('Failed to disconnect from Google Classroom');
+    }
+}
+
+// Load Google Classroom courses
+async function loadGoogleCourses() {
+    try {
+        console.log('📚 Loading Google Classroom courses...');
+        
+        showCoursesLoading();
+        
+        const response = await fetch('/google_classroom/fetch_courses');
+        
+        if (response.status === 401) {
+            showNotConnected();
+            return;
+        }
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.success) {
+                googleCourses = data.courses;
+                showCourses(data.courses);
+            } else {
+                showCoursesError(data.error || 'Failed to load courses');
+            }
+        } else {
+            showCoursesError('Failed to load courses');
+        }
+    } catch (error) {
+        console.error('❌ Error loading courses:', error);
+        showCoursesError('Failed to load courses');
+    }
+}
+
+// Show courses loading state
+function showCoursesLoading() {
+    document.getElementById('courses-loading').style.display = 'block';
+    document.getElementById('courses-list').style.display = 'none';
+    document.getElementById('no-courses').style.display = 'none';
+    document.getElementById('courses-error').style.display = 'none';
+}
+
+// Show courses list
+function showCourses(courses) {
+    console.log(`📚 Showing ${courses.length} courses`);
+    
+    document.getElementById('courses-loading').style.display = 'none';
+    document.getElementById('courses-list').style.display = 'block';
+    document.getElementById('no-courses').style.display = 'none';
+    document.getElementById('courses-error').style.display = 'none';
+    
+    document.getElementById('courses-count').textContent = `${courses.length} courses found`;
+    
+    const coursesGrid = document.getElementById('courses-grid');
+    coursesGrid.innerHTML = '';
+    
+    if (courses.length === 0) {
+        document.getElementById('courses-list').style.display = 'none';
+        document.getElementById('no-courses').style.display = 'block';
+        return;
+    }
+    
+    courses.forEach(course => {
+        const courseCard = createCourseCard(course);
+        coursesGrid.appendChild(courseCard);
+    });
+}
+
+// Show no courses state
+function showNoCourses() {
+    document.getElementById('courses-loading').style.display = 'none';
+    document.getElementById('courses-list').style.display = 'none';
+    document.getElementById('no-courses').style.display = 'block';
+    document.getElementById('courses-error').style.display = 'none';
+}
+
+// Show courses error state
+function showCoursesError(message) {
+    document.getElementById('courses-loading').style.display = 'none';
+    document.getElementById('courses-list').style.display = 'none';
+    document.getElementById('no-courses').style.display = 'none';
+    document.getElementById('courses-error').style.display = 'block';
+    
+    document.getElementById('courses-error-message').textContent = message;
+}
+
+// Create course card
+function createCourseCard(course) {
+    const col = document.createElement('div');
+    col.className = 'col-md-6 col-lg-4';
+    
+    const card = document.createElement('div');
+    card.className = 'google-course-card';
+    card.dataset.courseId = course.id;
+    
+    card.innerHTML = `
+        <h6>${course.name}</h6>
+        <div class="course-meta">
+            ${course.section ? `<div><i class="fas fa-layer-group me-1"></i>${course.section}</div>` : ''}
+            ${course.description ? `<div class="text-muted small mt-1">${course.description.substring(0, 100)}${course.description.length > 100 ? '...' : ''}</div>` : ''}
+        </div>
+        <div class="course-stats">
+            <div class="course-stat">
+                <i class="fas fa-calendar"></i>
+                <span>Active</span>
+            </div>
+            <div class="course-stat">
+                <i class="fas fa-link"></i>
+                <span>Google</span>
+            </div>
+        </div>
+    `;
+    
+    card.addEventListener('click', () => selectCourse(course, card));
+    
+    col.appendChild(card);
+    return col;
+}
+
+// Select course
+function selectCourse(course, cardElement) {
+    console.log('📋 Selecting course:', course.name);
+    
+    // Remove previous selection
+    document.querySelectorAll('.google-course-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selection to current card
+    cardElement.classList.add('selected');
+    
+    // Store selected course
+    selectedCourse = course;
+    
+    // Show import button
+    document.getElementById('import-selected-course').style.display = 'inline-block';
+}
+
+// Show import settings
+function showImportSettings() {
+    if (!selectedCourse) {
+        showErrorMessage('Please select a course first');
+        return;
+    }
+    
+    console.log('⚙️ Showing import settings for:', selectedCourse.name);
+    
+    // Update course info
+    document.getElementById('selected-course-info').innerHTML = `
+        <div class="course-preview">
+            <h6>${selectedCourse.name}</h6>
+            <div class="preview-stats">
+                ${selectedCourse.section ? `<span><i class="fas fa-layer-group me-1"></i>${selectedCourse.section}</span>` : ''}
+                <span><i class="fas fa-calendar me-1"></i>Active Course</span>
+            </div>
+        </div>
+    `;
+    
+    // Set default values
+    document.getElementById('course-title').value = selectedCourse.name;
+    document.getElementById('course-description').value = selectedCourse.description || '';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('courseSelectionModal'));
+    modal.show();
+}
+
+// Confirm import
+async function confirmImport() {
+    if (!selectedCourse) {
+        showErrorMessage('No course selected');
+        return;
+    }
+    
+    console.log('📥 Confirming import for:', selectedCourse.name);
+    
+    // Get import settings
+    const importSettings = {
+        importStudents: document.getElementById('import-students').checked,
+        importAssignments: document.getElementById('import-assignments').checked,
+        importMaterials: document.getElementById('import-materials').checked,
+        importAnnouncements: document.getElementById('import-announcements').checked,
+        courseTitle: document.getElementById('course-title').value,
+        courseDescription: document.getElementById('course-description').value
+    };
+    
+    // Close settings modal
+    const settingsModal = bootstrap.Modal.getInstance(document.getElementById('courseSelectionModal'));
+    settingsModal.hide();
+    
+    // Show progress modal
+    const progressModal = new bootstrap.Modal(document.getElementById('importProgressModal'));
+    progressModal.show();
+    
+    try {
+        // Start import
+        updateImportProgress(10, 'Starting import...', 'Preparing course data');
+        
+        const response = await fetch('/google_classroom/import_course', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                courseId: selectedCourse.id,
+                settings: importSettings
+            })
+        });
+        
+        updateImportProgress(50, 'Importing course...', 'Processing course data');
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.success) {
+                updateImportProgress(100, 'Import completed!', 'Course imported successfully');
+                
+                setTimeout(() => {
+                    progressModal.hide();
+                    showSuccessMessage(`Course "${selectedCourse.name}" imported successfully!`);
+                    
+                    // Close main modal
+                    const mainModal = bootstrap.Modal.getInstance(document.getElementById('googleClassroomImportModalNew'));
+                    mainModal.hide();
+                    
+                    // Reset state
+                    selectedCourse = null;
+                    document.getElementById('import-selected-course').style.display = 'none';
+                }, 2000);
+            } else {
+                throw new Error(data.error || 'Import failed');
+            }
+        } else {
+            throw new Error('Import request failed');
+        }
+    } catch (error) {
+        console.error('❌ Error importing course:', error);
+        progressModal.hide();
+        showErrorMessage(`Failed to import course: ${error.message}`);
+    }
+}
+
+// Update import progress
+function updateImportProgress(percent, status, details) {
+    document.getElementById('import-progress-bar').style.width = `${percent}%`;
+    document.getElementById('import-status').textContent = status;
+    document.getElementById('import-details').textContent = details;
+}
+
+// Utility functions
+function showSuccessMessage(message) {
+    // You can implement a toast notification system here
+    console.log('✅ Success:', message);
+    alert(message); // Temporary implementation
+}
+
+function showErrorMessage(message) {
+    // You can implement a toast notification system here
+    console.log('❌ Error:', message);
+    alert(message); // Temporary implementation
+}
+
+// Export functions for global access
+window.initGoogleClassroomImportModal = initGoogleClassroomImportModal;
+window.openGoogleClassroomImportNew = initGoogleClassroomImportModal;
+</script>

@@ -298,17 +298,11 @@ def start_flask_server() -> None:
     """Start Flask development server"""
     print_header("Starting Smart Learning Hub MVC Architecture Flask Application")
     
-    # Prefer explicit PORT env var if set and free, else fall back to 5004/5003
-    env_port = None
-    try:
-        env_port = int(os.environ.get('PORT', 0))
-    except Exception:
-        env_port = None
-
-    if env_port and try_port(env_port):
-        port = env_port
-    else:
-        port = 5004 if try_port(5004) else 5003
+    # Force port 8000 for Google Classroom integration
+    port = 8000
+    if not try_port(port):
+        print_status(f"Port {port} is busy, trying alternative ports...")
+        port = 8001 if try_port(8001) else (8002 if try_port(8002) else 5003)
     print_status(f"Application will be available at: http://localhost:{port}")
     print_status("Architecture: MVC (Model-View-Controller)")
     print_status("Features: User, Lesson, Note, Task, Pomodoro Management")

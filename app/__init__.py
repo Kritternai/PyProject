@@ -88,6 +88,7 @@ def register_blueprints(app):
     # INTEGRATION ROUTES
     # ============================================
     from .routes.integrations.routes_google_classroom import google_classroom_bp
+    from .routes.integrations.routes_google_classroom_new import google_classroom_bp as google_classroom_new_bp
     from .routes.integrations.routes_google_auth import google_auth_bp
     from .routes.integrations.routes_microsoft_teams import microsoft_teams_bp
     
@@ -123,9 +124,10 @@ def register_blueprints(app):
     # ============================================
     # REGISTER INTEGRATION BLUEPRINTS
     # ============================================
-    app.register_blueprint(google_classroom_bp)  # Google Classroom
-    app.register_blueprint(google_auth_bp)       # Google OAuth Sign-In
-    app.register_blueprint(microsoft_teams_bp)   # Microsoft Teams
+    app.register_blueprint(google_classroom_bp)      # Google Classroom (old)
+    app.register_blueprint(google_classroom_new_bp)  # Google Classroom (new)
+    app.register_blueprint(google_auth_bp)           # Google OAuth Sign-In
+    app.register_blueprint(microsoft_teams_bp)       # Microsoft Teams
 
 
 def register_template_filters(app):
