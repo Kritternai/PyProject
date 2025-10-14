@@ -22,7 +22,7 @@ class UserService:
                     first_name: str = None, last_name: str = None, role: str = 'student'):
         """Create a new user."""
         from app.models.user import UserModel
-        from app import db
+        from app.db_instance import db
         from werkzeug.security import generate_password_hash
         
         # Validate input
@@ -91,7 +91,7 @@ class LessonService:
     def create_lesson(self, user_id: str, title: str, description: str = None):
         """Create a new lesson."""
         from app.models.lesson import LessonModel
-        from app import db
+        from app.db_instance import db
         
         lesson = LessonModel(
             user_id=user_id,
@@ -127,7 +127,7 @@ class LessonService:
         """นับ lessons ที่เสร็จวันนี้"""
         from app.models.lesson import LessonModel
         from datetime import datetime
-        from app import db
+        from app.db_instance import db
         
         today = datetime.now().date()
         
@@ -147,7 +147,7 @@ class NoteService:
     def create_note(self, user_id: str, title: str, content: str, lesson_id: str = None, **kwargs):
         """Create a new note (standalone or linked to lesson)."""
         from app.models.note import NoteModel
-        from app import db
+        from app.db_instance import db
         import json
         
         note = NoteModel(
@@ -207,7 +207,7 @@ class NoteService:
     def update_note(self, note_id: str, **kwargs):
         """Update a note with any provided fields."""
         from app.models.note import NoteModel
-        from app import db
+        from app.db_instance import db
         import json
         
         note = NoteModel.query.filter_by(id=note_id).first()
@@ -247,7 +247,7 @@ class NoteService:
     def delete_note(self, note_id: str, user_id: str = None):
         """Delete a note."""
         from app.models.note import NoteModel
-        from app import db
+        from app.db_instance import db
         
         # Build query
         if user_id:
@@ -342,7 +342,7 @@ class NoteService:
         """นับ notes ที่สร้างวันนี้"""
         from datetime import datetime
         from app.models.note import NoteModel
-        from app import db
+        from app.db_instance import db
 
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         
@@ -366,7 +366,7 @@ class TaskService:
     def create_task(self, user_id: str, title: str, description: str = None):
         """Create a new task."""
         from app.models.task import TaskModel
-        from app import db
+        from app.db_instance import db
         
         task = TaskModel(
             user_id=user_id,
@@ -402,7 +402,7 @@ class PomodoroSessionService:
                     auto_start_next: bool = True, notification_enabled: bool = True,
                     sound_enabled: bool = True):
         """Create a new Pomodoro session with all optional parameters"""
-        from app import db
+        from app.db_instance import db
         try:
             from app.models.pomodoro_session import PomodoroSessionModel
             
@@ -457,7 +457,7 @@ class PomodoroSessionService:
         """Update a session with all possible fields"""
         from app.models.pomodoro_session import PomodoroSessionModel
         from app.models.task import TaskModel
-        from app import db
+        from app.db_instance import db
         
         session = self.get_session(session_id)
         if not session:
@@ -474,8 +474,13 @@ class PomodoroSessionService:
             session.status = data['status']
             if data['status'] == 'completed':
                 session.is_completed = True
+                session.is_interrupted = False
             elif data['status'] == 'interrupted':
                 session.is_interrupted = True
+                session.is_completed = False
+            else:
+                session.is_completed = False
+                session.is_interrupted = False
         
         # Update scoring and feedback
         if 'productivity_score' in data:
@@ -488,6 +493,8 @@ class PomodoroSessionService:
             session.difficulty_level = data['difficulty_level']
         if 'energy_level' in data:
             session.energy_level = data['energy_level']
+        if 'notes' in data:
+            session.notes = data['notes']
 
         # Update interruption data
         if 'interruption_count' in data:
@@ -536,14 +543,23 @@ class PomodoroSessionService:
     def end_session(self, session_id: str, status: str = 'completed'):
         """End a Pomodoro session"""
         from app.models.pomodoro_session import PomodoroSessionModel
-        from app import db
-        
+        from app.db_instance import db
+
         session = self.get_session(session_id)
         if not session:
             return None
 
         session.end_time = datetime.utcnow()
         session.status = status
+        if status == 'completed':
+            session.is_completed = True
+            session.is_interrupted = False
+        elif status == 'interrupted':
+            session.is_interrupted = True
+            session.is_completed = False
+        else:
+            session.is_completed = False
+            session.is_interrupted = False
         if session.start_time:
             session.actual_duration = int((session.end_time - session.start_time).total_seconds() / 60)
 
@@ -575,7 +591,7 @@ class PomodoroSessionService:
         if session.start_time:
             session.actual_duration = int((session.end_time - session.start_time).total_seconds() / 60)
 
-        from app import db
+        from app.db_instance import db
         db.session.commit()
         
         # Keep interruption statistics in sync
@@ -585,7 +601,7 @@ class PomodoroSessionService:
     def delete_session(self, session_id: str) -> bool:
         """Delete a session"""
         from app.models.pomodoro_session import PomodoroSessionModel
-        from app import db
+        from app.db_instance import db
         
         session = self.get_session(session_id)
         if not session:
@@ -598,7 +614,7 @@ class PomodoroSessionService:
     def _update_daily_statistics(self, user_id: str) -> None:
         """Aggregate and persist today's Pomodoro statistics for a user."""
         from datetime import date
-        from app import db
+        from app.db_instance import db
         from app.models.pomodoro_session import PomodoroSessionModel
         from app.models.pomodoro_statistics import PomodoroStatisticsModel
 
@@ -672,7 +688,7 @@ class PomodoroService:
         """นับ pomodoro ที่ทำวันนี้"""
         from datetime import date
         from app.models.pomodoro_session import PomodoroSessionModel
-        from app import db
+        from app.db_instance import db
 
         today = date.today()
         

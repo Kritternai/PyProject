@@ -301,12 +301,6 @@ async function skipTimer() {
   pomodoroState.isRunning = false;
   stopAllTimers();
   
-  // Complete current session if it's a pomodoro
-  if (pomodoroState.mode === 'pomodoro') {
-    console.log('⏭️ Completing pomodoro session...');
-    completeSession();
-  }
-
   if (pomodoroState.currentSessionId) {
     await interruptSessionInDatabase();
     clearCurrentSession();
@@ -470,8 +464,8 @@ function updateModeDisplay() {
   if (statusText) {
     const statusMessages = {
       'pomodoro': 'Time to focus!',
-      'short': 'Take a short break',
-      'long': 'Take a long break'
+      'shortBreak': 'Take a short break',
+      'longBreak': 'Take a long break'
     };
     statusText.textContent = statusMessages[pomodoroState.mode] || 'Time to focus!';
   }
@@ -719,7 +713,7 @@ function showSettings() {
 }
 
 // Save settings
-async function saveSettings() {
+async function handleSaveSettings() {
   const settings = {
     pomodoro: parseInt(document.getElementById('pomodoroTime').value) || 25,
     shortBreak: parseInt(document.getElementById('shortBreakTime').value) || 5,
@@ -860,8 +854,8 @@ function removeEventListeners() {
   // Clone elements to remove all event listeners
   const elements = [
     'startBtn', 'resetBtn', 'skipBtn', 'pomodoroTab', 'shortBreakTab', 'longBreakTab',
-    'addTaskBtn', 'taskInput', 'settingsBtn', 'closeSettings', 'saveSettings',
-    'statsBtn', 'closeStats', 'resetStatsBtn'
+  'addTaskBtn', 'taskInput', 'settingsBtn', 'closeSettings', 'saveSettings',
+  'statsBtn', 'closeStats', 'closeStatsBtn', 'resetStatsBtn'
   ];
   
   elements.forEach(id => {
@@ -979,9 +973,12 @@ function setupEventListeners() {
     });
   }
   
-  const saveSettings = document.getElementById('saveSettings');
-  if (saveSettings) {
-    saveSettings.addEventListener('click', saveSettings);
+  const saveSettingsBtn = document.getElementById('saveSettings');
+  if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      handleSaveSettings();
+    });
   }
   
   // Stats
@@ -993,6 +990,13 @@ function setupEventListeners() {
   const closeStats = document.getElementById('closeStats');
   if (closeStats) {
     closeStats.addEventListener('click', () => {
+      document.getElementById('statsDialog').close();
+    });
+  }
+  
+  const closeStatsBtn = document.getElementById('closeStatsBtn');
+  if (closeStatsBtn) {
+    closeStatsBtn.addEventListener('click', () => {
       document.getElementById('statsDialog').close();
     });
   }

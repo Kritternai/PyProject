@@ -3,7 +3,7 @@ Pomodoro Session Model
 Handles persistence of Pomodoro session data
 """
 
-from app import db
+from app.db_instance import db
 from datetime import datetime
 import uuid
 
