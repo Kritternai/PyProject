@@ -65,7 +65,7 @@ function loadPage(page, updateHistory = true) {
         console.log('🔄 Handling HTML response');
         return response.text().then(html => {
           console.log('📝 Updating main-content');
-        document.getElementById('main-content').innerHTML = html;
+          document.getElementById('main-content').innerHTML = html;
         
         if (page === 'dashboard') {
           console.log('📅 Setting up calendar...');
@@ -240,26 +240,10 @@ function loadPage(page, updateHistory = true) {
                 } catch (error) {
                   console.error('❌ Error initializing Pomodoro:', error);
                   showPomodoroError('Error initializing Pomodoro Timer');
-            script.onload = () => {
-              console.log('✅ pomodoro.js loaded successfully');
-              
-              // รอให้ script ทำงานและ define functions เสร็จ
-              setTimeout(() => {
-                if (window.onLoadPomodoro) {
-                  console.log('✅ Found onLoadPomodoro function, initializing...');
-                  try {
-                    // Always call onLoadPomodoro for fresh initialization
-                    window.onLoadPomodoro();
-                    console.log('✅ Pomodoro initialized successfully');
-                  } catch (error) {
-                    console.error('❌ Error initializing Pomodoro:', error);
-                    showPomodoroError('Error initializing Pomodoro Timer');
-                  }
-                } else {
-                  console.error('❌ onLoadPomodoro function not found after script load!');
-                  showPomodoroError('Error loading Pomodoro Timer');
                 }
-              } 
+              }
+            }, 100); // Small delay to ensure functions are defined
+          };
           
           script.onerror = () => {
             console.error('❌ Failed to load pomodoro.js');
@@ -280,35 +264,37 @@ function loadPage(page, updateHistory = true) {
           
           document.head.appendChild(script);
         }
-          setupAuthForms();
-          setupLessonForms();
-          setupLessonEditForm(); // <-- เพิ่มตรงนี้
-          setupSectionForms(); // เรียก setupSectionForms หลัง loadPage
-          setupNoteForms(); // เรียก setupNoteForms หลัง loadPage
-          setupNoteListFilters(); // ตั้งค่า search + status chips สำหรับหน้าโน้ต
-          // setup note editor bindings if editor fragment exists
-          if (document.getElementById('note-editor-page')) {
-            setupNoteEditor();
+        
+        // Setup page-specific functionality
+        setupAuthForms();
+        setupLessonForms();
+        setupLessonEditForm();
+        setupSectionForms();
+        setupNoteForms();
+        setupNoteListFilters();
+        
+        // Setup note editor bindings if editor fragment exists
+        if (document.getElementById('note-editor-page')) {
+          setupNoteEditor();
+        }
+        setupNoteCardOpeners();
+        setupLessonAddModal();
+        setupSectionFilter();
+        setupLessonSearchAndFilter();
+        
+        // Auto show Lesson Content tab and scroll if on lesson detail
+        if (page.startsWith('class/')) {
+          // Activate Content tab
+          const contentTabBtn = document.getElementById('content-tab');
+          if (contentTabBtn) {
+            contentTabBtn.click();
           }
-          setupNoteCardOpeners(); // เปิด editor เมื่อคลิกทั้งการ์ด
-          // If we are on the new editor route, ensure toolbar bindings exist
-          setupLessonAddModal(); // เรียก setupLessonAddModal หลัง loadPage
-          setupSectionFilter(); // เรียก setupSectionFilter() หลัง loadPage
-          setupLessonSearchAndFilter(); // เรียก setupLessonSearchAndFilter หลัง loadPage
-          
-          // Auto show Lesson Content tab and scroll if on lesson detail
-          if (page.startsWith('class/')) {
-            // Activate Content tab
-            const contentTabBtn = document.getElementById('content-tab');
-            if (contentTabBtn) {
-              contentTabBtn.click();
-            }
-            // Scroll to Lesson Content section
-            setTimeout(() => {
-              const lessonContent = document.querySelector('.card-body');
-              if (lessonContent) lessonContent.scrollIntoView({behavior: 'smooth', block: 'start'});
-            }, 300);
-          }
+          // Scroll to Lesson Content section
+          setTimeout(() => {
+            const lessonContent = document.querySelector('.card-body');
+            if (lessonContent) lessonContent.scrollIntoView({behavior: 'smooth', block: 'start'});
+          }, 300);
+        }
         });
       }
     })
@@ -319,6 +305,9 @@ function loadPage(page, updateHistory = true) {
       mainContent.innerHTML = '<div class="text-center py-5"><div class="alert alert-danger">Error loading page. Please try again.</div></div>';
     });
 }
+
+// Make loadPage globally available
+window.loadPage = loadPage;
 // Open full-page note editor (fragment) with optional selected note
 // If no noteId provided, open add note page instead
 window.openNoteEditor = function(noteId) {
@@ -3386,3 +3375,5 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Updated Google Classroom button to use new system');
     });
 });
+
+// Close any remaining open blocks
