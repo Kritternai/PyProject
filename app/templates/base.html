@@ -15,9 +15,7 @@
 </head>
 <body>
 <div class="d-flex">
-  <!-- Enhanced Sidebar with Enchat Design System -->
   <nav class="enchat-sidebar">
-    <!-- Sidebar Header -->
     <div class="enchat-sidebar__header">
       <a href="#" class="enchat-sidebar__logo" onclick="loadPage('dashboard');return false;">
         <span class="enchat-sidebar__logo-icon">
@@ -30,7 +28,6 @@
       </a>
     </div>
 
-    <!-- Sidebar Menu -->
     <div class="enchat-sidebar__menu">
       <ul class="enchat-sidebar__nav">
         <li class="enchat-sidebar__nav-item">
@@ -78,13 +75,11 @@
       </ul>
     </div>
 
-    <!-- Sidebar Footer / Auth -->
     <div class="enchat-sidebar__footer">
       {% include 'sidebar_auth_fragment.html' %}
     </div>
   </nav>
 
-  <!-- Main Content -->
   <main class="enchat-main-content" id="main-content">
     {% block content %}{% endblock %}
   </main>
@@ -133,4 +128,4 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 </body>
-</html> 
+</html>

@@ -50,6 +50,17 @@ function loadPage(page, updateHistory = true) {
           mainContent.classList.remove('loading');
           mainContent.innerHTML = html;
         
+      // ✅ โหลด track.js ถ้าเป็นหน้า Track
+      if (page === 'track') {
+       console.log('🚀 Track page detected - loading track.js manually');
+       const script = document.createElement('script');
+       script.src = '/static/js/track.js';
+       script.async = true;
+       script.onload = () => console.log('✅ track.js loaded successfully');
+       script.onerror = () => console.error('❌ Failed to load track.js');
+       document.body.appendChild(script);
+}
+
         if (page === 'dashboard') {
           console.log('📅 Setting up calendar...');
           setupFullCalendar();
