@@ -1,5 +1,23 @@
+// Cleanup function for previous page
+function cleanupPreviousPage() {
+  console.log('🧹 Cleaning up previous page...');
+  
+  // Call page-specific cleanup functions
+  if (window.onUnloadPomodoro && window.pomodoroInitialized) {
+    console.log('🧹 Cleaning up Pomodoro page...');
+    window.onUnloadPomodoro();
+  }
+  
+  // Add other page cleanup here as needed
+  
+  console.log('✅ Previous page cleanup completed');
+}
+
 function loadPage(page, updateHistory = true) {
   console.log('🔄 Loading page:', page);
+  
+  // Cleanup previous page before loading new one
+  cleanupPreviousPage();
   
   const mainContent = document.getElementById('main-content');
   
@@ -50,17 +68,6 @@ function loadPage(page, updateHistory = true) {
           mainContent.classList.remove('loading');
           mainContent.innerHTML = html;
         
-      // ✅ โหลด track.js ถ้าเป็นหน้า Track
-      if (page === 'track') {
-       console.log('🚀 Track page detected - loading track.js manually');
-       const script = document.createElement('script');
-       script.src = '/static/js/track.js';
-       script.async = true;
-       script.onload = () => console.log('✅ track.js loaded successfully');
-       script.onerror = () => console.error('❌ Failed to load track.js');
-       document.body.appendChild(script);
-}
-
         if (page === 'dashboard') {
           console.log('📅 Setting up calendar...');
           setupFullCalendar();
@@ -70,11 +77,8 @@ function loadPage(page, updateHistory = true) {
           console.log('⏰ Pomodoro page detected');
           window.isInSpaMode = true;
           
-          // Check if already loaded
-          if (window.pomodoroLoaded && window.pomodoroInitialized) {
-            console.log('✅ Pomodoro already loaded and initialized');
-            return;
-          }
+          // Always reload Pomodoro to ensure fresh state
+          console.log('🔄 Reloading Pomodoro for fresh state...');
           
           // โหลด pomodoro.js แบบ dynamic
           const loadPomodoro = () => {
@@ -99,13 +103,9 @@ function loadPage(page, updateHistory = true) {
                 if (window.onLoadPomodoro) {
                   console.log('✅ Found onLoadPomodoro function, initializing...');
                   try {
-                    // ตรวจสอบว่าเคย initialize แล้วหรือยัง
-                    if (!window.pomodoroInitialized) {
-                      window.onLoadPomodoro();
-                      console.log('✅ Pomodoro initialized successfully');
-                    } else {
-                      console.log('⚠️ Pomodoro already initialized');
-                    }
+                    // Always call onLoadPomodoro for fresh initialization
+                    window.onLoadPomodoro();
+                    console.log('✅ Pomodoro initialized successfully');
                   } catch (error) {
                     console.error('❌ Error initializing Pomodoro:', error);
                     showPomodoroError('Error initializing Pomodoro Timer');
