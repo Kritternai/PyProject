@@ -202,18 +202,38 @@ class GoogleClassroomService:
     def import_course(self, user_id: str, course_id: str, settings: Dict) -> Dict:
         """Import a Google Classroom course"""
         try:
+            print(f"📥 Importing course: {course_id} for user: {user_id}")
+            print(f"Settings: {settings}")
+            
             credentials = self.get_credentials(user_id)
             if not credentials:
                 raise Exception("No valid credentials found")
             
+            print(f"Building Google Classroom service...")
             # Build Google Classroom service
             service = build('classroom', 'v1', credentials=credentials)
             
+            print(f"Getting course details for: {course_id}")
             # Get course details
             course = service.courses().get(id=course_id).execute()
+            print(f"Course found: {course.get('name', 'Unknown')}")
             
             # Create lesson in our system
-            from app.services import LessonService
+            import sys
+            import os
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+            
+            # Try different import paths for LessonService
+            try:
+                from app.services.lesson_service import LessonService
+            except ImportError:
+                try:
+                    from services.lesson_service import LessonService
+                except ImportError:
+                    # Fallback: create lesson directly
+                    print("LessonService not found, creating lesson directly")
+                    return self._create_lesson_directly(user_id, course, course_id, settings)
+            
             lesson_service = LessonService()
             
             lesson_data = {
@@ -302,4 +322,51 @@ class GoogleClassroomService:
             return {
                 'success': False,
                 'error': f'Failed to import course: {str(e)}'
+            }
+    
+    def _create_lesson_directly(self, user_id: str, course: Dict, course_id: str, settings: Dict) -> Dict:
+        """Create lesson directly without LessonService"""
+        try:
+            print(f"Creating lesson directly for course: {course.get('name', 'Unknown')}")
+            
+            # Import database models
+            from app.models.lesson import LessonModel
+            import uuid
+            from datetime import datetime
+            
+            # Create lesson data
+            lesson_data = {
+                'id': str(uuid.uuid4()),
+                'title': f"Imported: {course.get('name', 'Google Classroom Course')}",
+                'description': course.get('description', '') or f'Imported from Google Classroom - {course_id}',
+                'status': 'in_progress',
+                'color_theme': 1,
+                'difficulty_level': 'intermediate',
+                'author_name': 'Google Classroom Import',
+                'user_id': user_id,
+                'created_at': datetime.utcnow(),
+                'updated_at': datetime.utcnow()
+            }
+            
+            # Create lesson in database
+            lesson = LessonModel(**lesson_data)
+            db.session.add(lesson)
+            db.session.commit()
+            
+            print(f"Successfully created lesson: {lesson.id}")
+            
+            return {
+                'success': True,
+                'message': 'Course imported successfully',
+                'lesson_id': lesson.id,
+                'course_name': course.get('name', 'Unknown Course')
+            }
+            
+        except Exception as e:
+            print(f"Error creating lesson directly: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                'success': False,
+                'error': f'Failed to create lesson: {str(e)}'
             }
