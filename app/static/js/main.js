@@ -355,6 +355,19 @@ window.openNoteEditor = function(noteId) {
 }
 
 // Preload common pages on page load
+function preloadPage(pageName) {
+  console.log(`📦 Preloading: ${pageName}`);
+  // Preload by making a request to cache the page
+  fetch(`/partial/${pageName}`)
+    .then(response => response.text())
+    .then(data => {
+      console.log(`✅ Preloaded: ${pageName}`);
+    })
+    .catch(error => {
+      console.log(`⚠️ Preload failed for ${pageName}:`, error);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   // Preload dashboard and class pages
   setTimeout(() => {
@@ -386,6 +399,11 @@ window.openNoteEditor = function(noteId) {
 window.openNoteEditorPage = function(noteId) {
   const target = noteId ? `note/editor/${noteId}` : 'note/editor';
   loadPage(target);
+}
+
+// Navigate to class page
+window.navigateToClass = function() {
+  loadPage('class');
 }
 
 // Attach click on whole note card to open editor (avoid when clicking action buttons/links)
@@ -1671,7 +1689,7 @@ function setupLessonSearchAndFilter() {
     }
     
     function updateClearButton() {
-      if (clearSearchBtn) {
+      if (clearSearchBtn && searchInput && filterSelect) {
         const hasValue = searchInput.value.trim() !== '' || filterSelect.value !== '';
         clearSearchBtn.style.display = hasValue ? 'block' : 'none';
       }
