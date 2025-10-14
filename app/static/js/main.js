@@ -133,12 +133,7 @@ function loadPage(page, updateHistory = true) {
                   console.error('❌ onLoadPomodoro function not found after script load!');
                   showPomodoroError('Error loading Pomodoro Timer');
                 }
-              } else {
-                console.error('❌ onLoadPomodoro function not found!');
-                showPomodoroError('Error loading Pomodoro Timer functions');
-              }
-            }, 200);
-          };
+              } 
           
           script.onerror = () => {
             console.error('❌ Failed to load pomodoro.js');
