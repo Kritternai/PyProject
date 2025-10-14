@@ -101,7 +101,11 @@ def authorize():
         return_to_import = request.args.get('return_to_import', 'false').lower() == 'true'
         print(f"Return to import: {return_to_import}")
         
-        authorization_url, state = flow.authorization_url(
+        # Generate state parameter
+        import secrets
+        state = secrets.token_urlsafe(32)
+        
+        authorization_url, _ = flow.authorization_url(
             access_type='offline',
             prompt='consent',
             state=f"{state}&return_to_import={return_to_import}" if return_to_import else state
@@ -239,6 +243,7 @@ def fetch_courses():
         
         # Use Google Classroom Service
         import sys
+        import sys
         import os
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'services'))
         from google_classroom_service import GoogleClassroomService
@@ -276,6 +281,7 @@ def import_course():
             return jsonify({'success': False, 'error': 'User not authenticated'}), 401
         
         # Use Google Classroom Service
+        import sys
         import sys
         import os
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'services'))
