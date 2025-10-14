@@ -238,6 +238,19 @@ document.addEventListener('DOMContentLoaded', function() {
     preloadPage('dashboard');
     preloadPage('class');
   }, 1000);
+  
+  // Check if we should open Google Classroom import modal
+  const urlParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  
+  if (hashParams.get('open_google_import') === 'true') {
+    // Open Google Classroom import modal after a short delay
+    setTimeout(() => {
+      if (typeof window.openGoogleClassroomModal === 'function') {
+        window.openGoogleClassroomModal();
+      }
+    }, 1000);
+  }
 });
 
 // Open full-page note editor (fragment) with optional selected note
@@ -3443,6 +3456,267 @@ window.insertHTMLAtCursor = function(html) {
 };
 
 console.log('✅ Note Editor global functions loaded');
+
+// ========================================
+// Google Classroom Integration Functions
+// ========================================
+
+// Google Classroom Import Functions - Global
+window.openGoogleClassroomImport = function() {
+    console.log('🔗 Opening Google Classroom import...');
+    
+    // Close current modal
+    const currentModal = bootstrap.Modal.getInstance(document.getElementById('addLessonModal'));
+    if (currentModal) {
+        currentModal.hide();
+    }
+    
+    // Show Google Classroom import modal
+    setTimeout(() => {
+        if (typeof window.openGoogleClassroomModal === 'function') {
+            window.openGoogleClassroomModal();
+        } else {
+            // Fallback: redirect to Google Classroom authorization
+            console.log('🔄 Redirecting to Google Classroom authorization...');
+            window.location.href = '/google_classroom/authorize';
+        }
+    }, 300);
+};
+
+// Google Classroom Modal Function
+window.openGoogleClassroomModal = function() {
+    console.log('📚 Opening Google Classroom modal...');
+    
+    const modal = new bootstrap.Modal(document.getElementById('googleClassroomImportModal'));
+    modal.show();
+    
+    // Load Google Classroom courses
+    if (typeof window.loadGoogleCourses === 'function') {
+        window.loadGoogleCourses();
+    } else {
+        console.log('⚠️ loadGoogleCourses function not found, redirecting to OAuth...');
+        window.location.href = '/google_classroom/authorize';
+    }
+};
+
+// Load Google Classroom Courses
+window.loadGoogleCourses = function() {
+    console.log('📋 Loading Google Classroom courses...');
+    
+    const loadingEl = document.getElementById('google-courses-loading');
+    const coursesEl = document.getElementById('google-courses-list');
+    const emptyEl = document.getElementById('google-courses-empty');
+    
+    if (!loadingEl || !coursesEl || !emptyEl) {
+        console.error('❌ Google Classroom modal elements not found');
+        return;
+    }
+    
+    loadingEl.style.display = 'block';
+    coursesEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    
+    fetch('/google_classroom/fetch_courses')
+        .then(response => {
+            if (response.status === 401) {
+                // User needs to authorize
+                console.log('🔐 Google Classroom authorization needed, redirecting...');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('googleClassroomImportModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                window.location.href = '/google_classroom/authorize?return_to_import=true';
+                return;
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data) return; // Skip if redirected
+            
+            loadingEl.style.display = 'none';
+            
+            if (data.success && data.courses && data.courses.length > 0) {
+                coursesEl.style.display = 'block';
+                displayGoogleCourses(data.courses);
+            } else if (data.needs_auth) {
+                console.log('🔐 Google Classroom authorization needed, showing auth state...');
+                const authEl = document.getElementById('google-auth-required');
+                if (authEl) {
+                    authEl.style.display = 'block';
+                } else {
+                    // Fallback: redirect to OAuth
+                    window.location.href = (data.redirect_url || '/google_classroom/authorize') + '?return_to_import=true';
+                }
+            } else {
+                emptyEl.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error loading Google courses:', error);
+            loadingEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+        });
+};
+
+// Display Google Classroom Courses
+function displayGoogleCourses(courses) {
+    console.log('📚 Displaying Google Classroom courses:', courses.length);
+    
+    const coursesEl = document.getElementById('google-courses-list');
+    coursesEl.innerHTML = '';
+    
+    courses.forEach(course => {
+        const courseCard = document.createElement('div');
+        courseCard.className = 'google-course-card';
+        courseCard.onclick = () => selectGoogleCourse(course);
+        
+        courseCard.innerHTML = `
+            <div class="google-course-title">${course.name || 'Untitled Course'}</div>
+            <div class="google-course-description">${course.description || 'No description'}</div>
+            <div class="google-course-meta">
+                <span><i class="bi bi-people"></i> ${course.studentsCount || 0} students</span>
+                <span><i class="bi bi-journal-text"></i> ${course.assignmentsCount || 0} assignments</span>
+                <span><i class="bi bi-calendar"></i> ${course.section || 'No section'}</span>
+            </div>
+        `;
+        
+        coursesEl.appendChild(courseCard);
+    });
+}
+
+// Select Google Classroom Course
+function selectGoogleCourse(course) {
+    console.log('✅ Selected Google Classroom course:', course.name);
+    
+    selectedCourse = course;
+    
+    // Update UI
+    document.querySelectorAll('.google-course-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    // Show preview
+    showImportPreview(course);
+    
+    // Enable import button
+    const importBtn = document.getElementById('import-course-btn');
+    if (importBtn) {
+        importBtn.disabled = false;
+    }
+}
+
+// Show Import Preview
+function showImportPreview(course) {
+    console.log('👁️ Showing import preview for:', course.name);
+    
+    const emptyEl = document.getElementById('import-preview-empty');
+    const contentEl = document.getElementById('import-preview-content');
+    
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (contentEl) contentEl.style.display = 'block';
+    
+    // Update preview data
+    const titleEl = document.getElementById('preview-course-title');
+    const studentsEl = document.getElementById('preview-students-count');
+    const assignmentsEl = document.getElementById('preview-assignments-count');
+    const materialsEl = document.getElementById('preview-materials-count');
+    const announcementsEl = document.getElementById('preview-announcements-count');
+    
+    if (titleEl) titleEl.textContent = course.name || 'Untitled Course';
+    if (studentsEl) studentsEl.textContent = course.studentsCount || 0;
+    if (assignmentsEl) assignmentsEl.textContent = course.assignmentsCount || 0;
+    if (materialsEl) materialsEl.textContent = course.materialsCount || 0;
+    if (announcementsEl) announcementsEl.textContent = course.announcementsCount || 0;
+}
+
+// Import Selected Course
+window.importSelectedCourse = function() {
+    if (!selectedCourse) {
+        console.error('❌ No course selected');
+        return;
+    }
+    
+    console.log('📥 Importing course:', selectedCourse.name);
+    
+    const importBtn = document.getElementById('import-course-btn');
+    const originalText = importBtn ? importBtn.innerHTML : '';
+    
+    // Show loading state
+    if (importBtn) {
+        importBtn.disabled = true;
+        importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
+    }
+    
+    // Get import settings
+    const settings = {
+        importStudents: document.getElementById('import-students')?.checked || true,
+        importAssignments: document.getElementById('import-assignments')?.checked || true,
+        importMaterials: document.getElementById('import-materials')?.checked || true,
+        importAnnouncements: document.getElementById('import-announcements')?.checked || true
+    };
+    
+    fetch('/google_classroom/import_course', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            courseId: selectedCourse.id,
+            settings: settings
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('✅ Course imported successfully');
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('googleClassroomImportModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Show success message
+            if (typeof window.showSuccess === 'function') {
+                window.showSuccess('🎉 Course imported successfully!');
+            }
+            
+            // Reload lessons list
+            if (typeof loadPage === 'function') {
+                setTimeout(() => loadPage('class'), 500);
+            } else {
+                setTimeout(() => window.location.reload(), 500);
+            }
+        } else {
+            throw new Error(data.message || 'Failed to import course');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error importing course:', error);
+        if (typeof window.showError === 'function') {
+            window.showError(error.message || 'Failed to import course');
+        } else {
+            alert('Error: ' + error.message);
+        }
+    })
+    .finally(() => {
+        if (importBtn) {
+            importBtn.disabled = false;
+            importBtn.innerHTML = originalText;
+        }
+    });
+};
+
+// Refresh Google Courses
+window.refreshGoogleCourses = function() {
+    console.log('🔄 Refreshing Google Classroom courses...');
+    if (typeof window.loadGoogleCourses === 'function') {
+        window.loadGoogleCourses();
+    }
+};
+
+console.log('✅ Google Classroom integration functions loaded');
 
 // ========================================
 // Browser History Navigation (Back/Forward)

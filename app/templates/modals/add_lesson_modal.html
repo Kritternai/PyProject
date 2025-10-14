@@ -313,6 +313,28 @@
                         
                         <!-- Right Side: Details -->
                         <div class="modal-split-right">
+                            <!-- Google Classroom Import Section -->
+                            <div class="modal-split-section">
+                                <div class="modal-split-section-title">
+                                    <i class="bi bi-google"></i>
+                                    <span>Import from Google Classroom</span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <button type="button" 
+                                            class="btn btn-outline-primary w-100" 
+                                            onclick="openGoogleClassroomImport()"
+                                            style="padding: 0.875rem 1rem; border-radius: 12px; font-weight: 600; border: 2px dashed #1976D2; background: linear-gradient(135deg, rgba(25, 118, 210, 0.05), rgba(13, 71, 161, 0.05));">
+                                        <i class="bi bi-download me-2"></i>
+                                        Import from Google Classroom
+                                    </button>
+                                    <div class="form-hint">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Import existing Google Classroom courses with students, assignments, and materials
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="modal-split-section">
                                 <div class="modal-split-section-title">
                                     <i class="bi bi-gear-fill"></i>
@@ -475,5 +497,7 @@ function handleAddLesson(event) {
         submitBtn.innerHTML = originalText;
     });
 }
+
+// Google Classroom functions are now in main.js
 </script>
 

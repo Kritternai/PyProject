@@ -1,0 +1,540 @@
+<!-- Google Classroom Import Modal -->
+<style>
+.google-import-modal .modal-dialog {
+    max-width: 1000px;
+}
+
+.google-import-modal .modal-content {
+    border-radius: 24px;
+    border: none;
+    box-shadow: 0 24px 80px rgba(25, 118, 210, 0.25);
+    overflow: hidden;
+}
+
+.google-import-modal .modal-header {
+    background: linear-gradient(135deg, #1976D2, #0D47A1);
+    color: white;
+    padding: 2rem 2.5rem;
+    border: none;
+    position: relative;
+}
+
+.google-import-modal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #42A5F5, #1976D2, #0D47A1);
+}
+
+.google-import-modal .modal-title {
+    font-weight: 800;
+    font-size: 1.75rem;
+    letter-spacing: -0.5px;
+}
+
+.google-import-modal .modal-body {
+    padding: 0;
+    background: #F8F9FD;
+}
+
+.google-import-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 600px;
+}
+
+.google-import-left {
+    padding: 2.5rem;
+    background: white;
+    border-right: 2px solid #E5E7EB;
+}
+
+.google-import-right {
+    padding: 2.5rem;
+    background: #F8F9FD;
+}
+
+.google-import-section {
+    margin-bottom: 2rem;
+}
+
+.google-import-section:last-child {
+    margin-bottom: 0;
+}
+
+.google-import-section-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #1976D2;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.google-course-card {
+    border: 2px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.google-course-card:hover {
+    border-color: #1976D2;
+    box-shadow: 0 8px 24px rgba(25, 118, 210, 0.15);
+    transform: translateY(-2px);
+}
+
+.google-course-card.selected {
+    border-color: #1976D2;
+    background: linear-gradient(135deg, rgba(25, 118, 210, 0.05), rgba(13, 71, 161, 0.05));
+    box-shadow: 0 8px 24px rgba(25, 118, 210, 0.2);
+}
+
+.google-course-title {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #1A202C;
+    margin-bottom: 0.5rem;
+}
+
+.google-course-description {
+    color: #718096;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.google-course-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8125rem;
+    color: #718096;
+}
+
+.google-course-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.import-preview {
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.import-preview-title {
+    font-weight: 700;
+    color: #1A202C;
+    margin-bottom: 1rem;
+}
+
+.import-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #F8F9FD;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+}
+
+.import-preview-item:last-child {
+    margin-bottom: 0;
+}
+
+.import-preview-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.import-preview-text {
+    flex: 1;
+    font-size: 0.875rem;
+    color: #4A5568;
+}
+
+.import-preview-count {
+    font-weight: 600;
+    color: #1976D2;
+    font-size: 0.8125rem;
+}
+
+@media (max-width: 768px) {
+    .google-import-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .google-import-left {
+        border-right: none;
+        border-bottom: 2px solid #E5E7EB;
+    }
+}
+</style>
+
+<div class="modal fade google-import-modal" id="googleClassroomImportModal" tabindex="-1" aria-labelledby="googleClassroomImportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="googleClassroomImportModalLabel">
+                    <i class="bi bi-google me-2"></i>Import from Google Classroom
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="google-import-layout">
+                    <!-- Left Side: Google Classroom Courses -->
+                    <div class="google-import-left">
+                        <div class="google-import-section">
+                            <div class="google-import-section-title">
+                                <i class="bi bi-list-ul"></i>
+                                <span>Available Courses</span>
+                            </div>
+                            
+                            <!-- Loading State -->
+                            <div id="google-courses-loading" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="text-muted mt-2">Loading Google Classroom courses...</p>
+                            </div>
+                            
+                            <!-- Courses List -->
+                            <div id="google-courses-list" style="display: none;">
+                                <!-- Courses will be populated here -->
+                            </div>
+                            
+                            <!-- No Courses State -->
+                            <div id="google-courses-empty" class="text-center py-4" style="display: none;">
+                                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">No Google Classroom courses found</p>
+                                <button class="btn btn-outline-primary" onclick="refreshGoogleCourses()">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                                </button>
+                            </div>
+                            
+                            <!-- Authorization Required State -->
+                            <div id="google-auth-required" class="text-center py-4" style="display: none;">
+                                <i class="bi bi-shield-lock text-warning" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3">Authorization Required</h5>
+                                <p class="text-muted">Connect to Google Classroom to import courses</p>
+                                <button class="btn btn-primary btn-lg" onclick="connectToGoogleClassroom()">
+                                    <i class="bi bi-google me-2"></i>Connect to Google Classroom
+                                </button>
+                                <div class="form-hint mt-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    You'll be redirected to Google to authorize access
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Side: Import Preview -->
+                    <div class="google-import-right">
+                        <div class="google-import-section">
+                            <div class="google-import-section-title">
+                                <i class="bi bi-eye"></i>
+                                <span>Import Preview</span>
+                            </div>
+                            
+                            <div id="import-preview-empty" class="text-center py-4">
+                                <i class="bi bi-cursor text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">Select a course to preview import</p>
+                            </div>
+                            
+                            <div id="import-preview-content" style="display: none;">
+                                <div class="import-preview">
+                                    <div class="import-preview-title" id="preview-course-title">Course Title</div>
+                                    
+                                    <div class="import-preview-item">
+                                        <div class="import-preview-icon" style="background: #1976D2;">
+                                            <i class="bi bi-people"></i>
+                                        </div>
+                                        <div class="import-preview-text">Students</div>
+                                        <div class="import-preview-count" id="preview-students-count">0</div>
+                                    </div>
+                                    
+                                    <div class="import-preview-item">
+                                        <div class="import-preview-icon" style="background: #48BB78;">
+                                            <i class="bi bi-journal-text"></i>
+                                        </div>
+                                        <div class="import-preview-text">Assignments</div>
+                                        <div class="import-preview-count" id="preview-assignments-count">0</div>
+                                    </div>
+                                    
+                                    <div class="import-preview-item">
+                                        <div class="import-preview-icon" style="background: #F6AD55;">
+                                            <i class="bi bi-file-earmark-text"></i>
+                                        </div>
+                                        <div class="import-preview-text">Materials</div>
+                                        <div class="import-preview-count" id="preview-materials-count">0</div>
+                                    </div>
+                                    
+                                    <div class="import-preview-item">
+                                        <div class="import-preview-icon" style="background: #9F7AEA;">
+                                            <i class="bi bi-chat-dots"></i>
+                                        </div>
+                                        <div class="import-preview-text">Announcements</div>
+                                        <div class="import-preview-count" id="preview-announcements-count">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="google-import-section">
+                            <div class="google-import-section-title">
+                                <i class="bi bi-gear"></i>
+                                <span>Import Settings</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="import-students" checked>
+                                    <label class="form-check-label" for="import-students">
+                                        Import students and roster
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="import-assignments" checked>
+                                    <label class="form-check-label" for="import-assignments">
+                                        Import assignments and coursework
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="import-materials" checked>
+                                    <label class="form-check-label" for="import-materials">
+                                        Import course materials
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-0">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="import-announcements" checked>
+                                    <label class="form-check-label" for="import-announcements">
+                                        Import announcements
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <div class="modal-footer-left">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <span>Select a course to import</span>
+                </div>
+                <div class="modal-footer-right">
+                    <button type="button" 
+                            class="btn btn-secondary" 
+                            data-bs-dismiss="modal"
+                            style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 600;">
+                        Cancel
+                    </button>
+                    <button type="button" 
+                            id="import-course-btn"
+                            class="btn btn-primary"
+                            onclick="importSelectedCourse()"
+                            disabled
+                            style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 600; background: linear-gradient(135deg, #1976D2, #0D47A1); border: none;">
+                        <i class="bi bi-download me-1"></i>Import Course
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedCourse = null;
+
+// Google Classroom functions are now in main.js
+// This script only contains modal-specific functions
+
+// Connect to Google Classroom
+function connectToGoogleClassroom() {
+    console.log('🔗 Connecting to Google Classroom...');
+    window.location.href = '/google_classroom/authorize?return_to_import=true';
+}
+
+// Load Google Classroom courses - Modal specific
+function loadGoogleCourses() {
+    const loadingEl = document.getElementById('google-courses-loading');
+    const coursesEl = document.getElementById('google-courses-list');
+    const emptyEl = document.getElementById('google-courses-empty');
+    
+    loadingEl.style.display = 'block';
+    coursesEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    
+    fetch('/google_classroom/fetch_courses')
+        .then(response => response.json())
+        .then(data => {
+            loadingEl.style.display = 'none';
+            
+            if (data.success && data.courses && data.courses.length > 0) {
+                coursesEl.style.display = 'block';
+                displayGoogleCourses(data.courses);
+            } else {
+                emptyEl.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading Google courses:', error);
+            loadingEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+        });
+}
+
+// Display Google Classroom courses
+function displayGoogleCourses(courses) {
+    const coursesEl = document.getElementById('google-courses-list');
+    coursesEl.innerHTML = '';
+    
+    courses.forEach(course => {
+        const courseCard = document.createElement('div');
+        courseCard.className = 'google-course-card';
+        courseCard.onclick = () => selectGoogleCourse(course);
+        
+        courseCard.innerHTML = `
+            <div class="google-course-title">${course.name || 'Untitled Course'}</div>
+            <div class="google-course-description">${course.description || 'No description'}</div>
+            <div class="google-course-meta">
+                <span><i class="bi bi-people"></i> ${course.studentsCount || 0} students</span>
+                <span><i class="bi bi-journal-text"></i> ${course.assignmentsCount || 0} assignments</span>
+                <span><i class="bi bi-calendar"></i> ${course.section || 'No section'}</span>
+            </div>
+        `;
+        
+        coursesEl.appendChild(courseCard);
+    });
+}
+
+// Select Google Classroom course
+function selectGoogleCourse(course) {
+    selectedCourse = course;
+    
+    // Update UI
+    document.querySelectorAll('.google-course-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    // Show preview
+    showImportPreview(course);
+    
+    // Enable import button
+    document.getElementById('import-course-btn').disabled = false;
+}
+
+// Show import preview
+function showImportPreview(course) {
+    const emptyEl = document.getElementById('import-preview-empty');
+    const contentEl = document.getElementById('import-preview-content');
+    
+    emptyEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    
+    // Update preview data
+    document.getElementById('preview-course-title').textContent = course.name || 'Untitled Course';
+    document.getElementById('preview-students-count').textContent = course.studentsCount || 0;
+    document.getElementById('preview-assignments-count').textContent = course.assignmentsCount || 0;
+    document.getElementById('preview-materials-count').textContent = course.materialsCount || 0;
+    document.getElementById('preview-announcements-count').textContent = course.announcementsCount || 0;
+}
+
+// Import selected course
+function importSelectedCourse() {
+    if (!selectedCourse) return;
+    
+    const importBtn = document.getElementById('import-course-btn');
+    const originalText = importBtn.innerHTML;
+    
+    // Show loading state
+    importBtn.disabled = true;
+    importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
+    
+    // Get import settings
+    const settings = {
+        importStudents: document.getElementById('import-students').checked,
+        importAssignments: document.getElementById('import-assignments').checked,
+        importMaterials: document.getElementById('import-materials').checked,
+        importAnnouncements: document.getElementById('import-announcements').checked
+    };
+    
+    fetch('/google_classroom/import_course', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            courseId: selectedCourse.id,
+            settings: settings
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('googleClassroomImportModal'));
+            modal.hide();
+            
+            // Show success message
+            if (typeof window.showSuccess === 'function') {
+                window.showSuccess('🎉 Course imported successfully!');
+            }
+            
+            // Reload lessons list
+            if (typeof loadPage === 'function') {
+                setTimeout(() => loadPage('class'), 500);
+            } else {
+                setTimeout(() => window.location.reload(), 500);
+            }
+        } else {
+            throw new Error(data.message || 'Failed to import course');
+        }
+    })
+    .catch(error => {
+        console.error('Error importing course:', error);
+        if (typeof window.showError === 'function') {
+            window.showError(error.message || 'Failed to import course');
+        } else {
+            alert('Error: ' + error.message);
+        }
+    })
+    .finally(() => {
+        importBtn.disabled = false;
+        importBtn.innerHTML = originalText;
+    });
+}
+
+// Refresh Google courses
+function refreshGoogleCourses() {
+    loadGoogleCourses();
+}
+</script>
