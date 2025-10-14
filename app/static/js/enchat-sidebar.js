@@ -52,6 +52,14 @@
       // Handle nav link clicks with smooth animation
       const navLinks = document.querySelectorAll('.enchat-sidebar__nav-link');
       navLinks.forEach(link => {
+        // Add hover preloading
+        link.addEventListener('mouseenter', () => {
+          const page = link.getAttribute('data-page');
+          if (page && typeof preloadPage === 'function') {
+            preloadPage(page);
+          }
+        });
+        
         link.addEventListener('click', (e) => {
           this.handleNavClick(e, link);
         });

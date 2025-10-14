@@ -80,7 +80,9 @@ def register_blueprints(app):
     from .routes.task_routes import task_bp
     from .routes.pomodoro_routes import pomodoro_bp
     from .routes.pomodoro_session_routes import pomodoro_session_bp
+
     from .routes.track_routes import track_bp
+    from .routes.grade_routes import grade_bp
     
     # ============================================
     # INTEGRATION ROUTES
@@ -88,15 +90,23 @@ def register_blueprints(app):
     from .routes.integrations.routes_google_classroom import google_classroom_bp
     from .routes.integrations.routes_google_auth import google_auth_bp
     from .routes.integrations.routes_microsoft_teams import microsoft_teams_bp
+    
+    # ============================================ 
+    # WEB AUTH ROUTES (HTML pages)
+    # ============================================
+    from .routes_web_auth import web_auth_bp
+    from .routes.stream_routes import stream_bp
 
     # ============================================
     # REGISTER MAIN WEB ROUTES
     # ============================================
-    app.register_blueprint(main_routes_bp)      # /, /dashboard, /partial/dashboard, /partial/track, /partial/dev
-    app.register_blueprint(class_bp)          # /partial/class, /class/<id>, class CRUD
-    app.register_blueprint(note_web_bp)       # /partial/note, note fragments & CRUD
-    app.register_blueprint(classwork_bp)      # /classwork/* tasks & materials
-    app.register_blueprint(api_bp)            # /api/* general data endpoints
+    app.register_blueprint(main_routes_bp)  # /, /dashboard, /partial/dashboard, /partial/track, /partial/dev
+    app.register_blueprint(class_bp)        # /partial/class, /class/<id>, class CRUD
+    app.register_blueprint(note_web_bp)     # /partial/note, note fragments & CRUD
+    app.register_blueprint(classwork_bp)    # /classwork/* tasks & materials
+    app.register_blueprint(stream_bp)       # /api/stream/* - Stream System (Q&A)
+    app.register_blueprint(api_bp)          # /api/* general data endpoints
+    app.register_blueprint(web_auth_bp)     # /login, /register, /logout HTML pages
     
     # ============================================
     # REGISTER API BLUEPRINTS
@@ -108,6 +118,7 @@ def register_blueprints(app):
     app.register_blueprint(pomodoro_bp)       # /api/pomodoro/*
     app.register_blueprint(pomodoro_session_bp)  # /pomodoro/session/*, /pomodoro/statistics/*
     app.register_blueprint(track_bp)          # /api/track/*
+    app.register_blueprint(grade_bp)        # /grades/* - Grade System
     
     # ============================================
     # REGISTER INTEGRATION BLUEPRINTS
@@ -234,3 +245,9 @@ def import_models():
     from .models.lesson_section import LessonSectionModel
     from .models.note import NoteModel
     from .models.task import TaskModel
+    
+    # Import Grade models
+    try:
+        from .models.grade import GradeConfig, GradeCategory, GradeItem, GradeEntry, GradeSummary
+    except ImportError:
+        pass  # Grade models may not exist yet

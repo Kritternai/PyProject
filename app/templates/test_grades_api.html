@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Grades API</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Grades API Test</h1>
+    
+    <div>
+        <label>Lesson ID:</label>
+        <input type="text" id="lessonId" value="37e5c2e4-d83b-4b4d-af7d-814bc6b60f0a" style="width: 400px">
+        <button onclick="testAPI()">Test API</button>
+    </div>
+    
+    <hr>
+    
+    <div id="results"></div>
+    
+    <script>
+        async function testAPI() {
+            const lessonId = document.getElementById('lessonId').value;
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Testing...</p>';
+            
+            let html = '';
+            
+            // Test 1: Get Config
+            html += '<h3>1. GET /grades/lessons/&lt;id&gt;/config</h3>';
+            try {
+                const response = await fetch(`/grades/lessons/${lessonId}/config`);
+                const data = await response.json();
+                html += `<p class="success">✅ Status: ${response.status}</p>`;
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                html += `<p class="error">❌ Error: ${error}</p>`;
+            }
+            
+            // Test 2: Get Categories
+            html += '<h3>2. GET /grades/lessons/&lt;id&gt;/categories</h3>';
+            try {
+                const response = await fetch(`/grades/lessons/${lessonId}/categories`);
+                const data = await response.json();
+                html += `<p class="success">✅ Status: ${response.status}</p>`;
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                html += `<p class="error">❌ Error: ${error}</p>`;
+            }
+            
+            // Test 3: Get Items
+            html += '<h3>3. GET /grades/lessons/&lt;id&gt;/items</h3>';
+            try {
+                const response = await fetch(`/grades/lessons/${lessonId}/items`);
+                const data = await response.json();
+                html += `<p class="success">✅ Status: ${response.status}</p>`;
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                html += `<p class="error">❌ Error: ${error}</p>`;
+            }
+            
+            // Test 4: Get My Grades
+            html += '<h3>4. GET /grades/lessons/&lt;id&gt;/my-grades</h3>';
+            try {
+                const response = await fetch(`/grades/lessons/${lessonId}/my-grades`);
+                const data = await response.json();
+                html += `<p class="success">✅ Status: ${response.status}</p>`;
+                html += `<p>Found ${data.data ? data.data.length : 0} grades</p>`;
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                html += `<p class="error">❌ Error: ${error}</p>`;
+            }
+            
+            // Test 5: Get Summary
+            html += '<h3>5. GET /grades/lessons/&lt;id&gt;/summary</h3>';
+            try {
+                const response = await fetch(`/grades/lessons/${lessonId}/summary`);
+                const data = await response.json();
+                html += `<p class="success">✅ Status: ${response.status}</p>`;
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                html += `<p class="error">❌ Error: ${error}</p>`;
+            }
+            
+            results.innerHTML = html;
+        }
+        
+        // Auto test on load
+        window.onload = () => testAPI();
+    </script>
+</body>
+</html>
+

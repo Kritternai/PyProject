@@ -245,19 +245,32 @@ def create_complete_database_schema():
         """)
         print("✅ Created assignment table")
         
-        # 9. Create member table
+        # 9. Create member table (class_member)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS member (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
                 lesson_id TEXT NOT NULL,
-                role TEXT DEFAULT 'student',
+                role TEXT DEFAULT 'viewer',
+                invited_by TEXT,
                 joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES user(id),
-                FOREIGN KEY (lesson_id) REFERENCES lesson(id)
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (invited_by) REFERENCES user(id),
+                UNIQUE(user_id, lesson_id)
             )
         """)
         print("✅ Created member table")
+        
+        # Add invited_by column if not exists
+        try:
+            cursor.execute("ALTER TABLE member ADD COLUMN invited_by TEXT REFERENCES user(id)")
+            print("✅ Added invited_by column to member table")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e):
+                print("   invited_by column already exists, skipping...")
+            else:
+                print(f"   Warning: {e}")
         
         # 10. Create database indexes
         indexes = [
@@ -491,6 +504,236 @@ def create_complete_database_schema():
         classwork_upload_dir = 'uploads/classwork'
         os.makedirs(classwork_upload_dir, exist_ok=True)
         print("✅ Created classwork uploads directory")
+        
+        # ============================================
+        # 16. Create Grade System Tables
+        # ============================================
+        print("🎓 Creating Grade System tables...")
+        
+        # 16.1 Grade Configuration Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS grade_config (
+                id TEXT PRIMARY KEY,
+                lesson_id TEXT UNIQUE NOT NULL,
+                grading_scale TEXT NOT NULL,
+                grading_type TEXT DEFAULT 'percentage',
+                total_points REAL DEFAULT 100,
+                passing_grade TEXT DEFAULT 'D',
+                passing_percentage REAL DEFAULT 50.0,
+                show_total_grade BOOLEAN DEFAULT 1,
+                allow_what_if BOOLEAN DEFAULT 1,
+                show_class_average BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id) ON DELETE CASCADE
+            )
+        """)
+        print("✅ Created grade_config table")
+        
+        # 16.2 Grade Category Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS grade_category (
+                id TEXT PRIMARY KEY,
+                lesson_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                weight REAL NOT NULL,
+                total_points REAL,
+                drop_lowest INTEGER DEFAULT 0,
+                drop_highest INTEGER DEFAULT 0,
+                color TEXT DEFAULT '#3B82F6',
+                icon TEXT DEFAULT 'bi-clipboard',
+                order_index INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id) ON DELETE CASCADE
+            )
+        """)
+        print("✅ Created grade_category table")
+        
+        # 16.3 Grade Item Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS grade_item (
+                id TEXT PRIMARY KEY,
+                lesson_id TEXT NOT NULL,
+                category_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                points_possible REAL NOT NULL,
+                due_date TIMESTAMP,
+                published_date TIMESTAMP,
+                is_published BOOLEAN DEFAULT 0,
+                is_extra_credit BOOLEAN DEFAULT 0,
+                is_muted BOOLEAN DEFAULT 0,
+                classwork_task_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id) ON DELETE CASCADE,
+                FOREIGN KEY (category_id) REFERENCES grade_category(id) ON DELETE CASCADE,
+                FOREIGN KEY (classwork_task_id) REFERENCES classwork_task(id) ON DELETE SET NULL
+            )
+        """)
+        print("✅ Created grade_item table")
+        
+        # Add classwork_task_id column if table already exists
+        try:
+            cursor.execute("ALTER TABLE grade_item ADD COLUMN classwork_task_id TEXT")
+            print("✅ Added classwork_task_id column to grade_item")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" not in str(e):
+                print(f"   Note: {e}")
+        
+        # 16.4 Grade Entry Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS grade_entry (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                grade_item_id TEXT NOT NULL,
+                score REAL,
+                points_possible REAL,
+                status TEXT DEFAULT 'pending',
+                is_excused BOOLEAN DEFAULT 0,
+                comments TEXT,
+                graded_by TEXT,
+                graded_at TIMESTAMP,
+                is_late BOOLEAN DEFAULT 0,
+                late_penalty REAL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id) ON DELETE CASCADE,
+                FOREIGN KEY (grade_item_id) REFERENCES grade_item(id) ON DELETE CASCADE,
+                FOREIGN KEY (graded_by) REFERENCES user(id)
+            )
+        """)
+        print("✅ Created grade_entry table")
+        
+        # 16.5 Grade Summary Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS grade_summary (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT NOT NULL,
+                current_score REAL,
+                total_possible REAL,
+                percentage REAL,
+                letter_grade TEXT,
+                gpa REAL,
+                is_passing BOOLEAN DEFAULT 1,
+                points_to_pass REAL,
+                points_to_next_grade TEXT,
+                last_calculated TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id) ON DELETE CASCADE,
+                UNIQUE(user_id, lesson_id)
+            )
+        """)
+        print("✅ Created grade_summary table")
+        
+        # 16.6 Create Grade System Indexes
+        grade_indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_grade_config_lesson ON grade_config(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_grade_category_lesson ON grade_category(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_grade_item_lesson ON grade_item(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_grade_item_category ON grade_item(category_id)",
+            "CREATE INDEX IF NOT EXISTS idx_grade_entry_user ON grade_entry(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_grade_entry_lesson ON grade_entry(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_grade_entry_item ON grade_entry(grade_item_id)",
+            "CREATE INDEX IF NOT EXISTS idx_grade_entry_status ON grade_entry(status)",
+            "CREATE INDEX IF NOT EXISTS idx_grade_summary_user ON grade_summary(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_grade_summary_lesson ON grade_summary(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_grade_summary_user_lesson ON grade_summary(user_id, lesson_id)"
+        ]
+        
+        for index_sql in grade_indexes:
+            try:
+                cursor.execute(index_sql)
+            except sqlite3.OperationalError as e:
+                print(f"   Warning: {e}")
+        
+        print("✅ Created grade system indexes")
+        print("🎉 Grade System tables created successfully!")
+        
+        # ============================================
+        # 17. Stream System (Q&A + Announcements + Activity Timeline)
+        # ============================================
+        print("\n📢 Creating Stream System tables...")
+        
+        # 17.1 Stream Posts Table (Q&A + Announcements + Activities)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stream_post (
+                id TEXT PRIMARY KEY,
+                lesson_id TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                type TEXT NOT NULL DEFAULT 'question',
+                title TEXT,
+                content TEXT NOT NULL,
+                is_pinned BOOLEAN DEFAULT 0,
+                allow_comments BOOLEAN DEFAULT 1,
+                has_accepted_answer BOOLEAN DEFAULT 0,
+                accepted_answer_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP,
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES user(id)
+            )
+        """)
+        print("✅ Created stream_post table")
+        
+        # 17.2 Stream Comments Table (Answers/Comments)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stream_comment (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                post_id TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                content TEXT NOT NULL,
+                is_accepted BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP,
+                FOREIGN KEY (post_id) REFERENCES stream_post(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES user(id)
+            )
+        """)
+        print("✅ Created stream_comment table")
+        
+        # 17.3 Stream Attachments Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stream_attachment (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                post_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                name TEXT NOT NULL,
+                url TEXT NOT NULL,
+                size INTEGER,
+                mime_type TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (post_id) REFERENCES stream_post(id) ON DELETE CASCADE
+            )
+        """)
+        print("✅ Created stream_attachment table")
+        
+        # 17.4 Create Stream System Indexes
+        stream_indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_stream_post_lesson ON stream_post(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_post_type ON stream_post(lesson_id, type)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_post_pinned ON stream_post(lesson_id, is_pinned)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_post_created ON stream_post(lesson_id, created_at DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_comment_post ON stream_comment(post_id)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_comment_accepted ON stream_comment(post_id, is_accepted)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_attachment_post ON stream_attachment(post_id)"
+        ]
+        
+        for index_sql in stream_indexes:
+            try:
+                cursor.execute(index_sql)
+            except sqlite3.OperationalError as e:
+                print(f"   Warning: {e}")
+        
+        print("✅ Created stream system indexes")
+        print("🎉 Stream System tables created successfully!")
         
         # Commit all changes
         conn.commit()

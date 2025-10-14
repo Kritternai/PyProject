@@ -1,0 +1,2608 @@
+<!-- Grades Tab - Complete Grade System with Calculator -->
+<div class="grades-container">
+    <!-- Header -->
+    <div class="grades-header">
+        <div class="grades-header-content">
+        <div>
+            <h2 class="grades-title">
+                <i class="bi bi-graph-up"></i>
+                Grades
+            </h2>
+            <p class="grades-subtitle">Track your academic progress and set goals</p>
+        </div>
+            <div class="grades-actions">
+                <button class="btn-icon" onclick="toggleGradesSidebar()" id="grades-sidebar-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <button class="btn-goal-calculator" onclick="openGoalCalculator()">
+                    <i class="bi bi-target"></i>
+                    <span>Goal Calculator</span>
+                </button>
+                <button class="btn-grades-secondary" onclick="openSetupModal()">
+                    <i class="bi bi-gear"></i>
+                    <span>Setup</span>
+                </button>
+                <button class="btn-grades-primary" id="grades-create-btn" onclick="openCreateGradeItemModal()">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Add Assignment</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="grades-main">
+        <!-- Content Layout -->
+        <div class="grades-content-layout">
+            <!-- Sidebar -->
+            <div class="grades-sidebar" id="grades-sidebar">
+                <!-- Navigation Section -->
+                <div class="grades-nav-section">
+                    <a href="#" class="grades-nav-item active" data-tab="overview" onclick="switchGradesTab('overview'); return false;">
+                        <i class="bi bi-speedometer2 grades-nav-item-icon"></i>
+                        Overview
+                    </a>
+                    <a href="#" class="grades-nav-item" data-tab="assignments" onclick="switchGradesTab('assignments'); return false;">
+                        <i class="bi bi-list-check grades-nav-item-icon"></i>
+                        Assignments
+                    </a>
+                    <a href="#" class="grades-nav-item" data-tab="categories" onclick="switchGradesTab('categories'); return false;">
+                        <i class="bi bi-grid-3x3-gap grades-nav-item-icon"></i>
+                        Categories
+                    </a>
+                    <a href="#" class="grades-nav-item" data-tab="goals" onclick="switchGradesTab('goals'); return false;">
+                        <i class="bi bi-target grades-nav-item-icon"></i>
+                        Goals
+                    </a>
+                </div>
+
+                <!-- Search Section -->
+                <div class="grades-search-section">
+                    <div class="search-container">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="Search assignments..." 
+                               id="grades-search-input">
+                    </div>
+                </div>
+
+                <!-- Stats Section -->
+                <div class="grades-stats-section">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number" id="total-assignments">--</div>
+                            <div class="stat-label">Total</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="graded-assignments">--</div>
+                            <div class="stat-label">Graded</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="pending-assignments">--</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="current-grade">--</div>
+                            <div class="stat-label">Current</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="grades-filter-section">
+                    <h4 class="filter-title">Filter by Status</h4>
+                    <div class="filter-options">
+                        <button class="filter-option active" data-filter="all" onclick="setGradesFilter('all')">
+                            <span class="status-dot all"></span>
+                            <span>All</span>
+                        </button>
+                        <button class="filter-option" data-filter="graded" onclick="setGradesFilter('graded')">
+                            <span class="status-dot graded"></span>
+                            <span>Graded</span>
+                        </button>
+                        <button class="filter-option" data-filter="pending" onclick="setGradesFilter('pending')">
+                            <span class="status-dot pending"></span>
+                            <span>Pending</span>
+                        </button>
+                        <button class="filter-option" data-filter="missing" onclick="setGradesFilter('missing')">
+                            <span class="status-dot missing"></span>
+                            <span>Missing</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="grades-filter-section">
+                    <h4 class="filter-title">Filter by Category</h4>
+                    <div class="filter-options" id="category-filters">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="grades-content" id="grades-content">
+                <!-- Overview Tab -->
+                <div class="grades-tab-content active" id="grades-tab-overview">
+                <!-- Clean Hero Section - Current Grade -->
+                <div class="overview-hero clean">
+                    <div class="grade-summary-card-clean" id="grade-summary">
+                        <!-- Loading state -->
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="text-muted mt-2">Loading grade summary...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clean Stats Grid -->
+                <div class="overview-stats-grid clean">
+                    <div class="stat-card-clean">
+                        <div class="stat-icon-clean">
+                            <i class="bi bi-clipboard-check"></i>
+                        </div>
+                        <div class="stat-content-clean">
+                            <div class="stat-value-clean" id="overview-total-items">--</div>
+                            <div class="stat-label-clean">Total Assignments</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-clean">
+                        <div class="stat-icon-clean">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-content-clean">
+                            <div class="stat-value-clean" id="overview-graded-items">--</div>
+                            <div class="stat-label-clean">Graded</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-clean">
+                        <div class="stat-icon-clean">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="stat-content-clean">
+                            <div class="stat-value-clean" id="overview-pending-items">--</div>
+                            <div class="stat-label-clean">Pending</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-clean">
+                        <div class="stat-icon-clean">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <div class="stat-content-clean">
+                            <div class="stat-value-clean" id="overview-average">--</div>
+                            <div class="stat-label-clean">Average Score</div>
+                        </div>
+                    </div>
+                </div>
+
+                    <!-- Two Column Layout -->
+                    <div class="overview-two-column">
+                        <!-- Left: Category Performance -->
+                        <div class="overview-section clean">
+                            <div class="section-header-compact">
+                                <h3 class="section-title-clean">
+                                    <i class="bi bi-bar-chart"></i>
+                                    Category Performance
+                                </h3>
+                                <a href="#" class="section-link-clean" onclick="switchGradesTab('categories'); return false;">
+                                    View All <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                            <div class="category-performance-clean" id="category-performance-overview">
+                                <!-- Dynamically loaded -->
+                            </div>
+                        </div>
+
+                        <!-- Right: Next Goal -->
+                        <div class="overview-section clean">
+                            <div class="section-header-compact">
+                                <h3 class="section-title-clean">
+                                    <i class="bi bi-target"></i>
+                                    Your Next Goal
+                                </h3>
+                                <button class="section-link-clean" onclick="openGoalCalculator()">
+                                    Calculate <i class="bi bi-calculator"></i>
+                                </button>
+                            </div>
+                            <div class="next-goal-card-clean" id="next-goal-card">
+                                <!-- Dynamically loaded -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Grades -->
+                    <div class="overview-section clean">
+                        <div class="section-header-compact">
+                            <h3 class="section-title-clean">
+                                <i class="bi bi-clock-history"></i>
+                                Recent Grades
+                            </h3>
+                            <a href="#" class="section-link-clean" onclick="switchGradesTab('assignments'); return false;">
+                                View All <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                        <div class="recent-grades-list-clean" id="recent-grades-list">
+                            <!-- Dynamically loaded -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignments Tab -->
+                <div class="grades-tab-content" id="grades-tab-assignments">
+                    <!-- Detailed Grades Table -->
+                    <div class="assignments-section">
+                        <div class="assignments-header">
+                            <h3 class="assignments-title">
+                                <i class="bi bi-list-check"></i>
+                                All Assignments
+                            </h3>
+                            <button class="btn-grades-primary" onclick="openCreateGradeItemModal()">
+                                <i class="bi bi-plus-lg"></i>
+                                <span>Add Assignment</span>
+                            </button>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="assignments-table" id="grades-table">
+                                <thead>
+                                    <tr>
+                                        <th>Assignment</th>
+                                        <th>Category</th>
+                                        <th>Due Date</th>
+                                        <th>Score</th>
+                                        <th>Percentage</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="grades-table-body">
+                                    <!-- Dynamically loaded -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories Tab -->
+                <div class="grades-tab-content" id="grades-tab-categories">
+                    <!-- Categories content will be loaded dynamically -->
+                </div>
+
+                <!-- Goals Tab -->
+                <div class="grades-tab-content" id="grades-tab-goals">
+                    <!-- Goals content will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Create Grade Item Modal -->
+<div class="modal fade" id="createGradeItemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📝 Add Assignment/Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="gradeItemForm">
+                    <!-- Combined Assignment Name + Task Selector -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Assignment Name *
+                            <i class="bi bi-info-circle text-muted" 
+                               title="Select from existing tasks or type a new name"></i>
+                        </label>
+                        
+                        <!-- Custom Dropdown Container -->
+                        <div class="custom-combobox">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="item-name" 
+                                   placeholder="Type name or select from tasks..."
+                                   oninput="handleAssignmentNameInput()"
+                                   onfocus="showTaskDropdown()"
+                                   autocomplete="off"
+                                   required>
+                            <i class="bi bi-chevron-down dropdown-icon" onclick="toggleTaskDropdown()"></i>
+                            
+                            <!-- Custom Dropdown Menu -->
+                            <div class="custom-dropdown-menu" id="task-dropdown" style="display: none;">
+                                <div class="dropdown-search">
+                                    <i class="bi bi-search"></i>
+                                    <input type="text" 
+                                           id="task-search" 
+                                           class="dropdown-search-input" 
+                                           placeholder="Search tasks..."
+                                           oninput="filterTaskDropdown()">
+                                </div>
+                                
+                                <div class="dropdown-section">
+                                    <div class="dropdown-section-header">
+                                        <i class="bi bi-link-45deg"></i> Link to Existing Task
+                                    </div>
+                                    <div id="task-list" class="dropdown-items">
+                                        <!-- Populated by JS -->
+                                    </div>
+                                </div>
+                                
+                                <div class="dropdown-divider"></div>
+                                
+                                <div class="dropdown-section">
+                                    <div class="dropdown-section-header">
+                                        <i class="bi bi-plus-circle"></i> Or Create New
+                                    </div>
+                                    <div class="dropdown-item create-new-hint" onclick="focusNameInput()">
+                                        <i class="bi bi-pencil-fill"></i>
+                                        <span>Type a new assignment name above</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" id="item-linked-task-id">
+                        <div class="task-link-status" id="task-link-hint">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Type to create new, or select from existing tasks</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Category *</label>
+                            <select class="form-select" id="item-category" required>
+                                <option value="">-- Select Category --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Points *</label>
+                            <input type="number" class="form-control" id="item-points" min="0" step="0.5" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="item-description" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="item-due-date">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check mt-4">
+                                <input type="checkbox" class="form-check-input" id="item-published" checked>
+                                <label class="form-check-label">Publish immediately</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveGradeItem()">
+                    <i class="bi bi-check-circle"></i> Create Assignment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Goal Calculator Modal -->
+<div class="modal fade" id="goalCalculatorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">🎯 Grade Goal Calculator</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="calculator-form">
+                    <label class="form-label">I want to get a:</label>
+                    <select class="form-select form-select-lg" id="target-grade" onchange="calculateGoal()">
+                        <option value="">-- Select Target Grade --</option>
+                        <option value="A">A (80-100%)</option>
+                        <option value="B+">B+ (75-79%)</option>
+                        <option value="B">B (70-74%)</option>
+                        <option value="C+">C+ (65-69%)</option>
+                        <option value="C">C (60-64%)</option>
+                        <option value="D+">D+ (55-59%)</option>
+                        <option value="D">D (50-54%)</option>
+                    </select>
+                    
+                    <div class="calculator-result mt-4" id="calculator-result">
+                        <!-- Result will be displayed here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Setup Grading Modal -->
+<div class="modal fade" id="setupGradingModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="setupModalTitle">⚙️ Setup Grading System</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="setup-info alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Configure your grading scale and categories according to your course syllabus.</span>
+                </div>
+                
+                <!-- Step 1: Grading Scale -->
+                <div class="setup-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">Step 1: Grading Scale</h6>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleGradingScaleEdit()">
+                            <i class="bi bi-pencil" id="edit-scale-icon"></i>
+                            <span id="edit-scale-text">Edit Scale</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Grading Scale Display (Read-only) -->
+                    <div id="grading-scale-display">
+                        <div class="grading-scale-preview" id="grading-scale-preview">
+                            <span class="badge bg-success">A (80-100%)</span>
+                            <span class="badge bg-primary">B+ (75-79%)</span>
+                            <span class="badge bg-info">B (70-74%)</span>
+                            <span class="badge bg-warning">C+ (65-69%)</span>
+                            <span class="badge bg-secondary">C (60-64%)</span>
+                            <span class="badge bg-secondary">D+ (55-59%)</span>
+                            <span class="badge bg-secondary">D (50-54%)</span>
+                            <span class="badge bg-danger">F (0-49%)</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Grading Scale Editor (Editable) -->
+                    <div id="grading-scale-editor" style="display: none;">
+                        <p class="text-muted small">Edit the percentage ranges for each grade level</p>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Grade</th>
+                                        <th>Min %</th>
+                                        <th>Max %</th>
+                                        <th>GPA</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="grading-scale-table">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-success" onclick="saveGradingScale()">
+                                <i class="bi bi-check"></i> Save Scale
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="cancelGradingScaleEdit()">
+                                <i class="bi bi-x"></i> Cancel
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="resetGradingScale()">
+                                <i class="bi bi-arrow-counterclockwise"></i> Reset to Default
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Categories -->
+                <div class="setup-section mt-4">
+                    <h6>Step 2: Grade Categories</h6>
+                    <p class="text-muted">Add categories from your syllabus (weights must total 100%)</p>
+                    
+                    <div id="categories-list">
+                        <!-- Categories will be added here -->
+                    </div>
+                    
+                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="addCategoryRow()">
+                        <i class="bi bi-plus-circle"></i> Add Category
+                    </button>
+                    
+                    <div class="mt-3">
+                        <strong>Total Weight: <span id="total-weight">0</span>%</strong>
+                        <div class="progress mt-2">
+                            <div class="progress-bar" id="weight-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="me-auto">
+                    <button type="button" class="btn btn-danger" id="clearConfigBtn" onclick="clearGradingConfig()" style="display: none;">
+                        <i class="bi bi-trash"></i> Clear All Configuration
+                    </button>
+                </div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveGradingSetup()">
+                    <i class="bi bi-check-circle"></i> <span id="saveSetupBtnText">Save Configuration</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Grades System - Immediately execute
+(function() {
+    'use strict';
+    
+    console.log('🎓 Grades system loaded');
+    
+    const lessonId = '{{ lesson_id }}';
+    let goalCalculatorModal, setupGradingModal, createGradeItemModal;
+    let categoriesData = [];
+    let currentSummary = null;
+    let currentGradingScale = null;
+    let isEditMode = false;
+    let availableTasks = [];
+    let currentGradesData = []; // Store grades data for filtering/searching
+    
+    // Initialize
+    initializeGradesSystem();
+    
+    function initializeGradesSystem() {
+        console.log('📊 Initializing Grades System for lesson:', lessonId);
+        
+        // Initialize modals
+        try {
+            const goalModalEl = document.getElementById('goalCalculatorModal');
+            const setupModalEl = document.getElementById('setupGradingModal');
+            const createItemModalEl = document.getElementById('createGradeItemModal');
+            
+            if (goalModalEl && typeof bootstrap !== 'undefined') {
+                goalCalculatorModal = new bootstrap.Modal(goalModalEl);
+            }
+            if (setupModalEl && typeof bootstrap !== 'undefined') {
+                setupGradingModal = new bootstrap.Modal(setupModalEl);
+            }
+            if (createItemModalEl && typeof bootstrap !== 'undefined') {
+                createGradeItemModal = new bootstrap.Modal(createItemModalEl);
+            }
+        } catch (error) {
+            console.error('Error initializing modals:', error);
+        }
+        
+        // Initialize sidebar search
+        initializeSidebarSearch();
+        
+        // Load grade data
+        loadGradeData();
+    }
+    
+    async function loadGradeData() {
+        try {
+            // Check if grade config exists
+            const configResponse = await fetch(`/grades/lessons/${lessonId}/config`);
+            
+            if (configResponse.status === 404) {
+                // No config - show setup prompt
+                showSetupPrompt();
+                return;
+            }
+            
+            // Load summary
+            const summaryResponse = await fetch(`/grades/lessons/${lessonId}/summary`);
+            const summaryData = await summaryResponse.json();
+            
+            console.log('📊 Summary data:', summaryData);
+            
+            if (summaryData.success) {
+                currentSummary = summaryData.data;
+                console.log('📈 Category breakdown:', summaryData.data.category_breakdown);
+                renderGradeSummary(summaryData.data);
+                renderOverviewStats(summaryData.data); // New: Overview stats
+                renderCategoryPerformanceCompact(summaryData.data.category_breakdown); // New: Compact categories
+                renderNextGoal(summaryData.data.goals); // New: Next goal only
+                updateSidebarStats(summaryData); // Update sidebar stats
+            } else {
+                console.error('❌ Failed to load summary:', summaryData);
+                // Update sidebar with empty data
+                updateSidebarStats({ data: {} });
+            }
+            
+            // Load grades table
+            console.log('📋 Loading grades table...');
+            const gradesResponse = await fetch(`/grades/lessons/${lessonId}/my-grades`);
+            const gradesData = await gradesResponse.json();
+            
+            console.log('📊 Grades response:', gradesData);
+            
+            if (gradesData.success) {
+                currentGradesData = gradesData.data; // Store for filtering/searching
+                console.log('📝 Rendering grades table with', gradesData.data.length, 'items');
+                renderGradesTable(gradesData.data);
+                renderRecentGrades(gradesData.data); // New: Recent grades
+                
+                // Update sidebar stats with actual grades data
+                updateSidebarStatsFromGrades(gradesData.data);
+            } else {
+                console.error('❌ Failed to load grades:', gradesData);
+                // Show error message in table
+                const tbody = document.getElementById('grades-table-body');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger py-4">
+                            Error loading grades: ${gradesData.error || 'Unknown error'}
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // Load categories for filter
+            const categoriesResponse = await fetch(`/grades/lessons/${lessonId}/categories`);
+            const categoriesResult = await categoriesResponse.json();
+            
+            if (categoriesResult.success) {
+                categoriesData = categoriesResult.data;
+                populateCategoryFilter(categoriesResult.data);
+            }
+            
+            // Load available tasks for linking
+            const tasksResponse = await fetch(`/grades/lessons/${lessonId}/available-tasks`);
+            const tasksData = await tasksResponse.json();
+            
+            if (tasksData.success) {
+                availableTasks = tasksData.data;
+                console.log('📋 Available tasks for linking:', availableTasks.length);
+            }
+            
+        } catch (error) {
+            console.error('Error loading grades:', error);
+            showError('Failed to load grades');
+        }
+    }
+    
+    // Open Create Grade Item Modal
+    async function openCreateGradeItemModal() {
+        if (!createGradeItemModal) {
+            showError('Modal not initialized');
+            return;
+        }
+        
+        // Reset form
+        document.getElementById('gradeItemForm').reset();
+        document.getElementById('item-linked-task-id').value = '';
+        document.getElementById('task-link-hint').innerHTML = '💡 Type to create new, or select from existing tasks below';
+        
+        // Populate category dropdown
+        const categorySelect = document.getElementById('item-category');
+        categorySelect.innerHTML = '<option value="">-- Select Category --</option>';
+        
+        for (const category of categoriesData) {
+            const option = document.createElement('option');
+            option.value = category.id;  // Use UUID, not name
+            option.textContent = `${category.name} (${category.weight}%)`;
+            categorySelect.appendChild(option);
+        }
+        
+        // Populate task dropdown (will be done when dropdown opens)
+        filterTaskDropdown();
+        
+        createGradeItemModal.show();
+    }
+    
+    // Show/Hide task dropdown
+    function showTaskDropdown() {
+        const dropdown = document.getElementById('task-dropdown');
+        dropdown.style.display = 'block';
+        filterTaskDropdown(); // Filter based on current input
+    }
+    
+    function hideTaskDropdown() {
+        setTimeout(() => {
+            const dropdown = document.getElementById('task-dropdown');
+            dropdown.style.display = 'none';
+        }, 200);
+    }
+    
+    function toggleTaskDropdown() {
+        const dropdown = document.getElementById('task-dropdown');
+        if (dropdown.style.display === 'none') {
+            showTaskDropdown();
+        } else {
+            dropdown.style.display = 'none';
+        }
+    }
+    
+    function focusNameInput() {
+        document.getElementById('item-name').focus();
+    }
+    
+    // Filter task dropdown based on search
+    function filterTaskDropdown() {
+        const searchInput = document.getElementById('task-search');
+        const nameInput = document.getElementById('item-name');
+        const searchTerm = (searchInput?.value || nameInput.value || '').toLowerCase();
+        
+        const taskList = document.getElementById('task-list');
+        const filteredTasks = availableTasks.filter(task => 
+            task.title.toLowerCase().includes(searchTerm) ||
+            (task.description && task.description.toLowerCase().includes(searchTerm))
+        );
+        
+        if (filteredTasks.length === 0) {
+            taskList.innerHTML = `
+                <div class="dropdown-item empty">
+                    <i class="bi bi-inbox"></i>
+                    <span>No tasks found</span>
+                </div>
+            `;
+        } else {
+            taskList.innerHTML = filteredTasks.map(task => {
+                const statusIcon = task.status === 'completed' ? '✅' :
+                                 task.status === 'in-progress' ? '🔄' : '📋';
+                const statusClass = task.status === 'completed' ? 'completed' :
+                                  task.status === 'in-progress' ? 'in-progress' : 'pending';
+                
+                return `
+                    <div class="dropdown-item task-item ${statusClass}" 
+                         onclick="selectTask('${escapeHtml(task.id)}', '${escapeHtml(task.title)}')">
+                        <div class="task-icon">${statusIcon}</div>
+                        <div class="task-info">
+                            <div class="task-title">${escapeHtml(task.title)}</div>
+                            ${task.description ? `<div class="task-desc">${escapeHtml(task.description.substring(0, 50))}${task.description.length > 50 ? '...' : ''}</div>` : ''}
+                        </div>
+                        ${task.due_date ? `<div class="task-due"><i class="bi bi-calendar"></i> ${formatDate(task.due_date)}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+    
+    // Select a task from dropdown
+    function selectTask(taskId, taskTitle) {
+        const task = availableTasks.find(t => t.id === taskId);
+        if (!task) return;
+        
+        const nameInput = document.getElementById('item-name');
+        const taskIdInput = document.getElementById('item-linked-task-id');
+        const hint = document.getElementById('task-link-hint');
+        const descInput = document.getElementById('item-description');
+        const dueDateInput = document.getElementById('item-due-date');
+        
+        // Set values
+        nameInput.value = task.title;
+        taskIdInput.value = task.id;
+        
+        // Update hint
+        hint.innerHTML = `
+            <i class="bi bi-check-circle-fill"></i>
+            <span><strong>Linked to task:</strong> ${escapeHtml(task.title)}</span>
+        `;
+        hint.className = 'task-link-status linked';
+        
+        // Auto-fill description and due date
+        if (task.description && !descInput.value) {
+            descInput.value = task.description;
+        }
+        if (task.due_date && !dueDateInput.value) {
+            const dueDate = new Date(task.due_date);
+            dueDateInput.value = dueDate.toISOString().split('T')[0];
+        }
+        
+        // Hide dropdown
+        document.getElementById('task-dropdown').style.display = 'none';
+        
+        console.log('🔗 Task selected:', task.title);
+    }
+    
+    // Handle assignment name input
+    function handleAssignmentNameInput() {
+        const nameInput = document.getElementById('item-name');
+        const taskIdInput = document.getElementById('item-linked-task-id');
+        const hint = document.getElementById('task-link-hint');
+        
+        const inputValue = nameInput.value.trim();
+        
+        // Filter dropdown
+        filterTaskDropdown();
+        
+        // Check if input matches a task exactly
+        const matchedTask = availableTasks.find(task => task.title === inputValue);
+        
+        if (matchedTask && taskIdInput.value === matchedTask.id) {
+            // Already linked - keep hint
+            return;
+        } else if (matchedTask) {
+            // Matches a task but not linked yet - suggest linking
+            hint.innerHTML = `
+                <i class="bi bi-link-45deg"></i>
+                <span>Press Enter or click to link to existing task</span>
+            `;
+            hint.className = 'task-link-status suggestion';
+        } else if (inputValue) {
+            // Custom name - creating new
+            taskIdInput.value = '';
+            hint.innerHTML = `
+                <i class="bi bi-pencil-fill"></i>
+                <span><strong>Creating new assignment:</strong> ${escapeHtml(inputValue)}</span>
+            `;
+            hint.className = 'task-link-status new';
+        } else {
+            // Empty input
+            taskIdInput.value = '';
+            hint.innerHTML = `
+                <i class="bi bi-info-circle"></i>
+                <span>Type to create new, or select from existing tasks</span>
+            `;
+            hint.className = 'task-link-status';
+        }
+    }
+    
+    // Format date helper
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const today = new Date();
+        const diffTime = date - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) return 'Overdue';
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Tomorrow';
+        if (diffDays <= 7) return `${diffDays}d`;
+        
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+    
+    // Save Grade Item
+    async function saveGradeItem() {
+        try {
+            const name = document.getElementById('item-name').value.trim();
+            const points = parseFloat(document.getElementById('item-points').value);
+            const categoryId = document.getElementById('item-category').value;
+            const linkedTaskId = document.getElementById('item-linked-task-id').value; // From hidden input
+            const description = document.getElementById('item-description').value.trim();
+            const dueDate = document.getElementById('item-due-date').value;
+            const isPublished = document.getElementById('item-published').checked;
+            
+            if (!name || !points || !categoryId) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            const itemData = {
+                name: name,
+                category_id: categoryId,
+                points_possible: points,
+                description: description,
+                due_date: dueDate || null,
+                is_published: isPublished
+            };
+            
+            // Add linked task if auto-detected
+            if (linkedTaskId) {
+                itemData.classwork_task_id = linkedTaskId;
+                console.log('🔗 Linking to task:', linkedTaskId);
+            } else {
+                console.log('✏️ Creating new assignment without task link');
+            }
+            
+            const response = await fetch(`/grades/lessons/${lessonId}/items`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(itemData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                createGradeItemModal.hide();
+                showSuccess('Assignment created successfully!');
+                
+                // Reload available tasks (to remove linked task from list)
+                try {
+                    const tasksResponse = await fetch(`/grades/lessons/${lessonId}/available-tasks`);
+                    const tasksData = await tasksResponse.json();
+                    if (tasksData.success) {
+                        availableTasks = tasksData.data;
+                        console.log('🔄 Available tasks updated:', availableTasks.length);
+                    }
+                } catch (e) {
+                    console.warn('Could not reload available tasks:', e);
+                }
+                
+                // Reload grades data
+                setTimeout(() => loadGradeData(), 500);
+            } else {
+                showError(result.error || 'Failed to create assignment');
+            }
+            
+        } catch (error) {
+            console.error('Error saving grade item:', error);
+            showError('Failed to create assignment');
+        }
+    }
+    
+    function showSetupPrompt() {
+        const container = document.getElementById('grade-summary');
+        if (container) {
+            container.innerHTML = `
+                <div class="setup-prompt">
+                    <i class="bi bi-gear" style="font-size: 3rem; opacity: 0.5;"></i>
+                    <h3>Grade System Not Configured</h3>
+                    <p>Set up your grading scale and categories to start tracking grades</p>
+                    <button class="btn btn-primary btn-lg" onclick="openSetupModal()">
+                        <i class="bi bi-gear"></i> Setup Grading System
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Hide other sections (safely check if they exist)
+        const goalsSection = document.getElementById('grade-goals');
+        if (goalsSection) goalsSection.style.display = 'none';
+        
+        const categorySection = document.getElementById('category-breakdown');
+        if (categorySection) categorySection.style.display = 'none';
+        
+        const tableSection = document.querySelector('.assignments-section');
+        if (tableSection) tableSection.style.display = 'none';
+    }
+    
+    function renderGradeSummary(summary) {
+        const html = `
+            <div class="grade-display-unified">
+                <div class="grade-main-info">
+                    <div class="grade-letter-unified">${summary.letter_grade}</div>
+                    <div class="grade-percentage-unified">${summary.percentage}%</div>
+                </div>
+                <div class="grade-secondary-info">
+                    <div class="grade-gpa-unified">
+                        <i class="bi bi-graph-up"></i>
+                        <span>GPA: ${summary.gpa.toFixed(2)}</span>
+                    </div>
+                    <div class="grade-points-unified">
+                        <i class="bi bi-trophy"></i>
+                        <span id="current-points">${summary.percentage}</span> / 100 points
+                    </div>
+                    <div class="grade-status-unified ${summary.is_passing ? 'passing' : 'failing'}">
+                        <i class="bi ${summary.is_passing ? 'bi-check-circle' : 'bi-exclamation-triangle'}"></i>
+                        <span>${summary.is_passing ? 'Passing' : 'Needs Improvement'}</span>
+                    </div>
+                </div>
+                <div class="progress-bar-unified">
+                    <div class="progress-bar-fill-unified" style="width: ${summary.percentage}%"></div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('grade-summary').innerHTML = html;
+    }
+    
+    // ==========================================
+    // OVERVIEW DASHBOARD FUNCTIONS
+    // ==========================================
+    
+    function renderOverviewStats(summary) {
+        // Total assignments
+        const totalEl = document.getElementById('overview-total-items');
+        if (totalEl) totalEl.textContent = summary.total_assignments || 0;
+        
+        // Graded assignments
+        const gradedEl = document.getElementById('overview-graded-items');
+        if (gradedEl) gradedEl.textContent = summary.graded_assignments || 0;
+        
+        // Pending assignments
+        const pendingEl = document.getElementById('overview-pending-items');
+        if (pendingEl) pendingEl.textContent = summary.pending_assignments || 0;
+        
+        // Average score
+        const avgEl = document.getElementById('overview-average');
+        if (avgEl) avgEl.textContent = summary.percentage ? `${summary.percentage}%` : '--';
+    }
+    
+    function renderCategoryPerformanceCompact(breakdown) {
+        const container = document.getElementById('category-performance-overview');
+        if (!container) return;
+        
+        if (!breakdown || Object.keys(breakdown).length === 0) {
+            container.innerHTML = `
+                <div class="overview-empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>No categories configured yet</p>
+                    <button class="btn-grades-secondary" onclick="openSetupModal()">
+                        <i class="bi bi-gear"></i> Setup Grading
+                    </button>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        
+        // Get top categories (limit to 5)
+        const categories = Object.values(breakdown).slice(0, 5);
+        
+        for (const category of categories) {
+            html += `
+                <div class="category-bar-clean">
+                    <div class="category-bar-header-clean">
+                        <div class="category-bar-name-clean">
+                            <span style="color: ${category.color}">●</span>
+                            ${escapeHtml(category.name)}
+                        </div>
+                        <div class="category-bar-score-clean">${category.percentage}%</div>
+                    </div>
+                    <div class="category-bar-progress-clean">
+                        <div class="category-bar-fill-clean" style="width: ${category.percentage}%"></div>
+                    </div>
+                    <div class="category-bar-details-clean">
+                        <span>${category.graded_items} / ${category.total_items} graded</span>
+                        <span>Weight: ${category.weight}%</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+    function renderNextGoal(goalsData) {
+        const container = document.getElementById('next-goal-card');
+        if (!container) return;
+        
+        if (!goalsData || !goalsData.goals) {
+            container.innerHTML = `
+                <div class="overview-empty-state">
+                    <i class="bi bi-target"></i>
+                    <p>No goals available</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const goals = goalsData.goals;
+        
+        // Find the next achievable goal (not already achieved)
+        const gradeOrder = ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D'];
+        let nextGoal = null;
+        let nextGrade = null;
+        
+        for (const grade of gradeOrder) {
+            if (goals[grade]) {
+                const goal = goals[grade];
+                if (!goal.already_achieved) {
+                    nextGoal = goal;
+                    nextGrade = grade;
+                    break;
+                }
+            }
+        }
+        
+        // If no achievable goal, show the current grade (already achieved)
+        if (!nextGoal) {
+            for (const grade of gradeOrder) {
+                if (goals[grade] && goals[grade].already_achieved) {
+                    nextGoal = goals[grade];
+                    nextGrade = grade;
+                    break;
+                }
+            }
+        }
+        
+        if (!nextGoal) {
+            container.innerHTML = `
+                <div class="overview-empty-state">
+                    <i class="bi bi-target"></i>
+                    <p>No goal information available</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Determine state
+        let stateClass = '';
+        let icon = '';
+        
+        if (nextGoal.already_achieved) {
+            stateClass = 'achieved';
+            icon = 'bi-check-circle-fill';
+        } else if (nextGoal.achievable) {
+            stateClass = 'achievable';
+            icon = 'bi-arrow-up-circle';
+        } else {
+            stateClass = 'not-achievable';
+            icon = 'bi-x-circle';
+        }
+        
+        let detailsHtml = '';
+        if (nextGoal.achievable && nextGoal.points_needed && nextGoal.percentage_needed) {
+            detailsHtml = `
+                <div class="next-goal-details-clean">
+                    <div class="goal-detail-item-clean">
+                        <div class="goal-detail-value-clean">${nextGoal.points_needed}</div>
+                        <div class="goal-detail-label-clean">Points Needed</div>
+                    </div>
+                    <div class="goal-detail-item-clean">
+                        <div class="goal-detail-value-clean">${nextGoal.percentage_needed}%</div>
+                        <div class="goal-detail-label-clean">On Remaining</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.className = `next-goal-card-clean ${stateClass}`;
+        container.innerHTML = `
+            <div class="next-goal-icon-clean">
+                <i class="bi ${icon}"></i>
+            </div>
+            <div class="next-goal-grade-clean">${nextGrade}</div>
+            <div class="next-goal-message-clean">${escapeHtml(nextGoal.message)}</div>
+            ${detailsHtml}
+        `;
+    }
+    
+    function renderRecentGrades(grades) {
+        const container = document.getElementById('recent-grades-list');
+        if (!container) return;
+        
+        if (!grades || grades.length === 0) {
+            container.innerHTML = `
+                <div class="overview-empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>No grades yet</p>
+                    <button class="btn-grades-primary" onclick="openCreateGradeItemModal()">
+                        <i class="bi bi-plus-lg"></i> Add Assignment
+                    </button>
+                </div>
+            `;
+            return;
+        }
+        
+        // Get only graded items and sort by date (newest first)
+        const gradedItems = grades.filter(g => g.status === 'graded' && g.score !== null);
+        
+        if (gradedItems.length === 0) {
+            container.innerHTML = `
+                <div class="overview-empty-state">
+                    <i class="bi bi-clock-history"></i>
+                    <p>No graded assignments yet</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Take only 5 most recent
+        const recentGrades = gradedItems.slice(0, 5);
+        
+        let html = '';
+        
+        for (const grade of recentGrades) {
+            html += `
+                <div class="recent-grade-item-clean">
+                    <div class="recent-grade-icon-clean">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                    <div class="recent-grade-info-clean">
+                        <div class="recent-grade-name-clean">${escapeHtml(grade.item_name)}</div>
+                        <div class="recent-grade-category-clean">${escapeHtml(grade.category_name)}</div>
+                    </div>
+                    <div class="recent-grade-score-clean">
+                        <div class="recent-grade-percentage-clean">${grade.percentage}%</div>
+                        <div class="recent-grade-points-clean">${grade.score}/${grade.points_possible}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+    // ==========================================
+    // END OVERVIEW DASHBOARD FUNCTIONS
+    // ==========================================
+    
+    function renderGoals(goalsData, containerId = 'grade-goals') {
+        const goals = goalsData.goals;
+        const container = document.getElementById(containerId);
+        
+        let html = '';
+        
+        // Sort grades by target (highest first)
+        const gradeOrder = ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F'];
+        const sortedGrades = Object.keys(goals).sort((a, b) => 
+            gradeOrder.indexOf(a) - gradeOrder.indexOf(b)
+        );
+        
+        for (const gradeLetter of sortedGrades) {
+            const goal = goals[gradeLetter];
+            let className = '';
+            let icon = '';
+            let message = '';
+            
+            if (goal.already_achieved) {
+                className = 'achieved';
+                icon = 'bi-check-circle-fill';
+                message = goal.message;
+            } else if (goal.achievable) {
+                className = 'achievable';
+                icon = 'bi-arrow-up-circle';
+                message = goal.message;
+            } else {
+                className = 'not-achievable';
+                icon = 'bi-x-circle';
+                message = goal.message;
+            }
+            
+            html += `
+                <div class="goal-card ${className}">
+                    <div class="goal-icon">
+                        <i class="bi ${icon}"></i>
+                    </div>
+                    <div class="goal-content">
+                        <div class="goal-grade">${gradeLetter}</div>
+                        <div class="goal-message">${message}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+    function renderCategoryBreakdown(breakdown, containerId = 'category-breakdown') {
+        const container = document.getElementById(containerId);
+        
+        if (!breakdown || Object.keys(breakdown).length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="mb-0">No categories configured yet</p>
+                    <button class="btn btn-sm btn-primary mt-2" onclick="openSetupModal()">
+                        <i class="bi bi-gear"></i> Setup Grading
+                    </button>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        
+        for (const categoryId in breakdown) {
+            const category = breakdown[categoryId];
+            
+            // Determine if category has any data
+            const hasData = category.total_items > 0;
+            const hasGrades = category.graded_items > 0;
+            
+            html += `
+                <div class="category-card">
+                    <div class="category-header">
+                        <div class="category-info">
+                            <h4 class="category-name">
+                                <span style="color: ${category.color}">●</span>
+                                ${category.name}
+                            </h4>
+                            <span class="category-weight">${category.weight}%</span>
+                        </div>
+                    </div>
+                    <div class="category-body">
+                        <div class="category-score">
+                            <div class="score-display">
+                                <span class="score-percentage">${category.percentage}%</span>
+                                <span class="score-points">${category.earned} / ${category.possible} pts</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" style="width: ${category.percentage}%; background: ${category.color}"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Item counts -->
+                        <div class="category-stats mt-2">
+                            <div class="stat-item">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <span>${category.total_items} assignment${category.total_items !== 1 ? 's' : ''}</span>
+                            </div>
+                            ${hasGrades ? `
+                            <div class="stat-item">
+                                <i class="bi bi-check-circle text-success"></i>
+                                <span>${category.graded_items} graded</span>
+                            </div>
+                            ` : ''}
+                            ${category.pending_items > 0 ? `
+                            <div class="stat-item">
+                                <i class="bi bi-clock text-warning"></i>
+                                <span>${category.pending_items} pending</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="category-contribution">
+                            Contributes: <strong>${category.weighted_score}%</strong> to final grade
+                        </div>
+                        
+                        ${!hasData ? `
+                        <div class="alert alert-info mt-2 mb-0 py-2 small">
+                            <i class="bi bi-info-circle"></i>
+                            No assignments added yet
+                        </div>
+                        ` : !hasGrades ? `
+                        <div class="alert alert-warning mt-2 mb-0 py-2 small">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            No grades submitted yet
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+        function renderGradesTable(grades, tableId = 'grades-table-body') {
+            console.log('🎨 renderGradesTable called with:', grades);
+            
+            const tbody = document.getElementById(tableId);
+            
+            if (!tbody) {
+                console.error('❌ grades table body element not found!', tableId);
+                return;
+            }
+        
+        if (!grades || grades.length === 0) {
+            console.log('📭 No grades to display');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.3;"></i>
+                        <p class="mb-2">No assignments added yet</p>
+                        <button class="btn btn-sm btn-primary" onclick="openCreateGradeItemModal()">
+                            <i class="bi bi-plus-circle"></i> Add First Assignment
+                        </button>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        console.log(`📝 Rendering ${grades.length} grade items...`);
+        
+        // Update sidebar stats when rendering table
+        updateSidebarStatsFromGrades(grades);
+        
+        let html = '';
+        
+        for (const grade of grades) {
+            const statusClass = grade.status === 'graded' ? 'graded' : 
+                              grade.status === 'pending' ? 'pending' : 'missing';
+            
+            const statusText = grade.status === 'graded' ? 'Graded' :
+                             grade.status === 'pending' ? 'Pending' : 'Missing';
+            
+            // Format score and percentage display
+            let scoreDisplay, percentDisplay;
+            
+            if (grade.status === 'graded' && grade.score !== null) {
+                scoreDisplay = `${grade.score} / ${grade.points_possible}`;
+                percentDisplay = `<strong>${grade.percentage}%</strong>`;
+            } else {
+                // Pending - show empty score but total points
+                scoreDisplay = `-- / ${grade.points_possible}`;
+                percentDisplay = '--';
+            }
+            
+            html += `
+                <tr class="grade-row" data-category="${grade.category_name}" data-item-id="${grade.item_id}">
+                    <td>
+                        <div class="assignment-cell">
+                            <div class="assignment-name-cell">
+                                <span class="assignment-name" onclick="editAssignmentName('${grade.item_id}', '${escapeHtml(grade.item_name)}')" title="Click to edit">
+                                    ${escapeHtml(grade.item_name)}
+                                </span>
+                                <i class="bi bi-pencil-fill edit-icon" onclick="editAssignmentName('${grade.item_id}', '${escapeHtml(grade.item_name)}')" title="Edit assignment name"></i>
+                            </div>
+                            ${grade.linked_task_title ? `
+                                <small class="text-muted ms-2">
+                                    <i class="bi bi-link-45deg"></i>
+                                    ${escapeHtml(grade.linked_task_title)}
+                                </small>
+                            ` : ''}
+                            ${grade.is_late ? '<span class="badge bg-warning ms-2">Late</span>' : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="category-cell">
+                            <span class="badge category-badge" style="background: ${grade.category_color}" onclick="editCategory('${grade.item_id}', '${grade.category_id}', '${escapeHtml(grade.category_name)}')" title="Click to change category">
+                                ${escapeHtml(grade.category_name)}
+                                <i class="bi bi-pencil-fill ms-1"></i>
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="due-date-cell">
+                            <span class="due-date" onclick="editDueDate('${grade.item_id}', '${grade.due_date || ''}')" title="Click to edit due date">
+                                ${formatDate(grade.due_date)}
+                                <i class="bi bi-pencil-fill edit-icon"></i>
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="score-cell">
+                            <span class="score-display" onclick="editScore('${grade.item_id}', '${grade.score || ''}', '${grade.points_possible}')" title="Click to edit score">
+                                ${scoreDisplay}
+                                <i class="bi bi-pencil-fill edit-icon"></i>
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="percentage-cell">
+                            <span class="percentage-display">${percentDisplay}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="status-cell">
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        console.log('✅ Setting table HTML...');
+        tbody.innerHTML = html;
+        console.log('✅ Grades table rendered successfully');
+    }
+    
+    function populateCategoryFilter(categories) {
+        // This function is deprecated - category filtering is now handled by sidebar
+        // Keeping for backward compatibility but does nothing
+        console.log('📋 Category filter (deprecated):', categories);
+    }
+    
+    // Modal functions
+    function openGoalCalculator() {
+        if (goalCalculatorModal) {
+            goalCalculatorModal.show();
+        }
+    }
+    
+    async function openSetupModal() {
+        if (setupGradingModal) {
+            // Check if config exists
+            try {
+                const configResponse = await fetch(`/grades/lessons/${lessonId}/config`);
+                
+                if (configResponse.ok) {
+                    // Config exists - Load for editing
+                    const configData = await configResponse.json();
+                    if (configData.success) {
+                        isEditMode = true;
+                        currentGradingScale = configData.data.grading_scale;
+                        await loadExistingConfig(configData.data);
+                    }
+                } else {
+                    // No config - Create mode
+                    isEditMode = false;
+                    currentGradingScale = getDefaultGradingScale();
+                    initializeSetupForm();
+                }
+                
+                setupGradingModal.show();
+                
+            } catch (error) {
+                console.error('Error opening setup modal:', error);
+                isEditMode = false;
+                currentGradingScale = getDefaultGradingScale();
+                initializeSetupForm();
+                setupGradingModal.show();
+            }
+        }
+    }
+    
+    function getDefaultGradingScale() {
+        return {
+            "A": {"min": 80, "max": 100, "gpa": 4.0},
+            "B+": {"min": 75, "max": 79, "gpa": 3.5},
+            "B": {"min": 70, "max": 74, "gpa": 3.0},
+            "C+": {"min": 65, "max": 69, "gpa": 2.5},
+            "C": {"min": 60, "max": 64, "gpa": 2.0},
+            "D+": {"min": 55, "max": 59, "gpa": 1.5},
+            "D": {"min": 50, "max": 54, "gpa": 1.0},
+            "F": {"min": 0, "max": 49, "gpa": 0.0}
+        };
+    }
+    
+    async function loadExistingConfig(config) {
+        // Update modal title
+        document.getElementById('setupModalTitle').textContent = '⚙️ Edit Grading System';
+        document.getElementById('saveSetupBtnText').textContent = 'Update Configuration';
+        document.getElementById('clearConfigBtn').style.display = 'inline-block';
+        
+        // Load grading scale
+        currentGradingScale = config.grading_scale;
+        updateGradingScalePreview(currentGradingScale);
+        
+        // Load categories
+        try {
+            const categoriesResponse = await fetch(`/grades/lessons/${lessonId}/categories`);
+            const categoriesData = await categoriesResponse.json();
+            
+            if (categoriesData.success) {
+                document.getElementById('categories-list').innerHTML = '';
+                
+                for (const category of categoriesData.data) {
+                    addCategoryRow(category);
+                }
+                
+                updateTotalWeight();
+            }
+        } catch (error) {
+            console.error('Error loading categories:', error);
+        }
+    }
+    
+    function initializeSetupForm() {
+        // Update modal title
+        document.getElementById('setupModalTitle').textContent = '⚙️ Setup Grading System';
+        document.getElementById('saveSetupBtnText').textContent = 'Save Configuration';
+        document.getElementById('clearConfigBtn').style.display = 'none';
+        
+        // Initialize grading scale preview
+        updateGradingScalePreview(currentGradingScale);
+        
+        // Initialize with one empty category row
+        document.getElementById('categories-list').innerHTML = '';
+        addCategoryRow();
+    }
+    
+    function updateGradingScalePreview(scale) {
+        const container = document.getElementById('grading-scale-preview');
+        let html = '';
+        
+        const gradeColors = {
+            'A': 'bg-success',
+            'B+': 'bg-primary',
+            'B': 'bg-info',
+            'C+': 'bg-warning',
+            'C': 'bg-secondary',
+            'D+': 'bg-secondary',
+            'D': 'bg-secondary',
+            'F': 'bg-danger'
+        };
+        
+        for (const [grade, data] of Object.entries(scale)) {
+            const color = gradeColors[grade] || 'bg-secondary';
+            html += `<span class="badge ${color}">${grade} (${data.min}-${data.max}%)</span> `;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+    function toggleGradingScaleEdit() {
+        const display = document.getElementById('grading-scale-display');
+        const editor = document.getElementById('grading-scale-editor');
+        
+        if (editor.style.display === 'none') {
+            // Show editor
+            display.style.display = 'none';
+            editor.style.display = 'block';
+            populateGradingScaleTable();
+            document.getElementById('edit-scale-icon').className = 'bi bi-x';
+            document.getElementById('edit-scale-text').textContent = 'Cancel';
+        } else {
+            // Hide editor
+            display.style.display = 'block';
+            editor.style.display = 'none';
+            document.getElementById('edit-scale-icon').className = 'bi bi-pencil';
+            document.getElementById('edit-scale-text').textContent = 'Edit Scale';
+        }
+    }
+    
+    function populateGradingScaleTable() {
+        const tbody = document.getElementById('grading-scale-table');
+        tbody.innerHTML = '';
+        
+        const gradeOrder = ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F'];
+        
+        for (const grade of gradeOrder) {
+            if (currentGradingScale[grade]) {
+                const data = currentGradingScale[grade];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${grade}</strong></td>
+                    <td><input type="number" class="form-control form-control-sm" 
+                               value="${data.min}" min="0" max="100" 
+                               data-grade="${grade}" data-field="min"></td>
+                    <td><input type="number" class="form-control form-control-sm" 
+                               value="${data.max}" min="0" max="100" 
+                               data-grade="${grade}" data-field="max"></td>
+                    <td><input type="number" class="form-control form-control-sm" 
+                               value="${data.gpa}" min="0" max="4" step="0.5" 
+                               data-grade="${grade}" data-field="gpa"></td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+    }
+    
+    function saveGradingScale() {
+        const rows = document.querySelectorAll('#grading-scale-table tr');
+        const newScale = {};
+        
+        rows.forEach(row => {
+            const grade = row.querySelector('[data-field="min"]').dataset.grade;
+            const min = parseFloat(row.querySelector('[data-field="min"]').value);
+            const max = parseFloat(row.querySelector('[data-field="max"]').value);
+            const gpa = parseFloat(row.querySelector('[data-field="gpa"]').value);
+            
+            newScale[grade] = {min, max, gpa};
+        });
+        
+        currentGradingScale = newScale;
+        updateGradingScalePreview(newScale);
+        toggleGradingScaleEdit();
+        
+        showSuccess('Grading scale updated');
+    }
+    
+    function cancelGradingScaleEdit() {
+        toggleGradingScaleEdit();
+    }
+    
+    function resetGradingScale() {
+        if (confirm('Reset to default Thai university grading scale?')) {
+            currentGradingScale = getDefaultGradingScale();
+            populateGradingScaleTable();
+            showSuccess('Reset to default scale');
+        }
+    }
+    
+    let categoryRowIndex = 0;
+    
+    function addCategoryRow(categoryData = null) {
+        const container = document.getElementById('categories-list');
+        const rowId = `category-row-${categoryRowIndex++}`;
+        
+        const row = document.createElement('div');
+        row.className = 'category-row mb-3';
+        row.id = rowId;
+        
+        if (categoryData) {
+            row.dataset.categoryId = categoryData.id;
+        }
+        
+        row.innerHTML = `
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" placeholder="Category name (e.g., Assignments)" 
+                           data-field="name" value="${categoryData ? categoryData.name : ''}">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" placeholder="Weight %" min="0" max="100" 
+                           data-field="weight" value="${categoryData ? categoryData.weight : ''}" 
+                           oninput="updateTotalWeight()">
+                </div>
+                <div class="col-md-3">
+                    <input type="color" class="form-control form-control-color" 
+                           value="${categoryData ? categoryData.color : '#3B82F6'}" 
+                           data-field="color">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-danger w-100" onclick="removeCategoryRow('${rowId}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(row);
+        updateTotalWeight();
+    }
+    
+    function removeCategoryRow(rowId) {
+        document.getElementById(rowId).remove();
+        updateTotalWeight();
+    }
+    
+    function updateTotalWeight() {
+        const rows = document.querySelectorAll('.category-row');
+        let total = 0;
+        
+        rows.forEach(row => {
+            const weightInput = row.querySelector('[data-field="weight"]');
+            const weight = parseFloat(weightInput.value) || 0;
+            total += weight;
+        });
+        
+        document.getElementById('total-weight').textContent = total.toFixed(0);
+        document.getElementById('weight-progress').style.width = total + '%';
+        
+        // Change color based on total
+        const progressBar = document.getElementById('weight-progress');
+        if (total === 100) {
+            progressBar.className = 'progress-bar bg-success';
+        } else if (total > 100) {
+            progressBar.className = 'progress-bar bg-danger';
+        } else {
+            progressBar.className = 'progress-bar bg-warning';
+        }
+    }
+    
+    async function saveGradingSetup() {
+        try {
+            // Validate total weight
+            const totalWeight = parseFloat(document.getElementById('total-weight').textContent);
+            if (totalWeight !== 100) {
+                alert('Total weight must equal 100%');
+                return;
+            }
+            
+            // Use current grading scale
+            const gradingScale = currentGradingScale;
+            
+            // Save/Update config
+            const method = isEditMode ? 'PUT' : 'POST';
+            const configResponse = await fetch(`/grades/lessons/${lessonId}/config`, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    grading_scale: gradingScale,
+                    grading_type: 'percentage',
+                    total_points: 100,
+                    passing_grade: 'D',
+                    passing_percentage: 50.0
+                })
+            });
+            
+            if (!configResponse.ok && !isEditMode) {
+                throw new Error('Failed to save configuration');
+            }
+            
+            // Delete old categories if in edit mode
+            if (isEditMode) {
+                const existingCategoriesResponse = await fetch(`/grades/lessons/${lessonId}/categories`);
+                const existingCategoriesData = await existingCategoriesResponse.json();
+                
+                if (existingCategoriesData.success) {
+                    for (const cat of existingCategoriesData.data) {
+                        await fetch(`/grades/categories/${cat.id}`, {
+                            method: 'DELETE'
+                        });
+                    }
+                }
+            }
+            
+            // Save new categories
+            const rows = document.querySelectorAll('.category-row');
+            let categoryIndex = 0;
+            
+            for (const row of rows) {
+                const name = row.querySelector('[data-field="name"]').value.trim();
+                const weight = parseFloat(row.querySelector('[data-field="weight"]').value);
+                const color = row.querySelector('[data-field="color"]').value;
+                
+                if (!name || !weight) continue;
+                
+                await fetch(`/grades/lessons/${lessonId}/categories`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name: name,
+                        weight: weight,
+                        color: color,
+                        order_index: categoryIndex++
+                    })
+                });
+            }
+            
+            // Close modal and reload
+            setupGradingModal.hide();
+            showSuccess(isEditMode ? 'Grading system updated successfully!' : 'Grading system configured successfully!');
+            setTimeout(() => {
+                isEditMode = false;
+                loadGradeData();
+            }, 500);
+            
+        } catch (error) {
+            console.error('Error saving setup:', error);
+            showError('Failed to save grading configuration');
+        }
+    }
+    
+    async function clearGradingConfig() {
+        if (!confirm('Are you sure you want to clear all grading configuration? This will delete all grades and cannot be undone!')) {
+            return;
+        }
+        
+        try {
+            // Delete config
+            const response = await fetch(`/grades/lessons/${lessonId}/config`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                setupGradingModal.hide();
+                showSuccess('Grading configuration cleared');
+                setTimeout(() => {
+                    isEditMode = false;
+                    loadGradeData();
+                }, 500);
+            } else {
+                throw new Error('Failed to delete configuration');
+            }
+        } catch (error) {
+            console.error('Error clearing config:', error);
+            showError('Failed to clear configuration');
+        }
+    }
+    
+    async function calculateGoal() {
+        const targetGrade = document.getElementById('target-grade').value;
+        
+        if (!targetGrade) {
+            document.getElementById('calculator-result').innerHTML = '';
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/grades/lessons/${lessonId}/goal-calculator`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({target_grade: targetGrade})
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const result = data.data;
+                const goal = result.goal_info;
+                
+                let resultHtml = '';
+                
+                if (goal.already_achieved) {
+                    resultHtml = `
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle-fill fs-3"></i>
+                            <h5 class="mt-3">Great News!</h5>
+                            <p class="mb-0">${goal.message}</p>
+                        </div>
+                    `;
+                } else if (goal.achievable) {
+                    resultHtml = `
+                        <div class="alert alert-info">
+                            <i class="bi bi-calculator fs-3"></i>
+                            <h5 class="mt-3">You Can Do It!</h5>
+                            <p>${goal.message}</p>
+                            <hr>
+                            <div class="goal-details">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="goal-stat">
+                                            <div class="stat-value">${goal.points_needed}</div>
+                                            <div class="stat-label">Points Needed</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="goal-stat">
+                                            <div class="stat-value">${goal.percentage_needed}%</div>
+                                            <div class="stat-label">On Remaining Work</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultHtml = `
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle fs-3"></i>
+                            <h5 class="mt-3">Not Achievable</h5>
+                            <p class="mb-0">${goal.message}</p>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('calculator-result').innerHTML = resultHtml;
+            }
+            
+        } catch (error) {
+            console.error('Error calculating goal:', error);
+            showError('Failed to calculate goal');
+        }
+    }
+    
+    // Old filterGrades function - deprecated, replaced by sidebar filtering
+    // Keeping for backward compatibility but redirecting to new search function
+    function filterGrades() {
+        console.log('⚠️ filterGrades (deprecated) - use searchGrades instead');
+        const searchInput = document.getElementById('grades-search-input');
+        const searchTerm = searchInput ? searchInput.value : '';
+        searchGrades(searchTerm);
+    }
+    
+    function formatDate(dateString) {
+        if (!dateString) return '--';
+        
+        const date = new Date(dateString);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const taskDate = new Date(date);
+        taskDate.setHours(0, 0, 0, 0);
+        
+        const diffDays = Math.ceil((taskDate - today) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Tomorrow';
+        if (diffDays === -1) return 'Yesterday';
+        
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function showSuccess(message) {
+        if (typeof window.showSuccess === 'function') {
+            window.showSuccess(message);
+        } else {
+            alert(message);
+        }
+    }
+    
+    function showError(message) {
+        if (typeof window.showError === 'function') {
+            window.showError(message);
+        } else {
+            alert(message);
+        }
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('task-dropdown');
+        const combobox = event.target.closest('.custom-combobox');
+        
+        if (dropdown && !combobox) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // ==========================================
+    // INLINE EDITING FUNCTIONS
+    // ==========================================
+    
+    // Edit assignment name
+    function editAssignmentName(itemId, currentName) {
+        const cell = document.querySelector(`tr[data-item-id="${itemId}"] .assignment-name-cell`);
+        const originalContent = cell.innerHTML;
+        
+        cell.innerHTML = `
+            <div class="edit-form">
+                <input type="text" 
+                       class="form-control form-control-sm" 
+                       id="edit-name-${itemId}" 
+                       value="${escapeHtml(currentName)}"
+                       maxlength="200">
+                <div class="edit-buttons">
+                    <button class="btn btn-success btn-sm" onclick="saveAssignmentName('${itemId}')" title="Save">
+                        <i class="bi bi-check"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="cancelEdit('${itemId}', 'name')" title="Cancel">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Focus and select text
+        const input = document.getElementById(`edit-name-${itemId}`);
+        input.focus();
+        input.select();
+        
+        // Save original content for cancel
+        cell.dataset.originalContent = originalContent;
+        
+        // Enter to save, Escape to cancel
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                saveAssignmentName(itemId);
+            } else if (e.key === 'Escape') {
+                cancelEdit(itemId, 'name');
+            }
+        });
+    }
+    
+    // Edit category
+    function editCategory(itemId, currentCategoryId, currentCategoryName) {
+        const cell = document.querySelector(`tr[data-item-id="${itemId}"] .category-cell`);
+        const originalContent = cell.innerHTML;
+        
+        // Build category options
+        let categoryOptions = '';
+        for (const category of categoriesData) {
+            const selected = category.id === currentCategoryId ? 'selected' : '';
+            categoryOptions += `<option value="${category.id}" ${selected}>${category.name} (${category.weight}%)</option>`;
+        }
+        
+        cell.innerHTML = `
+            <div class="edit-form">
+                <select class="form-select form-select-sm" id="edit-category-${itemId}">
+                    ${categoryOptions}
+                </select>
+                <div class="edit-buttons">
+                    <button class="btn btn-success btn-sm" onclick="saveCategory('${itemId}')" title="Save">
+                        <i class="bi bi-check"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="cancelEdit('${itemId}', 'category')" title="Cancel">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Focus dropdown
+        const select = document.getElementById(`edit-category-${itemId}`);
+        select.focus();
+        
+        // Save original content for cancel
+        cell.dataset.originalContent = originalContent;
+    }
+    
+    // Edit due date
+    function editDueDate(itemId, currentDate) {
+        const cell = document.querySelector(`tr[data-item-id="${itemId}"] .due-date-cell`);
+        const originalContent = cell.innerHTML;
+        
+        // Format date for input (YYYY-MM-DD)
+        const formattedDate = currentDate ? currentDate.split('T')[0] : '';
+        
+        cell.innerHTML = `
+            <div class="edit-form">
+                <input type="date" 
+                       class="form-control form-control-sm" 
+                       id="edit-due-date-${itemId}" 
+                       value="${formattedDate}">
+                <div class="edit-buttons">
+                    <button class="btn btn-success btn-sm" onclick="saveDueDate('${itemId}')" title="Save">
+                        <i class="bi bi-check"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="cancelEdit('${itemId}', 'due-date')" title="Cancel">
+                        <i class="bi bi-x"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="clearDueDate('${itemId}')" title="Clear date">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Focus input
+        const input = document.getElementById(`edit-due-date-${itemId}`);
+        input.focus();
+        
+        // Save original content for cancel
+        cell.dataset.originalContent = originalContent;
+    }
+    
+    // Edit score
+    function editScore(itemId, currentScore, totalPoints) {
+        const cell = document.querySelector(`tr[data-item-id="${itemId}"] .score-cell`);
+        const originalContent = cell.innerHTML;
+        
+        cell.innerHTML = `
+            <div class="edit-form">
+                <div class="score-edit-container">
+                    <input type="number" 
+                           class="form-control form-control-sm" 
+                           id="edit-score-${itemId}" 
+                           value="${currentScore}"
+                           step="0.1"
+                           min="0"
+                           max="${totalPoints}"
+                           placeholder="Score">
+                    <span class="score-separator">/</span>
+                    <input type="number" 
+                           class="form-control form-control-sm" 
+                           id="edit-points-${itemId}" 
+                           value="${totalPoints}"
+                           step="0.1"
+                           min="0"
+                           placeholder="Points">
+                </div>
+                <div class="edit-buttons">
+                    <button class="btn btn-success btn-sm" onclick="saveScore('${itemId}')" title="Save">
+                        <i class="bi bi-check"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="cancelEdit('${itemId}', 'score')" title="Cancel">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Focus score input
+        const scoreInput = document.getElementById(`edit-score-${itemId}`);
+        scoreInput.focus();
+        scoreInput.select();
+        
+        // Save original content for cancel
+        cell.dataset.originalContent = originalContent;
+    }
+    
+    // Save functions
+    async function saveAssignmentName(itemId) {
+        const newName = document.getElementById(`edit-name-${itemId}`).value.trim();
+        if (!newName) {
+            showError('Assignment name cannot be empty');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/grades/items/${itemId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name: newName })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showSuccess('Assignment name updated!');
+                loadGradeData(); // Reload table
+            } else {
+                showError(result.error || 'Failed to update assignment name');
+            }
+        } catch (error) {
+            console.error('Error updating assignment name:', error);
+            showError('Failed to update assignment name');
+        }
+    }
+    
+    async function saveCategory(itemId) {
+        const newCategoryId = document.getElementById(`edit-category-${itemId}`).value;
+        if (!newCategoryId) {
+            showError('Please select a category');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/grades/items/${itemId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ category_id: newCategoryId })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showSuccess('Category updated!');
+                loadGradeData(); // Reload table
+            } else {
+                showError(result.error || 'Failed to update category');
+            }
+        } catch (error) {
+            console.error('Error updating category:', error);
+            showError('Failed to update category');
+        }
+    }
+    
+    async function saveDueDate(itemId) {
+        const newDate = document.getElementById(`edit-due-date-${itemId}`).value;
+        
+        try {
+            const response = await fetch(`/grades/items/${itemId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ due_date: newDate || null })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showSuccess('Due date updated!');
+                loadGradeData(); // Reload table
+            } else {
+                showError(result.error || 'Failed to update due date');
+            }
+        } catch (error) {
+            console.error('Error updating due date:', error);
+            showError('Failed to update due date');
+        }
+    }
+    
+    async function saveScore(itemId) {
+        const score = parseFloat(document.getElementById(`edit-score-${itemId}`).value);
+        const points = parseFloat(document.getElementById(`edit-points-${itemId}`).value);
+        
+        if (isNaN(points) || points <= 0) {
+            showError('Points must be a positive number');
+            return;
+        }
+        
+        if (isNaN(score) || score < 0) {
+            showError('Score must be a non-negative number');
+            return;
+        }
+        
+        if (score > points) {
+            showError('Score cannot be greater than total points');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/grades/items/${itemId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    points_possible: points,
+                    score: score // This will create/update grade entry
+                })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showSuccess('Score updated!');
+                loadGradeData(); // Reload table
+            } else {
+                showError(result.error || 'Failed to update score');
+            }
+        } catch (error) {
+            console.error('Error updating score:', error);
+            showError('Failed to update score');
+        }
+    }
+    
+    function clearDueDate(itemId) {
+        document.getElementById(`edit-due-date-${itemId}`).value = '';
+        saveDueDate(itemId);
+    }
+    
+    // Cancel edit (restore original content)
+    function cancelEdit(itemId, field) {
+        const cell = document.querySelector(`tr[data-item-id="${itemId}"] .${field}-cell`);
+        if (cell && cell.dataset.originalContent) {
+            cell.innerHTML = cell.dataset.originalContent;
+        }
+    }
+    
+    // ==========================================
+    // SIDEBAR & NAVIGATION FUNCTIONS
+    // ==========================================
+    
+    // Toggle sidebar
+    function toggleGradesSidebar() {
+        const sidebar = document.getElementById('grades-sidebar');
+        const toggle = document.getElementById('grades-sidebar-toggle');
+        
+        if (sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            toggle.innerHTML = '<i class="bi bi-list"></i>';
+        } else {
+            sidebar.classList.add('open');
+            toggle.innerHTML = '<i class="bi bi-x"></i>';
+        }
+    }
+    
+    // Switch tabs
+    function switchGradesTab(tabName) {
+        // Update nav items
+        document.querySelectorAll('.grades-nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.grades-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`grades-tab-${tabName}`).classList.add('active');
+        
+        // Load tab-specific content
+        if (tabName === 'assignments') {
+            loadAssignmentsTab();
+        } else if (tabName === 'categories') {
+            loadCategoriesTab();
+        } else if (tabName === 'goals') {
+            loadGoalsTab();
+        }
+    }
+    
+    // Load assignments tab content
+    function loadAssignmentsTab() {
+        const assignmentsTab = document.getElementById('grades-tab-assignments');
+        if (!assignmentsTab) return;
+        
+        // Ensure assignments table is in the right place
+        const existingTable = document.querySelector('.assignments-section');
+        if (existingTable && !assignmentsTab.contains(existingTable)) {
+            assignmentsTab.appendChild(existingTable);
+        }
+        
+        // Reload grades table if needed
+        if (currentGradesData && currentGradesData.length > 0) {
+            renderGradesTable(currentGradesData);
+        }
+    }
+    
+    // Load categories tab content
+    function loadCategoriesTab() {
+        const categoriesTab = document.getElementById('grades-tab-categories');
+        if (!categoriesTab) return;
+        
+        categoriesTab.innerHTML = `
+            <div class="category-breakdown-section">
+                <h3 class="section-title">📈 Category Breakdown</h3>
+                <div class="categories-grid" id="category-breakdown-tab">
+                    <!-- Dynamically loaded -->
+                </div>
+            </div>
+        `;
+        
+        // Load categories data
+        if (currentSummary && currentSummary.category_breakdown) {
+            renderCategoryBreakdown(currentSummary.category_breakdown, 'category-breakdown-tab');
+        }
+    }
+    
+    // Load goals tab content
+    function loadGoalsTab() {
+        const goalsTab = document.getElementById('grades-tab-goals');
+        if (!goalsTab) return;
+        
+        goalsTab.innerHTML = `
+            <div class="grade-goals-section">
+                <h3 class="section-title">🎯 Grade Goals</h3>
+                <div class="goals-grid" id="grade-goals-tab">
+                    <!-- Dynamically loaded -->
+                </div>
+            </div>
+        `;
+        
+        // Load goals data
+        if (currentSummary && currentSummary.goals) {
+            renderGoals(currentSummary.goals, 'grade-goals-tab');
+        }
+    }
+    
+    // Set grades filter
+    function setGradesFilter(filter) {
+        // Update filter buttons
+        document.querySelectorAll('.grades-filter-section .filter-option').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const filterButton = document.querySelector(`[data-filter="${filter}"]`);
+        if (filterButton) {
+            filterButton.classList.add('active');
+        }
+        
+        // Apply filter using search function
+        const searchInput = document.getElementById('grades-search-input');
+        const searchTerm = searchInput ? searchInput.value : '';
+        searchGrades(searchTerm);
+    }
+    
+    // Update sidebar stats
+    function updateSidebarStats(summaryData) {
+        console.log('📊 Updating sidebar stats with:', summaryData);
+        
+        if (!summaryData || !summaryData.data) {
+            console.warn('⚠️ No summary data available for sidebar stats');
+            return;
+        }
+        
+        const data = summaryData.data;
+        
+        // Update stats with fallback values
+        updateSidebarStatsDisplay(
+            data.total_assignments || 0,
+            data.graded_assignments || 0,
+            data.pending_assignments || 0,
+            data.letter_grade || '--'
+        );
+        
+        console.log('✅ Sidebar stats updated:', {
+            total: data.total_assignments || 0,
+            graded: data.graded_assignments || 0,
+            pending: data.pending_assignments || 0,
+            current: data.letter_grade || '--'
+        });
+        
+        // Update category filters
+        updateCategoryFilters(data.category_breakdown || {});
+    }
+    
+    // Update sidebar stats from grades data directly
+    function updateSidebarStatsFromGrades(grades) {
+        console.log('📊 Updating sidebar stats from grades data:', grades);
+        
+        if (!grades || !Array.isArray(grades)) {
+            console.warn('⚠️ No grades data available for sidebar stats');
+            // Set to default values
+            updateSidebarStatsDisplay(0, 0, 0, '--');
+            return;
+        }
+        
+        // Calculate stats from grades data
+        const totalAssignments = grades.length;
+        const gradedAssignments = grades.filter(grade => grade.status === 'graded' && grade.score !== null).length;
+        const pendingAssignments = totalAssignments - gradedAssignments;
+        
+        // Calculate current grade from graded assignments
+        let currentGrade = '--';
+        if (gradedAssignments > 0) {
+            const gradedGrades = grades.filter(grade => grade.status === 'graded' && grade.score !== null);
+            const totalPercentage = gradedGrades.reduce((sum, grade) => sum + (grade.percentage || 0), 0);
+            const averagePercentage = totalPercentage / gradedAssignments;
+            
+            // Convert percentage to letter grade
+            if (averagePercentage >= 90) currentGrade = 'A';
+            else if (averagePercentage >= 85) currentGrade = 'B+';
+            else if (averagePercentage >= 80) currentGrade = 'B';
+            else if (averagePercentage >= 75) currentGrade = 'C+';
+            else if (averagePercentage >= 70) currentGrade = 'C';
+            else if (averagePercentage >= 65) currentGrade = 'D+';
+            else if (averagePercentage >= 60) currentGrade = 'D';
+            else currentGrade = 'F';
+        }
+        
+        // Update display
+        updateSidebarStatsDisplay(totalAssignments, gradedAssignments, pendingAssignments, currentGrade);
+        
+        console.log('✅ Sidebar stats updated from grades:', {
+            total: totalAssignments,
+            graded: gradedAssignments,
+            pending: pendingAssignments,
+            current: currentGrade
+        });
+    }
+    
+    // Helper function to update sidebar stats display
+    function updateSidebarStatsDisplay(total, graded, pending, current) {
+        const totalEl = document.getElementById('total-assignments');
+        const gradedEl = document.getElementById('graded-assignments');
+        const pendingEl = document.getElementById('pending-assignments');
+        const currentEl = document.getElementById('current-grade');
+        
+        if (totalEl) totalEl.textContent = total;
+        if (gradedEl) gradedEl.textContent = graded;
+        if (pendingEl) pendingEl.textContent = pending;
+        if (currentEl) currentEl.textContent = current;
+    }
+    
+    // Initialize sidebar search
+    function initializeSidebarSearch() {
+        const searchInput = document.getElementById('grades-search-input');
+        if (!searchInput) return;
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            searchGrades(searchTerm);
+        });
+        
+        // Clear search on escape
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                searchGrades('');
+            }
+        });
+    }
+    
+    // Enhanced search function
+    function searchGrades(searchTerm = '') {
+        if (!currentGradesData || !Array.isArray(currentGradesData)) return;
+        
+        let filteredGrades = currentGradesData;
+        
+        if (searchTerm) {
+            filteredGrades = currentGradesData.filter(grade => 
+                grade.item_name.toLowerCase().includes(searchTerm) ||
+                grade.category_name.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        // Apply current filter if any
+        const activeFilter = document.querySelector('.grades-filter-section .filter-option.active');
+        if (activeFilter) {
+            const filterType = activeFilter.getAttribute('data-filter');
+            if (filterType !== 'all') {
+                filteredGrades = filteredGrades.filter(grade => {
+                    if (filterType === 'graded') return grade.status === 'graded';
+                    if (filterType === 'pending') return grade.status === 'pending';
+                    if (filterType === 'missing') return grade.status === 'missing';
+                    if (filterType.startsWith('category-')) {
+                        const categoryId = filterType.replace('category-', '');
+                        return grade.category_id === categoryId;
+                    }
+                    return true;
+                });
+            }
+        }
+        
+        // Render filtered results
+        renderGradesTable(filteredGrades);
+        
+        // Update search input visual feedback
+        const searchInput = document.getElementById('grades-search-input');
+        if (searchInput) {
+            if (searchTerm) {
+                searchInput.style.borderColor = '#007aff';
+                searchInput.style.backgroundColor = 'white';
+            } else {
+                searchInput.style.borderColor = '#e5e5ea';
+                searchInput.style.backgroundColor = '#f2f2f7';
+            }
+        }
+    }
+    
+    // Update category filters in sidebar
+    function updateCategoryFilters(categoryBreakdown) {
+        const categoryFilters = document.getElementById('category-filters');
+        if (!categoryFilters) return;
+        
+        categoryFilters.innerHTML = '';
+        
+        for (const [categoryId, category] of Object.entries(categoryBreakdown)) {
+            const button = document.createElement('button');
+            button.className = 'filter-option';
+            button.setAttribute('data-category', categoryId);
+            button.onclick = () => setGradesFilter(`category-${categoryId}`);
+            
+            button.innerHTML = `
+                <span class="status-dot" style="background-color: ${category.color}"></span>
+                <span>${category.name}</span>
+            `;
+            
+            categoryFilters.appendChild(button);
+        }
+    }
+    
+    // Expose functions globally
+    window.openGoalCalculator = openGoalCalculator;
+    window.openSetupModal = openSetupModal;
+    window.openCreateGradeItemModal = openCreateGradeItemModal;
+    window.saveGradeItem = saveGradeItem;
+    window.handleAssignmentNameInput = handleAssignmentNameInput;
+    window.selectTask = selectTask;
+    window.showTaskDropdown = showTaskDropdown;
+    window.toggleTaskDropdown = toggleTaskDropdown;
+    window.focusNameInput = focusNameInput;
+    window.filterTaskDropdown = filterTaskDropdown;
+    window.calculateGoal = calculateGoal;
+    window.addCategoryRow = addCategoryRow;
+    window.removeCategoryRow = removeCategoryRow;
+    window.updateTotalWeight = updateTotalWeight;
+    window.saveGradingSetup = saveGradingSetup;
+    window.clearGradingConfig = clearGradingConfig;
+    window.toggleGradingScaleEdit = toggleGradingScaleEdit;
+    window.saveGradingScale = saveGradingScale;
+    window.cancelGradingScaleEdit = cancelGradingScaleEdit;
+    window.resetGradingScale = resetGradingScale;
+    window.filterGrades = filterGrades; // Deprecated - kept for compatibility
+    window.searchGrades = searchGrades;
+    
+    // Inline editing functions
+    window.editAssignmentName = editAssignmentName;
+    window.editCategory = editCategory;
+    window.editDueDate = editDueDate;
+    window.editScore = editScore;
+    window.saveAssignmentName = saveAssignmentName;
+    window.saveCategory = saveCategory;
+    window.saveDueDate = saveDueDate;
+    window.saveScore = saveScore;
+    window.clearDueDate = clearDueDate;
+    window.cancelEdit = cancelEdit;
+    
+    // Sidebar and navigation functions
+    window.toggleGradesSidebar = toggleGradesSidebar;
+    window.switchGradesTab = switchGradesTab;
+    window.setGradesFilter = setGradesFilter;
+    
+    console.log('✅ Grades system initialized');
+    
+})();
+</script>
+

@@ -1,0 +1,371 @@
+<!-- Modern All Lessons Page - Sidebar Style -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lessons-modern.css') }}">
+
+<style>
+/* Ripple animation for color picker */
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+</style>
+
+<div class="lessons-page">
+    <!-- Hero Header -->
+    <div class="lessons-hero">
+        <div class="lessons-hero-content">
+            <h1 class="lessons-hero-title">All Classes</h1>
+            <p class="lessons-hero-subtitle">Organize, track, and master your learning journey</p>
+            
+            <div class="lessons-hero-actions">
+                <div class="lessons-search-wrapper">
+                    <div class="lessons-search-hero">
+                        <i class="bi bi-search lessons-search-hero-icon"></i>
+                        <input type="text" id="lessonSearch" placeholder="Search classes by title or description...">
+                        <button class="lessons-search-clear" id="clearSearch" style="display: none;" title="Clear search">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Compact Filter Pills -->
+                    <div class="lessons-filter-compact">
+                        <button class="filter-compact-btn active" data-filter="all" onclick="filterLessons('all', this)">
+                            <i class="bi bi-grid-fill"></i>
+                            <span>All</span>
+                        </button>
+                        <button class="filter-compact-btn" data-filter="favorites" onclick="filterLessons('favorites', this)">
+                            <i class="bi bi-star-fill"></i>
+                            <span>Favorites</span>
+                        </button>
+                        <button class="filter-compact-btn" data-filter="active" onclick="filterLessons('active', this)">
+                            <i class="bi bi-play-circle-fill"></i>
+                            <span>Active</span>
+                        </button>
+                        <button class="filter-compact-btn" data-filter="completed" onclick="filterLessons('completed', this)">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Completed</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons Container -->
+                <div class="lessons-action-buttons">
+                    <button class="lessons-btn lessons-btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Create Class</span>
+                    </button>
+                    
+                    <button class="lessons-btn lessons-btn-outline" onclick="window.location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lessons-content">
+
+        <!-- Lessons Grid -->
+        <div class="lessons-grid" id="lessons-grid">
+            {% if lessons %}
+                {% for lesson in lessons %}
+                    <div class="lesson-card-modern" 
+                         data-lesson-id="{{ lesson.id }}" 
+                         data-status="{{ lesson.status or 'active' }}" 
+                         data-is-favorite="{{ 'true' if lesson.is_favorite else 'false' }}"
+                         onclick="navigateToClass('{{ lesson.id }}', event)"
+                         style="cursor: pointer;">
+                        
+                        <!-- Card Cover -->
+                        <div class="lesson-card-cover">
+                            {% if lesson.cover_image %}
+                                <img src="{{ url_for('static', filename=lesson.cover_image) }}" 
+                                     alt="{{ lesson.title }}">
+                            {% else %}
+                                {% set color_gradients = {
+                                    1: 'linear-gradient(135deg, #1976D2, #0D47A1)',
+                                    2: 'linear-gradient(135deg, #48BB78, #38A169)',
+                                    3: 'linear-gradient(135deg, #FC8181, #F56565)',
+                                    4: 'linear-gradient(135deg, #F6AD55, #ED8936)',
+                                    5: 'linear-gradient(135deg, #9F7AEA, #805AD5)',
+                                    6: 'linear-gradient(135deg, #F687B3, #ED64A6)'
+                                } %}
+                                {% set color_id = lesson.color_theme or lesson.selected_color or 1 %}
+                                {% set gradient = color_gradients[color_id|int] or color_gradients[1] %}
+                                <div class="lesson-card-gradient-cover" style="background: {{ gradient }};">
+                                    <i class="bi bi-book-fill"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Badges -->
+                            <div class="lesson-card-badges">
+                                <div class="lesson-card-status-badge {{ lesson.status or 'active' }}">
+                                    {% if lesson.status == 'completed' %}
+                                        Completed
+                                    {% elif lesson.status == 'archived' %}
+                                        Archived
+                                    {% else %}
+                                        Active
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="lesson-card-favorite {{ 'active' if lesson.is_favorite else '' }}" 
+                                     onclick="event.stopPropagation(); toggleFavorite('{{ lesson.id }}', this);">
+                                    <i class="bi {{ 'bi-star-fill' if lesson.is_favorite else 'bi-star' }}"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Card Body -->
+                        <div class="lesson-card-body">
+                            <h3 class="lesson-card-title">{{ lesson.title }}</h3>
+                            
+                            {% if lesson.description %}
+                                <p class="lesson-card-description">{{ lesson.description }}</p>
+                            {% else %}
+                                <p class="lesson-card-description">No description available</p>
+                            {% endif %}
+                            
+                            <!-- Card Footer -->
+                            <div class="lesson-card-footer">
+                                <div class="lesson-card-meta">
+                                    <i class="bi bi-calendar3"></i>
+                                    <span>{{ lesson.created_at.strftime('%b %d, %Y') if lesson.created_at else 'N/A' }}</span>
+                                </div>
+                                <div class="lesson-card-arrow">
+                                    <i class="bi bi-arrow-right"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <!-- Empty State -->
+                <div class="lessons-empty">
+                    <div class="lessons-empty-icon">
+                        <i class="bi bi-journal-plus"></i>
+                    </div>
+                    <h3>No Classes Yet</h3>
+                    <p>Start your learning journey by creating your first class</p>
+                    <button class="lessons-btn lessons-btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Create Your First Class</span>
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================
+// REAL-TIME SEARCH FOR ALL CLASSES PAGE
+// ============================================
+(function() {
+    'use strict';
+    
+    // Function to initialize search - can be called multiple times safely
+    function initializeClassesSearch() {
+        console.log('='.repeat(60));
+        console.log('🎓 INITIALIZING ALL CLASSES PAGE - REAL-TIME SEARCH');
+        console.log('='.repeat(60));
+        
+        // Set initial filter state
+        window.currentLessonFilter = 'all';
+        
+        // Get elements
+        const searchInput = document.getElementById('lessonSearch');
+        const clearButton = document.getElementById('clearSearch');
+        const lessonsGrid = document.getElementById('lessons-grid');
+        
+        console.log('📋 Element Check:');
+        console.log('  - Search Input:', searchInput ? '✅ Found' : '❌ NOT FOUND');
+        console.log('  - Clear Button:', clearButton ? '✅ Found' : '❌ NOT FOUND');
+        console.log('  - Lessons Grid:', lessonsGrid ? '✅ Found' : '❌ NOT FOUND');
+        
+        if (!searchInput) {
+            console.error('❌ FATAL: Search input not found! Cannot initialize search.');
+            return false;
+        }
+        
+        // Real-time search function
+        function performRealtimeSearch() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const lessonCards = document.querySelectorAll('.lesson-card-modern');
+            let visibleCount = 0;
+            
+            console.log(`\n🔍 SEARCHING: "${searchTerm}" (${searchTerm.length} chars)`);
+            console.log(`📊 Total cards to search: ${lessonCards.length}`);
+            
+            // Show/hide clear button
+            if (clearButton) {
+                if (searchTerm.length > 0) {
+                    clearButton.style.display = 'flex';
+                } else {
+                    clearButton.style.display = 'none';
+                }
+            }
+            
+            // Filter cards in real-time
+            lessonCards.forEach((card, index) => {
+                const titleElement = card.querySelector('.lesson-card-title');
+                const descElement = card.querySelector('.lesson-card-description');
+                
+                const title = (titleElement?.textContent || '').toLowerCase().trim();
+                const description = (descElement?.textContent || '').toLowerCase().trim();
+                
+                // Debug first 3 cards
+                if (index < 3) {
+                    console.log(`  Card ${index + 1}: "${title.substring(0, 30)}..."`);
+                }
+                
+                // Check if search term matches
+                const matchesSearch = searchTerm === '' || 
+                                     title.includes(searchTerm) || 
+                                     description.includes(searchTerm);
+                
+                // Check if card matches current filter
+                const matchesFilter = window.checkFilterMatch ? 
+                                     window.checkFilterMatch(card, window.currentLessonFilter) : 
+                                     true;
+                
+                // Show card only if matches both
+                const shouldShow = matchesSearch && matchesFilter;
+                card.style.display = shouldShow ? '' : 'none';
+                
+                if (shouldShow) visibleCount++;
+            });
+            
+            console.log(`✅ RESULTS: ${visibleCount}/${lessonCards.length} cards visible\n`);
+            
+            // Show/hide empty state
+            if (lessonsGrid) {
+                let emptyState = lessonsGrid.querySelector('.lessons-search-empty');
+                
+                if (visibleCount === 0 && lessonCards.length > 0) {
+                    if (!emptyState) {
+                        emptyState = document.createElement('div');
+                        emptyState.className = 'lessons-search-empty';
+                        emptyState.innerHTML = `
+                            <div class="lessons-empty">
+                                <div class="lessons-empty-icon">
+                                    <i class="bi bi-search"></i>
+                                </div>
+                                <h3>No Results Found</h3>
+                                <p>Try adjusting your search term or change filter</p>
+                            </div>
+                        `;
+                        lessonsGrid.appendChild(emptyState);
+                    }
+                    emptyState.style.display = 'block';
+                } else if (emptyState) {
+                    emptyState.style.display = 'none';
+                }
+            }
+        }
+        
+        // Remove old event listeners (if any) by cloning
+        const newSearchInput = searchInput.cloneNode(true);
+        searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+        
+        // Re-get the element after cloning
+        const freshSearchInput = document.getElementById('lessonSearch');
+        
+        console.log('\n⚡ Attaching Event Listeners...');
+        
+        // Real-time input event (triggers on every keystroke)
+        freshSearchInput.addEventListener('input', function(e) {
+            console.log('⌨️ INPUT EVENT FIRED - Value:', e.target.value);
+            performRealtimeSearch();
+        });
+        console.log('  ✓ Input event listener attached');
+        
+        // Keyup as backup (for better compatibility)
+        freshSearchInput.addEventListener('keyup', function(e) {
+            console.log('⌨️ KEYUP EVENT FIRED - Key:', e.key);
+            performRealtimeSearch();
+        });
+        console.log('  ✓ Keyup event listener attached');
+        
+        // Clear button
+        if (clearButton) {
+            clearButton.addEventListener('click', function(e) {
+                console.log('🗑️ CLEAR BUTTON CLICKED');
+                e.preventDefault();
+                e.stopPropagation();
+                freshSearchInput.value = '';
+                clearButton.style.display = 'none';
+                freshSearchInput.focus();
+                performRealtimeSearch();
+            });
+            console.log('  ✓ Clear button listener attached');
+        }
+        
+        // Keyboard shortcuts
+        freshSearchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                freshSearchInput.blur();
+            }
+            if (e.key === 'Escape') {
+                freshSearchInput.value = '';
+                if (clearButton) clearButton.style.display = 'none';
+                performRealtimeSearch();
+            }
+        });
+        console.log('  ✓ Keyboard shortcuts attached');
+        
+        // Initial state
+        if (clearButton) {
+            clearButton.style.display = 'none';
+        }
+        
+        // Log all cards
+        const allCards = document.querySelectorAll('.lesson-card-modern');
+        console.log(`\n📦 Loaded ${allCards.length} lesson cards`);
+        
+        // Initial sort by favorites
+        setTimeout(() => {
+            if (typeof window.sortLessonsByFavorite === 'function') {
+                window.sortLessonsByFavorite();
+                console.log('✓ Sorted by favorites');
+            }
+        }, 100);
+        
+        console.log('='.repeat(60));
+        console.log('✅ ALL CLASSES REAL-TIME SEARCH READY!');
+        console.log('='.repeat(60));
+        
+        // Test the search immediately
+        console.log('\n🧪 Testing search function...');
+        performRealtimeSearch();
+        
+        return true;
+    }
+    
+    // Try to initialize immediately
+    if (document.readyState === 'loading') {
+        console.log('⏳ DOM still loading, waiting...');
+        document.addEventListener('DOMContentLoaded', initializeClassesSearch);
+    } else {
+        console.log('✓ DOM ready, initializing now...');
+        initializeClassesSearch();
+    }
+    
+    // Also try after a short delay as backup
+    setTimeout(initializeClassesSearch, 500);
+    
+})();
+</script>
+
+<!-- Add Lesson Modal -->
+{% include 'modals/add_lesson_modal.html' %}
+
+
