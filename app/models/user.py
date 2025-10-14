@@ -31,6 +31,9 @@ class UserModel(db.Model):
     role = db.Column(db.String(20), default='student', nullable=False, index=True)
     preferences = db.Column(db.Text)  # JSON string for user preferences
     
+    # Google integration
+    google_credentials = db.Column(db.Text)  # JSON string for Google OAuth credentials
+    
     # Account status
     is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
     email_verified = db.Column(db.Boolean, default=False, nullable=False)

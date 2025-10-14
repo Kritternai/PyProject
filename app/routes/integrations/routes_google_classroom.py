@@ -174,7 +174,78 @@ def oauth2callback():
 @google_classroom_bp.route('/fetch_courses')
 @login_required
 def fetch_courses():
-    """Fetch Google Classroom courses (placeholder)"""
-    flash('Google Classroom course fetching is under development.', 'info')
-    return redirect(url_for('main.index') + '#class')
+    """Fetch Google Classroom courses"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'User not authenticated'}), 401
+        
+        # Use Google Classroom Service
+        from app.services.google_classroom_service import GoogleClassroomService
+        google_service = GoogleClassroomService()
+        
+        # Check if user has credentials
+        credentials = google_service.get_credentials(user_id)
+        if not credentials:
+            return jsonify({
+                'success': False,
+                'error': 'No Google credentials found. Please authorize first.',
+                'needs_auth': True
+            }), 401
+        
+        # Fetch courses from Google Classroom
+        courses = google_service.fetch_courses(user_id)
+        
+        return jsonify({
+            'success': True,
+            'courses': courses
+        })
+        
+    except Exception as e:
+        print(f"Error fetching Google Classroom courses: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to fetch courses: {str(e)}'
+        }), 500
+
+@google_classroom_bp.route('/import_course', methods=['POST'])
+@login_required
+def import_course():
+    """Import a Google Classroom course"""
+    try:
+        data = request.get_json()
+        course_id = data.get('courseId')
+        settings = data.get('settings', {})
+        
+        if not course_id:
+            return jsonify({'success': False, 'error': 'Course ID is required'}), 400
+        
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'User not authenticated'}), 401
+        
+        # Use Google Classroom Service
+        from app.services.google_classroom_service import GoogleClassroomService
+        google_service = GoogleClassroomService()
+        
+        # Check if user has credentials
+        credentials = google_service.get_credentials(user_id)
+        if not credentials:
+            return jsonify({
+                'success': False,
+                'error': 'No Google credentials found. Please authorize first.',
+                'needs_auth': True
+            }), 401
+        
+        # Import course using Google Classroom Service
+        result = google_service.import_course(user_id, course_id, settings)
+        
+        return jsonify(result)
+            
+    except Exception as e:
+        print(f"Error importing Google Classroom course: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to import course: {str(e)}'
+        }), 500
 
