@@ -15,7 +15,7 @@ class UserService:
     """Simple user service for business logic."""
     
     def create_user(self, username: str, email: str, password: str, 
-                   first_name: str = None, last_name: str = None, role: str = 'student'):
+                    first_name: str = None, last_name: str = None, role: str = 'student'):
         """Create a new user."""
         from app.models.user import UserModel
         from app import db
@@ -99,6 +99,29 @@ class LessonService:
         if not lesson:
             raise NotFoundException("Lesson not found")
         return lesson
+        
+    # --- โค้ดใหม่ที่เพิ่มเข้ามาใน LessonService ---
+    def get_lessons_count(self, user_id: str):
+        """นับ lessons ทั้งหมด"""
+        from app.models.lesson import LessonModel
+        return LessonModel.query.filter_by(user_id=user_id).count()
+
+    def get_lessons_completed_today(self, user_id: str):
+        """นับ lessons ที่เสร็จวันนี้"""
+        from app.models.lesson import LessonModel
+        from datetime import datetime
+        from app import db
+        
+        today = datetime.now().date()
+        
+        count = LessonModel.query.filter(
+            LessonModel.user_id == user_id,
+            LessonModel.status == 'completed',
+            db.func.date(LessonModel.updated_at) == today
+        ).count()
+        
+        return count
+    # --- จบโค้ดที่เพิ่ม ---
 
 
 class NoteService:
@@ -173,6 +196,28 @@ class NoteService:
         db.session.commit()
         return True
 
+    # --- โค้ดใหม่ที่เพิ่มเข้ามาใน NoteService ---
+    def get_notes_count_today(self, user_id: str):
+        """นับ notes ที่สร้างวันนี้"""
+        from datetime import datetime
+        from app.models.note import NoteModel
+        from app import db
+
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        count = NoteModel.query.filter(
+            NoteModel.user_id == user_id,
+            NoteModel.created_at >= today_start
+        ).count()
+        
+        return count
+
+    def get_total_notes_count(self, user_id: str):
+        """นับ notes ทั้งหมด"""
+        from app.models.note import NoteModel
+        return NoteModel.query.filter_by(user_id=user_id).count()
+    # --- จบโค้ดที่เพิ่ม ---
+
 
 class TaskService:
     """Simple task service for business logic."""
@@ -205,3 +250,33 @@ class TaskService:
         if not task:
             raise NotFoundException("Task not found")
         return task
+
+# --- Class ที่เพิ่มเข้ามา ---
+class PomodoroService:
+    """Service for Pomodoro tracking logic."""
+    
+    def get_pomodoros_count_today(self, user_id: str):
+        """นับ pomodoro ที่ทำวันนี้"""
+        from datetime import date
+        from app.models.pomodoro import PomodoroSessionModel
+        from app import db
+
+        today = date.today()
+        
+        count = PomodoroSessionModel.query.filter(
+            PomodoroSessionModel.user_id == user_id,
+            db.func.date(PomodoroSessionModel.created_at) == today
+        ).count()
+        
+        return count
+    
+    def get_study_time_today(self, user_id: str, duration_per_session: int = 25):
+        """คำนวณเวลาเรียนวันนี้ (นาที)"""
+        count = self.get_pomodoros_count_today(user_id)
+        return count * duration_per_session
+
+    def get_total_pomodoros_count(self, user_id: str):
+        """นับ pomodoros ทั้งหมด"""
+        from app.models.pomodoro import PomodoroSessionModel
+        return PomodoroSessionModel.query.filter_by(user_id=user_id).count()
+    

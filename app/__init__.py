@@ -80,6 +80,7 @@ def register_blueprints(app):
     from .routes.task_routes import task_bp
     from .routes.pomodoro_routes import pomodoro_bp
     from .routes.pomodoro_session_routes import pomodoro_session_bp
+    from .routes.track_routes import track_bp
     
     # ============================================
     # INTEGRATION ROUTES
@@ -91,29 +92,29 @@ def register_blueprints(app):
     # ============================================
     # REGISTER MAIN WEB ROUTES
     # ============================================
-    app.register_blueprint(main_routes_bp)  # /, /dashboard, /partial/dashboard, /partial/track, /partial/dev
-    app.register_blueprint(class_bp)        # /partial/class, /class/<id>, class CRUD
-    app.register_blueprint(note_web_bp)     # /partial/note, note fragments & CRUD
-    app.register_blueprint(classwork_bp)    # /classwork/* tasks & materials
-    app.register_blueprint(api_bp)          # /api/* general data endpoints
+    app.register_blueprint(main_routes_bp)      # /, /dashboard, /partial/dashboard, /partial/track, /partial/dev
+    app.register_blueprint(class_bp)          # /partial/class, /class/<id>, class CRUD
+    app.register_blueprint(note_web_bp)       # /partial/note, note fragments & CRUD
+    app.register_blueprint(classwork_bp)      # /classwork/* tasks & materials
+    app.register_blueprint(api_bp)            # /api/* general data endpoints
     
     # ============================================
     # REGISTER API BLUEPRINTS
     # ============================================
-    app.register_blueprint(auth_bp)         # /api/auth/* 
-    app.register_blueprint(user_bp)         # /api/users/*
-    app.register_blueprint(lesson_bp)       # /api/lessons/*
-    app.register_blueprint(note_bp)         # /api/notes/*
-    app.register_blueprint(task_bp)         # /api/tasks/*
-    app.register_blueprint(pomodoro_bp)     # /api/pomodoro/*
+    app.register_blueprint(auth_bp)           # /api/auth/* app.register_blueprint(user_bp)           # /api/users/*
+    app.register_blueprint(lesson_bp)         # /api/lessons/*
+    app.register_blueprint(note_bp)           # /api/notes/*
+    app.register_blueprint(task_bp)           # /api/tasks/*
+    app.register_blueprint(pomodoro_bp)       # /api/pomodoro/*
     app.register_blueprint(pomodoro_session_bp)  # /pomodoro/session/*, /pomodoro/statistics/*
+    app.register_blueprint(track_bp)          # /api/track/*
     
     # ============================================
     # REGISTER INTEGRATION BLUEPRINTS
     # ============================================
-    app.register_blueprint(google_classroom_bp)   # Google Classroom
-    app.register_blueprint(google_auth_bp)        # Google OAuth Sign-In
-    app.register_blueprint(microsoft_teams_bp)    # Microsoft Teams
+    app.register_blueprint(google_classroom_bp)  # Google Classroom
+    app.register_blueprint(google_auth_bp)       # Google OAuth Sign-In
+    app.register_blueprint(microsoft_teams_bp)   # Microsoft Teams
 
 
 def register_template_filters(app):
