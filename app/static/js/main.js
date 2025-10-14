@@ -3067,30 +3067,60 @@ window.openGoogleClassroomImport = function() {
 window.openGoogleClassroomModal = function() {
     console.log('📚 Opening Google Classroom modal...');
     
-    // Use old modal as primary
-    let modalElement = document.getElementById('googleClassroomImportModal');
-    let modalId = 'googleClassroomImportModal';
-    
-    if (!modalElement) {
-        modalElement = document.getElementById('googleClassroomImportModalNew');
-        modalId = 'googleClassroomImportModalNew';
-    }
-    
-    if (!modalElement) {
-        console.error('❌ No Google Classroom modal found');
-        return;
-    }
-    
-    const modal = new bootstrap.Modal(modalElement);
-    modal.show();
-    
-    // Load Google Classroom courses
-    if (typeof window.loadGoogleCourses === 'function') {
-        window.loadGoogleCourses();
-    } else {
-        console.log('⚠️ loadGoogleCourses function not found, redirecting to OAuth...');
-        window.location.href = '/google_classroom/authorize';
-    }
+    // Check if user has Google credentials first
+    fetch('/google_classroom/fetch_courses')
+        .then(response => {
+            if (response.status === 401) {
+                // No credentials - redirect to OAuth immediately
+                console.log('🔐 No Google credentials found, redirecting to OAuth...');
+                window.location.href = '/google_classroom/authorize?return_to_import=true';
+                return Promise.reject('Redirecting to OAuth');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data) return; // Skip if redirected
+            
+            // Has credentials - open modal and show courses
+            let modalElement = document.getElementById('googleClassroomImportModal');
+            let modalId = 'googleClassroomImportModal';
+            
+            if (!modalElement) {
+                modalElement = document.getElementById('googleClassroomImportModalNew');
+                modalId = 'googleClassroomImportModalNew';
+            }
+            
+            if (!modalElement) {
+                console.error('❌ No Google Classroom modal found');
+                return;
+            }
+            
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+            
+            // Load Google Classroom courses
+            if (typeof window.loadGoogleCourses === 'function') {
+                window.loadGoogleCourses();
+            } else {
+                console.log('⚠️ loadGoogleCourses function not found');
+            }
+        })
+        .catch(error => {
+            if (error === 'Redirecting to OAuth') {
+                console.log('🔄 OAuth redirect initiated');
+                return;
+            }
+            console.error('❌ Error checking Google credentials:', error);
+            // Fallback: try to open modal anyway
+            let modalElement = document.getElementById('googleClassroomImportModal');
+            if (!modalElement) {
+                modalElement = document.getElementById('googleClassroomImportModalNew');
+            }
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        });
 };
 
 // Connect to Google Classroom function
