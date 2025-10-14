@@ -207,11 +207,11 @@ def oauth2callback():
         return_to_import = session.pop('return_to_import', False)
         
         if return_to_import:
-            # Redirect back to class page with Google Classroom import modal open
-            return redirect(url_for('main.index') + '#class&open_google_import=true')
+            # Redirect back to dashboard with Google Classroom import modal open
+            return redirect(url_for('main_routes.dashboard') + '#class&open_google_import=true')
         else:
-            # Redirect to class page normally
-            return redirect(url_for('main.index') + '#class')
+            # Redirect to dashboard normally
+            return redirect(url_for('main_routes.dashboard') + '#class')
         
     except Exception as e:
         print(f"ERROR: Failed to save Google Classroom credentials: {e}")
