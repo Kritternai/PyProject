@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // In case of JS-heavy forms, we could disable/submit here.
     });
   }
-  attach('google-signin-sidebar');
+  // sidebar button was removed; keep login/register handlers
   attach('google-signin-login');
+  attach('google-signin-register');
 });

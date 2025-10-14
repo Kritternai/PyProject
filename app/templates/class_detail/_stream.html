@@ -1,0 +1,632 @@
+<!-- Stream Tab - Facebook-style Feed with Real-time Updates -->
+<div class="stream-container">
+    <!-- Header (เหมือน tabs อื่น) -->
+    <div class="stream-header">
+        <div class="stream-header-content">
+            <div>
+                <h2 class="stream-title">Stream</h2>
+                <p class="stream-subtitle">Class updates and Q&A</p>
+            </div>
+            <div class="stream-actions">
+                <button class="btn-icon" onclick="toggleStreamSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <button class="btn-stream-primary" onclick="openCreatePostModal()">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>{{ 'New Post' if is_owner else 'Ask Question' }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="stream-main">
+        <div class="stream-content-layout">
+            <!-- Sidebar -->
+            <div class="stream-sidebar" id="stream-sidebar">
+                <!-- Navigation -->
+                <div class="stream-nav-section">
+                    <a href="#" class="stream-nav-item active" data-filter="all" onclick="quickFilter('all'); return false;">
+                        <i class="bi bi-grid-3x3"></i>
+                        All Posts
+                    </a>
+                    <a href="#" class="stream-nav-item" data-filter="questions" onclick="quickFilter('questions'); return false;">
+                        <i class="bi bi-question-circle"></i>
+                        Questions
+                    </a>
+                    <a href="#" class="stream-nav-item" data-filter="announcements" onclick="quickFilter('announcements'); return false;">
+                        <i class="bi bi-megaphone"></i>
+                        Announcements
+                    </a>
+                    <a href="#" class="stream-nav-item" data-filter="activity" onclick="quickFilter('activity'); return false;">
+                        <i class="bi bi-clock-history"></i>
+                        Activity
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Feed -->
+            <div class="stream-content">
+                <!-- Create Post Box (Facebook style) -->
+                <div class="create-post-box">
+                    <div class="create-post-avatar" id="create-post-avatar"></div>
+                    <div class="create-post-input" onclick="openCreatePostModal()">
+                        <span>{{ "What's on your mind?" if is_owner else "Ask a question..." }}</span>
+                    </div>
+                </div>
+
+                <!-- Posts Feed -->
+                <div id="posts-container">
+                    <div class="loading-state" id="stream-loading">
+                        <div class="spinner-border text-primary"></div>
+                        <p>Loading posts...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Post Modal -->
+<div class="modal fade" id="createPostModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-title-text">{{ 'Create Post' if is_owner else 'Ask Question' }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% if is_owner %}
+                <div class="mb-3">
+                    <div class="post-type-selector">
+                        <label class="type-option selected">
+                            <input type="radio" name="post-type" value="announcement" checked>
+                            <span><i class="bi bi-megaphone-fill"></i> Announcement</span>
+                        </label>
+                        <label class="type-option">
+                            <input type="radio" name="post-type" value="question">
+                            <span><i class="bi bi-question-circle-fill"></i> Question</span>
+                        </label>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="post-title" 
+                           placeholder="Title (optional)" maxlength="200">
+                </div>
+
+                <div class="mb-3">
+                    <textarea class="form-control" id="post-content" rows="5" 
+                              placeholder="What do you want to share?" required></textarea>
+                </div>
+
+                {% if is_owner %}
+                <div class="post-options">
+                    <label><input type="checkbox" id="post-pin"> <i class="bi bi-pin"></i> Pin to top</label>
+                </div>
+                {% endif %}
+
+                <input type="hidden" id="post-id">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-stream-primary" onclick="submitPost()">
+                    <i class="bi bi-send"></i> Post
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    const lessonId = window.location.pathname.split('/')[2];
+    const isOwner = {{ 'true' if is_owner else 'false' }};
+    const currentUserId = '{{ current_user.id }}';
+    const currentUserName = '{{ current_user.name }}';
+    
+    let allPosts = [];
+    let currentFilter = 'all';
+    let updateInterval;
+    
+    // Initialize
+    renderCreatePostAvatar();
+    loadPosts();
+    startRealTimeUpdates();
+    
+    function renderCreatePostAvatar() {
+        const avatarContainer = document.getElementById('create-post-avatar');
+        if (avatarContainer) {
+            avatarContainer.innerHTML = getAvatar(currentUserName);
+        }
+    }
+    
+    // Type selector
+    document.querySelectorAll('.type-option').forEach(opt => {
+        opt.addEventListener('click', function() {
+            document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+            this.querySelector('input').checked = true;
+        });
+    });
+
+    // ============================================
+    // Real-time Updates (Auto-refresh every 10s)
+    // ============================================
+
+    function startRealTimeUpdates() {
+        updateInterval = setInterval(() => {
+            loadPosts(true); // Silent reload
+        }, 10000); // 10 seconds
+        
+        console.log('🔄 Real-time updates enabled (10s interval)');
+    }
+
+    // Stop updates when leaving tab
+    window.addEventListener('beforeunload', () => {
+        if (updateInterval) clearInterval(updateInterval);
+    });
+
+    // ============================================
+    // Load & Render
+    // ============================================
+
+    async function loadPosts(silent = false) {
+        try {
+            const params = new URLSearchParams();
+            if (currentFilter === 'questions') params.append('type', 'question');
+            else if (currentFilter === 'announcements') params.append('type', 'announcement');
+            else if (currentFilter === 'activity') params.append('type', 'activity');
+            
+            const response = await fetch(`/api/class/${lessonId}/stream/posts?${params}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const oldCount = allPosts.length;
+                allPosts = data.posts;
+                renderPosts();
+                
+                // Show notification for new posts (only if not silent and not first load)
+                if (!silent && oldCount > 0 && allPosts.length > oldCount) {
+                    if (typeof window.showSuccess === 'function') {
+                        window.showSuccess('New post available');
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            const loading = document.getElementById('stream-loading');
+            if (loading) loading.style.display = 'none';
+        }
+    }
+
+
+    function renderPosts() {
+        const container = document.getElementById('posts-container');
+        
+        if (allPosts.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>No posts yet</p>
+                    <small>${isOwner ? 'Share something with your class' : 'Check back later for updates'}</small>
+                </div>
+            `;
+            return;
+        }
+        
+        const sorted = [...allPosts].sort((a, b) => {
+            if (a.is_pinned && !b.is_pinned) return -1;
+            if (!a.is_pinned && b.is_pinned) return 1;
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+        
+        container.innerHTML = sorted.map(post => createPostCard(post)).join('');
+    }
+
+    function createPostCard(post) {
+        const isAuthor = post.user_id === currentUserId;
+        const canEdit = isAuthor || isOwner;
+        
+        return `
+            <div class="post-card ${post.is_pinned ? 'pinned' : ''}" data-post-id="${post.id}">
+                <div class="post-header">
+                    <div class="post-author">
+                        ${getAvatar(post.author.name)}
+                        <div>
+                            <div class="author-name">
+                                ${post.author.name}
+                                ${isAuthor ? '<span class="badge-me">You</span>' : ''}
+                            </div>
+                            <div class="post-meta">
+                                ${getTimeAgo(post.created_at)}
+                                ${post.is_pinned ? '<i class="bi bi-pin-fill text-warning"></i>' : ''}
+                                ${post.has_accepted_answer ? '<i class="bi bi-check-circle-fill text-success"></i>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    ${canEdit ? `
+                    <div class="dropdown">
+                        <button class="btn-icon-sm" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" onclick="editPost('${post.id}')"><i class="bi bi-pencil"></i> Edit</a></li>
+                            ${isOwner ? `<li><a class="dropdown-item" onclick="togglePin('${post.id}')"><i class="bi bi-pin"></i> ${post.is_pinned ? 'Unpin' : 'Pin'}</a></li>` : ''}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" onclick="deletePost('${post.id}')"><i class="bi bi-trash"></i> Delete</a></li>
+                        </ul>
+                    </div>
+                    ` : ''}
+                </div>
+
+                ${getTypeBadge(post.type)}
+
+                <div class="post-body">
+                    ${post.title ? `<h4>${escapeHtml(post.title)}</h4>` : ''}
+                    <p>${formatContent(post.content)}</p>
+                </div>
+
+                <div class="post-footer">
+                    <button class="post-action" onclick="toggleComments('${post.id}')">
+                        <i class="bi bi-chat"></i> 
+                        <span>${post.comments_count} ${post.comments_count === 1 ? 'Comment' : 'Comments'}</span>
+                    </button>
+                </div>
+
+                <div class="comments-section" id="comments-${post.id}" style="display:none">
+                    <div class="comments-list" id="comments-list-${post.id}"></div>
+                    ${post.allow_comments !== false ? `
+                    <div class="comment-input">
+                        ${getAvatar(currentUserName)}
+                        <input type="text" placeholder="Write a comment..." 
+                               id="input-${post.id}" 
+                               onkeypress="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); addComment('${post.id}'); }">
+                        <button onclick="addComment('${post.id}')"><i class="bi bi-send-fill"></i></button>
+                    </div>
+                    ` : '<div class="comments-disabled"><i class="bi bi-lock"></i> Comments disabled</div>'}
+                </div>
+            </div>
+        `;
+    }
+
+    function getTypeBadge(type) {
+        if (type === 'announcement') return `<div class="type-badge announcement"><i class="bi bi-megaphone-fill"></i> Announcement</div>`;
+        if (type === 'question') return `<div class="type-badge question"><i class="bi bi-question-circle-fill"></i> Question</div>`;
+        if (type === 'activity') return `<div class="type-badge activity"><i class="bi bi-clock-history"></i> Activity</div>`;
+        return '';
+    }
+
+    function getAvatar(name) {
+        const initial = name.charAt(0).toUpperCase();
+        const colors = ['#2B6BCF', '#28a745', '#ffc107', '#dc3545', '#6f42c1'];
+        const color = colors[name.charCodeAt(0) % colors.length];
+        return `<div class="avatar" style="background:${color}">${initial}</div>`;
+    }
+
+    function getTimeAgo(dateString) {
+        const date = new Date(dateString + (dateString.includes('Z') ? '' : 'Z'));
+        const seconds = Math.floor((new Date() - date) / 1000);
+        
+        if (seconds < 60) return 'Just now';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+        if (seconds < 86400) return Math.floor(seconds / 3600) + 'h';
+        if (seconds < 604800) return Math.floor(seconds / 86400) + 'd';
+        return date.toLocaleDateString();
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatContent(text) {
+        return escapeHtml(text).replace(/\n/g, '<br>');
+    }
+
+    // ============================================
+    // Quick Filter
+    // ============================================
+
+    window.quickFilter = function(filter) {
+        currentFilter = filter;
+        
+        document.querySelectorAll('.stream-nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+        
+        loadPosts();
+    };
+
+    window.toggleStreamSidebar = function() {
+        document.getElementById('stream-sidebar').classList.toggle('show');
+    };
+
+    // ============================================
+    // Create/Edit Post
+    // ============================================
+
+    window.openCreatePostModal = function() {
+        document.getElementById('post-id').value = '';
+        document.getElementById('post-title').value = '';
+        document.getElementById('post-content').value = '';
+        
+        if (isOwner) {
+            document.querySelector('[name="post-type"][value="announcement"]').checked = true;
+            document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+            document.querySelector('[value="announcement"]').closest('.type-option').classList.add('selected');
+            document.getElementById('post-pin').checked = false;
+        }
+        
+        document.getElementById('modal-title-text').textContent = isOwner ? 'Create Post' : 'Ask Question';
+        new bootstrap.Modal(document.getElementById('createPostModal')).show();
+    };
+
+    window.editPost = async function(postId) {
+        try {
+            const response = await fetch(`/api/stream/posts/${postId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const post = data.post;
+                document.getElementById('post-id').value = post.id;
+                document.getElementById('post-title').value = post.title || '';
+                document.getElementById('post-content').value = post.content;
+                
+                if (isOwner) {
+                    document.querySelector(`[name="post-type"][value="${post.type}"]`).checked = true;
+                    document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+                    document.querySelector(`[value="${post.type}"]`).closest('.type-option').classList.add('selected');
+                    document.getElementById('post-pin').checked = post.is_pinned;
+                }
+                
+                document.getElementById('modal-title-text').textContent = 'Edit Post';
+                new bootstrap.Modal(document.getElementById('createPostModal')).show();
+            }
+        } catch (error) {
+            alert('Error loading post');
+        }
+    };
+
+    window.submitPost = async function() {
+        const postId = document.getElementById('post-id').value;
+        const title = document.getElementById('post-title').value.trim();
+        const content = document.getElementById('post-content').value.trim();
+        
+        if (!content) {
+            alert('Content is required');
+            return;
+        }
+        
+        const data = {
+            title: title || null,
+            content: content,
+            type: isOwner ? document.querySelector('[name="post-type"]:checked').value : 'question',
+            is_pinned: isOwner ? document.getElementById('post-pin').checked : false
+        };
+        
+        try {
+            const url = postId ? `/api/stream/posts/${postId}` : `/api/class/${lessonId}/stream/posts`;
+            const method = postId ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('createPostModal')).hide();
+                await loadPosts();
+                
+                if (typeof window.showSuccess === 'function') {
+                    window.showSuccess(postId ? 'Post updated' : 'Post created');
+                }
+            } else {
+                alert(result.error || 'Failed to save');
+            }
+        } catch (error) {
+            alert('Error saving post');
+        }
+    };
+
+    window.deletePost = async function(postId) {
+        if (!confirm('Delete this post and all its comments?')) return;
+        
+        try {
+            const response = await fetch(`/api/stream/posts/${postId}`, { method: 'DELETE' });
+            const data = await response.json();
+            
+            if (data.success) {
+                await loadPosts();
+                
+                if (typeof window.showSuccess === 'function') {
+                    window.showSuccess('Post deleted');
+                }
+            }
+        } catch (error) {
+            alert('Error deleting post');
+        }
+    };
+
+    window.togglePin = async function(postId) {
+        try {
+            const response = await fetch(`/api/stream/posts/${postId}/pin`, { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.success) {
+                await loadPosts();
+            }
+        } catch (error) {
+            alert('Error toggling pin');
+        }
+    };
+
+    // ============================================
+    // Comments
+    // ============================================
+
+    window.toggleComments = async function(postId) {
+        const section = document.getElementById(`comments-${postId}`);
+        const list = document.getElementById(`comments-list-${postId}`);
+        
+        if (section.style.display === 'none') {
+            section.style.display = 'block';
+            
+            if (!list.dataset.loaded) {
+                await loadComments(postId);
+                list.dataset.loaded = 'true';
+            }
+        } else {
+            section.style.display = 'none';
+        }
+    };
+
+    async function loadComments(postId) {
+        try {
+            const response = await fetch(`/api/stream/posts/${postId}/comments`);
+            const data = await response.json();
+            
+            if (data.success) {
+                renderComments(postId, data.comments);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    function renderComments(postId, comments) {
+        const list = document.getElementById(`comments-list-${postId}`);
+        const post = allPosts.find(p => p.id === postId);
+        
+        if (comments.length === 0) {
+            list.innerHTML = '<div class="no-comments">No comments yet. Be the first!</div>';
+            return;
+        }
+        
+        list.innerHTML = comments.map(c => `
+            <div class="comment ${c.is_accepted ? 'accepted' : ''}">
+                ${getAvatar(c.author.name)}
+                <div class="comment-content">
+                    <div class="comment-header">
+                        <strong>${c.author.name}</strong>
+                        ${c.user_id === currentUserId ? '<span class="badge-me">You</span>' : ''}
+                        ${c.is_accepted ? '<span class="badge-accepted"><i class="bi bi-check-circle-fill"></i> Accepted</span>' : ''}
+                        <span class="time">${getTimeAgo(c.created_at)}</span>
+                    </div>
+                    <div class="comment-text">${formatContent(c.content)}</div>
+                    <div class="comment-actions">
+                        ${c.user_id === currentUserId || isOwner ? `
+                        <button onclick="deleteComment('${c.id}', '${postId}')">Delete</button>
+                        ` : ''}
+                        ${isOwner && post.type === 'question' && !c.is_accepted ? `
+                        <button class="text-success" onclick="acceptAnswer('${postId}', '${c.id}')">
+                            <i class="bi bi-check-circle"></i> Accept Answer
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.addComment = async function(postId) {
+        const input = document.getElementById(`input-${postId}`);
+        const content = input.value.trim();
+        
+        if (!content) return;
+        
+        try {
+            const response = await fetch(`/api/stream/posts/${postId}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                input.value = '';
+                
+                // Show comments section if hidden
+                const section = document.getElementById(`comments-${postId}`);
+                if (section.style.display === 'none') {
+                    section.style.display = 'block';
+                }
+                
+                // Render comments
+                renderComments(postId, data.comments);
+                
+                // Mark as loaded
+                const list = document.getElementById(`comments-list-${postId}`);
+                if (list) list.dataset.loaded = 'true';
+                
+                // Update count in post card
+                const post = allPosts.find(p => p.id === postId);
+                if (post) {
+                    post.comments_count = data.comments.length;
+                    
+                    // Update count display
+                    const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+                    if (postCard) {
+                        const countSpan = postCard.querySelector('.post-action span');
+                        if (countSpan) {
+                            countSpan.textContent = `${post.comments_count} ${post.comments_count === 1 ? 'Comment' : 'Comments'}`;
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            alert('Error adding comment');
+        }
+    };
+
+    window.deleteComment = async function(commentId, postId) {
+        if (!confirm('Delete this comment?')) return;
+        
+        try {
+            const response = await fetch(`/api/stream/comments/${commentId}`, { method: 'DELETE' });
+            const data = await response.json();
+            
+            if (data.success) {
+                await loadComments(postId);
+                await loadPosts();
+            }
+        } catch (error) {
+            alert('Error deleting comment');
+        }
+    };
+
+    window.acceptAnswer = async function(postId, commentId) {
+        try {
+            const response = await fetch(`/api/stream/posts/${postId}/accept-answer/${commentId}`, {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                await loadComments(postId);
+                await loadPosts();
+                
+                if (typeof window.showSuccess === 'function') {
+                    window.showSuccess('Answer accepted!');
+                }
+            }
+        } catch (error) {
+            alert('Error accepting answer');
+        }
+    };
+
+    console.log('✅ Stream system loaded');
+
+})();
+</script>

@@ -72,9 +72,18 @@
     <!-- Main Content -->
     <div class="lessons-content">
 
-        <!-- Lessons Grid -->
-        <div class="lessons-grid" id="lessons-grid">
-            {% if lessons %}
+        <!-- My Classes Section -->
+        {% if lessons %}
+        <div class="lessons-section mb-5">
+            <div class="section-header mb-3">
+                <h2 class="section-title">
+                    <i class="bi bi-star-fill text-warning"></i>
+                    My Classes
+                    <span class="badge bg-primary ms-2">{{ lessons|length }}</span>
+                </h2>
+                <p class="section-subtitle text-muted">Classes you created</p>
+            </div>
+            <div class="lessons-grid" id="my-lessons-grid">
                 {% for lesson in lessons %}
                     <div class="lesson-card-modern" 
                          data-lesson-id="{{ lesson.id }}" 
@@ -106,6 +115,12 @@
                             
                             <!-- Badges -->
                             <div class="lesson-card-badges">
+                                <!-- Role Badge -->
+                                <div class="lesson-card-role-badge owner">
+                                    <i class="bi bi-star-fill"></i>
+                                    Owner
+                                </div>
+                                
                                 <div class="lesson-card-status-badge {{ lesson.status or 'active' }}">
                                     {% if lesson.status == 'completed' %}
                                         Completed
@@ -146,21 +161,114 @@
                         </div>
                     </div>
                 {% endfor %}
-            {% else %}
-                <!-- Empty State -->
-                <div class="lessons-empty">
-                    <div class="lessons-empty-icon">
-                        <i class="bi bi-journal-plus"></i>
-                    </div>
-                    <h3>No Classes Yet</h3>
-                    <p>Start your learning journey by creating your first class</p>
-                    <button class="lessons-btn lessons-btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
-                        <i class="bi bi-plus-circle-fill"></i>
-                        <span>Create Your First Class</span>
-                    </button>
-                </div>
-            {% endif %}
+            </div>
         </div>
+        {% endif %}
+
+        <!-- Shared with Me Section -->
+        {% if shared_lessons %}
+        <div class="lessons-section">
+            <div class="section-header mb-3">
+                <h2 class="section-title">
+                    <i class="bi bi-people-fill text-primary"></i>
+                    Shared with Me
+                    <span class="badge bg-info ms-2">{{ shared_lessons|length }}</span>
+                </h2>
+                <p class="section-subtitle text-muted">Classes shared by others</p>
+            </div>
+            <div class="lessons-grid" id="shared-lessons-grid">
+                {% for lesson in shared_lessons %}
+                    <div class="lesson-card-modern" 
+                         data-lesson-id="{{ lesson.id }}" 
+                         data-status="{{ lesson.status or 'active' }}" 
+                         data-is-favorite="{{ 'true' if lesson.is_favorite else 'false' }}"
+                         onclick="navigateToClass('{{ lesson.id }}', event)"
+                         style="cursor: pointer;">
+                        
+                        <!-- Card Cover -->
+                        <div class="lesson-card-cover">
+                            {% if lesson.cover_image %}
+                                <img src="{{ url_for('static', filename=lesson.cover_image) }}" 
+                                     alt="{{ lesson.title }}">
+                            {% else %}
+                                {% set color_gradients = {
+                                    1: 'linear-gradient(135deg, #1976D2, #0D47A1)',
+                                    2: 'linear-gradient(135deg, #48BB78, #38A169)',
+                                    3: 'linear-gradient(135deg, #FC8181, #F56565)',
+                                    4: 'linear-gradient(135deg, #F6AD55, #ED8936)',
+                                    5: 'linear-gradient(135deg, #9F7AEA, #805AD5)',
+                                    6: 'linear-gradient(135deg, #F687B3, #ED64A6)'
+                                } %}
+                                {% set color_id = lesson.color_theme or lesson.selected_color or 1 %}
+                                {% set gradient = color_gradients[color_id|int] or color_gradients[1] %}
+                                <div class="lesson-card-gradient-cover" style="background: {{ gradient }};">
+                                    <i class="bi bi-book-fill"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Badges -->
+                            <div class="lesson-card-badges">
+                                <!-- Role Badge -->
+                                <div class="lesson-card-role-badge viewer">
+                                    <i class="bi bi-eye-fill"></i>
+                                    Viewer
+                                </div>
+                                
+                                <div class="lesson-card-status-badge {{ lesson.status or 'active' }}">
+                                    {% if lesson.status == 'completed' %}
+                                        Completed
+                                    {% elif lesson.status == 'archived' %}
+                                        Archived
+                                    {% else %}
+                                        Active
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Card Body -->
+                        <div class="lesson-card-body">
+                            <h3 class="lesson-card-title">{{ lesson.title }}</h3>
+                            
+                            {% if lesson.description %}
+                                <p class="lesson-card-description">{{ lesson.description }}</p>
+                            {% else %}
+                                <p class="lesson-card-description">No description available</p>
+                            {% endif %}
+                            
+                            <!-- Card Footer -->
+                            <div class="lesson-card-footer">
+                                <div class="lesson-card-meta">
+                                    <i class="bi bi-person-circle"></i>
+                                    <span>{{ lesson.author_name or 'Shared class' }}</span>
+                                </div>
+                                <div class="lesson-card-arrow">
+                                    <i class="bi bi-arrow-right"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Empty State (only if both are empty) -->
+        {% if not lessons and not shared_lessons %}
+        <div class="lessons-grid">
+            <div class="lessons-empty">
+                <div class="lessons-empty-icon">
+                    <i class="bi bi-journal-plus"></i>
+                </div>
+                <h3>No Classes Yet</h3>
+                <p>Start your learning journey by creating your first class</p>
+                <button class="lessons-btn lessons-btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>Create Your First Class</span>
+                </button>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 

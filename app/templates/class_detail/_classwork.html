@@ -1,14 +1,11 @@
 <!-- Classwork Tab - Professional Design (Full Functionality) -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/classwork.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
-
 <div class="classwork-container">
     <!-- Header -->
     <div class="classwork-header">
         <div class="classwork-header-content">
                 <div>
                 <h2 class="classwork-title">Classwork</h2>
-                <p class="classwork-subtitle">Manage assignments, materials, and track progress</p>
+                <p class="classwork-subtitle">Your personal tasks and shared materials</p>
                 </div>
             <div class="classwork-actions">
                 <button class="btn-icon" onclick="toggleSidebar()" id="sidebar-toggle">
@@ -316,6 +313,7 @@
     
     // Global variables for classwork
     const lessonId = window.location.pathname.split('/')[2];
+    const isOwner = {{ 'true' if is_owner else 'false' }};  // For materials only
     let currentTab = 'all';
     let currentFilter = 'all';
     let allTasks = [];
@@ -324,6 +322,7 @@
     let taskModal, materialModal, taskDetailModal;
     
     console.log('🚀 Initializing Classwork System for lesson:', lessonId);
+    console.log('👤 Is Owner:', isOwner, '(for materials control)');
 
     // Initialize immediately - script runs after DOM is ready
     initializeClassworkSystem();
@@ -375,11 +374,6 @@ function initializeEventListeners() {
 // Load classwork data from API
 async function loadClassworkData() {
     try {
-        // Check if loading functions exist
-        if (typeof window.showLoading === 'function') {
-            window.showLoading();
-        }
-        
         const response = await fetch(`/class/${lessonId}/classwork`);
         const data = await response.json();
         
@@ -387,36 +381,19 @@ async function loadClassworkData() {
             allTasks = data.data.classwork.tasks || [];
             allMaterials = data.data.classwork.materials || [];
             
-            console.log('📊 Loaded tasks:', allTasks.length, allTasks);
-            console.log('📁 Loaded materials:', allMaterials.length, allMaterials);
+            console.log('📊 Loaded tasks:', allTasks.length);
+            console.log('📁 Loaded materials:', allMaterials.length);
             
-            // Debug: Check first task structure
-            if (allTasks.length > 0) {
-                console.log('🔍 First task structure:', allTasks[0]);
-                console.log('🔍 First task status:', allTasks[0].status, 'Type:', typeof allTasks[0].status);
-            }
-            
+            // Render content immediately without flash
             updateStats(allTasks);
             renderAllContent(allTasks);
             renderKanbanBoard(allTasks);
             renderMaterials(allMaterials);
         } else {
-            if (typeof window.showError === 'function') {
-                window.showError('Failed to load classwork data');
-            } else {
-                console.error('Failed to load classwork data');
-            }
+            console.error('Failed to load classwork data');
         }
     } catch (error) {
         console.error('Error loading classwork:', error);
-        if (typeof window.showError === 'function') {
-            window.showError('Error loading classwork data');
-        }
-    } finally {
-        // Check if loading functions exist
-        if (typeof window.hideLoading === 'function') {
-            window.hideLoading();
-        }
     }
 }
 
@@ -495,11 +472,17 @@ function updateHeaderButton(tabName) {
     const headerText = document.getElementById('header-create-text');
     
     if (tabName === 'materials') {
-        headerText.textContent = 'Create Material';
-        headerBtn.setAttribute('onclick', 'openCreateMaterialModal()');
+        if (isOwner) {
+            headerText.textContent = 'Upload Material';
+            headerBtn.setAttribute('onclick', 'openCreateMaterialModal()');
+            headerBtn.style.display = 'flex';
+        } else {
+            headerBtn.style.display = 'none';
+        }
     } else {
         headerText.textContent = 'Create Task';
         headerBtn.setAttribute('onclick', 'openCreateTaskModal()');
+        headerBtn.style.display = 'flex';
     }
 }
 
@@ -581,16 +564,24 @@ function renderMaterials(materials) {
     const container = document.getElementById('materials-grid');
     
     if (materials.length === 0) {
+        const uploadButton = isOwner ? `
+            <button class="btn btn-primary btn-sm mt-3" onclick="openCreateMaterialModal()">
+                <i class="bi bi-cloud-upload me-1"></i>Upload Material
+            </button>
+        ` : '';
+        
+        const emptyMessage = isOwner 
+            ? 'Upload files and documents to share with class members' 
+            : 'No materials have been shared yet';
+        
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">
                     <i class="bi bi-folder-x"></i>
                 </div>
                 <div class="empty-title">No materials yet</div>
-                <div class="empty-description">Upload files and documents to share with your class</div>
-                <button class="btn btn-primary btn-sm mt-3" onclick="openCreateMaterialModal()">
-                    <i class="bi bi-cloud-upload me-1"></i>Upload Material
-                </button>
+                <div class="empty-description">${emptyMessage}</div>
+                ${uploadButton}
             </div>
         `;
         return;
@@ -824,6 +815,7 @@ function generatePreviewContent(material) {
 // Show empty state
 function showEmptyState(containerId, title, description) {
     const container = document.getElementById(containerId);
+    
     container.innerHTML = `
         <div class="empty-state">
             <div class="empty-icon">

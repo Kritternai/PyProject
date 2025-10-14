@@ -15,9 +15,7 @@
 </head>
 <body>
 <div class="d-flex">
-  <!-- Enhanced Sidebar with Enchat Design System -->
   <nav class="enchat-sidebar">
-    <!-- Sidebar Header -->
     <div class="enchat-sidebar__header">
       <a href="#" class="enchat-sidebar__logo" onclick="loadPage('dashboard');return false;">
         <span class="enchat-sidebar__logo-icon">
@@ -30,7 +28,6 @@
       </a>
     </div>
 
-    <!-- Sidebar Menu -->
     <div class="enchat-sidebar__menu">
       <ul class="enchat-sidebar__nav">
         <li class="enchat-sidebar__nav-item">
@@ -78,13 +75,11 @@
       </ul>
     </div>
 
-    <!-- Sidebar Footer / Auth -->
     <div class="enchat-sidebar__footer">
       {% include 'sidebar_auth_fragment.html' %}
     </div>
   </nav>
 
-  <!-- Main Content -->
   <main class="enchat-main-content" id="main-content">
     {% block content %}{% endblock %}
   </main>
@@ -103,24 +98,34 @@ function setActiveNav(el) {
 }
 window.addEventListener('DOMContentLoaded', function() {
   {% if not skip_auto_load %}
-    {% if initial_page %}
-      const initial = '{{ initial_page }}';
-      const navInit = document.querySelector(`.enchat-sidebar__nav-link[data-page=\"${initial}\"]`);
-      if (navInit) navInit.classList.add('active');
-      loadPage(initial);
-    {% elif google_connected %}
-      // If user just connected Google Classroom, load class page
-      const navClass = document.querySelector('.enchat-sidebar__nav-link[data-page=\"class\"]');
-      if (navClass) navClass.classList.add('active');
-      loadPage('class');
-    {% else %}
-      // Default: load dashboard
-      const navDash = document.querySelector('.enchat-sidebar__nav-link[data-page=\"dashboard\"]');
-      if (navDash) navDash.classList.add('active');
-      loadPage('dashboard');
-    {% endif %}
+    // Check URL path first to determine which page to load
+    const currentPath = window.location.pathname;
+    let pageToLoad = 'dashboard';
+    
+    if (currentPath && currentPath !== '/' && currentPath !== '/index' && currentPath !== '/dashboard') {
+      // Extract page from URL (remove leading slash)
+      pageToLoad = currentPath.substring(1);
+      console.log('📍 Loading page from URL:', pageToLoad);
+    } else {
+      {% if initial_page %}
+        pageToLoad = '{{ initial_page }}';
+      {% elif google_connected %}
+        pageToLoad = 'class';
+      {% else %}
+        pageToLoad = 'dashboard';
+      {% endif %}
+    }
+    
+    // Set active nav
+    const navLink = document.querySelector(`.enchat-sidebar__nav-link[data-page="${pageToLoad}"]`);
+    if (navLink) {
+      navLink.classList.add('active');
+    }
+    
+    // Load the page
+    loadPage(pageToLoad, false); // Don't update history on initial load
   {% endif %}
 });
 </script>
 </body>
-</html> 
+</html>

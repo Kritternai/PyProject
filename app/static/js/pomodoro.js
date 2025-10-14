@@ -55,9 +55,20 @@ const PomodoroAPI = {
 // ---------- State ----------
 const state = {
   mode: 'pomodoro',
+/**
+ * Pomodoro Timer - Complete Rewrite
+ * Simple, working Pomodoro timer with SPA support
+ */
+
+// ============================================================================
+// GLOBAL STATE
+// ============================================================================
+
+let pomodoroState = {
+  mode: 'pomodoro', // 'pomodoro', 'shortBreak', 'longBreak'
   isRunning: false,
-  timeLeft: 25 * 60,
-  totalTime: 25 * 60,
+  timeLeft: 25 * 60, // seconds
+  totalTime: 25 * 60, // seconds
   cycle: 1,
   completedPomodoros: 0,
   currentSessionId: null,
@@ -67,66 +78,120 @@ const state = {
     shortBreak: 5,
     longBreak: 15,
     longBreakInterval: 4,
-    autoStartBreaks: false,
+    autoStartBreaks: true,
     soundEnabled: true
   },
   stats: {
+    totalPomodoros: 0,
+    totalFocusTime: 0,
+    totalTasks: 0,
     todayPomodoros: 0,
     todayFocusTime: 0,
     todayTasks: 0,
     todayBreaks: 0,
-    totalPomodoros: 0,
-    totalFocusTime: 0,
-    totalTasks: 0,
     lastDate: new Date().toDateString()
   }
 };
 
+// Timer variables
 let interval = null;
+let globalTimer = null;
+let lastTick = Date.now();
+let isInitialized = false;
 
-// ---------- Utils ----------
-function formatTime(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
+// ============================================================================
+// CORE FUNCTIONS
+// ============================================================================
 
-function formatHours(minutes) {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours > 0) {
-    return `${hours}h ${mins}m`;
+// Get current mode time
+function getModeTime() {
+  switch (pomodoroState.mode) {
+    case 'pomodoro': return pomodoroState.settings.pomodoro * 60;
+    case 'shortBreak': return pomodoroState.settings.shortBreak * 60;
+    case 'longBreak': return pomodoroState.settings.longBreak * 60;
+    default: return 25 * 60;
   }
-  return `${mins}m`;
 }
 
-function showNotification(text) {
-  const notification = document.getElementById('notification');
-  document.getElementById('notificationText').textContent = text;
-  notification.classList.add('show');
-  
-  setTimeout(() => {
-    notification.classList.remove('show');
-  }, 3000);
+// Reset timer for current mode
+function resetTimer() {
+  pomodoroState.timeLeft = getModeTime();
+  pomodoroState.totalTime = getModeTime();
+  pomodoroState.isRunning = false;
 }
 
-// ---------- Core Timer Logic ----------
-function updateDisplay() {
-  document.getElementById('timeDisplay').textContent = formatTime(state.timeLeft);
-  const progress = ((state.totalTime - state.timeLeft) / state.totalTime) * 100;
-  document.getElementById('progressBar').style.width = `${progress}%`;
+// Switch to next mode
+function nextMode() {
+  console.log('🔄 Moving to next mode...');
+  console.log('🔄 Current mode:', pomodoroState.mode, 'Cycle:', pomodoroState.cycle);
   
-  document.getElementById('cycleInfo').textContent = `รอบที่ #${state.cycle}`;
+  if (pomodoroState.mode === 'pomodoro') {
+    pomodoroState.cycle++;
+    if (pomodoroState.cycle % pomodoroState.settings.longBreakInterval === 0) {
+      pomodoroState.mode = 'longBreak';
+      console.log('🔄 Switching to long break (cycle', pomodoroState.cycle, ')');
+    } else {
+      pomodoroState.mode = 'shortBreak';
+      console.log('🔄 Switching to short break (cycle', pomodoroState.cycle, ')');
+    }
+  } else {
+    pomodoroState.mode = 'pomodoro';
+    console.log('🔄 Switching back to pomodoro');
+  }
   
-  const statusTexts = {
-    pomodoro: 'เวลาที่จะมุ่งมั่น!',
-    short: 'พักสั้นๆ',
-    long: 'พักยาว ผ่อนคลาย'
-  };
-  document.getElementById('statusText').textContent = statusTexts[state.mode];
+  // Reset timer for new mode
+  pomodoroState.timeLeft = getModeTime();
+  pomodoroState.totalTime = getModeTime();
+  pomodoroState.isRunning = false;
   
-  document.getElementById('startBtn').textContent = state.isRunning ? 'Stop' : 'Start';
-  document.title = `${formatTime(state.timeLeft)} - Focus Timer`;
+  console.log('✅ Next mode set to:', pomodoroState.mode, 'with', pomodoroState.timeLeft, 'seconds');
+}
+
+// Complete current session
+function completeSession() {
+  if (pomodoroState.mode === 'pomodoro') {
+    pomodoroState.completedPomodoros++;
+    pomodoroState.stats.totalPomodoros++;
+    pomodoroState.stats.todayPomodoros++;
+    pomodoroState.stats.totalFocusTime += pomodoroState.settings.pomodoro;
+    pomodoroState.stats.todayFocusTime += pomodoroState.settings.pomodoro;
+  } else {
+    pomodoroState.stats.todayBreaks++;
+  }
+}
+
+// ============================================================================
+// TIMER FUNCTIONS
+// ============================================================================
+
+// Start timer
+function startTimer() {
+  console.log('🎯 startTimer called, current state:', {
+    isRunning: pomodoroState.isRunning,
+    timeLeft: pomodoroState.timeLeft
+  });
+  
+  if (pomodoroState.isRunning) {
+    console.log('⏸️ Timer is running, calling pauseTimer()');
+    pauseTimer();
+    return;
+  }
+
+  console.log('⏰ Starting Pomodoro timer...');
+  console.log('⏰ Current timeLeft:', pomodoroState.timeLeft);
+  pomodoroState.isRunning = true;
+  lastTick = Date.now();
+  
+  // Start local interval for UI updates
+  startLocalInterval();
+  
+  // Start global timer for background operation
+  startGlobalTimer();
+  
+  // Update button state
+  updateButtons();
+  
+  saveState();
 }
 
 async function switchMode(mode, reset = false, isSkip = false) {
@@ -170,22 +235,58 @@ async function switchMode(mode, reset = false, isSkip = false) {
     short: state.settings.shortBreak * 60,
     long: state.settings.longBreak * 60
   };
-  
-  state.timeLeft = times[mode];
-  state.totalTime = times[mode];
-  
-  document.querySelectorAll('.mode-tab').forEach(tab => {
-    tab.classList.remove('active');
-    if (tab.dataset.mode === mode) {
-      tab.classList.add('active');
-    }
-  });
-  
-  document.body.className = mode === 'pomodoro' ? '' : mode === 'short' ? 'short-break' : 'long-break';
-  updateDisplay();
+// Pause timer
+function pauseTimer() {
+  console.log('⏸️ Pausing Pomodoro timer...');
+  console.log('⏸️ Before pause - isRunning:', pomodoroState.isRunning);
+  pomodoroState.isRunning = false;
+  console.log('⏸️ After pause - isRunning:', pomodoroState.isRunning);
+  stopAllTimers();
+  updateButtons(); // Update button state
+  saveState();
 }
 
-let lastTick = Date.now();
+// Reset timer
+function resetTimer() {
+  console.log('🔄 Resetting Pomodoro timer...');
+  console.log('🔄 Current mode:', pomodoroState.mode);
+  
+  pomodoroState.isRunning = false;
+  pomodoroState.timeLeft = getModeTime();
+  pomodoroState.totalTime = getModeTime();
+  
+  console.log('🔄 Reset to:', pomodoroState.timeLeft, 'seconds');
+  
+  stopAllTimers();
+  updateButtons(); // Update button state
+  updateDisplay(); // Update display
+  saveState();
+}
+
+// Skip current session
+function skipTimer() {
+  console.log('⏭️ Skipping current session...');
+  console.log('⏭️ Current mode:', pomodoroState.mode);
+  
+  // Stop current timer
+  pomodoroState.isRunning = false;
+  stopAllTimers();
+  
+  // Complete current session if it's a pomodoro
+  if (pomodoroState.mode === 'pomodoro') {
+    console.log('⏭️ Completing pomodoro session...');
+    completeSession();
+  }
+  
+  // Move to next mode
+  nextMode();
+  
+  console.log('⏭️ Switched to mode:', pomodoroState.mode);
+  
+  updateButtons(); // Update button state
+  updateAll(); // Update all UI elements
+  saveState();
+}
 
 async function startTimer() {
   if (state.isRunning) {
@@ -206,6 +307,10 @@ async function startTimer() {
       }
     }
     return;
+// Start local interval for UI updates
+function startLocalInterval() {
+  if (interval) {
+    clearInterval(interval);
   }
 
   // Reset cycle when starting a new Pomodoro session
@@ -253,21 +358,44 @@ async function startTimer() {
   updateDisplay();
   
   interval = setInterval(() => {
-    const now = Date.now();
-    const delta = Math.floor((now - lastTick) / 1000);
-    
-    if (delta >= 1) {
-      if (state.timeLeft > 0) {
-        state.timeLeft = Math.max(0, state.timeLeft - delta);
-        lastTick = now;
-        updateDisplay();
-        
-        if (state.timeLeft === 0) {
-          timerComplete();
+    if (pomodoroState.isRunning) {
+      updateDisplay();
+      updateButtons();
+      updateModeTabs();
+    }
+  }, 100);
+}
+
+// Start global timer for background operation
+function startGlobalTimer() {
+  if (globalTimer) {
+    clearInterval(globalTimer);
+  }
+  
+  globalTimer = setInterval(() => {
+    if (pomodoroState.isRunning) {
+      const now = Date.now();
+      const delta = Math.floor((now - lastTick) / 1000);
+      
+      if (delta >= 1) {
+        if (pomodoroState.timeLeft > 0) {
+          pomodoroState.timeLeft = Math.max(0, pomodoroState.timeLeft - delta);
+          lastTick = now;
+          saveState();
+          
+          console.log('⏰ Timer tick:', pomodoroState.timeLeft, 'seconds left');
+          
+          // Update UI immediately
+          updateDisplay();
+          updateButtons();
+          
+          if (pomodoroState.timeLeft === 0) {
+            timerComplete();
+          }
         }
       }
     }
-  }, 100); // Run every 100ms for more accurate timing
+  }, 1000);
 }
 
 async function timerComplete() {
@@ -298,8 +426,53 @@ async function timerComplete() {
     state.stats.totalPomodoros++;
     state.stats.todayFocusTime += state.settings.pomodoro;
     state.stats.totalFocusTime += state.settings.pomodoro;
+// Timer completed
+function timerComplete() {
+  console.log('🔔 Timer completed!');
+  pomodoroState.isRunning = false;
+  completeSession();
+  
+  // Play sound if enabled
+  if (pomodoroState.settings.soundEnabled) {
+    playSound();
+  }
+  
+  // Auto-start next session if enabled
+  if (pomodoroState.settings.autoStartBreaks && pomodoroState.mode === 'pomodoro') {
+    setTimeout(() => {
+      nextMode();
+      startTimer();
+    }, 1000);
+  } else {
+    nextMode();
+  }
+  
+  stopAllTimers();
+  updateButtons(); // Update button state
+  saveState();
+}
+
+// Stop all timers
+function stopAllTimers() {
+  if (interval) {
+    clearInterval(interval);
+    interval = null;
+  }
+  if (globalTimer) {
+    clearInterval(globalTimer);
+    globalTimer = null;
+  }
+}
+
+// Play completion sound
+function playSound() {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
     
-    showNotification('🎉 Pomodoro สำเร็จ!');
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
     
     const nextMode = state.completedPomodoros % state.settings.longBreakInterval === 0 ? 'long' : 'short';
     switchMode(nextMode);
@@ -329,33 +502,208 @@ async function timerComplete() {
       console.error('Failed to create break session:', error);
       showNotification('⚠️ เกิดข้อผิดพลาดในการสร้าง session พัก');
     }
-  } else {
-    state.cycle++;
-    state.stats.todayBreaks++;
-    showNotification('✨ พักเสร็จแล้ว!');
-    switchMode('pomodoro');
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
     
-    if (state.settings.autoStartBreaks) {
-      startTimer();
-    }
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5);
+  } catch (e) {
+    console.error('Sound playback failed:', e);
   }
-  
-  updateStats();
-  playSound();
 }
 
-// ---------- Task Management ----------
-function updateTaskList() {
-  const list = document.getElementById('taskList');
-  list.innerHTML = '';
+// ============================================================================
+// UI FUNCTIONS
+// ============================================================================
+
+// Update timer display
+function updateDisplay() {
+  const timeDisplay = document.getElementById('timeDisplay');
+  if (!timeDisplay) {
+    console.log('❌ timeDisplay element not found');
+    return;
+  }
   
-  state.tasks.forEach(task => {
-    const li = document.createElement('li');
-    li.className = `task-item${task.completed ? ' completed' : ''}`;
-    li.dataset.id = task.id;
+  const minutes = Math.floor(pomodoroState.timeLeft / 60);
+  const seconds = pomodoroState.timeLeft % 60;
+  const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  
+  console.log('🔄 Updating display:', timeString, '(timeLeft:', pomodoroState.timeLeft, 'seconds)');
+  timeDisplay.textContent = timeString;
+  
+  // Update progress bar
+  const progressBar = document.getElementById('progressBar');
+  if (progressBar) {
+    const progress = ((pomodoroState.totalTime - pomodoroState.timeLeft) / pomodoroState.totalTime) * 100;
+    progressBar.style.width = `${progress}%`;
+    console.log('🔄 Progress bar updated to', progress + '%');
+  }
+}
+
+// Update mode display
+function updateModeDisplay() {
+  const modeDisplay = document.getElementById('modeDisplay');
+  if (!modeDisplay) {
+    console.warn('⚠️ modeDisplay element not found');
+    return;
+  }
+  
+  const modeText = {
+    'pomodoro': 'Focus Time',
+    'shortBreak': 'Short Break',
+    'longBreak': 'Long Break'
+  };
+  
+  const newText = modeText[pomodoroState.mode] || 'Focus Time';
+  console.log('🔄 Updating mode display to:', newText, '(mode:', pomodoroState.mode, ')');
+  modeDisplay.textContent = newText;
+}
+
+// Update button states
+function updateButtons() {
+  const startBtn = document.getElementById('startBtn');
+  if (startBtn) {
+    const newText = pomodoroState.isRunning ? 'Pause' : 'Start';
+    const newClass = pomodoroState.isRunning ? 'btn btn-warning' : 'btn btn-success';
     
-    li.innerHTML = `
-      <input type="checkbox" class="checkbox" ${task.completed ? 'checked' : ''}>
+    console.log('🔄 Updating button:', {
+      isRunning: pomodoroState.isRunning,
+      newText: newText,
+      newClass: newClass
+    });
+    
+    startBtn.textContent = newText;
+    startBtn.className = newClass;
+  } else {
+    console.warn('⚠️ startBtn element not found');
+  }
+}
+
+// Update mode tabs
+function updateModeTabs() {
+  console.log('🔄 Updating mode tabs for mode:', pomodoroState.mode);
+  
+  // Remove active class from all tabs - try both ID and data-mode selectors
+  const tabSelectors = [
+    { id: 'pomodoroTab', dataMode: 'pomodoro' },
+    { id: 'shortBreakTab', dataMode: 'short' },
+    { id: 'longBreakTab', dataMode: 'long' }
+  ];
+  
+  tabSelectors.forEach(({ id, dataMode }) => {
+    let tab = document.getElementById(id);
+    if (!tab) {
+      tab = document.querySelector(`[data-mode="${dataMode}"]`);
+    }
+    if (tab) {
+      tab.classList.remove('active');
+      console.log('🔄 Removed active class from', id || dataMode);
+    }
+  });
+  
+  // Add active class to current mode tab
+  const modeMap = {
+    'pomodoro': { id: 'pomodoroTab', dataMode: 'pomodoro' },
+    'shortBreak': { id: 'shortBreakTab', dataMode: 'short' },
+    'longBreak': { id: 'longBreakTab', dataMode: 'long' }
+  };
+  
+  const currentMode = modeMap[pomodoroState.mode];
+  if (currentMode) {
+    let currentTab = document.getElementById(currentMode.id);
+    if (!currentTab) {
+      currentTab = document.querySelector(`[data-mode="${currentMode.dataMode}"]`);
+    }
+    
+    if (currentTab) {
+      currentTab.classList.add('active');
+      console.log('✅ Added active class to', currentMode.id || currentMode.dataMode);
+    } else {
+      console.warn('⚠️ Current tab not found:', currentMode.id, 'or', currentMode.dataMode);
+    }
+  }
+}
+
+// Update cycle information
+function updateCycleInfo() {
+  const cycleInfo = document.getElementById('cycleInfo');
+  if (cycleInfo) {
+    cycleInfo.textContent = `Cycle #${pomodoroState.cycle}`;
+  }
+  
+  const statusText = document.getElementById('statusText');
+  if (statusText) {
+    let status = '';
+    if (pomodoroState.mode === 'pomodoro') {
+      status = 'Time to focus!';
+    } else if (pomodoroState.mode === 'shortBreak') {
+      status = 'Short break time!';
+    } else if (pomodoroState.mode === 'longBreak') {
+      status = 'Long break time!';
+    }
+    statusText.textContent = status;
+  }
+}
+
+// Update stats display
+function updateStats() {
+  const stats = pomodoroState.stats;
+  
+  console.log('📊 Updating stats:', stats);
+  
+  // Update total stats (in stats dialog)
+  const totalPomodoros = document.getElementById('totalPomodoros');
+  if (totalPomodoros) {
+    totalPomodoros.textContent = stats.totalPomodoros;
+  }
+  
+  const totalFocusTime = document.getElementById('totalFocusTime');
+  if (totalFocusTime) {
+    totalFocusTime.textContent = formatTime(stats.totalFocusTime * 60);
+  }
+  
+  const totalTasks = document.getElementById('totalTasksCompleted');
+  if (totalTasks) {
+    totalTasks.textContent = stats.totalTasks;
+  }
+  
+  // Update today's stats (in main display)
+  const todayPomodoros = document.getElementById('completedPomodoros');
+  if (todayPomodoros) {
+    todayPomodoros.textContent = stats.todayPomodoros;
+  }
+  
+  const todayFocusTime = document.getElementById('focusTime');
+  if (todayFocusTime) {
+    todayFocusTime.textContent = formatTime(stats.todayFocusTime * 60);
+  }
+  
+  const todayTasks = document.getElementById('completedTasks');
+  if (todayTasks) {
+    todayTasks.textContent = stats.todayTasks;
+  }
+  
+  const todayBreaks = document.getElementById('totalBreaks');
+  if (todayBreaks) {
+    todayBreaks.textContent = stats.todayBreaks;
+  }
+}
+
+// Update task list
+function updateTaskList() {
+  const taskList = document.getElementById('taskList');
+  if (!taskList) return;
+  
+  taskList.innerHTML = '';
+  pomodoroState.tasks.forEach((task, index) => {
+    const taskElement = document.createElement('li');
+    taskElement.className = `task-item ${task.completed ? 'completed' : ''}`;
+    taskElement.innerHTML = `
+      <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})">
       <span class="task-text">${task.text}</span>
       <span class="task-pomodoros">${task.pomodoros} 🍅</span>
       <button class="select-btn" ${task.completed ? 'disabled' : ''}>เลือก</button>
@@ -375,24 +723,64 @@ function updateTaskList() {
     });
     
     list.appendChild(li);
+      <button class="btn btn-sm btn-outline-danger" onclick="removeTask(${index})">×</button>
+    `;
+    taskList.appendChild(taskElement);
   });
   
-  document.getElementById('taskCount').textContent = `${state.tasks.length} งาน`;
+  // Update task count
+  const taskCount = document.getElementById('taskCount');
+  if (taskCount) {
+    taskCount.textContent = `${pomodoroState.tasks.length} tasks`;
+  }
 }
 
-function addTask(text) {
-  if (!text.trim()) return;
+// Format time for display
+function formatTime(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
   
-  const task = {
-    id: Date.now(),
-    text: text.trim(),
-    completed: false,
-    pomodoros: 0
-  };
-  
-  state.tasks.unshift(task);
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else {
+    return `${minutes}m`;
+  }
+}
+
+// Update all UI elements
+function updateAll() {
+  updateDisplay();
+  updateModeDisplay();
+  updateButtons();
+  updateModeTabs();
+  updateStats();
   updateTaskList();
-  document.getElementById('taskInput').value = '';
+  updateCycleInfo();
+}
+
+// ============================================================================
+// TASK FUNCTIONS
+// ============================================================================
+
+// Add new task
+function addTask() {
+  const taskInput = document.getElementById('taskInput');
+  if (!taskInput) return;
+  
+  const text = taskInput.value.trim();
+  if (!text) return;
+  
+  pomodoroState.tasks.push({
+    text: text,
+    completed: false,
+    createdAt: new Date().toISOString()
+  });
+  
+  taskInput.value = '';
+  updateTaskList();
+  pomodoroState.stats.totalTasks++;
+  pomodoroState.stats.todayTasks++;
+  saveState();
 }
 
 function toggleTask(id) {
@@ -435,36 +823,48 @@ function updateCurrentTaskDisplay() {
     currentTaskDisplay.textContent = state.currentTask 
       ? `กำลังทำ: ${state.currentTask.text}` 
       : 'ไม่ได้เลือกงาน';
+// Toggle task completion
+function toggleTask(index) {
+  if (index >= 0 && index < pomodoroState.tasks.length) {
+    pomodoroState.tasks[index].completed = !pomodoroState.tasks[index].completed;
+    updateTaskList();
+    saveState();
   }
 }
 
-// ---------- Stats & Settings ----------
-function updateStats() {
-  document.getElementById('completedPomodoros').textContent = state.stats.todayPomodoros;
-  document.getElementById('focusTime').textContent = formatHours(state.stats.todayFocusTime);
-  document.getElementById('completedTasks').textContent = state.stats.todayTasks;
-  document.getElementById('totalBreaks').textContent = state.stats.todayBreaks;
-  
-  document.getElementById('totalPomodoros').textContent = state.stats.totalPomodoros;
-  document.getElementById('totalFocusTime').textContent = formatHours(state.stats.totalFocusTime);
-  document.getElementById('totalTasksCompleted').textContent = state.stats.totalTasks;
+// Remove task
+function removeTask(index) {
+  if (index >= 0 && index < pomodoroState.tasks.length) {
+    pomodoroState.tasks.splice(index, 1);
+    updateTaskList();
+    saveState();
+  }
 }
 
-function openSettings() {
-  const dialog = document.getElementById('settingsDialog');
+// ============================================================================
+// SETTINGS FUNCTIONS
+// ============================================================================
+
+// Show settings dialog
+function showSettings() {
+  const settingsDialog = document.getElementById('settingsDialog');
+  if (!settingsDialog) return;
   
-  document.getElementById('pomodoroTime').value = state.settings.pomodoro;
-  document.getElementById('shortBreakTime').value = state.settings.shortBreak;
-  document.getElementById('longBreakTime').value = state.settings.longBreak;
-  document.getElementById('longBreakInterval').value = state.settings.longBreakInterval;
-  document.getElementById('autoStartBreaks').checked = state.settings.autoStartBreaks;
-  document.getElementById('soundEnabled').checked = state.settings.soundEnabled;
+  // Populate settings form
+  const settings = pomodoroState.settings;
+  document.getElementById('pomodoroTime').value = settings.pomodoro;
+  document.getElementById('shortBreakTime').value = settings.shortBreak;
+  document.getElementById('longBreakTime').value = settings.longBreak;
+  document.getElementById('longBreakInterval').value = settings.longBreakInterval;
+  document.getElementById('autoStartBreaks').checked = settings.autoStartBreaks;
+  document.getElementById('soundEnabled').checked = settings.soundEnabled;
   
-  dialog.showModal();
+  settingsDialog.showModal();
 }
 
+// Save settings
 function saveSettings() {
-  state.settings = {
+  const settings = {
     pomodoro: parseInt(document.getElementById('pomodoroTime').value) || 25,
     shortBreak: parseInt(document.getElementById('shortBreakTime').value) || 5,
     longBreak: parseInt(document.getElementById('longBreakTime').value) || 15,
@@ -473,32 +873,74 @@ function saveSettings() {
     soundEnabled: document.getElementById('soundEnabled').checked
   };
   
+  pomodoroState.settings = settings;
+  resetTimer();
   document.getElementById('settingsDialog').close();
-  switchMode(state.mode);
+  saveState();
+  updateAll();
 }
 
-// ---------- Sound Effects ----------
-function playSound() {
-  if (!state.settings.soundEnabled) return;
+// Show stats dialog
+function showStats() {
+  const statsDialog = document.getElementById('statsDialog');
+  if (!statsDialog) return;
+  updateStats();
+  statsDialog.showModal();
+}
+
+// Reset stats
+function resetStats() {
+  if (confirm('Are you sure you want to reset all statistics?')) {
+    pomodoroState.stats = {
+      totalPomodoros: 0,
+      totalFocusTime: 0,
+      totalTasks: 0,
+      todayPomodoros: 0,
+      todayFocusTime: 0,
+      todayTasks: 0,
+      todayBreaks: 0,
+      lastDate: new Date().toDateString()
+    };
+    saveState();
+    updateStats();
+  }
+}
+
+// ============================================================================
+// MODE FUNCTIONS
+// ============================================================================
+
+// Switch to different mode
+function switchMode(mode) {
+  console.log('🔄 switchMode called with mode:', mode);
+  console.log('🔄 Current mode:', pomodoroState.mode);
+  console.log('🔄 Mode change needed:', pomodoroState.mode !== mode);
   
-  try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+  if (pomodoroState.mode !== mode) {
+    console.log('🔄 Performing mode switch...');
     
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    // Stop current timer if running
+    if (pomodoroState.isRunning) {
+      console.log('⏸️ Stopping current timer before mode switch');
+      pomodoroState.isRunning = false;
+      stopAllTimers();
+    }
     
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
+    pomodoroState.mode = mode;
     
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    // Reset timer for new mode
+    pomodoroState.timeLeft = getModeTime();
+    pomodoroState.totalTime = getModeTime();
     
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
-  } catch (e) {
-    console.error('Sound playback failed:', e);
+    console.log('✅ Mode switched to', mode, 'with', pomodoroState.timeLeft, 'seconds');
+    console.log('✅ Timer display should show:', Math.floor(pomodoroState.timeLeft / 60) + ':' + (pomodoroState.timeLeft % 60).toString().padStart(2, '0'));
+    
+    updateAll();
+    saveState();
+    
+    console.log('✅ Mode switch completed');
+  } else {
+    console.log('⚠️ Already in', mode, 'mode, no change needed');
   }
 }
 
@@ -565,41 +1007,95 @@ function initializeApp() {
       // กรณีมีข้อผิดพลาดให้เริ่มต้นใหม่
       state.cycle = 1;
       state.completedPomodoros = 0;
+// ============================================================================
+// STATE PERSISTENCE
+// ============================================================================
+
+// Save state to localStorage
+function saveState() {
+  try {
+    const stateToSave = { 
+      ...pomodoroState,
+      lastTick: Date.now() // Add timestamp for sync
+    };
+    localStorage.setItem('pomodoroState', JSON.stringify(stateToSave));
+    console.log('💾 Pomodoro state saved');
+  } catch (e) {
+    console.error('Error saving pomodoro state:', e);
+  }
+}
+
+// Load state from localStorage
+function loadState() {
+  try {
+    const savedState = localStorage.getItem('pomodoroState');
+    if (savedState) {
+      const parsedState = JSON.parse(savedState);
+      Object.assign(pomodoroState, parsedState);
+      console.log('📂 Pomodoro state loaded');
+      return true;
     }
+  } catch (e) {
+    console.error('Error loading pomodoro state:', e);
   }
+  return false;
+}
 
-  // Check if it's a new day
+// Check for new day and reset daily stats
+function checkNewDay() {
   const today = new Date().toDateString();
-  if (state.stats.lastDate !== today) {
-    console.log('New day detected, resetting daily stats');
-    state.stats.todayPomodoros = 0;
-    state.stats.todayFocusTime = 0;
-    state.stats.todayTasks = 0;
-    state.stats.todayBreaks = 0;
-    state.stats.lastDate = today;
+  if (pomodoroState.stats.lastDate !== today) {
+    console.log('📅 New day detected, resetting daily stats');
+    pomodoroState.stats.todayPomodoros = 0;
+    pomodoroState.stats.todayFocusTime = 0;
+    pomodoroState.stats.todayTasks = 0;
+    pomodoroState.stats.todayBreaks = 0;
+    pomodoroState.stats.lastDate = today;
+    saveState();
   }
+}
 
-  // Initialize displays
-  console.log('Initializing displays...');
-  updateDisplay();
-  updateStats();
-  updateTaskList();
+// ============================================================================
+// EVENT LISTENERS
+// ============================================================================
 
-  // Timer Controls
-  console.log('Setting up timer controls...');
+// Remove existing event listeners to prevent duplicates
+function removeEventListeners() {
+  console.log('🧹 Removing existing event listeners...');
+  
+  // Clone elements to remove all event listeners
+  const elements = [
+    'startBtn', 'resetBtn', 'skipBtn', 'pomodoroTab', 'shortBreakTab', 'longBreakTab',
+    'addTaskBtn', 'taskInput', 'settingsBtn', 'closeSettings', 'saveSettings',
+    'statsBtn', 'closeStats', 'resetStatsBtn'
+  ];
+  
+  elements.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      const newElement = element.cloneNode(true);
+      element.parentNode.replaceChild(newElement, element);
+    }
+  });
+}
+
+// Setup all event listeners
+function setupEventListeners() {
+  console.log('🔗 Setting up event listeners...');
+  
+  // Remove existing event listeners first to prevent duplicates
+  removeEventListeners();
+  
+  // Timer controls
   const startBtn = document.getElementById('startBtn');
-  const resetBtn = document.getElementById('resetBtn');
-  const skipBtn = document.getElementById('skipBtn');
-
   if (startBtn) {
-    startBtn.addEventListener('click', () => {
-      console.log('Start/Pause button clicked');
-      startTimer();
-    });
+    console.log('🔗 Adding click listener to startBtn');
+    startBtn.addEventListener('click', startTimer);
   } else {
-    console.error('Start button not found!');
+    console.warn('⚠️ startBtn not found when setting up event listeners');
   }
-
+  
+  const resetBtn = document.getElementById('resetBtn');
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
       console.log('Reset button clicked');
@@ -608,10 +1104,13 @@ function initializeApp() {
         showNotification('🔄 รีเซ็ตเรียบร้อย!');
       }
     });
+    console.log('🔗 Adding click listener to resetBtn');
+    resetBtn.addEventListener('click', resetTimer);
   } else {
-    console.error('Reset button not found!');
+    console.warn('⚠️ resetBtn not found when setting up event listeners');
   }
-
+  
+  const skipBtn = document.getElementById('skipBtn');
   if (skipBtn) {
     skipBtn.addEventListener('click', () => {
       console.log('Skip button clicked');
@@ -622,104 +1121,104 @@ function initializeApp() {
         // เมื่อกด Skip ในโหมดพัก
         switchMode('pomodoro');
       }
+    console.log('🔗 Adding click listener to skipBtn');
+    skipBtn.addEventListener('click', skipTimer);
+  } else {
+    console.warn('⚠️ skipBtn not found when setting up event listeners');
+  }
+  
+  // Mode tabs - try both ID and data-mode selectors
+  let pomodoroTab = document.getElementById('pomodoroTab');
+  if (!pomodoroTab) {
+    pomodoroTab = document.querySelector('[data-mode="pomodoro"]');
+  }
+  if (pomodoroTab) {
+    console.log('🔗 Adding click listener to pomodoroTab');
+    pomodoroTab.addEventListener('click', (e) => {
+      console.log('🖱️ Pomodoro tab clicked!');
+      e.preventDefault();
+      switchMode('pomodoro');
     });
   } else {
-    console.error('Skip button not found!');
+    console.warn('⚠️ pomodoroTab not found when setting up event listeners');
   }
-
-  // Mode Tabs
-  console.log('Setting up mode tabs...');
-  const modeTabs = document.querySelectorAll('.mode-tab');
-  modeTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      console.log('Mode changed to:', tab.dataset.mode);
-      switchMode(tab.dataset.mode);
+  
+  let shortBreakTab = document.getElementById('shortBreakTab');
+  if (!shortBreakTab) {
+    shortBreakTab = document.querySelector('[data-mode="short"]');
+  }
+  if (shortBreakTab) {
+    console.log('🔗 Adding click listener to shortBreakTab');
+    shortBreakTab.addEventListener('click', (e) => {
+      console.log('🖱️ Short Break tab clicked!');
+      e.preventDefault();
+      switchMode('shortBreak');
     });
-  });
-
-  // Task Management
-  console.log('Setting up task management...');
-  const taskInput = document.getElementById('taskInput');
+  } else {
+    console.warn('⚠️ shortBreakTab not found when setting up event listeners');
+  }
+  
+  let longBreakTab = document.getElementById('longBreakTab');
+  if (!longBreakTab) {
+    longBreakTab = document.querySelector('[data-mode="long"]');
+  }
+  if (longBreakTab) {
+    console.log('🔗 Adding click listener to longBreakTab');
+    longBreakTab.addEventListener('click', (e) => {
+      console.log('🖱️ Long Break tab clicked!');
+      e.preventDefault();
+      switchMode('longBreak');
+    });
+  } else {
+    console.warn('⚠️ longBreakTab not found when setting up event listeners');
+  }
+  
+  // Tasks
   const addTaskBtn = document.getElementById('addTaskBtn');
-
+  if (addTaskBtn) {
+    addTaskBtn.addEventListener('click', addTask);
+  }
+  
+  const taskInput = document.getElementById('taskInput');
   if (taskInput) {
     taskInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        console.log('Adding task via Enter key');
-        addTask(e.target.value);
+        addTask();
       }
     });
   }
-
-  if (addTaskBtn) {
-    addTaskBtn.addEventListener('click', () => {
-      console.log('Adding task via button click');
-      const input = document.getElementById('taskInput');
-      if (input) {
-        addTask(input.value);
-      }
-    });
-  }
-
-  // Settings Dialog
-  console.log('Setting up settings dialog...');
+  
+  // Settings
   const settingsBtn = document.getElementById('settingsBtn');
-  const closeSettings = document.getElementById('closeSettings');
-  const saveSettingsBtn = document.getElementById('saveSettings');
-  const settingsDialog = document.getElementById('settingsDialog');
-
-  if (settingsBtn && settingsDialog) {
-    settingsBtn.addEventListener('click', () => {
-      console.log('Opening settings dialog');
-      openSettings();
-    });
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', showSettings);
   }
-
+  
+  const closeSettings = document.getElementById('closeSettings');
   if (closeSettings) {
     closeSettings.addEventListener('click', () => {
-      console.log('Closing settings dialog');
-      settingsDialog.close();
+      document.getElementById('settingsDialog').close();
     });
   }
-
-  if (saveSettingsBtn) {
-    saveSettingsBtn.addEventListener('click', () => {
-      console.log('Saving settings');
-      // call the settings save function defined above
-      saveSettings();
-    });
+  
+  const saveSettings = document.getElementById('saveSettings');
+  if (saveSettings) {
+    saveSettings.addEventListener('click', saveSettings);
   }
-
-  // Stats Dialog
-  console.log('Setting up stats dialog...');
+  
+  // Stats
   const statsBtn = document.getElementById('statsBtn');
-  const closeStats = document.getElementById('closeStats');
-  const closeStatsBtn = document.getElementById('closeStatsBtn');
-  const statsDialog = document.getElementById('statsDialog');
-
-  if (statsBtn && statsDialog) {
-    statsBtn.addEventListener('click', () => {
-      console.log('Opening stats dialog');
-      statsDialog.showModal();
-    });
+  if (statsBtn) {
+    statsBtn.addEventListener('click', showStats);
   }
-
+  
+  const closeStats = document.getElementById('closeStats');
   if (closeStats) {
     closeStats.addEventListener('click', () => {
-      console.log('Closing stats dialog');
-      statsDialog.close();
+      document.getElementById('statsDialog').close();
     });
   }
-
-  if (closeStatsBtn) {
-    closeStatsBtn.addEventListener('click', () => {
-      console.log('Closing stats dialog via button');
-      statsDialog.close();
-    });
-  }
-
-  // Reset Stats
-  console.log('Setting up stats reset...');
+  
   const resetStatsBtn = document.getElementById('resetStatsBtn');
   if (resetStatsBtn) {
     resetStatsBtn.addEventListener('click', () => {
@@ -747,42 +1246,109 @@ function initializeApp() {
         document.getElementById('settingsDialog').close();
       }
     });
+    resetStatsBtn.addEventListener('click', resetStats);
   }
-
-  // Keyboard Shortcuts
-  console.log('Setting up keyboard shortcuts...');
-  document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT') return;
-    
-    if (e.code === 'Space') {
-      e.preventDefault();
-      console.log('Space pressed - Start/Pause timer');
-      startTimer();
-    } else if (e.key.toLowerCase() === 'r') {
-      console.log('R pressed - Reset timer');
-      switchMode(state.mode);
-    }
-  });
-
-  // Auto-save state
-  console.log('Setting up auto-save...');
-  setInterval(() => {
-    // Save only if state has changed
-    const currentState = JSON.stringify(state);
-    if (currentState !== localStorage.getItem('pomodoroState')) {
-      localStorage.setItem('pomodoroState', currentState);
-      console.log('State auto-saved');
-    }
-  }, 10000); // Save every 10 seconds instead
-
-  console.log('Initialization complete!');
+  
+  console.log('✅ Event listeners setup complete');
 }
 
-// Cleanup function to stop timer and save state
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
+// Initialize the application
+function initialize() {
+  console.log('🚀 Initializing Pomodoro App...');
+  
+  // Prevent multiple initializations
+  if (isInitialized) {
+    console.log('⚠️ Pomodoro already initialized, skipping...');
+    return;
+  }
+  
+  // Load saved state
+  loadState();
+  
+  // Check for new day
+  checkNewDay();
+  
+  // Display current settings
+  console.log('🍅 Pomodoro Settings:', {
+    pomodoro: pomodoroState.settings.pomodoro + ' minutes',
+    shortBreak: pomodoroState.settings.shortBreak + ' minutes', 
+    longBreak: pomodoroState.settings.longBreak + ' minutes',
+    longBreakInterval: 'every ' + pomodoroState.settings.longBreakInterval + ' pomodoros',
+    autoStartBreaks: pomodoroState.settings.autoStartBreaks,
+    soundEnabled: pomodoroState.settings.soundEnabled
+  });
+  
+  console.log('🔄 Current State:', {
+    mode: pomodoroState.mode,
+    cycle: pomodoroState.cycle,
+    timeLeft: pomodoroState.timeLeft + ' seconds',
+    isRunning: pomodoroState.isRunning
+  });
+  
+  // Check if all required DOM elements exist
+  const requiredElements = [
+    { id: 'timeDisplay' },
+    { id: 'modeDisplay' },
+    { id: 'startBtn' },
+    { id: 'resetBtn' },
+    { id: 'skipBtn' },
+    { id: 'pomodoroTab', dataMode: 'pomodoro' },
+    { id: 'shortBreakTab', dataMode: 'short' },
+    { id: 'longBreakTab', dataMode: 'long' }
+  ];
+  
+  const missingElements = [];
+  requiredElements.forEach(({ id, dataMode }) => {
+    let element = document.getElementById(id);
+    if (!element && dataMode) {
+      element = document.querySelector(`[data-mode="${dataMode}"]`);
+    }
+    if (!element) {
+      missingElements.push(id || dataMode);
+    }
+  });
+  
+  if (missingElements.length > 0) {
+    console.error('❌ Missing required elements:', missingElements);
+  } else {
+    console.log('✅ All required elements found');
+  }
+  
+  // Debug: Show found elements
+  console.log('🔍 Found elements:');
+  requiredElements.forEach(({ id, dataMode }) => {
+    let element = document.getElementById(id);
+    if (!element && dataMode) {
+      element = document.querySelector(`[data-mode="${dataMode}"]`);
+    }
+    if (element) {
+      console.log(`✅ ${id || dataMode}:`, element.textContent || element.className);
+    }
+  });
+  
+  // Setup event listeners
+  setupEventListeners();
+  
+  // Update UI
+  updateAll();
+  
+  isInitialized = true;
+  console.log('✅ Pomodoro App initialized');
+}
+
+// Cleanup when leaving page
 function cleanup() {
   console.log('Cleaning up Pomodoro app...');
   
   // Stop timer
+  console.log('🧹 Cleaning up Pomodoro App...');
+  
+  // Don't stop global timer - let it continue running
+  // Only stop local interval for UI updates
   if (interval) {
     clearInterval(interval);
     interval = null;
@@ -829,49 +1395,194 @@ function cleanup() {
   localStorage.setItem('pomodoroState', JSON.stringify(state));
   
   console.log('✅ Cleanup complete');
+  // Remove event listeners to prevent memory leaks
+  removeEventListeners();
+  
+  // Save state before cleanup
+  saveState();
+  
+  isInitialized = false;
+  console.log('✅ Pomodoro App cleanup complete');
 }
 
-// Flag to track initialization status
-let isInitialized = false;
+// ============================================================================
+// STATE SYNCHRONIZATION
+// ============================================================================
 
-// Make functions globally available for SPA
-window.onLoadPomodoro = function() {
-  console.log('🔄 onLoadPomodoro called');
+// Sync state when returning to Pomodoro page
+function syncBackgroundState() {
+  console.log('🔄 Syncing background state...');
   
-  // If already initialized, cleanup first
+  // Load the latest state from localStorage
+  const savedState = localStorage.getItem('pomodoroState');
+  if (savedState) {
+    try {
+      const parsedState = JSON.parse(savedState);
+      
+      // If timer was running, calculate elapsed time
+      if (parsedState.isRunning && parsedState.timeLeft > 0) {
+        const now = Date.now();
+        const lastSaved = parsedState.lastTick || now;
+        const elapsed = Math.floor((now - lastSaved) / 1000);
+        
+        if (elapsed > 0) {
+          parsedState.timeLeft = Math.max(0, parsedState.timeLeft - elapsed);
+          parsedState.lastTick = now;
+          
+          console.log(`⏰ Synced timer: ${elapsed}s elapsed, ${parsedState.timeLeft}s remaining`);
+          
+          // Check if timer completed while away
+          if (parsedState.timeLeft === 0) {
+            console.log('🔔 Timer completed while away!');
+            timerComplete();
+            return;
+          }
+          
+          // Update state
+          Object.assign(pomodoroState, parsedState);
+          saveState();
+        }
+      }
+      
+      // Update UI with current state
+      updateAll();
+      
+      // If timer is running, restart local interval
+      if (pomodoroState.isRunning) {
+        startLocalInterval();
+        console.log('▶️ Restarted UI updates for running timer');
+      }
+      
+    } catch (e) {
+      console.error('Error syncing background state:', e);
+    }
+  }
+}
+
+// ============================================================================
+// SPA INTEGRATION
+// ============================================================================
+
+// Initialize Pomodoro app
+window.onLoadPomodoro = function() {
+  console.log('🔄 Loading Pomodoro page...');
+  
+  // Always cleanup previous instance first
   if (isInitialized) {
-    console.log('🧹 Cleaning up previous instance...');
+    console.log('🧹 Cleaning up previous Pomodoro instance...');
     cleanup();
   }
   
-  console.log('🚀 Initializing Pomodoro app...');
-  initializeApp();
-  isInitialized = true;
-  console.log('✅ Initialization complete');
-  
-  // Notify main.js that initialization is complete
-  window.pomodoroInitialized = true;
-  
-  // Dispatch custom event
-  window.dispatchEvent(new CustomEvent('pomodoroReady'));
-}
-
-window.onUnloadPomodoro = function() {
-  console.log('👋 Unloading Pomodoro app...');
-  cleanup();
+  // Reset initialization flag
   isInitialized = false;
-  window.pomodoroInitialized = false;
-}
+  
+  // Initialize after a short delay to ensure DOM is ready
+  setTimeout(() => {
+    console.log('🚀 Starting fresh Pomodoro initialization...');
+    initialize();
+    
+    // Sync state if timer was running in background
+    syncBackgroundState();
+    
+    window.pomodoroInitialized = true;
+    window.dispatchEvent(new CustomEvent('pomodoroReady'));
+  }, 100);
+};
 
-// Initialize on script load
-console.log('📥 pomodoro.js loaded');
-window.pomodoroLoaded = true;
-
-// Also initialize on direct page load if not in SPA mode
-if (!window.isInSpaMode) {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', window.onLoadPomodoro);
-  } else {
-    window.onLoadPomodoro();
+// Cleanup when leaving Pomodoro page
+window.onUnloadPomodoro = function() {
+  console.log('👋 Unloading Pomodoro page...');
+  
+  if (isInitialized) {
+    // Don't stop timer - let it continue running in background
+    console.log('💾 Saving timer state before page change...');
+    saveState();
+    
+    // Only cleanup UI and event listeners, keep timer running
+    cleanup();
   }
-}
+  
+  window.pomodoroInitialized = false;
+};
+
+// Page visibility API - pause UI updates when hidden
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    console.log('⏸️ Page hidden, timer continues running in background...');
+    // Timer continues running, just pause UI updates
+  } else {
+    console.log('▶️ Page visible, resuming timer updates...');
+    // Resume UI updates when page becomes visible
+    if (isInitialized && pomodoroState.isRunning) {
+      console.log('🔄 Resuming UI updates for running timer...');
+      updateAll();
+      // Restart local interval for UI updates
+      startLocalInterval();
+    }
+  }
+});
+
+// Test function for mode switching
+window.testModeSwitching = function() {
+  console.log('🧪 Testing mode switching...');
+  
+  const modes = ['pomodoro', 'shortBreak', 'longBreak'];
+  let currentIndex = 0;
+  
+  const testNext = () => {
+    if (currentIndex < modes.length) {
+      const mode = modes[currentIndex];
+      console.log('🧪 Testing switch to', mode);
+      switchMode(mode);
+      currentIndex++;
+      setTimeout(testNext, 1000);
+    } else {
+      console.log('🧪 Mode switching test completed');
+    }
+  };
+  
+  testNext();
+};
+
+// Test function to check mode tab elements
+window.testModeTabs = function() {
+  console.log('🧪 Testing mode tab elements...');
+  
+  const tabSelectors = [
+    { id: 'pomodoroTab', dataMode: 'pomodoro', name: 'Pomodoro' },
+    { id: 'shortBreakTab', dataMode: 'short', name: 'Short Break' },
+    { id: 'longBreakTab', dataMode: 'long', name: 'Long Break' }
+  ];
+  
+  tabSelectors.forEach(({ id, dataMode, name }) => {
+    let element = document.getElementById(id);
+    if (!element) {
+      element = document.querySelector(`[data-mode="${dataMode}"]`);
+    }
+    
+    if (element) {
+      console.log(`✅ ${name} tab found:`, element.textContent);
+      
+      // Test clicking
+      console.log(`🧪 Testing click on ${name} tab...`);
+      element.click();
+    } else {
+      console.log(`❌ ${name} tab not found (tried ${id} and [data-mode="${dataMode}"])`);
+    }
+  });
+};
+
+// Make functions globally available
+window.startTimer = startTimer;
+window.resetTimer = resetTimer;
+window.skipTimer = skipTimer;
+window.switchMode = switchMode;
+window.addTask = addTask;
+window.toggleTask = toggleTask;
+window.removeTask = removeTask;
+window.showSettings = showSettings;
+window.saveSettings = saveSettings;
+window.showStats = showStats;
+window.resetStats = resetStats;
+
+console.log('📦 Pomodoro Timer System Loaded'); 

@@ -245,19 +245,32 @@ def create_complete_database_schema():
         """)
         print("✅ Created assignment table")
         
-        # 9. Create member table
+        # 9. Create member table (class_member)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS member (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
                 lesson_id TEXT NOT NULL,
-                role TEXT DEFAULT 'student',
+                role TEXT DEFAULT 'viewer',
+                invited_by TEXT,
                 joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES user(id),
-                FOREIGN KEY (lesson_id) REFERENCES lesson(id)
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id),
+                FOREIGN KEY (invited_by) REFERENCES user(id),
+                UNIQUE(user_id, lesson_id)
             )
         """)
         print("✅ Created member table")
+        
+        # Add invited_by column if not exists
+        try:
+            cursor.execute("ALTER TABLE member ADD COLUMN invited_by TEXT REFERENCES user(id)")
+            print("✅ Added invited_by column to member table")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e):
+                print("   invited_by column already exists, skipping...")
+            else:
+                print(f"   Warning: {e}")
         
         # 10. Create database indexes
         indexes = [
@@ -661,6 +674,84 @@ def create_complete_database_schema():
         
         print("✅ Created grade system indexes")
         print("🎉 Grade System tables created successfully!")
+        
+        # ============================================
+        # 17. Stream System (Q&A + Announcements + Activity Timeline)
+        # ============================================
+        print("\n📢 Creating Stream System tables...")
+        
+        # 17.1 Stream Posts Table (Q&A + Announcements + Activities)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stream_post (
+                id TEXT PRIMARY KEY,
+                lesson_id TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                type TEXT NOT NULL DEFAULT 'question',
+                title TEXT,
+                content TEXT NOT NULL,
+                is_pinned BOOLEAN DEFAULT 0,
+                allow_comments BOOLEAN DEFAULT 1,
+                has_accepted_answer BOOLEAN DEFAULT 0,
+                accepted_answer_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP,
+                FOREIGN KEY (lesson_id) REFERENCES lesson(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES user(id)
+            )
+        """)
+        print("✅ Created stream_post table")
+        
+        # 17.2 Stream Comments Table (Answers/Comments)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stream_comment (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                post_id TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                content TEXT NOT NULL,
+                is_accepted BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP,
+                FOREIGN KEY (post_id) REFERENCES stream_post(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES user(id)
+            )
+        """)
+        print("✅ Created stream_comment table")
+        
+        # 17.3 Stream Attachments Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stream_attachment (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                post_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                name TEXT NOT NULL,
+                url TEXT NOT NULL,
+                size INTEGER,
+                mime_type TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (post_id) REFERENCES stream_post(id) ON DELETE CASCADE
+            )
+        """)
+        print("✅ Created stream_attachment table")
+        
+        # 17.4 Create Stream System Indexes
+        stream_indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_stream_post_lesson ON stream_post(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_post_type ON stream_post(lesson_id, type)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_post_pinned ON stream_post(lesson_id, is_pinned)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_post_created ON stream_post(lesson_id, created_at DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_comment_post ON stream_comment(post_id)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_comment_accepted ON stream_comment(post_id, is_accepted)",
+            "CREATE INDEX IF NOT EXISTS idx_stream_attachment_post ON stream_attachment(post_id)"
+        ]
+        
+        for index_sql in stream_indexes:
+            try:
+                cursor.execute(index_sql)
+            except sqlite3.OperationalError as e:
+                print(f"   Warning: {e}")
+        
+        print("✅ Created stream system indexes")
+        print("🎉 Stream System tables created successfully!")
         
         # Commit all changes
         conn.commit()

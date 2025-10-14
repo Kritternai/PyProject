@@ -1,7 +1,32 @@
-function loadPage(page) {
+// Cleanup function for previous page
+function cleanupPreviousPage() {
+  console.log('🧹 Cleaning up previous page...');
+  
+  // Call page-specific cleanup functions
+  if (window.onUnloadPomodoro && window.pomodoroInitialized) {
+    console.log('🧹 Cleaning up Pomodoro page...');
+    window.onUnloadPomodoro();
+  }
+  
+  // Add other page cleanup here as needed
+  
+  console.log('✅ Previous page cleanup completed');
+}
+
+function loadPage(page, updateHistory = true) {
   console.log('🔄 Loading page:', page);
   
+  // Cleanup previous page before loading new one
+  cleanupPreviousPage();
+  
   const mainContent = document.getElementById('main-content');
+  
+  // Update URL in address bar
+  if (updateHistory && window.history && window.history.pushState) {
+    const newUrl = '/' + page;
+    window.history.pushState({ page: page }, '', newUrl);
+    console.log('📍 Updated URL to:', newUrl);
+  }
   
   // Add loading class for smooth transition
   mainContent.classList.add('loading');
@@ -57,6 +82,8 @@ function loadPage(page) {
             console.log('🧹 Cleaning up previous Pomodoro instance...');
             window.onUnloadPomodoro();
           }
+          // Always reload Pomodoro to ensure fresh state
+          console.log('🔄 Reloading Pomodoro for fresh state...');
           
           // Reset Pomodoro flags
           window.pomodoroLoaded = false;
@@ -87,6 +114,24 @@ function loadPage(page) {
                 } catch (error) {
                   console.error('❌ Error initializing Pomodoro:', error);
                   showPomodoroError('Error initializing Pomodoro Timer');
+            script.onload = () => {
+              console.log('✅ pomodoro.js loaded successfully');
+              
+              // รอให้ script ทำงานและ define functions เสร็จ
+              setTimeout(() => {
+                if (window.onLoadPomodoro) {
+                  console.log('✅ Found onLoadPomodoro function, initializing...');
+                  try {
+                    // Always call onLoadPomodoro for fresh initialization
+                    window.onLoadPomodoro();
+                    console.log('✅ Pomodoro initialized successfully');
+                  } catch (error) {
+                    console.error('❌ Error initializing Pomodoro:', error);
+                    showPomodoroError('Error initializing Pomodoro Timer');
+                  }
+                } else {
+                  console.error('❌ onLoadPomodoro function not found after script load!');
+                  showPomodoroError('Error loading Pomodoro Timer');
                 }
               } else {
                 console.error('❌ onLoadPomodoro function not found!');
@@ -3380,3 +3425,50 @@ window.insertHTMLAtCursor = function(html) {
 };
 
 console.log('✅ Note Editor global functions loaded');
+
+// ========================================
+// Browser History Navigation (Back/Forward)
+// ========================================
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', function(event) {
+  console.log('🔙 Browser navigation detected:', event.state);
+  
+  if (event.state && event.state.page) {
+    // Load the page without updating history (to avoid duplicate entries)
+    loadPage(event.state.page, false);
+    
+    // Update active nav
+    if (typeof setActiveNav === 'function') {
+      const navLink = document.querySelector(`.enchat-sidebar__nav-link[data-page="${event.state.page}"]`);
+      if (navLink) {
+        setActiveNav(navLink);
+      }
+    }
+  } else {
+    // No state, try to detect from URL
+    const path = window.location.pathname;
+    if (path && path !== '/') {
+      const page = path.substring(1); // Remove leading slash
+      loadPage(page, false);
+      
+      // Update active nav
+      if (typeof setActiveNav === 'function') {
+        const navLink = document.querySelector(`.enchat-sidebar__nav-link[data-page="${page}"]`);
+        if (navLink) {
+          setActiveNav(navLink);
+        }
+      }
+    }
+  }
+});
+
+// Save initial state on page load
+if (window.history && window.history.replaceState) {
+  const currentPath = window.location.pathname;
+  const currentPage = currentPath === '/' || currentPath === '/dashboard' ? 'dashboard' : currentPath.substring(1);
+  window.history.replaceState({ page: currentPage }, '', currentPath);
+  console.log('📍 Initial history state saved:', currentPage);
+}
+
+console.log('✅ Browser history navigation enabled');
