@@ -94,7 +94,7 @@ def authorize():
         )
 
         # Use port from current app config
-        port = current_app.config.get('PORT', 5004)
+        port = current_app.config.get('PORT', 8000)
         flow.redirect_uri = f"http://localhost:{port}/google_classroom/oauth2callback"
         print(f"Redirect URI: {flow.redirect_uri}")
 
@@ -166,7 +166,7 @@ def oauth2callback():
     else:
         print("DEBUG: State matches perfectly")
 
-    port = current_app.config.get('PORT', 5004)
+    port = current_app.config.get('PORT', 8000)
     
     flow = Flow.from_client_config(
         client_config={
@@ -290,7 +290,11 @@ def fetch_courses():
     """Fetch Google Classroom courses"""
     try:
         user_id = session.get('user_id')
+        print(f"DEBUG fetch_courses: user_id = {user_id}")
+        print(f"DEBUG fetch_courses: session keys = {list(session.keys())}")
+        
         if not user_id:
+            print("DEBUG fetch_courses: No user_id in session - user not authenticated")
             return jsonify({'success': False, 'error': 'User not authenticated'}), 401
         
         # Check if user has Google credentials in database or session
@@ -347,6 +351,10 @@ def fetch_courses():
         results = service.courses().list(courseStates=['ACTIVE']).execute()
         courses = results.get('courses', [])
         
+        print(f"DEBUG: Fetched {len(courses)} courses from Google Classroom")
+        for course in courses:
+            print(f"DEBUG: Course - {course.get('name', 'No name')} (ID: {course.get('id', 'No ID')})")
+        
         # Format courses for frontend
         formatted_courses = []
         for course in courses:
@@ -371,6 +379,8 @@ def fetch_courses():
                 'teacherFolder': course.get('teacherFolder', {}),
                 'courseCreator': course.get('courseCreator', '')
             })
+        
+        print(f"DEBUG: Returning {len(formatted_courses)} formatted courses to frontend")
         
         return jsonify({
             'success': True,

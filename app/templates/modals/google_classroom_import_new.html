@@ -385,7 +385,12 @@ async function loadGoogleCourses() {
         const response = await fetch('/google_classroom/fetch_courses');
         
         if (response.status === 401) {
-            showNotConnected();
+            console.log('🔐 Google Classroom authorization needed, redirecting to OAuth...');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('googleClassroomImportModalNew'));
+            if (modal) {
+                modal.hide();
+            }
+            window.location.href = '/google_classroom/authorize?return_to_import=true';
             return;
         }
         
@@ -393,6 +398,7 @@ async function loadGoogleCourses() {
             const data = await response.json();
             
             if (data.success) {
+                console.log('✅ Success response received, calling showCourses...');
                 googleCourses = data.courses;
                 showCourses(data.courses);
             } else {
@@ -419,14 +425,36 @@ function showCoursesLoading() {
 function showCourses(courses) {
     console.log(`📚 Showing ${courses.length} courses`);
     
-    document.getElementById('courses-loading').style.display = 'none';
-    document.getElementById('courses-list').style.display = 'block';
-    document.getElementById('no-courses').style.display = 'none';
-    document.getElementById('courses-error').style.display = 'none';
+    const loadingEl = document.getElementById('courses-loading');
+    const listEl = document.getElementById('courses-list');
+    const emptyEl = document.getElementById('no-courses');
+    const errorEl = document.getElementById('courses-error');
     
-    document.getElementById('courses-count').textContent = `${courses.length} courses found`;
+    console.log('📋 Course elements found:', {
+        loading: !!loadingEl,
+        list: !!listEl,
+        empty: !!emptyEl,
+        error: !!errorEl
+    });
+    
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (listEl) listEl.style.display = 'block';
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (errorEl) errorEl.style.display = 'none';
+    
+    const countEl = document.getElementById('courses-count');
+    if (countEl) {
+        countEl.textContent = `${courses.length} courses found`;
+    }
     
     const coursesGrid = document.getElementById('courses-grid');
+    console.log('📋 Courses grid element:', !!coursesGrid);
+    
+    if (!coursesGrid) {
+        console.error('❌ courses-grid element not found!');
+        return;
+    }
+    
     coursesGrid.innerHTML = '';
     
     if (courses.length === 0) {
@@ -435,7 +463,9 @@ function showCourses(courses) {
         return;
     }
     
-    courses.forEach(course => {
+    console.log('📚 Creating course cards for', courses.length, 'courses');
+    courses.forEach((course, index) => {
+        console.log(`📝 Creating card ${index + 1}:`, course.name);
         const courseCard = createCourseCard(course);
         coursesGrid.appendChild(courseCard);
     });
@@ -461,6 +491,7 @@ function showCoursesError(message) {
 
 // Create course card
 function createCourseCard(course) {
+    console.log('🎨 Creating course card for:', course.name);
     const col = document.createElement('div');
     col.className = 'col-md-6 col-lg-4';
     

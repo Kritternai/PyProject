@@ -3067,7 +3067,21 @@ window.openGoogleClassroomImport = function() {
 window.openGoogleClassroomModal = function() {
     console.log('📚 Opening Google Classroom modal...');
     
-    const modal = new bootstrap.Modal(document.getElementById('googleClassroomImportModal'));
+    // Use old modal as primary
+    let modalElement = document.getElementById('googleClassroomImportModal');
+    let modalId = 'googleClassroomImportModal';
+    
+    if (!modalElement) {
+        modalElement = document.getElementById('googleClassroomImportModalNew');
+        modalId = 'googleClassroomImportModalNew';
+    }
+    
+    if (!modalElement) {
+        console.error('❌ No Google Classroom modal found');
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
     
     // Load Google Classroom courses
@@ -3079,13 +3093,38 @@ window.openGoogleClassroomModal = function() {
     }
 };
 
+// Connect to Google Classroom function
+window.connectToGoogleClassroom = function() {
+    console.log('🔗 Connecting to Google Classroom...');
+    // Close modal first
+    let modal = bootstrap.Modal.getInstance(document.getElementById('googleClassroomImportModal'));
+    if (!modal) {
+        modal = bootstrap.Modal.getInstance(document.getElementById('googleClassroomImportModalNew'));
+    }
+    if (modal) {
+        modal.hide();
+    }
+    // Then redirect to OAuth
+    window.location.href = '/google_classroom/authorize?return_to_import=true';
+};
+
 // Load Google Classroom Courses
 window.loadGoogleCourses = function() {
     console.log('📋 Loading Google Classroom courses...');
     
-    const loadingEl = document.getElementById('google-courses-loading');
-    const coursesEl = document.getElementById('google-courses-list');
-    const emptyEl = document.getElementById('google-courses-empty');
+    // Use old modal elements as primary
+    let loadingEl = document.getElementById('google-courses-loading');
+    let coursesEl = document.getElementById('google-courses-list');
+    let emptyEl = document.getElementById('google-courses-empty');
+    let authEl = document.getElementById('google-auth-required');
+    
+    if (!loadingEl) {
+        // Fallback to new modal elements
+        loadingEl = document.getElementById('courses-loading');
+        coursesEl = document.getElementById('courses-list');
+        emptyEl = document.getElementById('no-courses');
+        authEl = document.getElementById('google-not-connected');
+    }
     
     if (!loadingEl || !coursesEl || !emptyEl) {
         console.error('❌ Google Classroom modal elements not found');
@@ -3095,32 +3134,44 @@ window.loadGoogleCourses = function() {
     loadingEl.style.display = 'block';
     coursesEl.style.display = 'none';
     emptyEl.style.display = 'none';
+    if (authEl) authEl.style.display = 'none';
     
     fetch('/google_classroom/fetch_courses')
         .then(response => {
+            console.log('📡 Response status:', response.status);
             if (response.status === 401) {
-                // User needs to authorize
-                console.log('🔐 Google Classroom authorization needed, redirecting...');
-                const modal = bootstrap.Modal.getInstance(document.getElementById('googleClassroomImportModal'));
+                // User needs to authorize - redirect to OAuth immediately
+                console.log('🔐 Google Classroom authorization needed, redirecting to OAuth...');
+                
+                // Try to close any open Google Classroom modal
+                let modal = bootstrap.Modal.getInstance(document.getElementById('googleClassroomImportModal'));
+                if (!modal) {
+                    modal = bootstrap.Modal.getInstance(document.getElementById('googleClassroomImportModalNew'));
+                }
                 if (modal) {
                     modal.hide();
                 }
+                
                 window.location.href = '/google_classroom/authorize?return_to_import=true';
-                return;
+                return Promise.reject('Redirecting to OAuth'); // Prevent further processing
             }
             return response.json();
         })
         .then(data => {
             if (!data) return; // Skip if redirected
             
+            console.log('📡 API Response received:', data);
             loadingEl.style.display = 'none';
             
             if (data.success && data.courses && data.courses.length > 0) {
+                console.log('✅ Success: Found', data.courses.length, 'courses');
                 coursesEl.style.display = 'block';
                 displayGoogleCourses(data.courses);
             } else if (data.needs_auth) {
                 console.log('🔐 Google Classroom authorization needed, showing auth state...');
-                const authEl = document.getElementById('google-auth-required');
+                loadingEl.style.display = 'none';
+                coursesEl.style.display = 'none';
+                emptyEl.style.display = 'none';
                 if (authEl) {
                     authEl.style.display = 'block';
                 } else {
@@ -3132,6 +3183,11 @@ window.loadGoogleCourses = function() {
             }
         })
         .catch(error => {
+            if (error === 'Redirecting to OAuth') {
+                // Don't show error UI for OAuth redirects
+                console.log('🔄 OAuth redirect initiated, skipping error handling');
+                return;
+            }
             console.error('❌ Error loading Google courses:', error);
             loadingEl.style.display = 'none';
             emptyEl.style.display = 'block';
@@ -3141,8 +3197,16 @@ window.loadGoogleCourses = function() {
 // Display Google Classroom Courses
 function displayGoogleCourses(courses) {
     console.log('📚 Displaying Google Classroom courses:', courses.length);
+    console.log('📋 Course data:', courses);
     
     const coursesEl = document.getElementById('google-courses-list');
+    console.log('📋 Courses element found:', !!coursesEl);
+    
+    if (!coursesEl) {
+        console.error('❌ google-courses-list element not found!');
+        return;
+    }
+    
     coursesEl.innerHTML = '';
     
     courses.forEach(course => {
