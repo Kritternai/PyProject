@@ -5,6 +5,7 @@ charset-normalizer==3.4.2
 click==8.2.1
 Flask==3.1.1
 Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.1.0
 google-api-core==2.25.1
 google-api-python-client==2.176.0
 google-auth==2.40.3

@@ -15,14 +15,18 @@ def create_pomodoro_tables():
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
-        print("🔧 Creating pomodoro_session table...")
+        # Drop existing table if it exists
+        print("�️ Dropping existing pomodoro_session table...")
+        cursor.execute("DROP TABLE IF EXISTS pomodoro_session")
+        
+        print("�🔧 Creating pomodoro_session table...")
         
         # Create pomodoro_session table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS pomodoro_session (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
-                session_type TEXT NOT NULL,
+                session_type TEXT NOT NULL CHECK (session_type IN ('pomodoro', 'short_break', 'long_break')),
                 duration INTEGER NOT NULL,
                 start_time TIMESTAMP NOT NULL,
                 end_time TIMESTAMP,
@@ -52,6 +56,15 @@ def create_pomodoro_tables():
             )
         """)
         
+        # Drop existing indexes if they exist
+        print("🗑️ Dropping existing indexes...")
+        cursor.execute("DROP INDEX IF EXISTS idx_pomodoro_user")
+        cursor.execute("DROP INDEX IF EXISTS idx_pomodoro_type")
+        cursor.execute("DROP INDEX IF EXISTS idx_pomodoro_status")
+        cursor.execute("DROP INDEX IF EXISTS idx_pomodoro_start_time")
+        cursor.execute("DROP INDEX IF EXISTS idx_pomodoro_lesson")
+        cursor.execute("DROP INDEX IF EXISTS idx_pomodoro_completed")
+        
         # Create indexes
         print("🔧 Creating indexes...")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pomodoro_user ON pomodoro_session(user_id)")
@@ -70,7 +83,13 @@ def create_pomodoro_tables():
         
     except Exception as e:
         print(f"❌ Error creating pomodoro tables: {e}")
+        conn.rollback()
         raise e
+    finally:
+        try:
+            conn.close()
+        except:
+            pass
 
 if __name__ == "__main__":
     create_pomodoro_tables()

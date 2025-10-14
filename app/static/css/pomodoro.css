@@ -715,11 +715,44 @@ dialog::backdrop {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .modal-title {
   font-size: 22px;
   font-weight: 700;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 20px;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.modal-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  transform: rotate(90deg);
+  color: var(--text-dark);
+}
+
+.modal-close:active {
+  transform: rotate(90deg) scale(0.9);
+}
+
+.modal-close::before {
+  content: '×';
+  font-size: 24px;
+  line-height: 1;
 }
 
 .modal-body {

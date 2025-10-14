@@ -392,6 +392,202 @@ class TaskService:
             raise NotFoundException("Task not found")
         return task
 
+
+class PomodoroSessionService:
+    """Service layer for Pomodoro session management"""
+
+    def create_session(self, user_id: str, session_type: str, duration: int, task: Optional[str] = None, 
+                    lesson_id: Optional[str] = None, section_id: Optional[str] = None,
+                    mood_before: Optional[str] = None, energy_level: Optional[int] = None,
+                    auto_start_next: bool = True, notification_enabled: bool = True,
+                    sound_enabled: bool = True):
+        """Create a new Pomodoro session with all optional parameters"""
+        from app import db
+        try:
+            from app.models.pomodoro_session import PomodoroSessionModel
+            
+            if not user_id:
+                raise ValidationException("User ID is required")
+            
+            if session_type not in ['focus', 'short_break', 'long_break']:
+                raise ValidationException("Invalid session type")
+            
+            if duration <= 0:
+                raise ValidationException("Duration must be positive")
+
+            session = PomodoroSessionModel(
+                user_id=user_id,
+                session_type=session_type,
+                duration=duration,
+                start_time=datetime.utcnow(),
+                task=task,
+                status='active',
+                lesson_id=lesson_id,
+                section_id=section_id,
+                mood_before=mood_before,
+                energy_level=energy_level,
+                auto_start_next=auto_start_next,
+                notification_enabled=notification_enabled,
+                sound_enabled=sound_enabled,
+                is_completed=False,
+                is_interrupted=False,
+                interruption_count=0
+            )
+
+            db.session.add(session)
+            db.session.commit()
+            
+            return session
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error creating session: {str(e)}")
+            raise
+
+    def get_session(self, session_id: str):
+        """Get a specific session by ID"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        return PomodoroSessionModel.query.get(session_id)
+
+    def get_user_sessions(self, user_id: str):
+        """Get all sessions for a user"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        return PomodoroSessionModel.query.filter_by(user_id=user_id).all()
+
+    def update_session(self, session_id: str, data: Dict):
+        """Update a session with all possible fields"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        from app.models.task import TaskModel
+        from app import db
+        
+        session = self.get_session(session_id)
+        if not session:
+            return None
+
+        # Update timing fields
+        if 'actual_duration' in data:
+            session.actual_duration = data['actual_duration']
+        if 'end_time' in data:
+            session.end_time = data['end_time']
+        
+        # Update status fields
+        if 'status' in data:
+            session.status = data['status']
+            if data['status'] == 'completed':
+                session.is_completed = True
+            elif data['status'] == 'interrupted':
+                session.is_interrupted = True
+        
+        # Update scoring and feedback
+        if 'productivity_score' in data:
+            session.productivity_score = data['productivity_score']
+        if 'mood_after' in data:
+            session.mood_after = data['mood_after']
+        if 'focus_score' in data:
+            session.focus_score = data['focus_score']
+        if 'difficulty_level' in data:
+            session.difficulty_level = data['difficulty_level']
+        if 'energy_level' in data:
+            session.energy_level = data['energy_level']
+
+        # Update interruption data
+        if 'interruption_count' in data:
+            session.interruption_count = data['interruption_count']
+        if 'interruption_reasons' in data:
+            session.interruption_reasons = data['interruption_reasons']
+
+        # Update settings
+        if 'auto_start_next' in data:
+            session.auto_start_next = data['auto_start_next']
+        if 'notification_enabled' in data:
+            session.notification_enabled = data['notification_enabled']
+        if 'sound_enabled' in data:
+            session.sound_enabled = data['sound_enabled']
+
+        # Update related entities
+        if 'lesson_id' in data:
+            session.lesson_id = data['lesson_id']
+        if 'section_id' in data:
+            session.section_id = data['section_id']
+        
+        # Handle task update
+        if 'task' in data:
+            task_name = data['task']
+            if task_name:
+                # Try to find existing task first
+                task_obj = TaskModel.query.filter_by(user_id=session.user_id, title=task_name).first()
+                if not task_obj:
+                    # Create new task if it doesn't exist
+                    task_obj = TaskModel(
+                        user_id=session.user_id,
+                        title=task_name
+                    )
+                    db.session.add(task_obj)
+                    db.session.flush()  # Flush to get the task ID
+                
+                session.task_id = task_obj.id
+                session.task = task_name
+            else:
+                session.task_id = None
+                session.task = None
+
+        db.session.commit()
+        return session
+
+    def end_session(self, session_id: str, status: str = 'completed'):
+        """End a Pomodoro session"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        from app import db
+        
+        session = self.get_session(session_id)
+        if not session:
+            return None
+
+        session.end_time = datetime.utcnow()
+        session.status = status
+        if session.start_time:
+            session.actual_duration = int((session.end_time - session.start_time).total_seconds() / 60)
+
+        db.session.commit()
+        return session
+
+    def get_active_session(self, user_id: str):
+        """Get user's active session if exists"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        return PomodoroSessionModel.query.filter_by(
+            user_id=user_id,
+            status='active'
+        ).first()
+
+    def interrupt_session(self, session_id: str):
+        """Mark a session as interrupted and increment counter"""
+        session = self.get_session(session_id)
+        if not session:
+            return None
+
+        session.status = 'interrupted'
+        session.is_interrupted = True
+        session.interruption_count += 1
+        
+        session.end_time = datetime.utcnow()
+        if session.start_time:
+            session.actual_duration = int((session.end_time - session.start_time).total_seconds() / 60)
+
+        from app import db
+        db.session.commit()
+        return session
+
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a session"""
+        from app.models.pomodoro_session import PomodoroSessionModel
+        from app import db
+        
+        session = self.get_session(session_id)
+        if not session:
+            return False
+
+        db.session.delete(session)
+        db.session.commit()
+        return True
 # --- Class ที่เพิ่มเข้ามา ---
 class PomodoroService:
     """Service for Pomodoro tracking logic."""
