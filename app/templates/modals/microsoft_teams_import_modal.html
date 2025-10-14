@@ -1,0 +1,546 @@
+<!-- Microsoft Teams Import Modal -->
+<style>
+.microsoft-import-modal .modal-dialog {
+    max-width: 1000px;
+}
+
+.microsoft-import-modal .modal-content {
+    border-radius: 24px;
+    border: none;
+    box-shadow: 0 24px 80px rgba(98, 100, 167, 0.25);
+    overflow: hidden;
+}
+
+.microsoft-import-modal .modal-header {
+    background: linear-gradient(135deg, #6264A7, #464775);
+    color: white;
+    padding: 2rem 2.5rem;
+    border: none;
+    position: relative;
+}
+
+.microsoft-import-modal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #6264A7, #464775, #323130);
+}
+
+.microsoft-import-modal .modal-title {
+    font-weight: 800;
+    font-size: 1.75rem;
+    letter-spacing: -0.5px;
+}
+
+.microsoft-import-modal .modal-body {
+    padding: 0;
+    background: #F8F9FD;
+}
+
+.microsoft-import-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 600px;
+}
+
+.microsoft-import-left {
+    padding: 2.5rem;
+    background: white;
+    border-right: 2px solid #E5E7EB;
+}
+
+.microsoft-import-right {
+    padding: 2.5rem;
+    background: #F8F9FD;
+}
+
+.microsoft-import-section {
+    margin-bottom: 2rem;
+}
+
+.microsoft-import-section:last-child {
+    margin-bottom: 0;
+}
+
+.microsoft-import-section-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #6264A7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.teams-card {
+    border: 2px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.teams-card:hover {
+    border-color: #6264A7;
+    box-shadow: 0 8px 24px rgba(98, 100, 167, 0.15);
+    transform: translateY(-2px);
+}
+
+.teams-card.selected {
+    border-color: #6264A7;
+    background: linear-gradient(135deg, rgba(98, 100, 167, 0.05), rgba(70, 71, 117, 0.05));
+    box-shadow: 0 8px 24px rgba(98, 100, 167, 0.2);
+}
+
+.teams-title {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #1A202C;
+    margin-bottom: 0.5rem;
+}
+
+.teams-description {
+    color: #718096;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.teams-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8125rem;
+    color: #718096;
+}
+
+.teams-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.import-preview {
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.import-preview-title {
+    font-weight: 700;
+    color: #1A202C;
+    margin-bottom: 1rem;
+}
+
+.import-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #F8F9FD;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+}
+
+.import-preview-item:last-child {
+    margin-bottom: 0;
+}
+
+.import-preview-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.import-preview-text {
+    flex: 1;
+    font-size: 0.875rem;
+    color: #4A5568;
+}
+
+.import-preview-count {
+    font-weight: 600;
+    color: #6264A7;
+    font-size: 0.8125rem;
+}
+
+@media (max-width: 768px) {
+    .microsoft-import-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .microsoft-import-left {
+        border-right: none;
+        border-bottom: 2px solid #E5E7EB;
+    }
+}
+</style>
+
+<div class="modal fade microsoft-import-modal" id="microsoftTeamsImportModal" tabindex="-1" aria-labelledby="microsoftTeamsImportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="microsoftTeamsImportModalLabel">
+                    <i class="fab fa-microsoft me-2"></i>Import from Microsoft Teams
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="microsoft-import-layout">
+                    <!-- Left Side: Microsoft Teams -->
+                    <div class="microsoft-import-left">
+                        <div class="microsoft-import-section">
+                            <div class="microsoft-import-section-title">
+                                <i class="bi bi-people-fill"></i>
+                                <span>Available Teams</span>
+                            </div>
+                            
+                            <!-- Loading State -->
+                            <div id="teams-loading" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status" style="color: #6264A7 !important;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="text-muted mt-2">Loading Microsoft Teams...</p>
+                            </div>
+                            
+                            <!-- Teams List -->
+                            <div id="teams-list" style="display: none;">
+                                <!-- Teams will be populated here -->
+                            </div>
+                            
+                            <!-- No Teams State -->
+                            <div id="teams-empty" class="text-center py-4" style="display: none;">
+                                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">No Microsoft Teams found</p>
+                                <button class="btn btn-outline-primary" onclick="refreshTeams()" style="border-color: #6264A7; color: #6264A7;">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                                </button>
+                            </div>
+                            
+                            <!-- Authorization Required State -->
+                            <div id="teams-auth-required" class="text-center py-4" style="display: none;">
+                                <i class="bi bi-shield-lock text-warning" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3">Authorization Required</h5>
+                                <p class="text-muted">Connect to Microsoft Teams to import teams</p>
+                                <button class="btn btn-primary btn-lg" onclick="connectToMicrosoftTeams()" style="background: linear-gradient(135deg, #6264A7, #464775); border: none;">
+                                    <i class="fab fa-microsoft me-2"></i>Connect to Microsoft Teams
+                                </button>
+                                <div class="form-hint mt-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    You'll be redirected to Microsoft to authorize access
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Side: Import Preview -->
+                    <div class="microsoft-import-right">
+                        <div class="microsoft-import-section">
+                            <div class="microsoft-import-section-title">
+                                <i class="bi bi-eye"></i>
+                                <span>Import Preview</span>
+                            </div>
+                            
+                            <div id="teams-preview-empty" class="text-center py-4">
+                                <i class="bi bi-cursor text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">Select a team to preview import</p>
+                            </div>
+                            
+                            <div id="teams-preview-content" style="display: none;">
+                                <div class="import-preview">
+                                    <div class="import-preview-title" id="preview-team-title">Team Title</div>
+                                    
+                                    <div class="import-preview-item">
+                                        <div class="import-preview-icon" style="background: #6264A7;">
+                                            <i class="bi bi-people"></i>
+                                        </div>
+                                        <div class="import-preview-text">Members</div>
+                                        <div class="import-preview-count" id="preview-members-count">0</div>
+                                    </div>
+                                    
+                                    <div class="import-preview-item">
+                                        <div class="import-preview-icon" style="background: #48BB78;">
+                                            <i class="bi bi-chat-dots"></i>
+                                        </div>
+                                        <div class="import-preview-text">Channels</div>
+                                        <div class="import-preview-count" id="preview-channels-count">0</div>
+                                    </div>
+                                    
+                                    <div class="import-preview-item">
+                                        <div class="import-preview-icon" style="background: #F6AD55;">
+                                            <i class="bi bi-journal-text"></i>
+                                        </div>
+                                        <div class="import-preview-text">Assignments</div>
+                                        <div class="import-preview-count" id="preview-assignments-count">0</div>
+                                    </div>
+                                    
+                                    <div class="import-preview-item">
+                                        <div class="import-preview-icon" style="background: #9F7AEA;">
+                                            <i class="bi bi-file-earmark-text"></i>
+                                        </div>
+                                        <div class="import-preview-text">Files</div>
+                                        <div class="import-preview-count" id="preview-files-count">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="microsoft-import-section">
+                            <div class="microsoft-import-section-title">
+                                <i class="bi bi-gear"></i>
+                                <span>Import Settings</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="import-members" checked>
+                                    <label class="form-check-label" for="import-members">
+                                        Import team members
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="import-channels" checked>
+                                    <label class="form-check-label" for="import-channels">
+                                        Import channels and conversations
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="import-assignments" checked>
+                                    <label class="form-check-label" for="import-assignments">
+                                        Import assignments and tasks
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-0">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="import-files" checked>
+                                    <label class="form-check-label" for="import-files">
+                                        Import team files and resources
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <div class="modal-footer-left">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <span>Select a team to import</span>
+                </div>
+                <div class="modal-footer-right">
+                    <button type="button" 
+                            class="btn btn-secondary" 
+                            data-bs-dismiss="modal"
+                            style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 600;">
+                        Cancel
+                    </button>
+                    <button type="button" 
+                            id="import-team-btn"
+                            class="btn btn-primary"
+                            onclick="importSelectedTeam()"
+                            disabled
+                            style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 600; background: linear-gradient(135deg, #6264A7, #464775); border: none;">
+                        <i class="bi bi-download me-1"></i>Import Team
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedTeam = null;
+
+// Connect to Microsoft Teams
+function connectToMicrosoftTeams() {
+    console.log('🔗 Connecting to Microsoft Teams...');
+    window.location.href = '/microsoft_teams/authorize?return_to_import=true';
+}
+
+// Load Microsoft Teams - Modal specific
+function loadTeams() {
+    const loadingEl = document.getElementById('teams-loading');
+    const teamsEl = document.getElementById('teams-list');
+    const emptyEl = document.getElementById('teams-empty');
+    const authEl = document.getElementById('teams-auth-required');
+    
+    loadingEl.style.display = 'block';
+    teamsEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    authEl.style.display = 'none';
+    
+    fetch('/microsoft_teams/fetch_teams')
+        .then(response => response.json())
+        .then(data => {
+            loadingEl.style.display = 'none';
+            
+            if (data.needs_auth) {
+                authEl.style.display = 'block';
+            } else if (data.success && data.teams && data.teams.length > 0) {
+                teamsEl.style.display = 'block';
+                displayTeams(data.teams);
+            } else {
+                emptyEl.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading Teams:', error);
+            loadingEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+        });
+}
+
+// Display Microsoft Teams
+function displayTeams(teams) {
+    const teamsEl = document.getElementById('teams-list');
+    teamsEl.innerHTML = '';
+    
+    teams.forEach(team => {
+        const teamCard = document.createElement('div');
+        teamCard.className = 'teams-card';
+        teamCard.onclick = () => selectTeam(team);
+        
+        teamCard.innerHTML = `
+            <div class="teams-title">${team.name || 'Untitled Team'}</div>
+            <div class="teams-description">${team.description || 'No description'}</div>
+            <div class="teams-meta">
+                <span><i class="bi bi-people"></i> ${team.memberCount || 0} members</span>
+                <span><i class="bi bi-chat-dots"></i> ${team.channels ? team.channels.length : 0} channels</span>
+                <span><i class="bi bi-calendar"></i> ${team.created || 'Unknown date'}</span>
+            </div>
+        `;
+        
+        teamsEl.appendChild(teamCard);
+    });
+}
+
+// Select Microsoft Team
+function selectTeam(team) {
+    selectedTeam = team;
+    
+    // Update UI
+    document.querySelectorAll('.teams-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    // Show preview
+    showTeamPreview(team);
+    
+    // Enable import button
+    document.getElementById('import-team-btn').disabled = false;
+}
+
+// Show team preview
+function showTeamPreview(team) {
+    const emptyEl = document.getElementById('teams-preview-empty');
+    const contentEl = document.getElementById('teams-preview-content');
+    
+    emptyEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    
+    // Update preview data
+    document.getElementById('preview-team-title').textContent = team.name || 'Untitled Team';
+    document.getElementById('preview-members-count').textContent = team.memberCount || 0;
+    document.getElementById('preview-channels-count').textContent = team.channels ? team.channels.length : 0;
+    document.getElementById('preview-assignments-count').textContent = Math.floor(Math.random() * 10) + 1; // Mock data
+    document.getElementById('preview-files-count').textContent = Math.floor(Math.random() * 20) + 5; // Mock data
+}
+
+// Import selected team
+function importSelectedTeam() {
+    if (!selectedTeam) return;
+    
+    const importBtn = document.getElementById('import-team-btn');
+    const originalText = importBtn.innerHTML;
+    
+    // Show loading state
+    importBtn.disabled = true;
+    importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
+    
+    // Get import settings
+    const settings = {
+        importMembers: document.getElementById('import-members').checked,
+        importChannels: document.getElementById('import-channels').checked,
+        importAssignments: document.getElementById('import-assignments').checked,
+        importFiles: document.getElementById('import-files').checked
+    };
+    
+    fetch('/microsoft_teams/import_team', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            teamId: selectedTeam.id,
+            settings: settings
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('microsoftTeamsImportModal'));
+            modal.hide();
+            
+            // Show success message
+            if (typeof window.showSuccess === 'function') {
+                window.showSuccess('🎉 Team imported successfully!');
+            }
+            
+            // Reload lessons list
+            if (typeof loadPage === 'function') {
+                setTimeout(() => loadPage('class'), 500);
+            } else {
+                setTimeout(() => window.location.reload(), 500);
+            }
+        } else {
+            throw new Error(data.error || 'Failed to import team');
+        }
+    })
+    .catch(error => {
+        console.error('Error importing team:', error);
+        if (typeof window.showError === 'function') {
+            window.showError(error.message || 'Failed to import team');
+        } else {
+            alert('Error: ' + error.message);
+        }
+    })
+    .finally(() => {
+        importBtn.disabled = false;
+        importBtn.innerHTML = originalText;
+    });
+}
+
+// Refresh teams
+function refreshTeams() {
+    loadTeams();
+}
+
+// Initialize modal when shown
+document.getElementById('microsoftTeamsImportModal').addEventListener('shown.bs.modal', function () {
+    loadTeams();
+});
+</script>

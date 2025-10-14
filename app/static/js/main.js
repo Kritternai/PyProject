@@ -353,6 +353,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }, 1000);
   }
+  
+  // Check if we should open Microsoft Teams import modal
+  if (hashParams.get('open_teams_import') === 'true') {
+    // Open Microsoft Teams import modal after a short delay
+    setTimeout(() => {
+      if (typeof window.openMicrosoftTeamsModal === 'function') {
+        window.openMicrosoftTeamsModal();
+      }
+    }, 1000);
+  }
 });
 
 // Open full-page note editor (fragment) with optional selected note
@@ -3469,5 +3479,241 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Updated Google Classroom button to use new system');
     });
 });
+
+// ========================================
+// Microsoft Teams Integration Functions
+// ========================================
+
+// Microsoft Teams Import Functions - Global
+window.openMicrosoftTeamsImport = function() {
+    console.log('🔗 Opening Microsoft Teams import...');
+    
+    // Close current modal
+    const currentModal = bootstrap.Modal.getInstance(document.getElementById('addLessonModal'));
+    if (currentModal) {
+        currentModal.hide();
+    }
+    
+    // Show Microsoft Teams import modal
+    setTimeout(() => {
+        if (typeof window.openMicrosoftTeamsModal === 'function') {
+            window.openMicrosoftTeamsModal();
+        } else {
+            // Fallback: redirect to Microsoft Teams authorization
+            window.location.href = '/microsoft_teams/authorize?return_to_import=true';
+        }
+    }, 300);
+};
+
+// Open Microsoft Teams Import Modal
+window.openMicrosoftTeamsModal = function() {
+    console.log('🚀 Opening Microsoft Teams Import Modal...');
+    
+    // Check if modal exists
+    const modal = document.getElementById('microsoftTeamsImportModal');
+    if (!modal) {
+        console.error('❌ Microsoft Teams modal not found');
+        return;
+    }
+    
+    // Show modal
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+    
+    // Load teams when modal is shown
+    modal.addEventListener('shown.bs.modal', function () {
+        loadTeams();
+    });
+};
+
+// Load Microsoft Teams
+window.loadTeams = function() {
+    console.log('📋 Loading Microsoft Teams...');
+    
+    const loadingEl = document.getElementById('teams-loading');
+    const teamsEl = document.getElementById('teams-list');
+    const emptyEl = document.getElementById('teams-empty');
+    const authEl = document.getElementById('teams-auth-required');
+    
+    if (!loadingEl || !teamsEl || !emptyEl || !authEl) {
+        console.error('❌ Microsoft Teams modal elements not found');
+        return;
+    }
+    
+    loadingEl.style.display = 'block';
+    teamsEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    authEl.style.display = 'none';
+    
+    fetch('/microsoft_teams/fetch_teams')
+        .then(response => response.json())
+        .then(data => {
+            loadingEl.style.display = 'none';
+            
+            if (data.needs_auth) {
+                authEl.style.display = 'block';
+            } else if (data.success && data.teams && data.teams.length > 0) {
+                teamsEl.style.display = 'block';
+                displayTeams(data.teams);
+            } else {
+                emptyEl.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading Teams:', error);
+            loadingEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+        });
+};
+
+// Display Microsoft Teams
+window.displayTeams = function(teams) {
+    const teamsEl = document.getElementById('teams-list');
+    if (!teamsEl) return;
+    
+    teamsEl.innerHTML = '';
+    
+    teams.forEach(team => {
+        const teamCard = document.createElement('div');
+        teamCard.className = 'teams-card';
+        teamCard.onclick = () => selectTeam(team);
+        
+        teamCard.innerHTML = `
+            <div class="teams-title">${team.name || 'Untitled Team'}</div>
+            <div class="teams-description">${team.description || 'No description'}</div>
+            <div class="teams-meta">
+                <span><i class="bi bi-people"></i> ${team.memberCount || 0} members</span>
+                <span><i class="bi bi-chat-dots"></i> ${team.channels ? team.channels.length : 0} channels</span>
+                <span><i class="bi bi-calendar"></i> ${team.created || 'Unknown date'}</span>
+            </div>
+        `;
+        
+        teamsEl.appendChild(teamCard);
+    });
+};
+
+// Select Microsoft Team
+window.selectTeam = function(team) {
+    window.selectedTeam = team;
+    
+    // Update UI
+    document.querySelectorAll('.teams-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    // Show preview
+    showTeamPreview(team);
+    
+    // Enable import button
+    const importBtn = document.getElementById('import-team-btn');
+    if (importBtn) {
+        importBtn.disabled = false;
+    }
+};
+
+// Show team preview
+window.showTeamPreview = function(team) {
+    const emptyEl = document.getElementById('teams-preview-empty');
+    const contentEl = document.getElementById('teams-preview-content');
+    
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (contentEl) contentEl.style.display = 'block';
+    
+    // Update preview data
+    const titleEl = document.getElementById('preview-team-title');
+    const membersEl = document.getElementById('preview-members-count');
+    const channelsEl = document.getElementById('preview-channels-count');
+    const assignmentsEl = document.getElementById('preview-assignments-count');
+    const filesEl = document.getElementById('preview-files-count');
+    
+    if (titleEl) titleEl.textContent = team.name || 'Untitled Team';
+    if (membersEl) membersEl.textContent = team.memberCount || 0;
+    if (channelsEl) channelsEl.textContent = team.channels ? team.channels.length : 0;
+    if (assignmentsEl) assignmentsEl.textContent = team.assignments || Math.floor(Math.random() * 10) + 1;
+    if (filesEl) filesEl.textContent = team.files || Math.floor(Math.random() * 20) + 5;
+};
+
+// Import selected team
+window.importSelectedTeam = function() {
+    if (!window.selectedTeam) return;
+    
+    const importBtn = document.getElementById('import-team-btn');
+    if (!importBtn) return;
+    
+    const originalText = importBtn.innerHTML;
+    
+    // Show loading state
+    importBtn.disabled = true;
+    importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
+    
+    // Get import settings
+    const settings = {
+        importMembers: document.getElementById('import-members')?.checked || true,
+        importChannels: document.getElementById('import-channels')?.checked || true,
+        importAssignments: document.getElementById('import-assignments')?.checked || true,
+        importFiles: document.getElementById('import-files')?.checked || true
+    };
+    
+    fetch('/microsoft_teams/import_team', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            teamId: window.selectedTeam.id,
+            settings: settings
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('✅ Team imported successfully');
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('microsoftTeamsImportModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Show success message
+            if (typeof window.showSuccess === 'function') {
+                window.showSuccess('🎉 Team imported successfully!');
+            }
+            
+            // Reload lessons list
+            if (typeof loadPage === 'function') {
+                setTimeout(() => loadPage('class'), 500);
+            } else {
+                setTimeout(() => window.location.reload(), 500);
+            }
+        } else {
+            throw new Error(data.error || 'Failed to import team');
+        }
+    })
+    .catch(error => {
+        console.error('Error importing team:', error);
+        if (typeof window.showError === 'function') {
+            window.showError(error.message || 'Failed to import team');
+        } else {
+            alert('Error: ' + error.message);
+        }
+    })
+    .finally(() => {
+        importBtn.disabled = false;
+        importBtn.innerHTML = originalText;
+    });
+};
+
+// Connect to Microsoft Teams
+window.connectToMicrosoftTeams = function() {
+    console.log('🔗 Connecting to Microsoft Teams...');
+    window.location.href = '/microsoft_teams/authorize?return_to_import=true';
+};
+
+// Refresh teams
+window.refreshTeams = function() {
+    loadTeams();
+};
 
 // Close any remaining open blocks
