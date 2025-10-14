@@ -427,7 +427,7 @@
   background: #f5f7fa;
   transition: var(--enchat-transition-base);
   width: calc(100% - var(--enchat-sidebar-width));
-  overflow-x: hidden;
+  overflow-y: auto; /* Allow vertical scrolling for sticky positioning */
 }
 
 /* Container adjustments for full-width content */

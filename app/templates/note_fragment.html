@@ -24,223 +24,225 @@
     </div>
   </div>
 
-  <!-- Search and Filter Section (Inline Layout) -->
-  <div class="px-4 sticky-search-filter">
-    <div class="flex-wrap gap-3 mb-3 d-flex justify-content-between align-items-center">
-      <!-- Search Box (60% width) -->
-      <div class="flex-grow-1" style="max-width: 60%;">
-        <div class="input-group search-bar-modern">
-          <span class="bg-white input-group-text border-end-0">
-            <i class="bi bi-search text-muted"></i>
-          </span>
-          <input id="noteSearch" type="text" class="form-control border-start-0 ng-input" placeholder="Search notes...">
-        </div>
-      </div>
-      <!-- Filter Chips (38% width) -->
-      <div class="flex-wrap gap-2 d-flex chip-group">
-        <button type="button" class="btn btn-light chip active" data-status="">
-          <i class="bi bi-card-list me-1"></i>All
-        </button>
-        <button type="button" class="btn btn-light chip" data-status="pending">
-          <i class="bi bi-clock me-1"></i>Pending
-        </button>
-        <button type="button" class="btn btn-light chip" data-status="in-progress">
-          <i class="bi bi-arrow-repeat me-1"></i>In Progress
-        </button>
-        <button type="button" class="btn btn-light chip" data-status="completed">
-          <i class="bi bi-check-circle me-1"></i>Completed
-        </button>
-      </div>
-    </div>
-  </div>
-  <!-- Stats Section -->
-  <div class="px-4">
-    <div class="mb-3 row g-3 stats-row">
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="stat-icon-modern bg-gradient-primary me-3">
-              <i class="bi bi-journal-text"></i>
-            </div>
-            <div>
-              <div class="mb-1 small text-muted">Total Notes</div>
-              <div class="mb-0 h4 fw-bold">{{ stats.total }}</div>
-            </div>
+  <div style="min-height: 100vh;">
+    <!-- Search and Filter Section (Inline Layout) -->
+    <div class="px-4 sticky-search-filter">
+      <div class="flex-wrap gap-3 mb-3 d-flex justify-content-between align-items-center">
+        <!-- Search Box (60% width) -->
+        <div class="flex-grow-1" style="max-width: 60%;">
+          <div class="input-group search-bar-modern">
+            <span class="bg-white input-group-text border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input id="noteSearch" type="text" class="form-control border-start-0 ng-input" placeholder="Search notes...">
           </div>
         </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="stat-icon-modern bg-gradient-success me-3">
-              <i class="bi bi-check2-circle"></i>
-            </div>
-            <div>
-              <div class="mb-1 small text-muted">Completed</div>
-              <div class="mb-0 h4 fw-bold">{{ stats.completed }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="stat-icon-modern bg-gradient-info me-3">
-              <i class="bi bi-image"></i>
-            </div>
-            <div>
-              <div class="mb-1 small text-muted">Images</div>
-              <div class="mb-0 h4 fw-bold">{{ stats.images }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="stat-icon-modern bg-gradient-warning me-3">
-              <i class="bi bi-paperclip"></i>
-            </div>
-            <div>
-              <div class="mb-1 small text-muted">Files</div>
-              <div class="mb-0 h4 fw-bold">{{ stats.docs }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Integration Summary -->
-  {% if user_data %}
-  <div class="mb-4 row">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-body">
-          <h6 class="card-title">Debug</h6>
-          <div class="text-center row">
-            <div class="col-md-4">
-              <div class="border-end">
-                <h4 class="text-primary">{{ user_data.total_lessons }}</h4>
-                <p class="mb-0 text-muted">Total Lessons</p>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="border-end">
-                <h4 class="text-success">{{ user_data.total_notes }}</h4>
-                <p class="mb-0 text-muted">Total Notes</p>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div>
-                <h4 class="text-info">{{ user_data.total_files }}</h4>
-                <p class="mb-0 text-muted">Total Files</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Notes List Section -->
-  <div class="px-4">
-    <div class="row g-3">
-      {% if notes %}
-      {% for note in notes %}
-      <div class="mb-4 col-md-6 col-lg-4">
-        <div class="card h-100 neo-card note-card" data-status="{{ (note.status or 'pending') }}"
-          data-note-id="{{ note.id }}" style="cursor:pointer;">
-          {% set first_image = None %}
-          {% if note.files %}
-          {% set first_image = (note.files | selectattr('file_type', 'equalto', 'image') | list | first) %}
-          {% endif %}
-          {% if first_image %}
-          <img src="{{ url_for('static', filename=first_image.file_path) }}" class="card-img-top" alt="cover"
-            style="object-fit:cover;height:140px;">
-          {% else %}
-          <div class="note-cover bg-brand"></div>
-          {% endif %}
-          <div class="card-body d-flex flex-column">
-            <div class="mb-2 d-flex justify-content-between align-items-start">
-              <h5 class="mb-0 card-title">{{ note.title }}</h5>
-              {% set st = (note.status or 'pending') %}
-              {% set badge = 'secondary' %}
-              {% if st == 'in-progress' %}{% set badge = 'warning' %}{% elif st == 'completed' %}{% set badge =
-              'success' %}{% endif %}
-              <span class="badge status-pill bg-{{ badge }} text-uppercase">{{ st.replace('-', ' ') }}</span>
-            </div>
-            <p class="card-text text-truncate-3">{{ (note.content or '')|striptags }}</p>
-            {% if note.tags %}
-            <div class="mb-2">
-              {% for tag in note.tags %}
-              {% if tag and tag.strip() %}
-              {% set tag_lower = tag.strip().lower() %}
-              {% if 'study' in tag_lower or 'studer' in tag_lower %}
-              <span class="tag-badge tag-badge-primary">{{ tag.strip() }}</span>
-              {% elif 'math' in tag_lower %}
-              <span class="tag-badge tag-badge-warning">{{ tag.strip() }}</span>
-              {% elif 'sci' in tag_lower or 'science' in tag_lower %}
-              <span class="tag-badge tag-badge-success">{{ tag.strip() }}</span>
-              {% elif 'eng' in tag_lower or 'engineering' in tag_lower %}
-              <span class="tag-badge tag-badge-info">{{ tag.strip() }}</span>
-              {% elif 'code' in tag_lower or 'programming' in tag_lower %}
-              <span class="tag-badge tag-badge-purple">{{ tag.strip() }}</span>
-              {% else %}
-              <span class="tag-badge">{{ tag.strip() }}</span>
-              {% endif %}
-              {% endif %}
-              {% endfor %}
-            </div>
-            {% endif %}
-            {% if note.external_link %}
-            <a href="{{ note.external_link }}" target="_blank"
-              class="mb-2 btn btn-sm btn-outline-success align-self-start">
-              <i class="fas fa-link me-1"></i>Reference
-            </a>
-            {% endif %}
-          </div>
-          <div class="gap-2 pt-0 pb-3 bg-white border-0 card-footer d-flex justify-content-between align-items-center">
-            <!-- Date (Left) -->
-            <div class="small text-muted">
-              <i class="bi bi-calendar2-week me-1"></i>{{ note.created_at.strftime('%Y-%m-%d') if note.created_at else
-              '' }}
-            </div>
-            <!-- Action Buttons (Right) -->
-            <div class="gap-2 d-flex">
-              <button type="button" class="ng-btn-outline-primary ng-btn-sm btn-rounded-25"
-                onclick="openNoteEditor('{{ note.id }}')" data-note-id="{{ note.id }}"
-                data-note-title="{{ note.title }}" data-note-content="{{ note.content or '' }}"
-                data-note-tags="{{ (note.tags or []) | join(', ') }}" data-note-status="{{ note.status or 'pending' }}"
-                data-note-type="{{ note.note_type if note.note_type is string else note.note_type.value }}"
-                data-note-is-public="{{ '1' if note.is_public else '0' }}"
-                data-note-external-link="{{ note.external_link or '' }}"
-                data-note-images='{{ note.files | selectattr("file_type", "equalto", "image") | list | to_json | safe }}'
-                data-note-files='{{ note.files | selectattr("file_type", "equalto", "document") | list | to_json | safe }}'>
-                <i class="bi bi-pencil note-icon-sm"></i>Edit
-              </button>
-              <button onclick="deleteNote('{{ note.id }}')" class="ng-btn-outline-danger ng-btn-sm btn-rounded-25"><i
-                  class="bi bi-trash note-icon-sm"></i>Delete</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-      {% else %}
-      <div class="col-12">
-        <div class="py-5 text-center empty-state-modern">
-          <div class="mb-4 empty-state-icon">
-            <i class="bi bi-journal-x"></i>
-          </div>
-          <h4 class="mb-2 text-muted">No notes yet</h4>
-          <p class="mb-4 text-muted">Start organizing your thoughts and ideas</p>
-          <button type="button" class="ng-btn-save" onclick="loadPage('note/add')">
-            <i class="bi bi-plus-lg"></i>Create your first note
+        <!-- Filter Chips (38% width) -->
+        <div class="flex-wrap gap-2 d-flex chip-group">
+          <button type="button" class="btn btn-light chip active" data-status="">
+            <i class="bi bi-card-list me-1"></i>All
+          </button>
+          <button type="button" class="btn btn-light chip" data-status="pending">
+            <i class="bi bi-clock me-1"></i>Pending
+          </button>
+          <button type="button" class="btn btn-light chip" data-status="in-progress">
+            <i class="bi bi-arrow-repeat me-1"></i>In Progress
+          </button>
+          <button type="button" class="btn btn-light chip" data-status="completed">
+            <i class="bi bi-check-circle me-1"></i>Completed
           </button>
         </div>
       </div>
-      {% endif %}
+    </div>
+    <!-- Stats Section -->
+    <div class="px-4">
+      <div class="mb-3 row g-3 stats-row">
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <div class="stat-icon-modern bg-gradient-primary me-3">
+                <i class="bi bi-journal-text"></i>
+              </div>
+              <div>
+                <div class="mb-1 small text-muted">Total Notes</div>
+                <div class="mb-0 h4 fw-bold">{{ stats.total }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <div class="stat-icon-modern bg-gradient-success me-3">
+                <i class="bi bi-check2-circle"></i>
+              </div>
+              <div>
+                <div class="mb-1 small text-muted">Completed</div>
+                <div class="mb-0 h4 fw-bold">{{ stats.completed }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <div class="stat-icon-modern bg-gradient-info me-3">
+                <i class="bi bi-image"></i>
+              </div>
+              <div>
+                <div class="mb-1 small text-muted">Images</div>
+                <div class="mb-0 h4 fw-bold">{{ stats.images }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <div class="stat-icon-modern bg-gradient-warning me-3">
+                <i class="bi bi-paperclip"></i>
+              </div>
+              <div>
+                <div class="mb-1 small text-muted">Files</div>
+                <div class="mb-0 h4 fw-bold">{{ stats.docs }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Integration Summary -->
+    {% if user_data %}
+    <div class="mb-4 row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <h6 class="card-title">Debug</h6>
+            <div class="text-center row">
+              <div class="col-md-4">
+                <div class="border-end">
+                  <h4 class="text-primary">{{ user_data.total_lessons }}</h4>
+                  <p class="mb-0 text-muted">Total Lessons</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="border-end">
+                  <h4 class="text-success">{{ user_data.total_notes }}</h4>
+                  <p class="mb-0 text-muted">Total Notes</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div>
+                  <h4 class="text-info">{{ user_data.total_files }}</h4>
+                  <p class="mb-0 text-muted">Total Files</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Notes List Section -->
+    <div class="px-4">
+      <div class="row g-3">
+        {% if notes %}
+        {% for note in notes %}
+        <div class="mb-4 col-md-6 col-lg-4">
+          <div class="card h-100 neo-card note-card" data-status="{{ (note.status or 'pending') }}"
+            data-note-id="{{ note.id }}" style="cursor:pointer;">
+            {% set first_image = None %}
+            {% if note.files %}
+            {% set first_image = (note.files | selectattr('file_type', 'equalto', 'image') | list | first) %}
+            {% endif %}
+            {% if first_image %}
+            <img src="{{ url_for('static', filename=first_image.file_path) }}" class="card-img-top" alt="cover"
+              style="object-fit:cover;height:140px;">
+            {% else %}
+            <div class="note-cover bg-brand"></div>
+            {% endif %}
+            <div class="card-body d-flex flex-column">
+              <div class="mb-2 d-flex justify-content-between align-items-start">
+                <h5 class="mb-0 card-title">{{ note.title }}</h5>
+                {% set st = (note.status or 'pending') %}
+                {% set badge = 'secondary' %}
+                {% if st == 'in-progress' %}{% set badge = 'warning' %}{% elif st == 'completed' %}{% set badge =
+                'success' %}{% endif %}
+                <span class="badge status-pill bg-{{ badge }} text-uppercase">{{ st.replace('-', ' ') }}</span>
+              </div>
+              <p class="card-text text-truncate-3">{{ (note.content or '')|striptags }}</p>
+              {% if note.tags %}
+              <div class="mb-2">
+                {% for tag in note.tags %}
+                {% if tag and tag.strip() %}
+                {% set tag_lower = tag.strip().lower() %}
+                {% if 'study' in tag_lower or 'studer' in tag_lower %}
+                <span class="tag-badge tag-badge-primary">{{ tag.strip() }}</span>
+                {% elif 'math' in tag_lower %}
+                <span class="tag-badge tag-badge-warning">{{ tag.strip() }}</span>
+                {% elif 'sci' in tag_lower or 'science' in tag_lower %}
+                <span class="tag-badge tag-badge-success">{{ tag.strip() }}</span>
+                {% elif 'eng' in tag_lower or 'engineering' in tag_lower %}
+                <span class="tag-badge tag-badge-info">{{ tag.strip() }}</span>
+                {% elif 'code' in tag_lower or 'programming' in tag_lower %}
+                <span class="tag-badge tag-badge-purple">{{ tag.strip() }}</span>
+                {% else %}
+                <span class="tag-badge">{{ tag.strip() }}</span>
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+              </div>
+              {% endif %}
+              {% if note.external_link %}
+              <a href="{{ note.external_link }}" target="_blank"
+                class="mb-2 btn btn-sm btn-outline-success align-self-start">
+                <i class="fas fa-link me-1"></i>Reference
+              </a>
+              {% endif %}
+            </div>
+            <div class="gap-2 pt-0 pb-3 bg-white border-0 card-footer d-flex justify-content-between align-items-center">
+              <!-- Date (Left) -->
+              <div class="small text-muted">
+                <i class="bi bi-calendar2-week me-1"></i>{{ note.created_at.strftime('%Y-%m-%d') if note.created_at else
+                '' }}
+              </div>
+              <!-- Action Buttons (Right) -->
+              <div class="gap-2 d-flex">
+                <button type="button" class="ng-btn-outline-primary ng-btn-sm btn-rounded-25"
+                  onclick="openNoteEditor('{{ note.id }}')" data-note-id="{{ note.id }}"
+                  data-note-title="{{ note.title }}" data-note-content="{{ note.content or '' }}"
+                  data-note-tags="{{ (note.tags or []) | join(', ') }}" data-note-status="{{ note.status or 'pending' }}"
+                  data-note-type="{{ note.note_type if note.note_type is string else note.note_type.value }}"
+                  data-note-is-public="{{ '1' if note.is_public else '0' }}"
+                  data-note-external-link="{{ note.external_link or '' }}"
+                  data-note-images='{{ note.files | selectattr("file_type", "equalto", "image") | list | to_json | safe }}'
+                  data-note-files='{{ note.files | selectattr("file_type", "equalto", "document") | list | to_json | safe }}'>
+                  <i class="bi bi-pencil note-icon-sm"></i>Edit
+                </button>
+                <button onclick="deleteNote('{{ note.id }}')" class="ng-btn-outline-danger ng-btn-sm btn-rounded-25"><i
+                    class="bi bi-trash note-icon-sm"></i>Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-12">
+          <div class="py-5 text-center empty-state-modern">
+            <div class="mb-4 empty-state-icon">
+              <i class="bi bi-journal-x"></i>
+            </div>
+            <h4 class="mb-2 text-muted">No notes yet</h4>
+            <p class="mb-4 text-muted">Start organizing your thoughts and ideas</p>
+            <button type="button" class="ng-btn-save" onclick="loadPage('note/add')">
+              <i class="bi bi-plus-lg"></i>Create your first note
+            </button>
+          </div>
+        </div>
+        {% endif %}
+      </div>
     </div>
   </div>
 </div>

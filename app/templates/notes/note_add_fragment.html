@@ -21,10 +21,10 @@
   </div>
 
   <!-- Main Content Area -->
-  <div class="bg-white d-flex flex-column ng-space"
-    style="margin-left: 0.5rem; margin-right: 0.5rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+  <div class="d-flex flex-column ng-space"
+    style="margin-left: 0.5rem; margin-right: 0.5rem;">
     <!-- Title Input Section -->
-    <div class="p-4 mt-16 border-bottom ui-surface glass-panel" style="border-radius: 12px 12px 0 0;">
+    <div class="p-4 mt-16 border-bottom ui-surface glass-panel">
       <label class="mb-2 form-label section-title"><i class="bi bi-type"></i>Title</label>
       <input type="text" class="form-control form-control-lg ng-input" id="addTitle" name="title"
         placeholder="Enter note title..." maxlength="200" required>
@@ -49,7 +49,7 @@
     </div>
 
     <!-- Rich Text Toolbar -->
-    <div class="p-3 mx-4 mt-3 mb-2 border-0 editor-toolbar ui-toolbar glass-panel" style="border-radius: 8px;">
+    <div class="p-3 mx-4 mt-3 mb-2 border-0 editor-toolbar ui-toolbar glass-panel">
       <div class="flex-wrap gap-2 d-flex align-items-center">
         <!-- Text Formatting -->
         <button class="btn btn-sm ng-chip" onclick="formatText('bold')" title="Bold (Ctrl+B)">
@@ -107,7 +107,7 @@
 
     <!-- Editor Content -->
     <div id="addContent" class="p-5 mx-4 mb-3 overflow-auto flex-grow-1 editor-card glass-panel" contenteditable="true"
-      style="outline:none; border-radius: 8px; min-height: 400px;" aria-label="Note content editor" role="textbox"
+      style="outline:none; min-height: 400px;" aria-label="Note content editor" role="textbox"
       data-placeholder="Start writing your note here...">
       <em class="text-muted"></em>
     </div>
@@ -136,8 +136,7 @@
 
     <!-- Status Bar -->
     <div
-      class="p-3 mx-4 mb-4 border-top small text-muted d-flex justify-content-between align-items-center glass-section ng-glass ng-rounded"
-      style="border-radius: 0 0 12px 12px;">
+      class="p-3 mx-4 mb-4 border-top small text-muted d-flex justify-content-between align-items-center glass-section ng-glass ng-rounded">
       <div class="save-status unsaved" id="addSaveStatus">
         <i class="bi bi-exclamation-circle"></i>
         <span>Unsaved changes</span>
