@@ -379,7 +379,7 @@ let selectedCourse = null;
 // Connect to Google Classroom
 function connectToGoogleClassroom() {
     console.log('🔗 Connecting to Google Classroom...');
-    window.location.href = '/google_classroom/authorize';
+    window.location.href = '/google_classroom/authorize?return_to_import=true';
 }
 
 // Load Google Classroom courses - Modal specific

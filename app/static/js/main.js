@@ -227,6 +227,19 @@ document.addEventListener('DOMContentLoaded', function() {
     preloadPage('dashboard');
     preloadPage('class');
   }, 1000);
+  
+  // Check if we should open Google Classroom import modal
+  const urlParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  
+  if (hashParams.get('open_google_import') === 'true') {
+    // Open Google Classroom import modal after a short delay
+    setTimeout(() => {
+      if (typeof window.openGoogleClassroomModal === 'function') {
+        window.openGoogleClassroomModal();
+      }
+    }, 1000);
+  }
 });
 
 // Open full-page note editor (fragment) with optional selected note
@@ -3501,7 +3514,7 @@ window.loadGoogleCourses = function() {
                 if (modal) {
                     modal.hide();
                 }
-                window.location.href = '/google_classroom/authorize';
+                window.location.href = '/google_classroom/authorize?return_to_import=true';
                 return;
             }
             return response.json();
@@ -3521,7 +3534,7 @@ window.loadGoogleCourses = function() {
                     authEl.style.display = 'block';
                 } else {
                     // Fallback: redirect to OAuth
-                    window.location.href = data.redirect_url || '/google_classroom/authorize';
+                    window.location.href = (data.redirect_url || '/google_classroom/authorize') + '?return_to_import=true';
                 }
             } else {
                 emptyEl.style.display = 'block';

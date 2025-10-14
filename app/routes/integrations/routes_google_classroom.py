@@ -58,41 +58,68 @@ def load_logged_in_user():
 @login_required
 def authorize():
     """Authorize Google Classroom API access"""
-    if not current_app.config.get('GOOGLE_CLIENT_ID') or not current_app.config.get('GOOGLE_CLIENT_SECRET'):
+    print("🔐 Google Classroom authorization requested")
+    
+    # Check environment variables
+    client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+    client_secret = current_app.config.get('GOOGLE_CLIENT_SECRET')
+    
+    print(f"Client ID: {client_id[:20] if client_id else 'None'}...")
+    print(f"Client Secret: {client_secret[:20] if client_secret else 'None'}...")
+    
+    if not client_id or not client_secret:
         flash('Google API credentials are not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.', 'danger')
         return redirect(url_for('main_routes.index'))
 
-    flow = Flow.from_client_config(
-        client_config={
-            "web": {
-                "client_id": current_app.config['GOOGLE_CLIENT_ID'],
-                "client_secret": current_app.config['GOOGLE_CLIENT_SECRET'],
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [
-                    "http://localhost:5004/google_classroom/oauth2callback",
-                    "http://127.0.0.1:5004/google_classroom/oauth2callback",
-                    "http://localhost:8000/google_classroom/oauth2callback",
-                    "http://localhost:8001/google_classroom/oauth2callback",
-                    "http://127.0.0.1:8000/google_classroom/oauth2callback",
-                    "http://127.0.0.1:8001/google_classroom/oauth2callback"
-                ]
-            }
-        },
-        scopes=SCOPES
-    )
+    try:
+        flow = Flow.from_client_config(
+            client_config={
+                "web": {
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                    "redirect_uris": [
+                        "http://localhost:5004/google_classroom/oauth2callback",
+                        "http://127.0.0.1:5004/google_classroom/oauth2callback",
+                        "http://localhost:8000/google_classroom/oauth2callback",
+                        "http://localhost:8001/google_classroom/oauth2callback",
+                        "http://127.0.0.1:8000/google_classroom/oauth2callback",
+                        "http://127.0.0.1:8001/google_classroom/oauth2callback"
+                    ]
+                }
+            },
+            scopes=SCOPES
+        )
 
-    # Use port from current app config
-    port = current_app.config.get('PORT', 5004)
-    flow.redirect_uri = f"http://localhost:{port}/google_classroom/oauth2callback"
+        # Use port from current app config
+        port = current_app.config.get('PORT', 5004)
+        flow.redirect_uri = f"http://localhost:{port}/google_classroom/oauth2callback"
+        print(f"Redirect URI: {flow.redirect_uri}")
 
-    authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        prompt='consent'
-    )
+        # Check if we should return to Google Classroom import modal
+        return_to_import = request.args.get('return_to_import', 'false').lower() == 'true'
+        print(f"Return to import: {return_to_import}")
+        
+        authorization_url, state = flow.authorization_url(
+            access_type='offline',
+            prompt='consent',
+            state=f"{state}&return_to_import={return_to_import}" if return_to_import else state
+        )
 
-    session['oauth_state'] = state
-    return redirect(authorization_url)
+        print(f"Authorization URL: {authorization_url}")
+        session['oauth_state'] = state
+        session['return_to_import'] = return_to_import
+        
+        print("🔗 Redirecting to Google OAuth...")
+        return redirect(authorization_url)
+        
+    except Exception as e:
+        print(f"❌ Error creating OAuth flow: {e}")
+        import traceback
+        traceback.print_exc()
+        flash(f'Failed to initialize Google OAuth: {str(e)}', 'danger')
+        return redirect(url_for('main_routes.index'))
 
 @google_classroom_bp.route('/oauth2callback')
 def oauth2callback():
@@ -172,8 +199,15 @@ def oauth2callback():
         flash('Successfully connected to Google Classroom!', 'success')
         print(f"DEBUG: OAuth2 callback completed for user {user_id}")
         
-        # Redirect to class page
-        return redirect(url_for('main.index') + '#class')
+        # Check if we should return to Google Classroom import modal
+        return_to_import = session.pop('return_to_import', False)
+        
+        if return_to_import:
+            # Redirect back to class page with Google Classroom import modal open
+            return redirect(url_for('main.index') + '#class&open_google_import=true')
+        else:
+            # Redirect to class page normally
+            return redirect(url_for('main.index') + '#class')
         
     except Exception as e:
         print(f"ERROR: Failed to save Google Classroom credentials: {e}")
@@ -204,49 +238,19 @@ def fetch_courses():
             }), 401
         
         # Use Google Classroom Service
-        try:
-            from app.services.google_classroom_service import GoogleClassroomService
-            google_service = GoogleClassroomService()
-            
-            # Fetch courses from Google Classroom
-            courses = google_service.fetch_courses(user_id)
-            
-            return jsonify({
-                'success': True,
-                'courses': courses
-            })
-            
-        except ImportError:
-            # Fallback to mock data if service not available
-            print("Google Classroom Service not available, using mock data")
-            mock_courses = [
-                {
-                    'id': 'course_1',
-                    'name': 'Introduction to Programming',
-                    'description': 'Learn the basics of programming with Python',
-                    'section': 'CS101',
-                    'studentsCount': 25,
-                    'assignmentsCount': 8,
-                    'materialsCount': 12,
-                    'announcementsCount': 5
-                },
-                {
-                    'id': 'course_2', 
-                    'name': 'Web Development',
-                    'description': 'Build modern web applications',
-                    'section': 'CS201',
-                    'studentsCount': 18,
-                    'assignmentsCount': 12,
-                    'materialsCount': 15,
-                    'announcementsCount': 3
-                }
-            ]
-            
-            return jsonify({
-                'success': True,
-                'courses': mock_courses,
-                'message': 'Using mock data - Google Classroom Service not fully configured'
-            })
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'services'))
+        from google_classroom_service import GoogleClassroomService
+        google_service = GoogleClassroomService()
+        
+        # Fetch courses from Google Classroom
+        courses = google_service.fetch_courses(user_id)
+        
+        return jsonify({
+            'success': True,
+            'courses': courses
+        })
         
     except Exception as e:
         print(f"Error fetching Google Classroom courses: {e}")
@@ -272,61 +276,26 @@ def import_course():
             return jsonify({'success': False, 'error': 'User not authenticated'}), 401
         
         # Use Google Classroom Service
-        try:
-            from app.services.google_classroom_service import GoogleClassroomService
-            google_service = GoogleClassroomService()
-            
-            # Check if user has credentials
-            credentials = google_service.get_credentials(user_id)
-            if not credentials:
-                return jsonify({
-                    'success': False,
-                    'error': 'No Google credentials found. Please authorize first.',
-                    'needs_auth': True,
-                    'redirect_url': '/google_classroom/authorize'
-                }), 401
-            
-            # Import course using Google Classroom Service
-            result = google_service.import_course(user_id, course_id, settings)
-            
-            return jsonify(result)
-            
-        except ImportError:
-            # Fallback to mock lesson if service not available
-            print("Google Classroom Service not available, creating mock lesson")
-            from app.services import LessonService
-            
-            lesson_service = LessonService()
-            
-            # Create new lesson based on course_id
-            course_names = {
-                'course_1': 'Introduction to Programming',
-                'course_2': 'Web Development', 
-                'course_3': 'Data Science Fundamentals'
-            }
-            
-            lesson_data = {
-                'title': f'Imported: {course_names.get(course_id, "Google Classroom Course")}',
-                'description': f'Imported from Google Classroom - {course_id}',
-                'status': 'in_progress',
-                'color_theme': 1,
-                'difficulty_level': 'intermediate',
-                'author_name': 'Google Classroom Import'
-            }
-            
-            lesson = lesson_service.create_lesson(user_id, lesson_data)
-            
-            if lesson:
-                return jsonify({
-                    'success': True,
-                    'message': 'Course imported successfully (mock)',
-                    'lesson_id': lesson.id
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'error': 'Failed to create lesson'
-                }), 500
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'services'))
+        from google_classroom_service import GoogleClassroomService
+        google_service = GoogleClassroomService()
+        
+        # Check if user has credentials
+        credentials = google_service.get_credentials(user_id)
+        if not credentials:
+            return jsonify({
+                'success': False,
+                'error': 'No Google credentials found. Please authorize first.',
+                'needs_auth': True,
+                'redirect_url': '/google_classroom/authorize'
+            }), 401
+        
+        # Import course using Google Classroom Service
+        result = google_service.import_course(user_id, course_id, settings)
+        
+        return jsonify(result)
             
     except Exception as e:
         print(f"Error importing Google Classroom course: {e}")

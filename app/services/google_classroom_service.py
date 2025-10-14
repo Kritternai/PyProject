@@ -9,6 +9,10 @@ from typing import List, Dict, Optional
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from app import db
 from app.models.user import UserModel
 
@@ -35,9 +39,11 @@ class GoogleClassroomService:
         try:
             user = UserModel.query.filter_by(id=user_id).first()
             if not user or not user.google_credentials:
+                print(f"No Google credentials found for user {user_id}")
                 return None
             
             creds_data = json.loads(user.google_credentials)
+            print(f"Found credentials for user {user_id}: {creds_data.get('token', '')[:20]}...")
             
             credentials = Credentials(
                 token=creds_data.get('token'),
@@ -50,13 +56,17 @@ class GoogleClassroomService:
             
             # Refresh token if needed
             if credentials.expired and credentials.refresh_token:
+                print(f"Token expired for user {user_id}, refreshing...")
                 credentials.refresh(Request())
                 self.save_credentials(user_id, credentials)
+                print(f"Token refreshed for user {user_id}")
             
             return credentials
             
         except Exception as e:
             print(f"Error getting credentials for user {user_id}: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def save_credentials(self, user_id: str, credentials: Credentials) -> bool:
@@ -87,13 +97,16 @@ class GoogleClassroomService:
     def fetch_courses(self, user_id: str) -> List[Dict]:
         """Fetch Google Classroom courses for user"""
         try:
+            print(f"Fetching courses for user {user_id}")
             credentials = self.get_credentials(user_id)
             if not credentials:
                 raise Exception("No valid credentials found")
             
+            print(f"Building Google Classroom service for user {user_id}")
             # Build Google Classroom service
             service = build('classroom', 'v1', credentials=credentials)
             
+            print(f"Fetching courses from Google Classroom API...")
             # Fetch courses
             results = service.courses().list(
                 courseStates=['ACTIVE'],
@@ -101,11 +114,14 @@ class GoogleClassroomService:
             ).execute()
             
             courses = results.get('courses', [])
+            print(f"Found {len(courses)} courses from Google Classroom")
             
             # Process each course to get additional details
             processed_courses = []
             for course in courses:
                 course_id = course.get('id')
+                course_name = course.get('name', 'Untitled Course')
+                print(f"Processing course: {course_name} (ID: {course_id})")
                 
                 # Get students count
                 try:
@@ -114,7 +130,9 @@ class GoogleClassroomService:
                         pageSize=1000
                     ).execute()
                     students_count = len(students_result.get('students', []))
-                except:
+                    print(f"  - Students: {students_count}")
+                except Exception as e:
+                    print(f"  - Error getting students: {e}")
                     students_count = 0
                 
                 # Get course work count
@@ -124,7 +142,9 @@ class GoogleClassroomService:
                         pageSize=1000
                     ).execute()
                     assignments_count = len(coursework_result.get('courseWork', []))
-                except:
+                    print(f"  - Assignments: {assignments_count}")
+                except Exception as e:
+                    print(f"  - Error getting assignments: {e}")
                     assignments_count = 0
                 
                 # Get announcements count
@@ -134,7 +154,9 @@ class GoogleClassroomService:
                         pageSize=1000
                     ).execute()
                     announcements_count = len(announcements_result.get('announcements', []))
-                except:
+                    print(f"  - Announcements: {announcements_count}")
+                except Exception as e:
+                    print(f"  - Error getting announcements: {e}")
                     announcements_count = 0
                 
                 # Get course work materials count
@@ -144,12 +166,14 @@ class GoogleClassroomService:
                         pageSize=1000
                     ).execute()
                     materials_count = len(materials_result.get('courseWorkMaterial', []))
-                except:
+                    print(f"  - Materials: {materials_count}")
+                except Exception as e:
+                    print(f"  - Error getting materials: {e}")
                     materials_count = 0
                 
                 processed_course = {
                     'id': course_id,
-                    'name': course.get('name', 'Untitled Course'),
+                    'name': course_name,
                     'description': course.get('description', ''),
                     'section': course.get('section', ''),
                     'room': course.get('room', ''),
@@ -166,10 +190,13 @@ class GoogleClassroomService:
                 
                 processed_courses.append(processed_course)
             
+            print(f"Successfully processed {len(processed_courses)} courses")
             return processed_courses
             
         except Exception as e:
             print(f"Error fetching courses for user {user_id}: {e}")
+            import traceback
+            traceback.print_exc()
             raise e
     
     def import_course(self, user_id: str, course_id: str, settings: Dict) -> Dict:
