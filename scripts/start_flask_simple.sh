@@ -7,8 +7,8 @@
 echo "🚀 Starting Smart Learning Hub..."
 
 # Set Environment Variables
-export GOOGLE_CLIENT_ID="40820229782-0f7uoqd5ab94cuipmbdk09jeradqvac0.apps.googleusercontent.com"
-export GOOGLE_CLIENT_SECRET="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"
+export GOOGLE_CLIENT_ID="your-google-client-id-here"
+export GOOGLE_CLIENT_SECRET="your-google-client-secret-here"
 export FLASK_SECRET_KEY="your_strong_random_flask_secret_key"
 export OAUTHLIB_INSECURE_TRANSPORT="1"
 export FLASK_ENV="development"

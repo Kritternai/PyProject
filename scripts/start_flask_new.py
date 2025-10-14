@@ -69,8 +69,8 @@ class FlaskStarter:
             self.print_warning("Using default development values...")
             
             # Set default development values
-            os.environ['GOOGLE_CLIENT_ID'] = "231151462337-sspbadu0r8rlnoht5pgg77un10i26r8d.apps.googleusercontent.com"
-            os.environ['GOOGLE_CLIENT_SECRET'] = "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"
+            os.environ['GOOGLE_CLIENT_ID'] = "your-google-client-id-here"
+            os.environ['GOOGLE_CLIENT_SECRET'] = "your-google-client-secret-here"
             os.environ['FLASK_SECRET_KEY'] = "your_strong_random_flask_secret_key"
         else:
             self.print_success("Google OAuth credentials found in environment variables")

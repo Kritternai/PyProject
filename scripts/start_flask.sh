@@ -58,8 +58,8 @@ if [ -z "$GOOGLE_CLIENT_ID" ] || [ -z "$GOOGLE_CLIENT_SECRET" ]; then
     print_warning "Using default development values..."
     
     # Set default development values (replace with your actual credentials)
-    export GOOGLE_CLIENT_ID="231151462337-sspbadu0r8rlnoht5pgg77un10i26r8d.apps.googleusercontent.com"
-    export GOOGLE_CLIENT_SECRET="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"
+    export GOOGLE_CLIENT_ID="your-google-client-id-here"
+    export GOOGLE_CLIENT_SECRET="your-google-client-secret-here"
     export FLASK_SECRET_KEY="your_strong_random_flask_secret_key" # REMEMBER TO CHANGE THIS!    
 else
     print_success "Google OAuth credentials found in environment variables"
