@@ -140,3 +140,63 @@ def partial_pomodoro():
     except Exception as e:
         return render_template('pomodoro_fragment.html', user=g.user)
 
+
+# ============================================
+# DIRECT URL ACCESS ROUTES (for SPA with URLs)
+# ============================================
+
+@main_routes_bp.route('/class')
+@login_required_web
+def class_page():
+    """Class page - Direct URL access"""
+    return render_template('base.html', user=g.user)
+
+
+@main_routes_bp.route('/note')
+@login_required_web
+def note_page():
+    """Note page - Direct URL access"""
+    return render_template('base.html', user=g.user)
+
+
+@main_routes_bp.route('/track')
+@login_required_web
+def track_page():
+    """Track page - Direct URL access"""
+    return render_template('base.html', user=g.user)
+
+
+@main_routes_bp.route('/pomodoro')
+@login_required_web
+def pomodoro_page():
+    """Pomodoro page - Direct URL access"""
+    return render_template('base.html', user=g.user)
+
+
+@main_routes_bp.route('/setting')
+@login_required_web
+def setting_page():
+    """Setting page - Direct URL access"""
+    return render_template('base.html', user=g.user)
+
+
+@main_routes_bp.route('/profile')
+@login_required_web
+def profile_page():
+    """Profile page - Direct URL access"""
+    return render_template('base.html', user=g.user)
+
+
+@main_routes_bp.route('/change_password')
+@login_required_web
+def change_password_page():
+    """Change password page - Direct URL access"""
+    return render_template('base.html', user=g.user)
+
+
+@main_routes_bp.route('/dev')
+@login_required_web
+def dev_page():
+    """Dev page - Direct URL access"""
+    return render_template('base.html', user=g.user)
+

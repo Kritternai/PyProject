@@ -1,8 +1,56 @@
-function loadPage(page) {
-  // Show loading indicator
-  const mainContent = document.getElementById('main-content');
-  mainContent.innerHTML = '<div class="text-center py-5 text-secondary" id="loading-indicator">Loading...</div>';
+// Cleanup function for previous page
+function cleanupPreviousPage() {
+  console.log('🧹 Cleaning up previous page...');
+  
+  // Call page-specific cleanup functions
+  if (window.onUnloadPomodoro && window.pomodoroInitialized) {
+    console.log('🧹 Cleaning up Pomodoro page...');
+    window.onUnloadPomodoro();
+  }
+  
+  // Add other page cleanup here as needed
+  
+  console.log('✅ Previous page cleanup completed');
+}
+
+function loadPage(page, updateHistory = true) {
   console.log('🔄 Loading page:', page);
+  
+  // Cleanup previous page before loading new one
+  cleanupPreviousPage();
+  
+  const mainContent = document.getElementById('main-content');
+  
+  // Update URL in address bar
+  if (updateHistory && window.history && window.history.pushState) {
+    const newUrl = '/' + page;
+    window.history.pushState({ page: page }, '', newUrl);
+    console.log('📍 Updated URL to:', newUrl);
+  }
+  
+  // Add loading class for smooth transition
+  mainContent.classList.add('loading');
+  
+  // Show loading indicator immediately with better styling
+  mainContent.innerHTML = `
+    <div class="loading-container" style="
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      padding: 2rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+      margin: 1rem;
+    ">
+      <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div class="text-secondary">Loading ${page.charAt(0).toUpperCase() + page.slice(1)}...</div>
+    </div>
+  `;
+
   
   fetch('/partial/' + page)
     .then(response => {
@@ -155,11 +203,8 @@ function loadPage(page) {
           console.log('⏰ Pomodoro page detected');
           window.isInSpaMode = true;
           
-          // Check if already loaded
-          if (window.pomodoroLoaded && window.pomodoroInitialized) {
-            console.log('✅ Pomodoro already loaded and initialized');
-            return;
-          }
+          // Always reload Pomodoro to ensure fresh state
+          console.log('🔄 Reloading Pomodoro for fresh state...');
           
           // โหลด pomodoro.js แบบ dynamic
           const loadPomodoro = () => {
@@ -184,13 +229,9 @@ function loadPage(page) {
                 if (window.onLoadPomodoro) {
                   console.log('✅ Found onLoadPomodoro function, initializing...');
                   try {
-                    // ตรวจสอบว่าเคย initialize แล้วหรือยัง
-                    if (!window.pomodoroInitialized) {
-                      window.onLoadPomodoro();
-                      console.log('✅ Pomodoro initialized successfully');
-                    } else {
-                      console.log('⚠️ Pomodoro already initialized');
-                    }
+                    // Always call onLoadPomodoro for fresh initialization
+                    window.onLoadPomodoro();
+                    console.log('✅ Pomodoro initialized successfully');
                   } catch (error) {
                     console.error('❌ Error initializing Pomodoro:', error);
                     showPomodoroError('Error initializing Pomodoro Timer');
@@ -2972,3 +3013,50 @@ window.insertHTMLAtCursor = function(html) {
 };
 
 console.log('✅ Note Editor global functions loaded');
+
+// ========================================
+// Browser History Navigation (Back/Forward)
+// ========================================
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', function(event) {
+  console.log('🔙 Browser navigation detected:', event.state);
+  
+  if (event.state && event.state.page) {
+    // Load the page without updating history (to avoid duplicate entries)
+    loadPage(event.state.page, false);
+    
+    // Update active nav
+    if (typeof setActiveNav === 'function') {
+      const navLink = document.querySelector(`.enchat-sidebar__nav-link[data-page="${event.state.page}"]`);
+      if (navLink) {
+        setActiveNav(navLink);
+      }
+    }
+  } else {
+    // No state, try to detect from URL
+    const path = window.location.pathname;
+    if (path && path !== '/') {
+      const page = path.substring(1); // Remove leading slash
+      loadPage(page, false);
+      
+      // Update active nav
+      if (typeof setActiveNav === 'function') {
+        const navLink = document.querySelector(`.enchat-sidebar__nav-link[data-page="${page}"]`);
+        if (navLink) {
+          setActiveNav(navLink);
+        }
+      }
+    }
+  }
+});
+
+// Save initial state on page load
+if (window.history && window.history.replaceState) {
+  const currentPath = window.location.pathname;
+  const currentPage = currentPath === '/' || currentPath === '/dashboard' ? 'dashboard' : currentPath.substring(1);
+  window.history.replaceState({ page: currentPage }, '', currentPath);
+  console.log('📍 Initial history state saved:', currentPage);
+}
+
+console.log('✅ Browser history navigation enabled');

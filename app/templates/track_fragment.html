@@ -1,153 +1,242 @@
-<!-- Progress Tracking Fragment -->
-<div class="container-fluid" style="padding: 2rem;">
-    <div class="row">
-        <!-- Today's Progress -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-line me-2"></i>📊 Today's Progress
-                    </h5>
+<!-- Modern Progress Tracking Dashboard -->
+<div class="track-dashboard ng-font">
+    <div class="dashboard-container">
+        <!-- Header Section -->
+        <div class="dashboard-header mb-4">
+            <h2 class="dashboard-title">
+                <i class="bi bi-graph-up-arrow me-2"></i>
+                Progress Tracking
+            </h2>
+            <p class="dashboard-subtitle">Monitor your daily learning journey</p>
+        </div>
+
+        <!-- Top Row: Today's Progress & Weekly Chart -->
+        <div class="row g-4 mb-4">
+            <!-- Today's Progress -->
+            <div class="col-lg-6">
+                <div class="glass-card h-100">
+                    <div class="card-header-modern">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-badge icon-badge-blue me-3">
+                                <i class="bi bi-calendar-check"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title-modern mb-0">Today's Progress</h5>
+                                <p class="card-subtitle-modern mb-0">Your daily goals</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <!-- Pomodoros Progress -->
+                        <div class="progress-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center">
+                                    <span class="progress-icon">🍅</span>
+                                    <span class="progress-label">Pomodoros</span>
+                                </div>
+                                <span id="pomodoro-goal" class="progress-value">0/8</span>
+                            </div>
+                            <div class="modern-progress">
+                                <div id="pomodoro-progress" class="modern-progress-bar progress-blue" 
+                                     style="width: 0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Study Time Progress -->
+                        <div class="progress-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center">
+                                    <span class="progress-icon">⏰</span>
+                                    <span class="progress-label">Study Time</span>
+                                </div>
+                                <span id="study-time-goal" class="progress-value">0/240 min</span>
+                            </div>
+                            <div class="modern-progress">
+                                <div id="study-time-progress" class="modern-progress-bar progress-teal" 
+                                     style="width: 0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Lessons Progress -->
+                        <div class="progress-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center">
+                                    <span class="progress-icon">📚</span>
+                                    <span class="progress-label">Lessons</span>
+                                </div>
+                                <span id="lessons-goal" class="progress-value">0/3</span>
+                            </div>
+                            <div class="modern-progress">
+                                <div id="lessons-progress" class="modern-progress-bar progress-purple" 
+                                     style="width: 0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notes Progress -->
+                        <div class="progress-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center">
+                                    <span class="progress-icon">📝</span>
+                                    <span class="progress-label">Notes</span>
+                                </div>
+                                <span id="notes-goal" class="progress-value">0/5</span>
+                            </div>
+                            <div class="modern-progress">
+                                <div id="notes-progress" class="modern-progress-bar progress-indigo" 
+                                     style="width: 0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="mt-4">
+                            <button class="btn-modern btn-modern-outline" onclick="resetDailyProgress()">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Reset Today
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <!-- Pomodoros Progress -->
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="fw-bold">🍅 Pomodoros</span>
-                            <span id="pomodoro-goal" class="text-muted">0/8</span>
-                        </div>
-                        <div class="progress" style="height: 20px;">
-                            <div id="pomodoro-progress" class="progress-bar bg-primary" role="progressbar" 
-                                 style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            </div>
+            
+            <!-- Weekly Chart -->
+            <div class="col-lg-6">
+                <div class="glass-card h-100">
+                    <div class="card-header-modern">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-badge icon-badge-teal me-3">
+                                <i class="bi bi-bar-chart-line"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title-modern mb-0">Weekly Progress</h5>
+                                <p class="card-subtitle-modern mb-0">Last 7 days overview</p>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Study Time Progress -->
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="fw-bold">⏰ Study Time</span>
-                            <span id="study-time-goal" class="text-muted">0/240 min</span>
+                    <div class="card-body-modern">
+                        <div class="chart-container">
+                            <canvas id="progress-chart"></canvas>
                         </div>
-                        <div class="progress" style="height: 20px;">
-                            <div id="study-time-progress" class="progress-bar bg-success" role="progressbar" 
-                                 style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Lessons Progress -->
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="fw-bold">📚 Lessons</span>
-                            <span id="lessons-goal" class="text-muted">0/3</span>
-                        </div>
-                        <div class="progress" style="height: 20px;">
-                            <div id="lessons-progress" class="progress-bar bg-warning" role="progressbar" 
-                                 style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Notes Progress -->
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="fw-bold">📝 Notes</span>
-                            <span id="notes-goal" class="text-muted">0/5</span>
-                        </div>
-                        <div class="progress" style="height: 20px;">
-                            <div id="notes-progress" class="progress-bar bg-info" role="progressbar" 
-                                 style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Quick Actions -->
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary btn-sm" onclick="resetDailyProgress()">
-                            <i class="fas fa-redo me-1"></i>Reset Today
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Weekly Chart -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-bar me-2"></i>📈 Weekly Progress
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="progress-chart" width="400" height="200"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row">
-        <!-- Time Distribution -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0">
-                        <i class="fas fa-clock me-2"></i>⏱️ Time Distribution
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="time-chart" width="400" height="200"></canvas>
+        <!-- Middle Row: Time Distribution & Achievements -->
+        <div class="row g-4 mb-4">
+            <!-- Time Distribution -->
+            <div class="col-lg-6">
+                <div class="glass-card h-100">
+                    <div class="card-header-modern">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-badge icon-badge-purple me-3">
+                                <i class="bi bi-pie-chart"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title-modern mb-0">Time Distribution</h5>
+                                <p class="card-subtitle-modern mb-0">How you spend your time</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="chart-container">
+                            <canvas id="time-chart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Achievements -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-trophy me-2"></i>🏆 Achievements
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div id="achievements-list">
-                        <div class="text-center text-muted">
-                            <i class="fas fa-star fa-2x mb-2"></i>
-                            <p>Complete goals to unlock achievements!</p>
+            
+            <!-- Achievements -->
+            <div class="col-lg-6">
+                <div class="glass-card h-100">
+                    <div class="card-header-modern">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-badge icon-badge-gold me-3">
+                                <i class="bi bi-trophy"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title-modern mb-0">Achievements</h5>
+                                <p class="card-subtitle-modern mb-0">Your milestones</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div id="achievements-list" class="achievements-container">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="bi bi-star"></i>
+                                </div>
+                                <p class="empty-text">Complete goals to unlock achievements!</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- Statistics Summary -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-pie me-2"></i>📊 Statistics Summary
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-md-3">
-                            <div class="h3 text-primary" id="total-pomodoros">0</div>
-                            <div class="text-muted">Total Pomodoros</div>
+        
+        <!-- Statistics Summary -->
+        <div class="row">
+            <div class="col-12">
+                <div class="glass-card">
+                    <div class="card-header-modern">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-badge icon-badge-indigo me-3">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title-modern mb-0">Statistics Summary</h5>
+                                <p class="card-subtitle-modern mb-0">Overall performance metrics</p>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="h3 text-success" id="total-study-time">0h</div>
-                            <div class="text-muted">Study Time</div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="h3 text-warning" id="total-lessons">0</div>
-                            <div class="text-muted">Lessons</div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="h3 text-info" id="total-notes">0</div>
-                            <div class="text-muted">Notes</div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="row g-4">
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="stat-box stat-box-blue">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-clock-history"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="total-pomodoros">0</div>
+                                        <div class="stat-label">Total Pomodoros</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="stat-box stat-box-teal">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-stopwatch"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="total-study-time">0h</div>
+                                        <div class="stat-label">Study Time</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="stat-box stat-box-purple">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-book"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="total-lessons">0</div>
+                                        <div class="stat-label">Lessons</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="stat-box stat-box-indigo">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="total-notes">0</div>
+                                        <div class="stat-label">Notes</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -157,27 +246,487 @@
 </div>
 
 <style>
-.progress {
-    border-radius: 10px;
+/* Modern Dashboard Styling */
+:root {
+    /* Color Palette - Calm & Professional */
+    --color-blue-50: #eff6ff;
+    --color-blue-100: #dbeafe;
+    --color-blue-500: #3b82f6;
+    --color-blue-600: #2563eb;
+    --color-blue-700: #1d4ed8;
+    
+    --color-teal-50: #f0fdfa;
+    --color-teal-100: #ccfbf1;
+    --color-teal-500: #14b8a6;
+    --color-teal-600: #0d9488;
+    
+    --color-purple-50: #faf5ff;
+    --color-purple-100: #f3e8ff;
+    --color-purple-500: #a855f7;
+    --color-purple-600: #9333ea;
+    
+    --color-indigo-50: #eef2ff;
+    --color-indigo-100: #e0e7ff;
+    --color-indigo-500: #6366f1;
+    --color-indigo-600: #4f46e5;
+    
+    --color-gold-500: #f59e0b;
+    --color-gold-600: #d97706;
+    
+    /* Background & Surfaces */
+    --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-secondary: rgba(255, 255, 255, 0.95);
+    --surface-glass: rgba(255, 255, 255, 0.7);
+    --surface-hover: rgba(255, 255, 255, 0.85);
+    
+    /* Text */
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-tertiary: #94a3b8;
+    
+    /* Effects */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --blur-md: blur(12px);
+    --blur-lg: blur(20px);
+    
+    /* Spacing */
+    --space-xs: 0.5rem;
+    --space-sm: 0.75rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
 }
 
-.progress-bar {
-    border-radius: 10px;
-    transition: width 0.6s ease;
+/* Typography */
+.ng-font {
+    font-family: 'Inter', 'Segoe UI', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-primary);
+    line-height: 1.6;
 }
 
-.card {
+.track-dashboard {
+    min-height: 100vh;
+    background: var(--bg-primary);
+    padding: var(--space-xl);
+}
+
+.dashboard-container {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* Header */
+.dashboard-header {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+}
+
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: var(--space-xs);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-subtitle {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 0;
+}
+
+/* Glass Card - Neo-Glass Style */
+.glass-card {
+    background: var(--surface-glass);
+    backdrop-filter: var(--blur-lg);
+    -webkit-backdrop-filter: var(--blur-lg);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.glass-card:hover {
+    background: var(--surface-hover);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Card Header */
+.card-header-modern {
+    padding: var(--space-lg);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.card-title-modern {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.card-subtitle-modern {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Icon Badge */
+.icon-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.icon-badge-blue {
+    background: linear-gradient(135deg, var(--color-blue-500), var(--color-blue-600));
+    color: white;
+}
+
+.icon-badge-teal {
+    background: linear-gradient(135deg, var(--color-teal-500), var(--color-teal-600));
+    color: white;
+}
+
+.icon-badge-purple {
+    background: linear-gradient(135deg, var(--color-purple-500), var(--color-purple-600));
+    color: white;
+}
+
+.icon-badge-gold {
+    background: linear-gradient(135deg, var(--color-gold-500), var(--color-gold-600));
+    color: white;
+}
+
+.icon-badge-indigo {
+    background: linear-gradient(135deg, var(--color-indigo-500), var(--color-indigo-600));
+    color: white;
+}
+
+/* Card Body */
+.card-body-modern {
+    padding: var(--space-lg);
+}
+
+/* Progress Items */
+.progress-item {
+    margin-bottom: var(--space-lg);
+}
+
+.progress-item:last-child {
+    margin-bottom: 0;
+}
+
+.progress-icon {
+    font-size: 1.25rem;
+    margin-right: var(--space-sm);
+}
+
+.progress-label {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.progress-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Modern Progress Bar */
+.modern-progress {
+    height: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    position: relative;
+}
+
+.modern-progress-bar {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.progress-blue {
+    background: linear-gradient(90deg, var(--color-blue-500), var(--color-blue-600));
+}
+
+.progress-teal {
+    background: linear-gradient(90deg, var(--color-teal-500), var(--color-teal-600));
+}
+
+.progress-purple {
+    background: linear-gradient(90deg, var(--color-purple-500), var(--color-purple-600));
+}
+
+.progress-indigo {
+    background: linear-gradient(90deg, var(--color-indigo-500), var(--color-indigo-600));
+}
+
+/* Modern Button */
+.btn-modern {
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: none;
-    border-radius: 15px;
+    cursor: pointer;
 }
 
-.card-header {
-    border-radius: 15px 15px 0 0 !important;
+.btn-modern-outline {
+    background: transparent;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
+}
+
+.btn-modern-outline:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    height: 240px;
+}
+
+.chart-container canvas {
+    max-height: 100%;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: var(--space-xl);
+}
+
+.empty-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--space-md);
+    border-radius: var(--radius-full);
+    background: var(--color-gold-100);
+    color: var(--color-gold-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}
+
+.empty-text {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    margin: 0;
+}
+
+/* Achievements Container */
+.achievements-container {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Statistics Boxes */
+.stat-box {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.stat-box:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.stat-box-blue .stat-icon {
+    background: var(--color-blue-100);
+    color: var(--color-blue-600);
+}
+
+.stat-box-teal .stat-icon {
+    background: var(--color-teal-100);
+    color: var(--color-teal-600);
+}
+
+.stat-box-purple .stat-icon {
+    background: var(--color-purple-100);
+    color: var(--color-purple-600);
+}
+
+.stat-box-indigo .stat-icon {
+    background: var(--color-indigo-100);
+    color: var(--color-indigo-600);
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: var(--space-xs);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .track-dashboard {
+        padding: var(--space-lg);
+    }
+    
+    .dashboard-title {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .chart-container {
+        height: 200px;
+    }
+    
+    .stat-box {
+        padding: var(--space-md);
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
 }
 
 @media (max-width: 768px) {
-    .card-body canvas {
-        max-height: 200px;
+    .track-dashboard {
+        padding: var(--space-md);
+    }
+    
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+    
+    .dashboard-subtitle {
+        font-size: 0.875rem;
+    }
+    
+    .card-header-modern {
+        padding: var(--space-md);
+    }
+    
+    .card-body-modern {
+        padding: var(--space-md);
+    }
+    
+    .icon-badge {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .chart-container {
+        height: 180px;
+    }
+    
+    .stat-box {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--space-sm);
+    }
+    
+    .stat-icon {
+        margin: 0 auto;
+    }
+}
+
+/* Smooth Animations */
+@media (prefers-reduced-motion: no-preference) {
+    .glass-card,
+    .stat-box,
+    .btn-modern,
+    .icon-badge {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+}
+
+/* Print Styles */
+@media print {
+    .track-dashboard {
+        background: white;
+        padding: 0;
+    }
+    
+    .glass-card {
+        background: white;
+        box-shadow: none;
+        border: 1px solid #ddd;
     }
 }
 </style>
+
+<script src="{{ url_for('static', filename='js/track.js') }}"></script>
