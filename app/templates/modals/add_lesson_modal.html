@@ -498,23 +498,6 @@ function handleAddLesson(event) {
     });
 }
 
-// Google Classroom Import function
-function openGoogleClassroomImport() {
-    // Close current modal
-    const currentModal = bootstrap.Modal.getInstance(document.getElementById('addLessonModal'));
-    if (currentModal) {
-        currentModal.hide();
-    }
-    
-    // Show Google Classroom import modal
-    setTimeout(() => {
-        if (typeof window.openGoogleClassroomModal === 'function') {
-            window.openGoogleClassroomModal();
-        } else {
-            // Fallback: redirect to Google Classroom authorization
-            window.location.href = '/google_classroom/authorize';
-        }
-    }, 300);
-}
+// Google Classroom functions are now in main.js
 </script>
 

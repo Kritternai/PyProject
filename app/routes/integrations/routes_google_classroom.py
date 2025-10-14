@@ -145,16 +145,27 @@ def oauth2callback():
             flash('User not found.', 'danger')
             return redirect(url_for('main_routes.index'))
         
-        # Store credentials in user metadata (you may want to create a separate table for this)
-        # For now, we'll use a simple approach
-        # from app.infrastructure.persistence.models.user_model import UserModel
+        # Store credentials in database
         from app.models.user import UserModel
+        import json
+        
         user_model = UserModel.query.filter_by(id=user_id).first()
         
         if user_model:
-            # Store credentials as JSON in a metadata field (you'll need to add this field)
-            # For now, we'll just print a message
-            print(f"DEBUG: Would store credentials for user {user_id}")
+            # Store credentials as JSON
+            creds_data = {
+                'token': credentials.token,
+                'refresh_token': credentials.refresh_token,
+                'token_uri': credentials.token_uri,
+                'client_id': credentials.client_id,
+                'client_secret': credentials.client_secret,
+                'scopes': credentials.scopes
+            }
+            
+            user_model.google_credentials = json.dumps(creds_data)
+            db.session.commit()
+            
+            print(f"DEBUG: Stored credentials for user {user_id}")
             print(f"  Token: {credentials.token[:20]}...")
             print(f"  Refresh Token: {credentials.refresh_token[:20] if credentials.refresh_token else 'None'}...")
             
@@ -180,26 +191,62 @@ def fetch_courses():
         if not user_id:
             return jsonify({'success': False, 'error': 'User not authenticated'}), 401
         
-        # Use Google Classroom Service
-        from app.services.google_classroom_service import GoogleClassroomService
-        google_service = GoogleClassroomService()
+        # Check if user has Google credentials
+        from app.models.user import UserModel
+        user = UserModel.query.filter_by(id=user_id).first()
         
-        # Check if user has credentials
-        credentials = google_service.get_credentials(user_id)
-        if not credentials:
+        if not user or not user.google_credentials:
             return jsonify({
                 'success': False,
                 'error': 'No Google credentials found. Please authorize first.',
-                'needs_auth': True
+                'needs_auth': True,
+                'redirect_url': '/google_classroom/authorize'
             }), 401
         
-        # Fetch courses from Google Classroom
-        courses = google_service.fetch_courses(user_id)
-        
-        return jsonify({
-            'success': True,
-            'courses': courses
-        })
+        # Use Google Classroom Service
+        try:
+            from app.services.google_classroom_service import GoogleClassroomService
+            google_service = GoogleClassroomService()
+            
+            # Fetch courses from Google Classroom
+            courses = google_service.fetch_courses(user_id)
+            
+            return jsonify({
+                'success': True,
+                'courses': courses
+            })
+            
+        except ImportError:
+            # Fallback to mock data if service not available
+            print("Google Classroom Service not available, using mock data")
+            mock_courses = [
+                {
+                    'id': 'course_1',
+                    'name': 'Introduction to Programming',
+                    'description': 'Learn the basics of programming with Python',
+                    'section': 'CS101',
+                    'studentsCount': 25,
+                    'assignmentsCount': 8,
+                    'materialsCount': 12,
+                    'announcementsCount': 5
+                },
+                {
+                    'id': 'course_2', 
+                    'name': 'Web Development',
+                    'description': 'Build modern web applications',
+                    'section': 'CS201',
+                    'studentsCount': 18,
+                    'assignmentsCount': 12,
+                    'materialsCount': 15,
+                    'announcementsCount': 3
+                }
+            ]
+            
+            return jsonify({
+                'success': True,
+                'courses': mock_courses,
+                'message': 'Using mock data - Google Classroom Service not fully configured'
+            })
         
     except Exception as e:
         print(f"Error fetching Google Classroom courses: {e}")
@@ -225,22 +272,61 @@ def import_course():
             return jsonify({'success': False, 'error': 'User not authenticated'}), 401
         
         # Use Google Classroom Service
-        from app.services.google_classroom_service import GoogleClassroomService
-        google_service = GoogleClassroomService()
-        
-        # Check if user has credentials
-        credentials = google_service.get_credentials(user_id)
-        if not credentials:
-            return jsonify({
-                'success': False,
-                'error': 'No Google credentials found. Please authorize first.',
-                'needs_auth': True
-            }), 401
-        
-        # Import course using Google Classroom Service
-        result = google_service.import_course(user_id, course_id, settings)
-        
-        return jsonify(result)
+        try:
+            from app.services.google_classroom_service import GoogleClassroomService
+            google_service = GoogleClassroomService()
+            
+            # Check if user has credentials
+            credentials = google_service.get_credentials(user_id)
+            if not credentials:
+                return jsonify({
+                    'success': False,
+                    'error': 'No Google credentials found. Please authorize first.',
+                    'needs_auth': True,
+                    'redirect_url': '/google_classroom/authorize'
+                }), 401
+            
+            # Import course using Google Classroom Service
+            result = google_service.import_course(user_id, course_id, settings)
+            
+            return jsonify(result)
+            
+        except ImportError:
+            # Fallback to mock lesson if service not available
+            print("Google Classroom Service not available, creating mock lesson")
+            from app.services import LessonService
+            
+            lesson_service = LessonService()
+            
+            # Create new lesson based on course_id
+            course_names = {
+                'course_1': 'Introduction to Programming',
+                'course_2': 'Web Development', 
+                'course_3': 'Data Science Fundamentals'
+            }
+            
+            lesson_data = {
+                'title': f'Imported: {course_names.get(course_id, "Google Classroom Course")}',
+                'description': f'Imported from Google Classroom - {course_id}',
+                'status': 'in_progress',
+                'color_theme': 1,
+                'difficulty_level': 'intermediate',
+                'author_name': 'Google Classroom Import'
+            }
+            
+            lesson = lesson_service.create_lesson(user_id, lesson_data)
+            
+            if lesson:
+                return jsonify({
+                    'success': True,
+                    'message': 'Course imported successfully (mock)',
+                    'lesson_id': lesson.id
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to create lesson'
+                }), 500
             
     except Exception as e:
         print(f"Error importing Google Classroom course: {e}")

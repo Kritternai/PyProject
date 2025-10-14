@@ -229,6 +229,20 @@
                                     <i class="bi bi-arrow-clockwise me-1"></i>Refresh
                                 </button>
                             </div>
+                            
+                            <!-- Authorization Required State -->
+                            <div id="google-auth-required" class="text-center py-4" style="display: none;">
+                                <i class="bi bi-shield-lock text-warning" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3">Authorization Required</h5>
+                                <p class="text-muted">Connect to Google Classroom to import courses</p>
+                                <button class="btn btn-primary btn-lg" onclick="connectToGoogleClassroom()">
+                                    <i class="bi bi-google me-2"></i>Connect to Google Classroom
+                                </button>
+                                <div class="form-hint mt-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    You'll be redirected to Google to authorize access
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -359,16 +373,16 @@
 <script>
 let selectedCourse = null;
 
-// Open Google Classroom import modal
-function openGoogleClassroomModal() {
-    const modal = new bootstrap.Modal(document.getElementById('googleClassroomImportModal'));
-    modal.show();
-    
-    // Load Google Classroom courses
-    loadGoogleCourses();
+// Google Classroom functions are now in main.js
+// This script only contains modal-specific functions
+
+// Connect to Google Classroom
+function connectToGoogleClassroom() {
+    console.log('🔗 Connecting to Google Classroom...');
+    window.location.href = '/google_classroom/authorize';
 }
 
-// Load Google Classroom courses
+// Load Google Classroom courses - Modal specific
 function loadGoogleCourses() {
     const loadingEl = document.getElementById('google-courses-loading');
     const coursesEl = document.getElementById('google-courses-list');
