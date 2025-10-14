@@ -1,1102 +1,1058 @@
-<div class="px-4 container-fluid" id="note-list-container">
-    <div class="">
-      <h1 class="">All note</h1>
-    </div>
-    <div class="mb-3 d-flex justify-content-between align-items-center page-toolbar">
-        <div class="flex-grow-1 me-3" style="max-width: 640px;">
-            <div class="input-group search-bar">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input id="noteSearch" type="text" class="form-control" placeholder="Search">
-            </div>
+<!-- Load shared note styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/note_shared.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/tag_badges.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/note_list_modals.css') }}">
+
+<div class="px-0 container-fluid ng-font note-section-top-0 note-sticky-container" id="note-list-container"
+  style="padding-top: 0;">
+  <!-- Header Section -->
+  <div
+    class="px-4 pb-2 mb-3 note-header d-flex align-items-center justify-content-between border-bottom note-sticky-header">
+    <div class="gap-2 d-flex align-items-center">
+      <div class="d-flex align-items-center">
+        <div class="hero-icon me-2"><i class="bi bi-journal-text note-icon-md"></i></div>
+        <div>
+          <h5 class="mb-0 ng-title">My Notes</h5>
+          <div class="ng-subtitle">Organize and manage your notes</div>
         </div>
-        <a href="#" class="text-decoration-none add-link" onclick="loadPage('note/add'); return false;">
-            <i class="bi bi-plus-circle me-1"></i>Add new note
-        </a>
+      </div>
     </div>
-    <div class="mb-3 d-flex justify-content-between align-items-center">
-        <div class="gap-2 d-flex chip-group">
-            <button type="button" class="btn btn-light chip active" data-status="">All</button>
-            <button type="button" class="btn btn-light chip" data-status="pending">Pending</button>
-            <button type="button" class="btn btn-light chip" data-status="in-progress">In Progress</button>
-            <button type="button" class="btn btn-light chip" data-status="completed">Completed</button>
+    <div class="gap-2 d-flex align-items-center">
+      <button class="ng-btn-primary" onclick="loadPage('note/add')" title="Create new note">
+        <i class="bi bi-plus-lg"></i>New Note
+      </button>
+    </div>
+  </div>
+
+  <!-- Search and Filter Section (Inline Layout) -->
+  <div class="px-4 sticky-search-filter">
+    <div class="flex-wrap gap-3 mb-3 d-flex justify-content-between align-items-center">
+      <!-- Search Box (60% width) -->
+      <div class="flex-grow-1" style="max-width: 60%;">
+        <div class="input-group search-bar-modern">
+          <span class="bg-white input-group-text border-end-0">
+            <i class="bi bi-search text-muted"></i>
+          </span>
+          <input id="noteSearch" type="text" class="form-control border-start-0 ng-input" placeholder="Search notes...">
         </div>
-        <div></div>
+      </div>
+      <!-- Filter Chips (38% width) -->
+      <div class="flex-wrap gap-2 d-flex chip-group">
+        <button type="button" class="btn btn-light chip active" data-status="">
+          <i class="bi bi-card-list me-1"></i>All
+        </button>
+        <button type="button" class="btn btn-light chip" data-status="pending">
+          <i class="bi bi-clock me-1"></i>Pending
+        </button>
+        <button type="button" class="btn btn-light chip" data-status="in-progress">
+          <i class="bi bi-arrow-repeat me-1"></i>In Progress
+        </button>
+        <button type="button" class="btn btn-light chip" data-status="completed">
+          <i class="bi bi-check-circle me-1"></i>Completed
+        </button>
+      </div>
     </div>
-    {% set stats = namespace(images=0, docs=0, completed=0, inprogress=0, pending=0) %}
-    {% if notes %}
-      {% for n in notes %}
-        {% set st = (n.status or 'pending') %}
-        {% if st == 'completed' %}{% set stats.completed = stats.completed + 1 %}
-        {% elif st == 'in-progress' %}{% set stats.inprogress = stats.inprogress + 1 %}
-        {% else %}{% set stats.pending = stats.pending + 1 %}{% endif %}
-        {% if n.files %}
-          {% for f in n.files %}
-            {% if f and f.file_type == 'image' %}{% set stats.images = stats.images + 1 %}{% endif %}
-            {% if f and f.file_type == 'document' %}{% set stats.docs = stats.docs + 1 %}{% endif %}
-          {% endfor %}
-        {% endif %}
-      {% endfor %}
-    {% endif %}
+  </div>
+  <!-- Stats Section -->
+  <div class="px-4">
     <div class="mb-3 row g-3 stats-row">
       <div class="col-12 col-sm-6 col-lg-3">
-        <div class="stat-card d-flex align-items-center justify-content-between">
+        <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center">
-            <div class="text-white stat-icon bg-brand me-2"><i class="bi bi-journal-text"></i></div>
-            <div class="small text-muted">Total Notes</div>
-          </div>
-          <div class="m-0 display-6 fw-semibold">{{ notes|length }}</div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="stat-card d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="stat-icon bg-success-subtle text-success me-2"><i class="bi bi-check2-circle"></i></div>
-            <div class="small text-muted">Completed</div>
-          </div>
-          <div class="m-0 display-6 fw-semibold">{{ stats.completed }}</div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="stat-card d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="stat-icon bg-primary-subtle text-primary me-2"><i class="bi bi-image"></i></div>
-            <div class="small text-muted">Images</div>
-          </div>
-          <div class="m-0 display-6 fw-semibold">{{ stats.images }}</div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <div class="stat-card d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <div class="stat-icon bg-info-subtle text-info me-2"><i class="bi bi-paperclip"></i></div>
-            <div class="small text-muted">Files</div>
-          </div>
-          <div class="m-0 display-6 fw-semibold">{{ stats.docs }}</div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Integration Summary -->
-    {% if user_data %}
-    <div class="mb-4 row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-title">Debug</h6>
-                    <div class="text-center row">
-                        <div class="col-md-4">
-                            <div class="border-end">
-                                <h4 class="text-primary">{{ user_data.total_lessons }}</h4>
-                                <p class="mb-0 text-muted">Total Lessons</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="border-end">
-                                <h4 class="text-success">{{ user_data.total_notes }}</h4>
-                                <p class="mb-0 text-muted">Total Notes</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div>
-                                <h4 class="text-info">{{ user_data.total_files }}</h4>
-                                <p class="mb-0 text-muted">Total Files</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="stat-icon-modern bg-gradient-primary me-3">
+              <i class="bi bi-journal-text"></i>
             </div>
-        </div>
-    </div>
-    {% endif %}
-    <div class="row">
-        {% if notes %}
-            {% for note in notes %}
-                <div class="mb-4 col-md-6 col-lg-4">
-                    <div class="card h-100 neo-card note-card" data-status="{{ (note.status or 'pending') }}" data-note-id="{{ note.id }}" style="cursor:pointer;">
-                        {% set first_image = None %}
-                        {% if note.files %}
-                            {% set first_image = (note.files | selectattr('file_type', 'equalto', 'image') | list | first) %}
-                        {% endif %}
-                        {% if first_image %}
-                            <img src="{{ url_for('static', filename=first_image.file_path) }}" class="card-img-top" alt="cover" style="object-fit:cover;height:140px;">
-                        {% else %}
-                            <div class="note-cover bg-brand"></div>
-                        {% endif %}
-                        <div class="card-body d-flex flex-column">
-                            <div class="mb-2 d-flex justify-content-between align-items-start">
-                                <h5 class="mb-0 card-title">{{ note.title }}</h5>
-                                {% set st = (note.status or 'pending') %}
-                                {% set badge = 'secondary' %}
-                                {% if st == 'in-progress' %}{% set badge = 'warning' %}{% elif st == 'completed' %}{% set badge = 'success' %}{% endif %}
-                                <span class="badge status-pill bg-{{ badge }} text-uppercase">{{ st.replace('-', ' ') }}</span>
-                            </div>
-                            <p class="card-text text-truncate-3">{{ (note.content or '')|striptags }}</p>
-                            {% if note.tags %}
-                                <div class="mb-2">
-                                    {% if note.tags is string %}
-                                        {% for tag in note.tags.split(',') %}
-                                            <span class="border badge text-bg-light me-1">{{ tag.strip() }}</span>
-                                        {% endfor %}
-                                    {% else %}
-                                        {% for tag in note.tags %}
-                                            <span class="border badge text-bg-light me-1">{{ (tag or '')|trim }}</span>
-                                        {% endfor %}
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                            {% if note.external_link %}
-                                <a href="{{ note.external_link }}" target="_blank" class="mb-2 btn btn-sm btn-outline-success align-self-start">
-                                    <i class="fas fa-link me-1"></i>Reference
-                                </a>
-                            {% endif %}
-                            <div class="mt-auto small text-muted">
-                                <span class="me-2"><i class="bi bi-calendar2-week me-1"></i>{{ note.created_at.strftime('%Y-%m-%d') if note.created_at else '' }}</span>
-                                {% if note.lesson and note.lesson.title %}
-                                <span><i class="bi bi-journal-text me-1"></i>{{ note.lesson.title }}</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="gap-2 pt-0 pb-3 bg-white border-0 card-footer d-flex justify-content-end">
-                            <button type="button" class="btn btn-sm btn-outline-primary btn-soft" onclick="openNoteEditor('{{ note.id }}')"
-                                data-note-id="{{ note.id }}"
-                                data-note-title="{{ note.title }}"
-                                data-note-content="{{ note.content or '' }}"
-                                data-note-tags="{% if note.tags is string %}{{ note.tags }}{% else %}{{ (note.tags or []) | join(', ') }}{% endif %}"
-                                data-note-status="{{ note.status or 'pending' }}"
-                                data-note-type="{{ note.note_type if note.note_type is string else note.note_type.value }}"
-                                data-note-is-public="{{ '1' if note.is_public else '0' }}"
-                                data-note-external-link="{{ note.external_link or '' }}"
-                                data-note-images='{{ note.files | selectattr("file_type", "equalto", "image") | list | to_json | safe }}'
-                                data-note-files='{{ note.files | selectattr("file_type", "equalto", "document") | list | to_json | safe }}'>
-                                <i class="fas fa-pen me-1"></i>Edit
-                            </button>
-                            <button onclick="deleteNote('{{ note.id }}')" class="btn btn-sm btn-outline-danger btn-soft"><i class="fas fa-trash me-1"></i>Delete</button>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <div class="col">
-                <div class="py-5 text-center text-muted">
-                    <p class="mb-2">You don't have any notes yet.</p>
-                    <button type="button" class="btn btn-primary" onclick="loadPage('note/add')"><i class="fas fa-plus me-1"></i>Create your first note</button>
-                </div>
+            <div>
+              <div class="mb-1 small text-muted">Total Notes</div>
+              <div class="mb-0 h4 fw-bold">{{ stats.total }}</div>
             </div>
-        {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon-modern bg-gradient-success me-3">
+              <i class="bi bi-check2-circle"></i>
+            </div>
+            <div>
+              <div class="mb-1 small text-muted">Completed</div>
+              <div class="mb-0 h4 fw-bold">{{ stats.completed }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon-modern bg-gradient-info me-3">
+              <i class="bi bi-image"></i>
+            </div>
+            <div>
+              <div class="mb-1 small text-muted">Images</div>
+              <div class="mb-0 h4 fw-bold">{{ stats.images }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="p-3 stat-card-modern glass-panel d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="stat-icon-modern bg-gradient-warning me-3">
+              <i class="bi bi-paperclip"></i>
+            </div>
+            <div>
+              <div class="mb-1 small text-muted">Files</div>
+              <div class="mb-0 h4 fw-bold">{{ stats.docs }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- Integration Summary -->
+  {% if user_data %}
+  <div class="mb-4 row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title">Debug</h6>
+          <div class="text-center row">
+            <div class="col-md-4">
+              <div class="border-end">
+                <h4 class="text-primary">{{ user_data.total_lessons }}</h4>
+                <p class="mb-0 text-muted">Total Lessons</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="border-end">
+                <h4 class="text-success">{{ user_data.total_notes }}</h4>
+                <p class="mb-0 text-muted">Total Notes</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div>
+                <h4 class="text-info">{{ user_data.total_files }}</h4>
+                <p class="mb-0 text-muted">Total Files</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Notes List Section -->
+  <div class="px-4">
+    <div class="row g-3">
+      {% if notes %}
+      {% for note in notes %}
+      <div class="mb-4 col-md-6 col-lg-4">
+        <div class="card h-100 neo-card note-card" data-status="{{ (note.status or 'pending') }}"
+          data-note-id="{{ note.id }}" style="cursor:pointer;">
+          {% set first_image = None %}
+          {% if note.files %}
+          {% set first_image = (note.files | selectattr('file_type', 'equalto', 'image') | list | first) %}
+          {% endif %}
+          {% if first_image %}
+          <img src="{{ url_for('static', filename=first_image.file_path) }}" class="card-img-top" alt="cover"
+            style="object-fit:cover;height:140px;">
+          {% else %}
+          <div class="note-cover bg-brand"></div>
+          {% endif %}
+          <div class="card-body d-flex flex-column">
+            <div class="mb-2 d-flex justify-content-between align-items-start">
+              <h5 class="mb-0 card-title">{{ note.title }}</h5>
+              {% set st = (note.status or 'pending') %}
+              {% set badge = 'secondary' %}
+              {% if st == 'in-progress' %}{% set badge = 'warning' %}{% elif st == 'completed' %}{% set badge =
+              'success' %}{% endif %}
+              <span class="badge status-pill bg-{{ badge }} text-uppercase">{{ st.replace('-', ' ') }}</span>
+            </div>
+            <p class="card-text text-truncate-3">{{ (note.content or '')|striptags }}</p>
+            {% if note.tags %}
+            <div class="mb-2">
+              {% for tag in note.tags %}
+              {% if tag and tag.strip() %}
+              {% set tag_lower = tag.strip().lower() %}
+              {% if 'study' in tag_lower or 'studer' in tag_lower %}
+              <span class="tag-badge tag-badge-primary">{{ tag.strip() }}</span>
+              {% elif 'math' in tag_lower %}
+              <span class="tag-badge tag-badge-warning">{{ tag.strip() }}</span>
+              {% elif 'sci' in tag_lower or 'science' in tag_lower %}
+              <span class="tag-badge tag-badge-success">{{ tag.strip() }}</span>
+              {% elif 'eng' in tag_lower or 'engineering' in tag_lower %}
+              <span class="tag-badge tag-badge-info">{{ tag.strip() }}</span>
+              {% elif 'code' in tag_lower or 'programming' in tag_lower %}
+              <span class="tag-badge tag-badge-purple">{{ tag.strip() }}</span>
+              {% else %}
+              <span class="tag-badge">{{ tag.strip() }}</span>
+              {% endif %}
+              {% endif %}
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% if note.external_link %}
+            <a href="{{ note.external_link }}" target="_blank"
+              class="mb-2 btn btn-sm btn-outline-success align-self-start">
+              <i class="fas fa-link me-1"></i>Reference
+            </a>
+            {% endif %}
+          </div>
+          <div class="gap-2 pt-0 pb-3 bg-white border-0 card-footer d-flex justify-content-between align-items-center">
+            <!-- Date (Left) -->
+            <div class="small text-muted">
+              <i class="bi bi-calendar2-week me-1"></i>{{ note.created_at.strftime('%Y-%m-%d') if note.created_at else
+              '' }}
+            </div>
+            <!-- Action Buttons (Right) -->
+            <div class="gap-2 d-flex">
+              <button type="button" class="ng-btn-outline-primary ng-btn-sm btn-rounded-25"
+                onclick="openNoteEditor('{{ note.id }}')" data-note-id="{{ note.id }}"
+                data-note-title="{{ note.title }}" data-note-content="{{ note.content or '' }}"
+                data-note-tags="{{ (note.tags or []) | join(', ') }}" data-note-status="{{ note.status or 'pending' }}"
+                data-note-type="{{ note.note_type if note.note_type is string else note.note_type.value }}"
+                data-note-is-public="{{ '1' if note.is_public else '0' }}"
+                data-note-external-link="{{ note.external_link or '' }}"
+                data-note-images='{{ note.files | selectattr("file_type", "equalto", "image") | list | to_json | safe }}'
+                data-note-files='{{ note.files | selectattr("file_type", "equalto", "document") | list | to_json | safe }}'>
+                <i class="bi bi-pencil note-icon-sm"></i>Edit
+              </button>
+              <button onclick="deleteNote('{{ note.id }}')" class="ng-btn-outline-danger ng-btn-sm btn-rounded-25"><i
+                  class="bi bi-trash note-icon-sm"></i>Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="col-12">
+        <div class="py-5 text-center empty-state-modern">
+          <div class="mb-4 empty-state-icon">
+            <i class="bi bi-journal-x"></i>
+          </div>
+          <h4 class="mb-2 text-muted">No notes yet</h4>
+          <p class="mb-4 text-muted">Start organizing your thoughts and ideas</p>
+          <button type="button" class="ng-btn-save" onclick="loadPage('note/add')">
+            <i class="bi bi-plus-lg"></i>Create your first note
+          </button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 
 <!-- Add Note Modal -->
-<div class="modal fade modal-glass" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+<div class="modal fade modal-glass" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel"
+  aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
-        <div class="text-white border-0 modal-header hero bg-success">
-            <div class="d-flex align-items-center">
-                <div class="hero-icon me-2"><i class="bi bi-journal-text"></i></div>
-                <div>
-                    <h5 class="mb-0 text-white modal-title" id="addNoteModalLabel">Add New Note</h5>
-                    <div class="opacity-75 small">Essentials</div>
-                </div>
+      <div class="text-white border-0 modal-header hero bg-success">
+        <div class="d-flex align-items-center">
+          <div class="hero-icon me-2"><i class="bi bi-journal-text"></i></div>
+          <div>
+            <h5 class="mb-0 text-white modal-title" id="addNoteModalLabel">Add New Note</h5>
+            <div class="opacity-75 small">Essentials</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="add-note-form" action="/partial/note/add" method="post" enctype="multipart/form-data"
+          class="needs-validation" novalidate>
+          <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
+            <label for="title" class="form-label section-title"><i class="bi bi-type me-1"></i>Title</label>
+            <input type="text" class="form-control" id="title" name="title" maxlength="80"
+              aria-describedby="titleHelp titleCounter" placeholder="Enter a concise title" required>
+            <div class="d-flex justify-content-between">
+              <div id="titleHelp" class="form-text">Keep it short and clear.</div>
+              <div id="titleCounter" class="form-text">0/80</div>
             </div>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-            <form id="add-note-form" action="/partial/note/add" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
-                    <label for="title" class="form-label section-title"><i class="bi bi-type me-1"></i>Title</label>
-                    <input type="text" class="form-control" id="title" name="title" maxlength="80" aria-describedby="titleHelp titleCounter" placeholder="Enter a concise title" required>
-                    <div class="d-flex justify-content-between">
-                        <div id="titleHelp" class="form-text">Keep it short and clear.</div>
-                        <div id="titleCounter" class="form-text">0/80</div>
-                    </div>
-                    <div class="mt-3"></div>
-                    <label for="content" class="form-label section-title"><i class="bi bi-textarea-t me-1"></i>Content</label>
-                    <textarea class="form-control" id="content" name="content" rows="5" maxlength="2000" aria-describedby="contentHelp contentCounter" placeholder="Write your note here..." required></textarea>
-                    <div class="d-flex justify-content-between">
-                        <div id="contentHelp" class="form-text">Describe the details. You can add links and files below.</div>
-                        <div id="contentCounter" class="form-text">0/2000</div>
-                    </div>
+            <div class="mt-3"></div>
+            <label for="content" class="form-label section-title"><i class="bi bi-textarea-t me-1"></i>Content</label>
+            <textarea class="form-control" id="content" name="content" rows="5" maxlength="2000"
+              aria-describedby="contentHelp contentCounter" placeholder="Write your note here..." required></textarea>
+            <div class="d-flex justify-content-between">
+              <div id="contentHelp" class="form-text">Describe the details. You can add links and files below.</div>
+              <div id="contentCounter" class="form-text">0/2000</div>
+            </div>
+          </div>
+          <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
+            <div class="row">
+              <div class="mb-3 col-md-6">
+                <label for="tags" class="form-label section-title"><i class="bi bi-tags me-1"></i>Tags</label>
+                <div class="input-group">
+                  <span class="input-group-text" data-bs-toggle="tooltip" title="Comma-separated tags"><i
+                      class="bi bi-hash"></i></span>
+                  <input type="text" class="form-control" id="tags" name="tags" placeholder="e.g. math, homework"
+                    aria-describedby="tagsHelp">
                 </div>
-                <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
-                    <div class="row">
-                        <div class="mb-3 col-md-6">
-                            <label for="tags" class="form-label section-title"><i class="bi bi-tags me-1"></i>Tags</label>
-                            <div class="input-group">
-                                <span class="input-group-text" data-bs-toggle="tooltip" title="Comma-separated tags"><i class="bi bi-hash"></i></span>
-                                <input type="text" class="form-control" id="tags" name="tags" placeholder="e.g. math, homework" aria-describedby="tagsHelp">
-                            </div>
-                            <div id="tagsHelp" class="form-text">Separate multiple tags with commas.</div>
-                        </div>
-                        <div class="mb-3 col-md-6">
-                            <label for="status" class="form-label section-title"><i class="bi bi-ui-checks-grid me-1"></i>Status</label>
-                            <div class="input-group">
-                                <span class="input-group-text" data-bs-toggle="tooltip" title="Current status"><i class="bi bi-ui-checks-grid"></i></span>
-                                <select class="form-select" id="status" name="status" aria-describedby="statusHelp addStatusBadge">
-                                    <option value="pending">Pending</option>
-                                    <option value="in-progress">In Progress</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                                <span class="bg-transparent border-0 input-group-text"><span id="addStatusBadge" class="badge bg-secondary">Pending</span></span>
-                            </div>
-                            <div id="statusHelp" class="form-text">Track your progress.</div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="mb-3 col-md-6">
-                            <label for="note_type" class="form-label section-title"><i class="bi bi-list-nested me-1"></i>Note Type</label>
-                            <select class="form-select" id="note_type" name="note_type">
-                                <option value="text">Text</option>
-                                <option value="markdown">Markdown</option>
-                                <option value="code">Code</option>
-                                <option value="image">Image</option>
-                                <option value="audio">Audio</option>
-                                <option value="video">Video</option>
-                            </select>
-                        </div>
-                        <div class="mb-3 col-md-6 d-flex align-items-end">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="is_public" name="is_public">
-                                <label class="form-check-label" for="is_public">Public</label>
-                            </div>
-                        </div>
-                    </div>
+                <div id="tagsHelp" class="form-text">Separate multiple tags with commas.</div>
+              </div>
+              <div class="mb-3 col-md-6">
+                <label for="status" class="form-label section-title"><i
+                    class="bi bi-ui-checks-grid me-1"></i>Status</label>
+                <div class="input-group">
+                  <span class="input-group-text" data-bs-toggle="tooltip" title="Current status"><i
+                      class="bi bi-ui-checks-grid"></i></span>
+                  <select class="form-select" id="status" name="status" aria-describedby="statusHelp addStatusBadge">
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                  <span class="bg-transparent border-0 input-group-text"><span id="addStatusBadge"
+                      class="badge bg-secondary">Pending</span></span>
                 </div>
-                <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
-                    <label for="external_link" class="form-label section-title"><i class="bi bi-link-45deg me-1"></i>External Link</label>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
-                        <input type="url" class="form-control" id="external_link" name="external_link" placeholder="https://example.com" aria-describedby="linkHelp">
-                    </div>
-                    <div id="linkHelp" class="mb-3 form-text">Optional reference link (must be a valid URL).</div>
-                    <label for="image" class="form-label section-title"><i class="bi bi-image me-1"></i>Image</label>
-                    <input class="form-control" type="file" id="image" name="image" accept="image/*" aria-describedby="imageHelp">
-                    <div id="imageHelp" class="form-text">PNG, JPG or GIF.</div>
-                    <div id="add-image-preview" class="mt-2 mb-3"></div>
-                    <label for="file" class="form-label section-title"><i class="bi bi-paperclip me-1"></i>File Attachment</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-paperclip"></i></span>
-                        <input class="form-control" type="file" id="file" name="file" aria-describedby="fileHelp">
-                    </div>
-                    <div id="fileHelp" class="form-text">Attach any supporting files (optional).</div>
-                    <div id="add-file-preview" class="mt-2"></div>
+                <div id="statusHelp" class="form-text">Track your progress.</div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="mb-3 col-md-6">
+                <label for="note_type" class="form-label section-title"><i class="bi bi-list-nested me-1"></i>Note
+                  Type</label>
+                <select class="form-select" id="note_type" name="note_type">
+                  <option value="text">Text</option>
+                  <option value="markdown">Markdown</option>
+                  <option value="code">Code</option>
+                  <option value="image">Image</option>
+                  <option value="audio">Audio</option>
+                  <option value="video">Video</option>
+                </select>
+              </div>
+              <div class="mb-3 col-md-6 d-flex align-items-end">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="is_public" name="is_public">
+                  <label class="form-check-label" for="is_public">Public</label>
                 </div>
+              </div>
+            </div>
+          </div>
+          <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
+            <label for="external_link" class="form-label section-title"><i class="bi bi-link-45deg me-1"></i>External
+              Link</label>
+            <div class="mb-3 input-group">
+              <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+              <input type="url" class="form-control" id="external_link" name="external_link"
+                placeholder="https://example.com" aria-describedby="linkHelp">
+            </div>
+            <div id="linkHelp" class="mb-3 form-text">Optional reference link (must be a valid URL).</div>
+            <label for="image" class="form-label section-title"><i class="bi bi-image me-1"></i>Image</label>
+            <input class="form-control" type="file" id="image" name="image" accept="image/*"
+              aria-describedby="imageHelp">
+            <div id="imageHelp" class="form-text">PNG, JPG or GIF.</div>
+            <div id="add-image-preview" class="mt-2 mb-3"></div>
+            <label for="file" class="form-label section-title"><i class="bi bi-paperclip me-1"></i>File
+              Attachment</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-paperclip"></i></span>
+              <input class="form-control" type="file" id="file" name="file" aria-describedby="fileHelp">
+            </div>
+            <div id="fileHelp" class="form-text">Attach any supporting files (optional).</div>
+            <div id="add-file-preview" class="mt-2"></div>
+          </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-soft" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i>Close</button>
-                    <div id="addSavingIndicator" class="me-2 d-none">
-                        <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
-                        <span class="visually-hidden">Saving...</span>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-soft"><i class="bi bi-save2-fill me-1"></i>Save Note</button>
-                </div>
-            </form>
-        </div>
+          <div class="modal-footer">
+            <button type="button" class="ng-btn-soft" data-bs-dismiss="modal"><i
+                class="bi bi-x-circle"></i>Close</button>
+            <div id="addSavingIndicator" class="me-2 d-none">
+              <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
+              <span class="visually-hidden">Saving...</span>
+            </div>
+            <button type="submit" class="ng-btn-primary"><i class="bi bi-save2-fill"></i>Save Note</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- Edit Note Modal -->
-<div class="modal fade modal-glass" id="editNoteModal" tabindex="-1" aria-labelledby="editNoteModalLabel" aria-hidden="true">
+<div class="modal fade modal-glass" id="editNoteModal" tabindex="-1" aria-labelledby="editNoteModalLabel"
+  aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
-        <div class="text-white border-0 modal-header hero bg-warning">
-            <div class="d-flex align-items-center">
-                <div class="hero-icon me-2"><i class="bi bi-pencil"></i></div>
-                <div>
-                    <h5 class="mb-0 text-white modal-title" id="editNoteModalLabel">Edit Note</h5>
-                    <div class="opacity-75 small">Essentials</div>
-                </div>
+      <div class="text-white border-0 modal-header hero bg-warning">
+        <div class="d-flex align-items-center">
+          <div class="hero-icon me-2"><i class="bi bi-pencil"></i></div>
+          <div>
+            <h5 class="mb-0 text-white modal-title" id="editNoteModalLabel">Edit Note</h5>
+            <div class="opacity-75 small">Essentials</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-note-form" enctype="multipart/form-data" class="needs-validation" novalidate>
+          <input type="hidden" id="edit-note-id" name="note_id">
+          <div class="mb-3">
+            <label for="edit-title" class="form-label section-title"><i class="bi bi-type me-1"></i>Title</label>
+            <input type="text" class="form-control" id="edit-title" name="title" maxlength="80"
+              aria-describedby="editTitleCounter" required>
+            <div id="editTitleCounter" class="form-text">0/80</div>
+          </div>
+          <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
+            <label for="edit-content" class="form-label section-title"><i
+                class="bi bi-textarea-t me-1"></i>Content</label>
+            <textarea class="form-control" id="edit-content" name="content" rows="5" maxlength="2000"
+              aria-describedby="editContentCounter" required></textarea>
+            <div id="editContentCounter" class="form-text text-end">0/2000</div>
+          </div>
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label for="edit-tags" class="form-label section-title"><i class="bi bi-tags me-1"></i>Tags</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                <input type="text" class="form-control" id="edit-tags" name="tags" placeholder="e.g. math, homework">
+              </div>
+              <div class="form-text">Separate multiple tags with commas.</div>
             </div>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-            <form id="edit-note-form" enctype="multipart/form-data" class="needs-validation" novalidate>
-                <input type="hidden" id="edit-note-id" name="note_id">
-                <div class="mb-3">
-                    <label for="edit-title" class="form-label section-title"><i class="bi bi-type me-1"></i>Title</label>
-                    <input type="text" class="form-control" id="edit-title" name="title" maxlength="80" aria-describedby="editTitleCounter" required>
-                    <div id="editTitleCounter" class="form-text">0/80</div>
-                </div>
-                <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
-                    <label for="edit-content" class="form-label section-title"><i class="bi bi-textarea-t me-1"></i>Content</label>
-                    <textarea class="form-control" id="edit-content" name="content" rows="5" maxlength="2000" aria-describedby="editContentCounter" required></textarea>
-                    <div id="editContentCounter" class="form-text text-end">0/2000</div>
-                </div>
-                <div class="row">
-                    <div class="mb-3 col-md-6">
-                        <label for="edit-tags" class="form-label section-title"><i class="bi bi-tags me-1"></i>Tags</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-hash"></i></span>
-                            <input type="text" class="form-control" id="edit-tags" name="tags" placeholder="e.g. math, homework">
-                        </div>
-                        <div class="form-text">Separate multiple tags with commas.</div>
-                    </div>
-                    <div class="mb-3 col-md-6">
-                        <label for="edit-status" class="form-label section-title"><i class="bi bi-ui-checks-grid me-1"></i>Status</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-ui-checks-grid"></i></span>
-                            <select class="form-select" id="edit-status" name="status" aria-describedby="editStatusBadge">
-                                <option value="pending">Pending</option>
-                                <option value="in-progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                            </select>
-                            <span class="bg-transparent border-0 input-group-text"><span id="editStatusBadge" class="badge bg-secondary">Pending</span></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="mb-3 col-md-6">
-                        <label for="edit-note-type" class="form-label section-title"><i class="bi bi-list-nested me-1"></i>Note Type</label>
-                        <select class="form-select" id="edit-note-type" name="note_type">
-                            <option value="text">Text</option>
-                            <option value="markdown">Markdown</option>
-                            <option value="code">Code</option>
-                            <option value="image">Image</option>
-                            <option value="audio">Audio</option>
-                            <option value="video">Video</option>
-                        </select>
-                    </div>
-                    <div class="mb-3 col-md-6 d-flex align-items-end">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="edit-is-public" name="is_public">
-                            <label class="form-check-label" for="edit-is-public">Public</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="edit-external-link" class="form-label section-title"><i class="bi bi-link-45deg me-1"></i>External Link</label>
-                    <input type="url" class="form-control" id="edit-external-link" name="external_link">
-                </div>
-                <!-- Current Images Section -->
-                <div class="mb-3">
-                    <label class="form-label">Current Images</label>
-                    <div id="edit-image-preview" class="mt-2">
-                        <!-- Current images will be populated here -->
-                    </div>
-                </div>
-                
-                <!-- New Uploads -->
-                <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
-                    <label for="edit-image" class="form-label">Upload New Image</label>
-                    <input class="form-control" type="file" id="edit-image" name="image" accept="image/*">
-                    <div id="edit-image-new-preview" class="mt-2 mb-3"></div>
-                    <label for="edit-file" class="form-label">Upload New File</label>
-                    <input class="form-control" type="file" id="edit-file" name="file">
-                    <div id="edit-file-new-preview" class="mt-2"></div>
-                </div>
-                <!-- Current Files Section -->
-                <div class="mb-3">
-                    <label class="form-label">Current Files</label>
-                    <div id="edit-file-preview" class="mt-2">
-                        <!-- Current files will be populated here -->
-                    </div>
-                </div>
+            <div class="mb-3 col-md-6">
+              <label for="edit-status" class="form-label section-title"><i
+                  class="bi bi-ui-checks-grid me-1"></i>Status</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-ui-checks-grid"></i></span>
+                <select class="form-select" id="edit-status" name="status" aria-describedby="editStatusBadge">
+                  <option value="pending">Pending</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <span class="bg-transparent border-0 input-group-text"><span id="editStatusBadge"
+                    class="badge bg-secondary">Pending</span></span>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label for="edit-note-type" class="form-label section-title"><i class="bi bi-list-nested me-1"></i>Note
+                Type</label>
+              <select class="form-select" id="edit-note-type" name="note_type">
+                <option value="text">Text</option>
+                <option value="markdown">Markdown</option>
+                <option value="code">Code</option>
+                <option value="image">Image</option>
+                <option value="audio">Audio</option>
+                <option value="video">Video</option>
+              </select>
+            </div>
+            <div class="mb-3 col-md-6 d-flex align-items-end">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="edit-is-public" name="is_public">
+                <label class="form-check-label" for="edit-is-public">Public</label>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="edit-external-link" class="form-label section-title"><i
+                class="bi bi-link-45deg me-1"></i>External Link</label>
+            <input type="url" class="form-control" id="edit-external-link" name="external_link">
+          </div>
+          <!-- Current Images Section -->
+          <div class="mb-3">
+            <label class="form-label">Current Images</label>
+            <div id="edit-image-preview" class="mt-2">
+              <!-- Current images will be populated here -->
+            </div>
+          </div>
+
+          <!-- New Uploads -->
+          <div class="p-3 mb-3 border bg-light rounded-3 glass-section">
+            <label for="edit-image" class="form-label">Upload New Image</label>
+            <input class="form-control" type="file" id="edit-image" name="image" accept="image/*">
+            <div id="edit-image-new-preview" class="mt-2 mb-3"></div>
+            <label for="edit-file" class="form-label">Upload New File</label>
+            <input class="form-control" type="file" id="edit-file" name="file">
+            <div id="edit-file-new-preview" class="mt-2"></div>
+          </div>
+          <!-- Current Files Section -->
+          <div class="mb-3">
+            <label class="form-label">Current Files</label>
+            <div id="edit-file-preview" class="mt-2">
+              <!-- Current files will be populated here -->
+            </div>
+          </div>
 
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-soft" data-bs-dismiss="modal"><i class="bi bi-x-circle me-1"></i>Close</button>
-                    <div id="editSavingIndicator" class="me-2 d-none">
-                        <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
-                        <span class="visually-hidden">Saving...</span>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-soft"><i class="bi bi-pencil-square me-1"></i>Update Note</button>
-                </div>
-            </form>
-        </div>
+          <div class="modal-footer">
+            <button type="button" class="ng-btn-soft" data-bs-dismiss="modal"><i
+                class="bi bi-x-circle"></i>Close</button>
+            <div id="editSavingIndicator" class="me-2 d-none">
+              <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
+              <span class="visually-hidden">Saving...</span>
+            </div>
+            <button type="submit" class="ng-btn-primary"><i class="bi bi-pencil-square"></i>Update Note</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </div>
 
-<style>
-.root, :root {
-  --slh-primary: #003B8E;
-  --slh-primary-2: #2B6BCF;
-  --slh-primary-3: #002862;
-}
-.text-truncate-3 { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-.min-height-100 { min-height: 100px; }
-.upload-area { 
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-.upload-area:hover {
-  background-color: rgba(0,123,255,0.05);
-  transform: translateY(-2px);
-}
-.card {
-  transition: all 0.3s ease;
-}
-.card:hover {
-  transform: translateY(-2px);
-}
-.attachment-item {
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 8px;
-  transition: all 0.3s ease;
-}
-.attachment-item:hover {
-  background: #e9ecef;
-  transform: translateX(4px);
-}
-.remove-attachment {
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
-}
-.remove-attachment:hover {
-  opacity: 1;
-}
-/* Glassmorphism and Neumorphism for modals */
-.neo-card {
-  border: 1px solid rgba(255,255,255,0.5);
-  border-radius: 16px;
-  background: linear-gradient(145deg, #ffffff, #eef1f6);
-  box-shadow: 8px 8px 20px rgba(0,0,0,0.08), -6px -6px 16px rgba(255,255,255,0.9);
-  transition: transform .2s ease, box-shadow .2s ease;
-}
-.neo-card:hover { transform: translateY(-2px); box-shadow: 12px 12px 26px rgba(0,0,0,0.10), -8px -8px 18px rgba(255,255,255,0.95); }
-.status-pill { border-radius: 999px; letter-spacing: .3px; }
-.modal-glass .modal-content {
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(255,255,255,0.35);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15), inset 1px 1px 0 rgba(255,255,255,0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 16px;
-}
-.modal-glass .modal-header {
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-}
-.modal-glass .modal-header.bg-success { background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3)) !important; }
-.modal-glass .modal-header.bg-warning { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)) !important; }
-.modal-glass .modal-title i { filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
-.modal-glass .modal-body {
-  background: radial-gradient(1200px circle at 10% 10%, rgba(255,255,255,.6), rgba(255,255,255,.4) 40%, rgba(255,255,255,.25) 70%);
-}
-.hero { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); }
-.hero .hero-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; }
-.hero-tabs .nav-link { border-radius: 999px; color: #495057; }
-.hero-tabs .nav-link.active { background: rgba(0,0,0,.08); color: #111; }
-.glass-section {
-  background: rgba(255,255,255,0.55) !important;
-  border: 1px solid rgba(255,255,255,0.35) !important;
-  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.5), 8px 8px 18px rgba(0,0,0,0.05);
-}
-.section-title { font-weight: 600; color: #334155; }
-.modal-glass .form-control,
-.modal-glass .form-select,
-.modal-glass .input-group-text {
-  border-radius: 12px;
-  background: linear-gradient(145deg, #ffffff, #e6e9ef);
-  box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9);
-  border: 1px solid rgba(0,0,0,0.04);
-}
-.modal-glass .form-control:focus,
-.modal-glass .form-select:focus {
-  box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15), inset 4px 4px 8px rgba(0,0,0,0.06), inset -4px -4px 8px rgba(255,255,255,0.8);
-  border-color: rgba(var(--bs-primary-rgb), .35);
-}
-.modal-glass .badge { border-radius: 999px; }
-.modal-glass .btn-primary {
-  background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary));
-  border-color: var(--slh-primary);
-}
-.modal-glass .btn-primary:hover,
-.modal-glass .btn-primary:focus {
-  background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3));
-  border-color: var(--slh-primary-3);
-}
-.btn-soft {
-  border-radius: 12px;
-  box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9);
-  border: 1px solid rgba(0,0,0,0.04);
-}
-.btn-soft:active {
-  box-shadow: inset 4px 4px 8px rgba(0,0,0,0.08), inset -4px -4px 8px rgba(255,255,255,0.8);
-}
-.modal-backdrop.show { backdrop-filter: blur(4px); }
-.page-toolbar .form-control, .page-toolbar .form-select { min-height: 40px; }
-.search-bar .input-group { border-radius: 999px; overflow: hidden; box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.9); }
-.search-bar .input-group-text { background: linear-gradient(145deg, #ffffff, #e6e9ef); border-right: 0; }
-.search-bar .form-control { border-left: 0; background: linear-gradient(145deg, #ffffff, #e6e9ef); }
-.search-bar .form-control:focus { box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15), inset 4px 4px 8px rgba(0,0,0,0.06), inset -4px -4px 8px rgba(255,255,255,0.8); border-color: rgba(var(--bs-primary-rgb), .35); }
-.add-link { color: var(--slh-primary-2); font-weight: 600; }
-.add-link:hover { color: var(--slh-primary); }
-.chip-group .chip { border-radius: 999px; padding: 6px 14px; border: 1px solid rgba(0,59,142,.25); box-shadow: 2px 2px 6px rgba(0,0,0,0.06), -2px -2px 6px rgba(255,255,255,.8); background:#fff; color: var(--slh-primary); transition: all .15s ease; }
-.chip-group .chip.active { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); color: #fff; border-color: var(--slh-primary); }
-.stats-row .stat-card { background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%); border:1px solid rgba(0,0,0,.05); border-radius:14px; padding:14px 16px; min-height:72px; box-shadow: 0 6px 18px rgba(0,0,0,.06), 0 1px 0 rgba(255,255,255,.9) inset; transition: transform .15s ease, box-shadow .15s ease; }
-.stats-row .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.08), 0 1px 0 rgba(255,255,255,.95) inset; }
-.stat-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; }
-.bg-brand { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); }
-.bg-success-subtle { background: rgba(25, 135, 84, .12) !important; }
-.bg-primary-subtle { background: rgba(13, 110, 253, .12) !important; }
-.bg-info-subtle { background: rgba(13, 202, 240, .12) !important; }
-.chip-group .chip:hover { background: rgba(0,59,142,.08); color: var(--slh-primary-2); }
-.chip-group .chip:focus-visible { outline: none; box-shadow: 0 0 0 .2rem rgba(0,59,142,.25); }
-.chip-group .chip.active { background: linear-gradient(135deg, var(--slh-primary-2), var(--slh-primary)); color: #fff; border-color: var(--slh-primary); box-shadow: 0 8px 16px rgba(0,59,142,.18); }
-.neo-card { background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%); }
-.neo-card .card-footer { border-top: 1px solid rgba(0,0,0,.05); }
-.note-cover { height:140px; background: linear-gradient(135deg, var(--slh-primary), var(--slh-primary-3)); border-top-left-radius: .375rem; border-top-right-radius: .375rem; }
-</style>
+<!-- All styles moved to external CSS files for consistency -->
+<!-- note_shared.css: Main design system -->
+<!-- note_list_modals.css: Modal-specific styles -->
 
 <script>
-// Set static URL for file paths
-const staticUrl = "{{ url_for('static', filename='') }}";
+  // Set static URL for file paths
+  const staticUrl = "{{ url_for('static', filename='') }}";
 
-// Function to populate edit note modal with data
-function populateEditNoteModal(button) {
-  const noteId = button.getAttribute('data-note-id');
-  const noteTitle = button.getAttribute('data-note-title');
-  const noteContent = button.getAttribute('data-note-content');
-  const noteTags = button.getAttribute('data-note-tags');
-  const noteStatus = button.getAttribute('data-note-status');
-  const noteType = button.getAttribute('data-note-type');
-  const noteIsPublic = button.getAttribute('data-note-is-public') === '1';
-  const noteExternalLink = button.getAttribute('data-note-external-link');
-  
-  console.log('=== Edit Modal Debug ===');
-  console.log('Note ID:', noteId);
-  
-  // Set form action
-  const editForm = document.getElementById('edit-note-form');
-  editForm.action = `/partial/note/${noteId}/edit`;
-  editForm.method = 'post';
-  
-  // Populate form fields
-  document.getElementById('edit-note-id').value = noteId;
-  document.getElementById('edit-title').value = noteTitle || '';
-  document.getElementById('edit-content').value = noteContent || '';
-  document.getElementById('edit-tags').value = noteTags || '';
-  document.getElementById('edit-status').value = noteStatus || 'pending';
-  const editType = document.getElementById('edit-note-type');
-  if (editType && noteType) editType.value = noteType;
-  const editIsPublic = document.getElementById('edit-is-public');
-  if (editIsPublic) editIsPublic.checked = noteIsPublic;
-  document.getElementById('edit-external-link').value = noteExternalLink || '';
+  // Function to populate edit note modal with data
+  function populateEditNoteModal(button) {
+    const noteId = button.getAttribute('data-note-id');
+    const noteTitle = button.getAttribute('data-note-title');
+    const noteContent = button.getAttribute('data-note-content');
+    const noteTags = button.getAttribute('data-note-tags');
+    const noteStatus = button.getAttribute('data-note-status');
+    const noteType = button.getAttribute('data-note-type');
+    const noteIsPublic = button.getAttribute('data-note-is-public') === '1';
+    const noteExternalLink = button.getAttribute('data-note-external-link');
 
-  // Show preview for existing files
-  const imagePreview = document.getElementById('edit-image-preview');
-  const filePreview = document.getElementById('edit-file-preview');
-  
-  // Clear previous content
-  if (imagePreview) {
-    imagePreview.innerHTML = '<div class="py-3 text-center text-muted"><i class="mb-2 fas fa-image fa-2x"></i><div>No images attached</div></div>';
-  }
-  if (filePreview) {
-    filePreview.innerHTML = '<div class="py-3 text-center text-muted"><i class="mb-2 fas fa-file fa-2x"></i><div>No files attached</div></div>';
-  }
-  
-  // Show current images (with removal support)
-  const noteImages = button.getAttribute('data-note-images');
-  console.log('Raw noteImages attribute:', noteImages);
-  console.log('noteImages type:', typeof noteImages);
-  
-  if (noteImages && noteImages !== '[]' && noteImages !== 'null' && noteImages !== 'undefined' && noteImages.trim() !== '') {
-    try {
-      const images = JSON.parse(noteImages);
-      console.log('Parsed images:', images);
-      if (Array.isArray(images) && images.length > 0) {
-        imagePreview.innerHTML = '';
-        images.forEach((image, index) => {
-          if (image && image !== 'null' && image !== 'undefined') {
-            const imgDiv = document.createElement('div');
-            imgDiv.className = 'attachment-item d-flex align-items-center justify-content-between';
-            
-            const imgContainer = document.createElement('div');
-            imgContainer.className = 'd-flex align-items-center';
-            
-            const img = document.createElement('img');
-            img.src = staticUrl + image.file_path;
-            img.className = 'rounded me-3';
-            img.style.maxHeight = '60px';
-            img.style.maxWidth = '60px';
-            img.style.objectFit = 'cover';
-            img.alt = 'Current image';
-            
-            const imgInfo = document.createElement('div');
-            imgInfo.innerHTML = `
+    console.log('=== Edit Modal Debug ===');
+    console.log('Note ID:', noteId);
+
+    // Set form action
+    const editForm = document.getElementById('edit-note-form');
+    editForm.action = `/partial/note/${noteId}/edit`;
+    editForm.method = 'post';
+
+    // Populate form fields
+    document.getElementById('edit-note-id').value = noteId;
+    document.getElementById('edit-title').value = noteTitle || '';
+    document.getElementById('edit-content').value = noteContent || '';
+    document.getElementById('edit-tags').value = noteTags || '';
+    document.getElementById('edit-status').value = noteStatus || 'pending';
+    const editType = document.getElementById('edit-note-type');
+    if (editType && noteType) editType.value = noteType;
+    const editIsPublic = document.getElementById('edit-is-public');
+    if (editIsPublic) editIsPublic.checked = noteIsPublic;
+    document.getElementById('edit-external-link').value = noteExternalLink || '';
+
+    // Show preview for existing files
+    const imagePreview = document.getElementById('edit-image-preview');
+    const filePreview = document.getElementById('edit-file-preview');
+
+    // Clear previous content
+    if (imagePreview) {
+      imagePreview.innerHTML = '<div class="py-3 text-center text-muted"><i class="mb-2 fas fa-image fa-2x"></i><div>No images attached</div></div>';
+    }
+    if (filePreview) {
+      filePreview.innerHTML = '<div class="py-3 text-center text-muted"><i class="mb-2 fas fa-file fa-2x"></i><div>No files attached</div></div>';
+    }
+
+    // Show current images (with removal support)
+    const noteImages = button.getAttribute('data-note-images');
+    console.log('Raw noteImages attribute:', noteImages);
+    console.log('noteImages type:', typeof noteImages);
+
+    if (noteImages && noteImages !== '[]' && noteImages !== 'null' && noteImages !== 'undefined' && noteImages.trim() !== '') {
+      try {
+        const images = JSON.parse(noteImages);
+        console.log('Parsed images:', images);
+        if (Array.isArray(images) && images.length > 0) {
+          imagePreview.innerHTML = '';
+          images.forEach((image, index) => {
+            if (image && image !== 'null' && image !== 'undefined') {
+              const imgDiv = document.createElement('div');
+              imgDiv.className = 'attachment-item d-flex align-items-center justify-content-between';
+
+              const imgContainer = document.createElement('div');
+              imgContainer.className = 'd-flex align-items-center';
+
+              const img = document.createElement('img');
+              img.src = staticUrl + image.file_path;
+              img.className = 'rounded me-3';
+              img.style.maxHeight = '60px';
+              img.style.maxWidth = '60px';
+              img.style.objectFit = 'cover';
+              img.alt = 'Current image';
+
+              const imgInfo = document.createElement('div');
+              imgInfo.innerHTML = `
               <div class="fw-semibold">${image.file_name}</div>
               <div class="text-muted small">Image</div>
             `;
-            
-            imgContainer.appendChild(img);
-            imgContainer.appendChild(imgInfo);
-            
-            const removeContainer = document.createElement('div');
-            removeContainer.className = 'form-check form-switch remove-attachment';
-            removeContainer.innerHTML = `
+
+              imgContainer.appendChild(img);
+              imgContainer.appendChild(imgInfo);
+
+              const removeContainer = document.createElement('div');
+              removeContainer.className = 'form-check form-switch remove-attachment';
+              removeContainer.innerHTML = `
               <input class="form-check-input" type="checkbox" id="remove_image_${index}" name="remove_image_ids" value="${image.id}">
               <label class="form-check-label text-danger" for="remove_image_${index}">
                 <i class="fas fa-trash me-1"></i>Remove
               </label>
             `;
-            
-            imgDiv.appendChild(imgContainer);
-            imgDiv.appendChild(removeContainer);
-            imagePreview.appendChild(imgDiv);
-          }
-        });
+
+              imgDiv.appendChild(imgContainer);
+              imgDiv.appendChild(removeContainer);
+              imagePreview.appendChild(imgDiv);
+            }
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing image data:', e);
       }
-    } catch (e) {
-      console.error('Error parsing image data:', e);
     }
-  }
-  
-  // Show current files (with removal support)
-  const noteFiles = button.getAttribute('data-note-files');
-  console.log('Raw noteFiles attribute:', noteFiles);
-  console.log('noteFiles type:', typeof noteFiles);
-  
-  if (noteFiles && noteFiles !== '[]' && noteFiles !== 'null' && noteFiles !== 'undefined' && noteFiles.trim() !== '') {
-    try {
-      const files = JSON.parse(noteFiles);
-      console.log('Parsed files:', files);
-      if (Array.isArray(files) && files.length > 0) {
-        filePreview.innerHTML = '';
-        files.forEach((file, index) => {
-          if (file && file !== 'null' && file !== 'undefined') {
-            const fileDiv = document.createElement('div');
-            fileDiv.className = 'attachment-item d-flex align-items-center justify-content-between';
-            
-            const fileContainer = document.createElement('div');
-            fileContainer.className = 'd-flex align-items-center';
-            
-            const fileIcon = document.createElement('div');
-            fileIcon.className = 'me-3 text-primary';
-            fileIcon.innerHTML = '<i class="fas fa-file fa-2x"></i>';
-            
-            const fileInfo = document.createElement('div');
-            fileInfo.innerHTML = `
+
+    // Show current files (with removal support)
+    const noteFiles = button.getAttribute('data-note-files');
+    console.log('Raw noteFiles attribute:', noteFiles);
+    console.log('noteFiles type:', typeof noteFiles);
+
+    if (noteFiles && noteFiles !== '[]' && noteFiles !== 'null' && noteFiles !== 'undefined' && noteFiles.trim() !== '') {
+      try {
+        const files = JSON.parse(noteFiles);
+        console.log('Parsed files:', files);
+        if (Array.isArray(files) && files.length > 0) {
+          filePreview.innerHTML = '';
+          files.forEach((file, index) => {
+            if (file && file !== 'null' && file !== 'undefined') {
+              const fileDiv = document.createElement('div');
+              fileDiv.className = 'attachment-item d-flex align-items-center justify-content-between';
+
+              const fileContainer = document.createElement('div');
+              fileContainer.className = 'd-flex align-items-center';
+
+              const fileIcon = document.createElement('div');
+              fileIcon.className = 'me-3 text-primary';
+              fileIcon.innerHTML = '<i class="fas fa-file fa-2x"></i>';
+
+              const fileInfo = document.createElement('div');
+              fileInfo.innerHTML = `
               <div class="fw-semibold">${file.file_name}</div>
               <div class="text-muted small">Document</div>
               <a href="${staticUrl}${file.file_path}" target="_blank" class="mt-1 btn btn-sm btn-outline-primary">
                 <i class="fas fa-download me-1"></i>Download
               </a>
             `;
-            
-            fileContainer.appendChild(fileIcon);
-            fileContainer.appendChild(fileInfo);
-            
-            const removeContainer = document.createElement('div');
-            removeContainer.className = 'form-check form-switch remove-attachment';
-            removeContainer.innerHTML = `
+
+              fileContainer.appendChild(fileIcon);
+              fileContainer.appendChild(fileInfo);
+
+              const removeContainer = document.createElement('div');
+              removeContainer.className = 'form-check form-switch remove-attachment';
+              removeContainer.innerHTML = `
               <input class="form-check-input" type="checkbox" id="remove_file_${index}" name="remove_file_ids" value="${file.id}">
               <label class="form-check-label text-danger" for="remove_file_${index}">
                 <i class="fas fa-trash me-1"></i>Remove
               </label>
             `;
-            
-            fileDiv.appendChild(fileContainer);
-            fileDiv.appendChild(removeContainer);
-            filePreview.appendChild(fileDiv);
-          }
-        });
+
+              fileDiv.appendChild(fileContainer);
+              fileDiv.appendChild(removeContainer);
+              filePreview.appendChild(fileDiv);
+            }
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing file data:', e);
       }
-    } catch (e) {
-      console.error('Error parsing file data:', e);
     }
   }
-}
 
-// Setup edit note modal
-console.log('JavaScript file is loading...');
+  // Setup edit note modal
+  console.log('JavaScript file is loading...');
 
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM loaded, setting up edit modal...');
-  const editNoteModal = document.getElementById('editNoteModal');
-  console.log('Edit modal element:', editNoteModal);
-  
-  // Test: Add click listener directly to all edit buttons
-  const editButtons = document.querySelectorAll('[data-bs-target="#editNoteModal"]');
-  console.log('Found edit buttons:', editButtons.length);
-  
-  editButtons.forEach((btn, index) => {
-    console.log(`Edit button ${index}:`, btn);
-    btn.addEventListener('click', function() {
-      console.log('Edit button clicked!', this);
+  document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM loaded, setting up edit modal...');
+    const editNoteModal = document.getElementById('editNoteModal');
+    console.log('Edit modal element:', editNoteModal);
+
+    // Test: Add click listener directly to all edit buttons
+    const editButtons = document.querySelectorAll('[data-bs-target="#editNoteModal"]');
+    console.log('Found edit buttons:', editButtons.length);
+
+    editButtons.forEach((btn, index) => {
+      console.log(`Edit button ${index}:`, btn);
+      btn.addEventListener('click', function () {
+        console.log('Edit button clicked!', this);
+      });
     });
-  });
-  if (editNoteModal) {
-    editNoteModal.addEventListener('show.bs.modal', function (event) {
-      console.log('Modal show event triggered');
-      const button = event.relatedTarget;
-      console.log('Button that triggered modal:', button);
-      if (button) {
-        const noteId = button.getAttribute('data-note-id');
-        console.log('Fetching data for note ID:', noteId);
-        
-        // First, populate with existing data immediately
-        console.log('Populating with existing data first...');
-        populateEditNoteModal(button);
-        
-        // Then fetch latest data from server to ensure freshness
-        fetch(`/partial/note/${noteId}/data`, {
-          headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(r => r.json())
-        .then(json => {
-          if (json && json.success && json.data) {
-            // Hydrate data-attributes so populateEditNoteModal can fill fields consistently
-            button.setAttribute('data-note-title', json.data.title || '');
-            button.setAttribute('data-note-content', json.data.content || '');
-            const tags = Array.isArray(json.data.tags) ? json.data.tags.join(', ') : (json.data.tags || '');
-            button.setAttribute('data-note-tags', tags);
-            button.setAttribute('data-note-type', (json.data.note_type || 'text'));
-            button.setAttribute('data-note-is-public', json.data.is_public ? '1' : '0');
-            if (json.data.status !== undefined) button.setAttribute('data-note-status', json.data.status || 'pending');
-            if (json.data.external_link !== undefined) button.setAttribute('data-note-external-link', json.data.external_link || '');
+    if (editNoteModal) {
+      editNoteModal.addEventListener('show.bs.modal', function (event) {
+        console.log('Modal show event triggered');
+        const button = event.relatedTarget;
+        console.log('Button that triggered modal:', button);
+        if (button) {
+          const noteId = button.getAttribute('data-note-id');
+          console.log('Fetching data for note ID:', noteId);
 
-            // Split files into images and documents for preview/removal
-            const files = Array.isArray(json.data.files) ? json.data.files : [];
-            const images = files.filter(f => f && f.file_type === 'image');
-            const docs = files.filter(f => f && f.file_type === 'document');
-            button.setAttribute('data-note-images', JSON.stringify(images));
-            button.setAttribute('data-note-files', JSON.stringify(docs));
-            
-            // Re-populate with fresh data
-            console.log('Re-populating with fresh server data...');
-            populateEditNoteModal(button);
-          } else {
-            console.error('Invalid server response:', json);
+          // First, populate with existing data immediately
+          console.log('Populating with existing data first...');
+          populateEditNoteModal(button);
+
+          // Then fetch latest data from server to ensure freshness
+          fetch(`/partial/note/${noteId}/data`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+          })
+            .then(r => r.json())
+            .then(json => {
+              if (json && json.success && json.data) {
+                // Hydrate data-attributes so populateEditNoteModal can fill fields consistently
+                button.setAttribute('data-note-title', json.data.title || '');
+                button.setAttribute('data-note-content', json.data.content || '');
+                const tags = Array.isArray(json.data.tags) ? json.data.tags.join(', ') : (json.data.tags || '');
+                button.setAttribute('data-note-tags', tags);
+                button.setAttribute('data-note-type', (json.data.note_type || 'text'));
+                button.setAttribute('data-note-is-public', json.data.is_public ? '1' : '0');
+                if (json.data.status !== undefined) button.setAttribute('data-note-status', json.data.status || 'pending');
+                if (json.data.external_link !== undefined) button.setAttribute('data-note-external-link', json.data.external_link || '');
+
+                // Split files into images and documents for preview/removal
+                const files = Array.isArray(json.data.files) ? json.data.files : [];
+                const images = files.filter(f => f && f.file_type === 'image');
+                const docs = files.filter(f => f && f.file_type === 'document');
+                button.setAttribute('data-note-images', JSON.stringify(images));
+                button.setAttribute('data-note-files', JSON.stringify(docs));
+
+                // Re-populate with fresh data
+                console.log('Re-populating with fresh server data...');
+                populateEditNoteModal(button);
+              } else {
+                console.error('Invalid server response:', json);
+              }
+            })
+            .catch((error) => {
+              console.error('Fetch failed:', error);
+              // Already populated with existing data above
+            });
+        }
+      });
+      editNoteModal.addEventListener('shown.bs.modal', function () {
+        const el = document.getElementById('edit-title');
+        if (el) el.focus();
+      });
+
+      editNoteModal.addEventListener('hidden.bs.modal', function () {
+        // Reset form when modal is closed
+        const editForm = document.getElementById('edit-note-form');
+        if (editForm) {
+          editForm.reset();
+        }
+      });
+    }
+
+
+
+    // Setup file preview for add modal
+    const addImageInput = document.getElementById('image');
+    const addImagePreview = document.getElementById('add-image-preview');
+    if (addImageInput && addImagePreview) {
+      addImageInput.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (file && file.type.startsWith('image/')) {
+          // Clear existing preview
+          addImagePreview.innerHTML = '';
+
+          // Create new preview
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'img-fluid';
+            img.style.maxHeight = '200px';
+            img.alt = 'Image preview';
+            addImagePreview.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // Setup file preview for add modal
+    const addFileInput = document.getElementById('file');
+    const addFilePreview = document.getElementById('add-file-preview');
+    if (addFileInput && addFilePreview) {
+      addFileInput.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (file) {
+          // Clear existing preview
+          addFilePreview.innerHTML = '';
+
+          // Create new preview
+          const fileLink = document.createElement('a');
+          fileLink.href = URL.createObjectURL(file);
+          fileLink.target = '_blank';
+          fileLink.className = 'btn btn-sm btn-outline-success';
+          fileLink.innerHTML = `<i class="fas fa-file me-1"></i>${file.name} (New file)`;
+          addFilePreview.appendChild(fileLink);
+        }
+      });
+    }
+
+    // Setup file preview for edit modal
+    const editFileInput = document.getElementById('edit-file');
+    const editFilePreview = document.getElementById('edit-file-preview');
+    if (editFileInput && editFilePreview) {
+      editFileInput.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (file) {
+          // Clear existing preview
+          const existingPreview = editFilePreview.querySelector('.new-file-preview');
+          if (existingPreview) {
+            existingPreview.remove();
+          }
+
+          // Create new preview
+          const previewDiv = document.createElement('div');
+          previewDiv.className = 'new-file-preview mt-2';
+
+          const fileLink = document.createElement('a');
+          fileLink.href = URL.createObjectURL(file);
+          fileLink.target = '_blank';
+          fileLink.className = 'btn btn-sm btn-outline-success';
+          fileLink.innerHTML = `<i class="fas fa-file me-1"></i>${file.name} (New file)`;
+
+          previewDiv.appendChild(fileLink);
+          editFilePreview.appendChild(previewDiv);
+        }
+      });
+    }
+
+    // Setup image preview for edit modal
+    const editImageInput = document.getElementById('edit-image');
+    const editImagePreview = document.getElementById('edit-image-preview');
+    if (editImageInput && editImagePreview) {
+      editImageInput.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (file && file.type.startsWith('image/')) {
+          // Clear existing new image preview
+          const existingPreview = editImagePreview.querySelector('.new-image-preview');
+          if (existingPreview) {
+            existingPreview.remove();
+          }
+
+          // Create new preview
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'new-image-preview mt-2';
+
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'img-fluid';
+            img.style.maxHeight = '200px';
+            img.alt = 'New image preview';
+
+            previewDiv.appendChild(img);
+            editImagePreview.appendChild(previewDiv);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // Setup edit note form submission
+    const editNoteForm = document.getElementById('edit-note-form');
+    if (editNoteForm) {
+      // counters for edit form
+      const et = document.getElementById('edit-title');
+      const etc = document.getElementById('editTitleCounter');
+      const ec = document.getElementById('edit-content');
+      const ecc = document.getElementById('editContentCounter');
+      function upd2(i, el) { if (i && el) el.textContent = `${i.value.length}/${i.maxLength}`; }
+      ['input', 'change'].forEach(evt => {
+        et?.addEventListener(evt, () => upd2(et, etc));
+        ec?.addEventListener(evt, () => upd2(ec, ecc));
+      });
+      const es = document.getElementById('edit-status');
+      const esb = document.getElementById('editStatusBadge');
+      function setEditBadge() { if (!es || !esb) return; const v = es.value; esb.textContent = v.replace('-', ' '); esb.className = 'badge'; if (v === 'completed') esb.classList.add('bg-success'); else if (v === 'in-progress') esb.classList.add('bg-warning'); else esb.classList.add('bg-secondary'); }
+      es?.addEventListener('change', setEditBadge);
+
+      editNoteForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(editNoteForm);
+        // Append removal selections (checked items only)
+        const removeImageChecks = editNoteForm.querySelectorAll('input[name="remove_image_ids"]:checked');
+        removeImageChecks.forEach(chk => formData.append('remove_image_ids', chk.value));
+        const removeFileChecks = editNoteForm.querySelectorAll('input[name="remove_file_ids"]:checked');
+        removeFileChecks.forEach(chk => formData.append('remove_file_ids', chk.value));
+        const noteId = document.getElementById('edit-note-id').value;
+
+        fetch(`/partial/note/${noteId}/edit`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
           }
         })
-        .catch((error) => {
-          console.error('Fetch failed:', error);
-          // Already populated with existing data above
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // Close modal and reload notes
+              const modal = bootstrap.Modal.getInstance(document.getElementById('editNoteModal'));
+              if (modal) {
+                modal.hide();
+              }
+              loadPage('note');
+            } else {
+              alert(data.message || 'Error updating note.');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating note.');
+          })
+          .finally(() => { upd2(et, etc); upd2(ec, ecc); setEditBadge(); });
+      });
+      editNoteForm.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          editNoteForm.requestSubmit();
+        }
+      });
+    }
+
+    // Setup add note form submission (AJAX)
+    const addNoteForm = document.getElementById('add-note-form');
+    if (addNoteForm) {
+      // counters and badge for add form
+      const t = document.getElementById('title');
+      const tc = document.getElementById('titleCounter');
+      const c = document.getElementById('content');
+      const cc = document.getElementById('contentCounter');
+      function upd(i, el) { if (i && el) el.textContent = `${i.value.length}/${i.maxLength}`; }
+      ['input', 'change'].forEach(evt => {
+        t?.addEventListener(evt, () => upd(t, tc));
+        c?.addEventListener(evt, () => upd(c, cc));
+      });
+      const stSel = document.getElementById('status');
+      const stBadge = document.getElementById('addStatusBadge');
+      function setAddBadge() { if (!stSel || !stBadge) return; const v = stSel.value; stBadge.textContent = v.replace('-', ' '); stBadge.className = 'badge'; if (v === 'completed') stBadge.classList.add('bg-success'); else if (v === 'in-progress') stBadge.classList.add('bg-warning'); else stBadge.classList.add('bg-secondary'); }
+      stSel?.addEventListener('change', setAddBadge);
+      upd(t, tc); upd(c, cc); setAddBadge();
+
+      addNoteForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(addNoteForm);
+        const saving = document.getElementById('addSavingIndicator');
+        if (saving) saving.classList.remove('d-none');
+        fetch('/partial/note/add', {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.success) {
+              // Close modal
+              const modalEl = document.getElementById('addNoteModal');
+              const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+              modal.hide();
+              // Reload notes fragment
+              loadPage('note');
+            } else {
+              alert((data && data.message) || 'Error adding note');
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            alert('Error adding note');
+          })
+          .finally(() => { if (saving) saving.classList.add('d-none'); });
+      });
+      const addModalEl = document.getElementById('addNoteModal');
+      if (addModalEl) {
+        addModalEl.addEventListener('shown.bs.modal', function () {
+          // Reset form
+          const form = document.getElementById('add-note-form');
+          if (form) {
+            form.reset();
+            form.classList.remove('was-validated');
+          }
+
+          // Clear file previews
+          const imagePreview = document.getElementById('add-image-preview');
+          const filePreview = document.getElementById('add-file-preview');
+          if (imagePreview) imagePreview.innerHTML = '';
+          if (filePreview) filePreview.innerHTML = '';
+
+          // Reset counters
+          const titleCounter = document.getElementById('titleCounter');
+          const contentCounter = document.getElementById('contentCounter');
+          if (titleCounter) titleCounter.textContent = '0/80';
+          if (contentCounter) contentCounter.textContent = '0/2000';
+
+          // Reset status badge
+          const statusSelect = document.getElementById('status');
+          const statusBadge = document.getElementById('addStatusBadge');
+          if (statusSelect && statusBadge) {
+            statusSelect.value = 'pending';
+            statusBadge.textContent = 'Pending';
+            statusBadge.className = 'badge bg-secondary';
+          }
+
+          // Focus on title field
+          const el = document.getElementById('title');
+          if (el) el.focus();
         });
       }
-    });
-    editNoteModal.addEventListener('shown.bs.modal', function(){
-      const el = document.getElementById('edit-title');
-      if (el) el.focus();
-    });
-    
-    editNoteModal.addEventListener('hidden.bs.modal', function () {
-      // Reset form when modal is closed
-      const editForm = document.getElementById('edit-note-form');
-      if (editForm) {
-        editForm.reset();
-      }
-    });
-  }
-  
+    }
+  });
 
-  
-  // Setup file preview for add modal
-  const addImageInput = document.getElementById('image');
-  const addImagePreview = document.getElementById('add-image-preview');
-  if (addImageInput && addImagePreview) {
-    addImageInput.addEventListener('change', function() {
-      const file = this.files && this.files[0];
-      if (file && file.type.startsWith('image/')) {
-        // Clear existing preview
-        addImagePreview.innerHTML = '';
-        
-        // Create new preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          img.className = 'img-fluid';
-          img.style.maxHeight = '200px';
-          img.alt = 'Image preview';
-          addImagePreview.appendChild(img);
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  }
-  
-  // Setup file preview for add modal
-  const addFileInput = document.getElementById('file');
-  const addFilePreview = document.getElementById('add-file-preview');
-  if (addFileInput && addFilePreview) {
-    addFileInput.addEventListener('change', function() {
-      const file = this.files && this.files[0];
-      if (file) {
-        // Clear existing preview
-        addFilePreview.innerHTML = '';
-        
-        // Create new preview
-        const fileLink = document.createElement('a');
-        fileLink.href = URL.createObjectURL(file);
-        fileLink.target = '_blank';
-        fileLink.className = 'btn btn-sm btn-outline-success';
-        fileLink.innerHTML = `<i class="fas fa-file me-1"></i>${file.name} (New file)`;
-        addFilePreview.appendChild(fileLink);
-      }
-    });
-  }
-  
-  // Setup file preview for edit modal
-  const editFileInput = document.getElementById('edit-file');
-  const editFilePreview = document.getElementById('edit-file-preview');
-  if (editFileInput && editFilePreview) {
-    editFileInput.addEventListener('change', function() {
-      const file = this.files && this.files[0];
-      if (file) {
-        // Clear existing preview
-        const existingPreview = editFilePreview.querySelector('.new-file-preview');
-        if (existingPreview) {
-          existingPreview.remove();
-        }
-        
-        // Create new preview
-        const previewDiv = document.createElement('div');
-        previewDiv.className = 'new-file-preview mt-2';
-        
-        const fileLink = document.createElement('a');
-        fileLink.href = URL.createObjectURL(file);
-        fileLink.target = '_blank';
-        fileLink.className = 'btn btn-sm btn-outline-success';
-        fileLink.innerHTML = `<i class="fas fa-file me-1"></i>${file.name} (New file)`;
-        
-        previewDiv.appendChild(fileLink);
-        editFilePreview.appendChild(previewDiv);
-      }
-    });
-  }
-  
-  // Setup image preview for edit modal
-  const editImageInput = document.getElementById('edit-image');
-  const editImagePreview = document.getElementById('edit-image-preview');
-  if (editImageInput && editImagePreview) {
-    editImageInput.addEventListener('change', function() {
-      const file = this.files && this.files[0];
-      if (file && file.type.startsWith('image/')) {
-        // Clear existing new image preview
-        const existingPreview = editImagePreview.querySelector('.new-image-preview');
-        if (existingPreview) {
-          existingPreview.remove();
-        }
-        
-        // Create new preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const previewDiv = document.createElement('div');
-          previewDiv.className = 'new-image-preview mt-2';
-          
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          img.className = 'img-fluid';
-          img.style.maxHeight = '200px';
-          img.alt = 'New image preview';
-          
-          previewDiv.appendChild(img);
-          editImagePreview.appendChild(previewDiv);
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  }
-  
-  // Setup edit note form submission
-  const editNoteForm = document.getElementById('edit-note-form');
-  if (editNoteForm) {
-    // counters for edit form
-    const et = document.getElementById('edit-title');
-    const etc = document.getElementById('editTitleCounter');
-    const ec = document.getElementById('edit-content');
-    const ecc = document.getElementById('editContentCounter');
-    function upd2(i, el){ if(i&&el) el.textContent = `${i.value.length}/${i.maxLength}`; }
-    ['input','change'].forEach(evt=>{
-      et?.addEventListener(evt, ()=>upd2(et,etc));
-      ec?.addEventListener(evt, ()=>upd2(ec,ecc));
-    });
-    const es = document.getElementById('edit-status');
-    const esb = document.getElementById('editStatusBadge');
-    function setEditBadge(){ if(!es||!esb) return; const v=es.value; esb.textContent=v.replace('-', ' '); esb.className='badge'; if(v==='completed') esb.classList.add('bg-success'); else if(v==='in-progress') esb.classList.add('bg-warning'); else esb.classList.add('bg-secondary'); }
-    es?.addEventListener('change', setEditBadge);
+  function openNoteEditor(noteId) {
+    // Open edit modal with note data
+    const modal = new bootstrap.Modal(document.getElementById('editNoteModal'));
 
-    editNoteForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const formData = new FormData(editNoteForm);
-      // Append removal selections (checked items only)
-      const removeImageChecks = editNoteForm.querySelectorAll('input[name="remove_image_ids"]:checked');
-      removeImageChecks.forEach(chk => formData.append('remove_image_ids', chk.value));
-      const removeFileChecks = editNoteForm.querySelectorAll('input[name="remove_file_ids"]:checked');
-      removeFileChecks.forEach(chk => formData.append('remove_file_ids', chk.value));
-      const noteId = document.getElementById('edit-note-id').value;
-      
-      fetch(`/partial/note/${noteId}/edit`, {
+    // Find the edit button for this note to get data attributes
+    const editButton = document.querySelector(`button[data-note-id="${noteId}"]`);
+    if (editButton) {
+      populateEditNoteModal(editButton);
+      modal.show();
+    } else {
+      // Fallback: load editor page
+      if (typeof loadPage === 'function') {
+        loadPage(`note/editor/${noteId}`);
+      }
+    }
+  }
+
+  function deleteNote(noteId) {
+    if (confirm('Are you sure you want to delete this note?')) {
+      fetch(`/partial/note/${noteId}/delete`, {
         method: 'POST',
-        body: formData,
         headers: {
           'X-Requested-With': 'XMLHttpRequest'
         }
       })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          // Close modal and reload notes
-          const modal = bootstrap.Modal.getInstance(document.getElementById('editNoteModal'));
-          if (modal) {
-            modal.hide();
-          }
-          loadPage('note');
-        } else {
-          alert(data.message || 'Error updating note.');
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Error updating note.');
-      })
-      .finally(()=>{ upd2(et,etc); upd2(ec,ecc); setEditBadge(); });
-    });
-    editNoteForm.addEventListener('keydown', function(e){
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        editNoteForm.requestSubmit();
-      }
-    });
-  }
-
-  // Setup add note form submission (AJAX)
-  const addNoteForm = document.getElementById('add-note-form');
-  if (addNoteForm) {
-    // counters and badge for add form
-    const t = document.getElementById('title');
-    const tc = document.getElementById('titleCounter');
-    const c = document.getElementById('content');
-    const cc = document.getElementById('contentCounter');
-    function upd(i, el){ if(i&&el) el.textContent = `${i.value.length}/${i.maxLength}`; }
-    ['input','change'].forEach(evt=>{
-      t?.addEventListener(evt, ()=>upd(t,tc));
-      c?.addEventListener(evt, ()=>upd(c,cc));
-    });
-    const stSel = document.getElementById('status');
-    const stBadge = document.getElementById('addStatusBadge');
-    function setAddBadge(){ if(!stSel||!stBadge) return; const v=stSel.value; stBadge.textContent=v.replace('-', ' '); stBadge.className='badge'; if(v==='completed') stBadge.classList.add('bg-success'); else if(v==='in-progress') stBadge.classList.add('bg-warning'); else stBadge.classList.add('bg-secondary'); }
-    stSel?.addEventListener('change', setAddBadge);
-    upd(t,tc); upd(c,cc); setAddBadge();
-
-    addNoteForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const formData = new FormData(addNoteForm);
-      const saving = document.getElementById('addSavingIndicator');
-      if (saving) saving.classList.remove('d-none');
-      fetch('/partial/note/add', {
-        method: 'POST',
-        body: formData,
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.success) {
-          // Close modal
-          const modalEl = document.getElementById('addNoteModal');
-          const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-          modal.hide();
-          // Reload notes fragment
-          loadPage('note');
-        } else {
-          alert((data && data.message) || 'Error adding note');
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        alert('Error adding note');
-      })
-      .finally(()=>{ if (saving) saving.classList.add('d-none'); });
-    });
-    const addModalEl = document.getElementById('addNoteModal');
-    if (addModalEl) {
-      addModalEl.addEventListener('shown.bs.modal', function(){
-        // Reset form
-        const form = document.getElementById('add-note-form');
-        if (form) {
-          form.reset();
-          form.classList.remove('was-validated');
-        }
-        
-        // Clear file previews
-        const imagePreview = document.getElementById('add-image-preview');
-        const filePreview = document.getElementById('add-file-preview');
-        if (imagePreview) imagePreview.innerHTML = '';
-        if (filePreview) filePreview.innerHTML = '';
-        
-        // Reset counters
-        const titleCounter = document.getElementById('titleCounter');
-        const contentCounter = document.getElementById('contentCounter');
-        if (titleCounter) titleCounter.textContent = '0/80';
-        if (contentCounter) contentCounter.textContent = '0/2000';
-        
-        // Reset status badge
-        const statusSelect = document.getElementById('status');
-        const statusBadge = document.getElementById('addStatusBadge');
-        if (statusSelect && statusBadge) {
-          statusSelect.value = 'pending';
-          statusBadge.textContent = 'Pending';
-          statusBadge.className = 'badge bg-secondary';
-        }
-        
-        // Focus on title field
-        const el = document.getElementById('title');
-        if (el) el.focus();
-      });
-    }
-  }
-});
-
-function deleteNote(noteId) {
-  if (confirm('Are you sure you want to delete this note?')) {
-    fetch(`/partial/note/${noteId}/delete`, {
-      method: 'POST',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    })
-    .then(response => response.text())
-    .then(html => {
-      document.getElementById('note-list-container').outerHTML = html;
-    })
-    .catch(error => {
-      console.error('Error deleting note:', error);
-      alert('Error deleting note');
-    });
-    addNoteForm.addEventListener('keydown', function(e){
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        addNoteForm.requestSubmit();
-      }
-    });
-    // Simple client-side filter for notes
-    const searchInput = document.getElementById('noteSearch');
-    const statusSelect = document.getElementById('noteStatusFilter');
-    function filterNotes(){
-      const term = (searchInput?.value || '').toLowerCase();
-      const status = statusSelect?.value || '';
-      document.querySelectorAll('#note-list-container .neo-card').forEach(card => {
-        const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
-        const body = card.querySelector('.card-text')?.textContent.toLowerCase() || '';
-        const st = card.getAttribute('data-status') || '';
-        const matches = (!term || title.includes(term) || body.includes(term)) && (!status || status===st);
-        card.parentElement.style.display = matches ? '' : 'none';
-      });
-    }
-    if (searchInput) searchInput.addEventListener('input', filterNotes);
-    if (statusSelect) statusSelect.addEventListener('change', filterNotes);
-    // chip status filters
-    document.querySelectorAll('.chip-group .chip').forEach(btn=>{
-      btn.addEventListener('click', function(){
-        document.querySelectorAll('.chip-group .chip').forEach(b=>b.classList.remove('active'));
-        this.classList.add('active');
-        const st = this.getAttribute('data-status') || '';
-        const term = (searchInput?.value || '').toLowerCase();
-        document.querySelectorAll('#note-list-container .neo-card').forEach(card => {
-          const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
-          const body = card.querySelector('.card-text')?.textContent.toLowerCase() || '';
-          const cst = card.getAttribute('data-status') || '';
-          const matches = (!term || title.includes(term) || body.includes(term)) && (!st || st===cst);
-          card.parentElement.style.display = matches ? '' : 'none';
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('note-list-container').outerHTML = html;
+        })
+        .catch(error => {
+          console.error('Error deleting note:', error);
+          alert('Error deleting note');
         });
-      });
-    });
+    }
   }
-}
+
+  // Script loaded dynamically via main.js for SPA compatibility
+  // See: app/static/js/note_js/note_list.js
+
+  // Fallback initialization for non-SPA mode
+  (function () {
+    console.log('[note_fragment] Script tag executed');
+
+    // Check if we need to load the script manually (non-SPA mode)
+    if (!window.initializeNoteList) {
+      console.log('[note_fragment] initializeNoteList not found, loading script...');
+      const script = document.createElement('script');
+      script.src = '/static/js/note_js/note_list.js?v=' + Date.now();
+      script.onload = () => {
+        console.log('[note_fragment] Script loaded successfully');
+      };
+      document.head.appendChild(script);
+    } else {
+      console.log('[note_fragment] Functions already loaded');
+      // Re-initialize if already loaded
+      if (window.initializeNoteList) {
+        window.initializeNoteList();
+      }
+    }
+  })();
 </script>
