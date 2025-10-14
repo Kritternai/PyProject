@@ -1,59 +1,93 @@
-<div class="container-fluid px-0 ng-font" id="note-editor-page" data-selected-note-id="{{ selected_note_id or '' }}">
-  <div class="note-header d-flex align-items-center justify-content-between px-4 pt-3 pb-2 border-bottom">
-    <div class="d-flex align-items-center gap-2">
-      <button class="btn btn-light btn-sm btn-soft ng-btn" onclick="loadPage('note')" aria-label="Back to notes"><i class="bi bi-arrow-left"></i></button>
+<!-- Load shared note styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/note_shared.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/tag_badges.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/note_editor_layout.css') }}">
+
+<div class="px-0 container-fluid ng-font note-section-top-0 note-sticky-container" id="note-editor-page"
+  data-selected-note-id="{{ selected_note_id or '' }}" style="padding-top: 0;">
+  <!-- Header Section -->
+  <div class="px-4 pb-2 note-header d-flex align-items-center justify-content-between border-bottom note-sticky-header">
+    <div class="gap-2 d-flex align-items-center">
+      <button class="ng-btn ng-btn-sm btn-rounded-25" onclick="loadPage('note')" aria-label="Back to notes"><i
+          class="bi bi-arrow-left"></i></button>
       <div class="d-flex align-items-center">
-        <div class="hero-icon me-2"><i class="bi bi-journal-text"></i></div>
+        <div class="hero-icon me-2"><i class="bi bi-journal-text note-icon-md"></i></div>
         <div>
-          <h5 class="mb-0 ng-title">Notes</h5>
-          <div class="opacity-75 small ng-subtitle">Edit and organize your notes</div>
+          <h5 class="mb-0 ng-title">Edit Notes</h5>
+          <div class="ng-subtitle">Edit and organize your notes</div>
         </div>
       </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <button class="btn btn-light btn-sm" onclick="openNoteEditor()"><i class="bi bi-plus-lg me-1"></i>New</button>
+    <div class="gap-2 d-flex align-items-center">
+      <button class="ng-btn-primary ng-btn-sm btn-rounded-25" onclick="clearEditorForNew()" title="Create new note"><i
+          class="bi bi-plus-lg"></i>New</button>
     </div>
   </div>
 
   <div class="d-flex" id="editorSplit">
     <!-- Left: list -->
-    <aside class="border-end sidebar-panel glass-dark" style="width: 300px; min-width: 260px;">
+    <aside class="border-end sidebar-panel glass-dark" style="width: 300px; min-width: 260px; border-radius: 25px;">
       <div class="p-3 border-bottom glass-section ng-space">
-        <label class="form-label section-title mb-2"><i class="bi bi-search me-1"></i>Search</label>
-        <div class="input-group">
-          <span class="input-group-text"><i class="bi bi-search"></i></span>
-          <input type="text" class="form-control ng-input" id="editorNoteSearch" placeholder="Search notes..." aria-label="Search notes">
+        <label class="mb-2 form-label section-title"><i class="bi bi-search"></i>Search</label>
+        <div class="input-group search-bar-modern">
+          <span class="bg-white input-group-text border-end-0">
+            <i class="bi bi-search text-muted"></i>
+          </span>
+          <input type="text" class="form-control border-start-0 ng-input" id="editorNoteSearch"
+            placeholder="Search notes..." aria-label="Search notes">
         </div>
       </div>
       <div class="overflow-auto" id="editorNotesList">
         {% if notes %}
-          {% for note in notes %}
-          <div class="p-3 note-row neo-card-lite ng-neo" role="button" onclick="loadEditorNote('{{ note.id }}')" data-note-id="{{ note.id }}">
-            <div class="fw-semibold text-truncate"><i class="bi bi-journal-text me-1 text-primary"></i>{{ note.title }}</div>
-            <div class="small text-muted text-truncate">{{ (note.content or '')|striptags }}</div>
-            <div class="small text-muted"><i class="bi bi-calendar2-week me-1"></i>{{ note.created_at.strftime('%Y-%m-%d %H:%M') if note.created_at else '' }}</div>
+        {% for note in notes %}
+        <div class="p-3 note-row neo-card-lite ng-neo" role="button" onclick="loadEditorNote('{{ note.id }}')"
+          data-note-id="{{ note.id }}">
+          <div class="mb-2 d-flex align-items-start">
+            <i class="mt-1 bi bi-journal-text note-icon-primary me-2"></i>
+            <div class="fw-semibold text-truncate flex-grow-1">{{ note.title }}</div>
           </div>
-          {% endfor %}
+          <div class="mb-2 small text-muted text-truncate" style="padding-left: 24px;">
+            {{ (note.content or '')|striptags|truncate(60) }}
+          </div>
+          <div class="small text-muted d-flex align-items-center" style="padding-left: 24px;">
+            <i class="bi bi-calendar2-week me-1"></i>
+            {{ note.created_at.strftime('%Y-%m-%d') if note.created_at else '' }}
+          </div>
+        </div>
+        {% endfor %}
         {% else %}
-          <div class="text-center text-muted py-5">No notes yet</div>
+        <div class="py-5 text-center text-muted">No notes yet</div>
         {% endif %}
       </div>
     </aside>
 
     <!-- Right: editor -->
-    <section class="flex-grow-1 d-flex flex-column bg-white ng-space">
-      <div class="p-3 border-bottom d-flex align-items-center gap-3 ui-surface glass-panel">
-        <div class="w-100">
-          <label class="form-label section-title mb-1 ng-subtitle"><i class="bi bi-type me-1"></i>Title</label>
-          <input type="text" class="form-control form-control-lg ng-input" id="editorTitle" placeholder="Note title..." aria-label="Note title">
-        </div>
-        <div class="d-flex align-items-end gap-2">
-          <button class="btn ng-chip" onclick="refreshEditorNote()" title="Refresh" aria-label="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
-          <button class="btn ng-btn-save" onclick="saveEditorNote()"><i class="bi bi-save me-1"></i>Save</button>
+    <section class="flex-grow-1 d-flex flex-column ng-space">
+      <div class="p-3 border-bottom ui-surface glass-panel">
+        <label class="mb-1 form-label section-title"><i class="bi bi-type"></i>Title</label>
+        <input type="text" class="form-control form-control-lg ng-input" id="editorTitle" placeholder="Note title..."
+          aria-label="Note title">
+
+        <!-- Status and Tags Section -->
+        <div class="mt-3 row g-3">
+          <div class="col-md-6">
+            <label class="mb-2 form-label section-title"><i class="bi bi-ui-checks-grid"></i>Status</label>
+            <select class="form-select ng-input" id="editorNoteStatus" name="status">
+              <option value="pending">Pending</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="mb-2 form-label section-title"><i class="bi bi-tags"></i>Tags</label>
+            <input type="text" class="form-control ng-input" id="editorNoteTags" name="tags"
+              placeholder="e.g. work, study, important" maxlength="100">
+            <div class="form-text small">Separate tags with commas</div>
+          </div>
         </div>
       </div>
-      <div class="editor-toolbar ui-toolbar glass-panel border-0 p-2 mt-2 mb-1 mx-2">
-        <div class="d-flex gap-2 flex-wrap align-items-center">
+      <div class="p-2 mx-2 mt-2 mb-1 border-0 editor-toolbar ui-toolbar glass-panel">
+        <div class="flex-wrap gap-2 d-flex align-items-center">
           <!-- Text Formatting -->
           <button class="btn btn-sm ng-chip" onclick="formatText('bold')" title="Bold (Ctrl+B)">
             <i class="bi bi-type-bold"></i>
@@ -107,277 +141,71 @@
           </button>
         </div>
       </div>
-      <div id="editorContent" class="flex-grow-1 p-4 overflow-auto editor-card glass-panel" contenteditable="true" style="outline:none;"
-           aria-label="Note content editor" role="textbox">
+      <div id="editorContent" class="p-4 mx-2 mb-2 overflow-auto flex-grow-1 editor-card glass-panel"
+        contenteditable="true" style="outline:none;" aria-label="Note content editor" role="textbox">
       </div>
-      <div class="p-2 border-top small text-muted d-flex justify-content-between glass-section ng-glass ng-rounded">
-        <span id="editorStatus" aria-live="polite">Ready</span>
+
+      <!-- File Upload Section -->
+      <div class="p-3 mx-2 mb-2 border-top border-bottom ui-surface glass-panel">
+        <label class="mb-2 form-label section-title"><i class="bi bi-paperclip"></i>Attachments</label>
+        <div class="file-upload-section" onclick="document.getElementById('editorFileInput').click()">
+          <i class="mb-2 bi bi-cloud-upload note-icon-xl d-block"></i>
+          <p class="mb-2"><strong>Click to upload</strong> or drag and drop</p>
+          <p class="mb-0 small text-muted">PDF, DOC, DOCX, JPG, PNG, GIF (Max 10MB)</p>
+        </div>
+        <input type="file" id="editorFileInput" class="d-none" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif" multiple>
+        <div id="editorFilePreviewContainer" class="mt-3"></div>
+      </div>
+
+      <!-- Action Buttons Section -->
+      <div class="p-2 mx-2 mb-2 d-flex justify-content-between align-items-center glass-section">
+        <button class="ng-chip btn-rounded-25" onclick="refreshEditorNote()" title="Refresh" aria-label="Refresh">
+          <i class="bi bi-arrow-clockwise"></i>Refresh
+        </button>
+        <button class="ng-btn-save btn-rounded-25" onclick="saveEditorNote()">
+          <i class="bi bi-save"></i>Save
+        </button>
+      </div>
+
+      <div
+        class="p-2 border-top small text-muted d-flex justify-content-between align-items-center glass-section ng-glass ng-rounded">
+        <div class="save-status unsaved" id="editorSaveStatus">
+          <i class="bi bi-exclamation-circle"></i>
+          <span>Unsaved changes</span>
+        </div>
         <span class="ng-body">Ctrl+S to save</span>
       </div>
     </section>
   </div>
 </div>
 
+<!-- Script loaded dynamically via main.js for SPA compatibility -->
+<!-- See: app/static/js/note_js/note_editor.js -->
+
 <script>
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-  initializeNoteEditor();
-});
+  // Fallback initialization for non-SPA mode
+  (function () {
+    console.log('[note_editor_fragment] Script tag executed');
 
-function initializeNoteEditor() {
-  // Load selected note if specified
-  const container = document.getElementById('note-editor-page');
-  const selected = container?.getAttribute('data-selected-note-id');
-  if (selected) { loadEditorNote(selected); }
-
-  // Setup toolbar state tracking
-  const editor = getEditor();
-  if (editor) {
-    editor.addEventListener('mouseup', updateToolbarStates);
-    editor.addEventListener('keyup', updateToolbarStates);
-    editor.addEventListener('focus', updateToolbarStates);
-    editor.addEventListener('input', updateToolbarStates);
-  }
-
-  // Search filter
-  const search = document.getElementById('editorNoteSearch');
-  if (search) {
-    search.addEventListener('input', function(){
-      const term = this.value.toLowerCase();
-      document.querySelectorAll('#editorNotesList .note-row').forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = !term || text.includes(term) ? '' : 'none';
-      });
-    });
-  }
-
-  // Ctrl+S to save
-  document.addEventListener('keydown', function(e){
-    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-      e.preventDefault();
-      saveEditorNote();
+    // Check if we need to load the script manually (non-SPA mode)
+    if (!window.loadEditorNote) {
+      console.log('[note_editor_fragment] loadEditorNote not found, loading script...');
+      const script = document.createElement('script');
+      script.src = '/static/js/note_js/note_editor.js?v=' + Date.now();
+      script.onload = () => {
+        console.log('[note_editor_fragment] Script loaded successfully');
+      };
+      document.head.appendChild(script);
+    } else {
+      console.log('[note_editor_fragment] Functions already loaded');
+      // Re-initialize if already loaded
+      if (window.initializeNoteEditor) {
+        window.initializeNoteEditor();
+      }
     }
-  });
-}
-
-function getEditor() { return document.getElementById('editorContent'); }
-
-function execCommand(command, value = null) {
-  const editor = getEditor(); if (!editor) return false;
-  editor.focus();
-  const result = document.execCommand(command, false, value);
-  setTimeout(updateToolbarStates, 10);
-  return result;
-}
-
-function updateToolbarStates() {
-  const toolbar = document.querySelector('.editor-toolbar'); if (!toolbar) return;
-  const commandMap = { bold: "formatText('bold')", italic: "formatText('italic')", underline: "formatText('underline')", strikeThrough: "formatText('strikeThrough')" };
-  Object.keys(commandMap).forEach(cmd => {
-    try {
-      const isActive = document.queryCommandState(cmd);
-      const button = toolbar.querySelector(`[onclick="${commandMap[cmd]}"]`);
-      if (button) button.classList.toggle('active', isActive);
-    } catch(_) {}
-  });
-}
-
-function addClickFeedback(buttonSelector) {
-  const button = document.querySelector(buttonSelector);
-  if (button) {
-    button.style.transform = 'scale(0.96)';
-    button.style.transition = 'transform 0.12s ease';
-    setTimeout(() => { button.style.transform = ''; }, 100);
-  }
-}
-
-// Formatting
-function formatText(command) { addClickFeedback(`[onclick="formatText('${command}')"]`); execCommand(command); }
-
-// Lists
-function insertList(type) { addClickFeedback(`[onclick="insertList('${type}')"]`); execCommand(type === 'ul' ? 'insertUnorderedList' : 'insertOrderedList'); }
-
-// Alignment
-function alignText(alignment) { addClickFeedback(`[onclick="alignText('${alignment}')"]`); execCommand(alignment); }
-
-// Media
-function insertImage() {
-  addClickFeedback('[onclick="insertImage()"]');
-  const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = 'image/*';
-  fileInput.onchange = function(){
-    const file = fileInput.files?.[0]; if (!file) return;
-    const status = document.getElementById('editorStatus'); if (status) status.textContent = 'Uploading image...';
-    const noteId = window.currentEditingNoteId;
-    if (!noteId) {
-      const reader = new FileReader();
-      reader.onload = function(){ execCommand('insertHTML', `<img src="${reader.result}" style="max-width:100%;height:auto;border-radius:12px" alt="Image">`); if (status) status.textContent = 'Image inserted'; };
-      reader.readAsDataURL(file); return;
-    }
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('title', document.getElementById('editorTitle')?.value || '');
-    formData.append('content', document.getElementById('editorContent')?.innerHTML || '');
-    fetch(`/partial/note/${noteId}/edit`, { method:'POST', body: formData, headers:{ 'X-Requested-With':'XMLHttpRequest' } })
-      .then(r=>r.json())
-      .then(()=> fetch(`/partial/note/${noteId}/data`, { headers:{ 'X-Requested-With':'XMLHttpRequest' } }).then(r=>r.json()))
-      .then(data=>{
-        if (data?.success && data?.data?.files?.length) {
-          const imgs = data.data.files.filter(f=> (f.file_type||'').toLowerCase()==='image');
-          const latest = imgs[imgs.length-1];
-          if (latest?.file_path) execCommand('insertHTML', `<img src="/static/${latest.file_path}" style="max-width:100%;height:auto;border-radius:12px" alt="${latest.file_name||'Image'}">`);
-          if (status) status.textContent = 'Image uploaded and inserted';
-        } else { if (status) status.textContent = 'Image upload failed'; }
-      })
-      .catch(()=>{ if (status) status.textContent = 'Image upload error'; });
-  };
-  fileInput.click();
-}
-
-function insertLink() {
-  addClickFeedback('[onclick="insertLink()"]');
-  const selection = window.getSelection(); const selectedText = selection.toString();
-  let url = prompt('Enter link URL:', 'https://'); if (!url) return;
-  if (!/^https?:\/\//.test(url)) url = 'https://' + url;
-  if (selectedText) execCommand('createLink', url);
-  else { const linkText = prompt('Enter link text:', url); if (linkText) execCommand('insertHTML', `<a href="${url}" target="_blank">${linkText}</a>`); }
-}
-
-function insertTable() {
-  addClickFeedback('[onclick="insertTable()"]');
-  const rows = parseInt(prompt('Number of rows:', '3')) || 3;
-  const cols = parseInt(prompt('Number of columns:', '3')) || 3;
-  if (rows < 1 || cols < 1 || rows > 20 || cols > 10) { alert('Please enter valid dimensions (1-20 rows, 1-10 columns)'); return; }
-  let html = '<table class="table table-bordered" style="width:100%;margin:10px 0"><tbody>';
-  for (let r=0;r<rows;r++){ html += '<tr>'; for (let c=0;c<cols;c++){ html += '<td style="padding:10px;min-width:50px">&nbsp;</td>'; } html += '</tr>'; }
-  html += '</tbody></table><p>&nbsp;</p>';
-  execCommand('insertHTML', html);
-  setTimeout(()=>{ const table=getEditor()?.querySelector('table:last-of-type'); const firstCell=table?.querySelector('td'); if(firstCell){ const range=document.createRange(); range.selectNodeContents(firstCell); range.collapse(true); const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);} },10);
-}
-
-function undoAction(){ addClickFeedback('[onclick="undoAction()"]'); execCommand('undo'); }
-function redoAction(){ addClickFeedback('[onclick="redoAction()"]'); execCommand('redo'); }
-
-// Data fetching
-window.loadEditorNote = function(noteId){
-  const status = document.getElementById('editorStatus'); if (status) status.textContent = 'Loading...';
-  fetch(`/partial/note/${noteId}/data`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
-    .then(r=>r.json())
-    .then(j=>{
-      if (j && j.success && j.data){
-        document.getElementById('editorTitle').value = j.data.title || '';
-        document.getElementById('editorContent').innerHTML = j.data.content || '';
-        if (status) status.textContent = 'Loaded';
-        window.currentEditingNoteId = j.data.id;
-        document.querySelectorAll('#editorNotesList .note-row').forEach(row => {
-          row.classList.toggle('active', row.getAttribute('data-note-id') === String(j.data.id));
-        });
-      } else { if (status) status.textContent = 'Load failed'; }
-    })
-    .catch(()=>{ if (status) status.textContent = 'Load error'; });
-}
-
-window.refreshEditorNote = function(){ if (window.currentEditingNoteId) loadEditorNote(window.currentEditingNoteId); }
-
-window.saveEditorNote = function(){
-  const title = document.getElementById('editorTitle').value || '';
-  const content = document.getElementById('editorContent').innerHTML || '';
-  const status = document.getElementById('editorStatus');
-  const id = window.currentEditingNoteId;
-  const form = new FormData(); form.append('title', title); form.append('content', content);
-  if (!id) {
-    fetch('/partial/note/add', { method: 'POST', body: form, headers: { 'X-Requested-With':'XMLHttpRequest' }})
-      .then(r=>r.json())
-      .then(j=>{ if (j && j.success){ if (status) status.textContent = 'Saved'; if (j.note_id){ window.currentEditingNoteId = j.note_id; } } else { if (status) status.textContent = j.message || 'Save failed'; } })
-      .catch(()=>{ if (status) status.textContent = 'Save error'; });
-  } else {
-    fetch(`/partial/note/${id}/edit`, { method:'POST', body: form, headers: { 'X-Requested-With':'XMLHttpRequest' }})
-      .then(r=>r.json())
-      .then(j=>{ if (j && j.success){ if (status) status.textContent = 'Saved'; } else { if (status) status.textContent = j.message || 'Save failed'; } })
-      .catch(()=>{ if (status) status.textContent = 'Save error'; });
-  }
-}
+  })();
 </script>
 
-<style>
-/* Base theme */
-:root {
-  --bg: radial-gradient(1200px 1200px at 10% 10%, rgba(255,255,255,0.5), rgba(255,255,255,0.35) 40%, rgba(255,255,255,0.25) 70%), linear-gradient(135deg, #8ec5fc 0%, #e0c3fc 100%);
-  --surface: #ffffff;         /* cards/panels */
-  --muted: #eef1f7;           /* subtle separators */
-  --text: #1f2937;            /* primary text */
-  --subtext: #6b7280;         /* secondary text */
-  --border: #e5e7eb;          /* borders */
-  --shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-  --radius: 14px;
-  --accent1: #a78bfa;         /* lavender */
-  --accent2: #60a5fa;         /* blue */
-  --accent-gradient: linear-gradient(135deg, var(--accent1), var(--accent2));
-  --glass-blur: blur(24px);
-  --glass-bg: rgba(255,255,255,0.35);
-  --glass-border: rgba(255,255,255,0.6);
-  --glass-inner: inset 1px 1px 0 rgba(255,255,255,0.6);
-}
-
-/* App background */
-body { background: var(--bg); background-attachment: fixed; }
-.ng-font { font-family: 'Inter', 'SF Pro Text', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif; color: var(--text); }
-
-/* Header */
-.note-header { background: var(--surface); box-shadow: var(--shadow); border-bottom: 1px solid var(--border) !important; border-radius: 0 0 var(--radius) var(--radius); }
-.note-header { position: relative; background: rgba(255,255,255,0.28); border: 1px solid rgba(255,255,255,0.55) !important; backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: 0 0 20px 20px; box-shadow: 0 12px 28px rgba(15,23,42,.08), inset 0 1px 0 rgba(255,255,255,0.6); }
-.note-header:before { content: ""; position:absolute; inset:0; pointer-events:none; background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.06)); border-radius: inherit; }
-.note-header .hero-icon { width:36px; height:36px; border-radius:12px; background: rgba(255,255,255,0.55); color: var(--text); display:flex; align-items:center; justify-content:center; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-.ng-title { font-weight: 700; color: var(--text); }
-.ng-subtitle { color: var(--subtext); }
-.note-header .ng-title, .note-header .ng-subtitle { text-shadow: 0 1px 2px rgba(0,0,0,0.08); }
-
-/* Sidebar */
-.glass-panel { background: var(--glass-bg); border-radius: 16px; border: 1px solid var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--shadow), var(--glass-inner); }
-.glass-dark { background: rgba(10,20,60,0.35); border: 1px solid rgba(255,255,255,0.3); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: 0 20px 40px rgba(10,20,60,0.15), inset 0 1px 0 rgba(255,255,255,0.3); }
-.sidebar-panel { background: transparent; }
-.neo-card-lite { background: var(--surface); border-radius: 12px; }
-#note-editor-page .note-row { border-radius: 20px; margin: 8px 10px; padding: 12px 14px !important; border: 1px solid rgba(255,255,255,0.55); background: rgba(255,255,255,0.35); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 8px 20px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.6); transition: transform .25s ease, box-shadow .25s ease, background .25s ease; }
-#note-editor-page .note-row:hover { background: rgba(255,255,255,0.55); box-shadow: 0 14px 28px rgba(15,23,42,0.12), 0 0 0 3px rgba(167,139,250,0.16); transform: translateY(-2px); }
-#note-editor-page .note-row.active { background: linear-gradient(135deg, rgba(167,139,250,0.18), rgba(96,165,250,0.18)); border-color: rgba(167,139,250,0.55); box-shadow: 0 0 0 3px rgba(167,139,250,0.22); }
-
-/* Surfaces */
-.ui-surface { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
-
-/* Toolbar */
-.ui-toolbar { background: rgba(255,255,255,0.28); border: 1px solid rgba(255,255,255,0.5) !important; border-radius: 16px; backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); box-shadow: var(--shadow), var(--glass-inner); transition: box-shadow .3s ease; }
-.ui-toolbar .btn { border-radius: 12px; padding: 6px 10px; border: 1px solid rgba(255,255,255,0.6); color: var(--text); background: rgba(255,255,255,0.5); backdrop-filter: blur(12px); }
-.ui-toolbar .btn i { font-size: 14px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08)); }
-.ui-toolbar .btn:hover { background: rgba(255,255,255,0.7); box-shadow: 0 0 0 3px rgba(255,255,255,0.35), 0 8px 22px rgba(15,23,42,.08); transform: translateY(-1px); }
-.ui-toolbar .btn.active { background: linear-gradient(135deg, rgba(167,139,250,0.25), rgba(96,165,250,0.25)); border-color: rgba(167,139,250,0.6); box-shadow: 0 0 0 3px rgba(167,139,250,0.25), 0 8px 22px rgba(96,165,250,.18); }
-.ui-toolbar .btn.active i { filter: drop-shadow(0 0 6px rgba(167,139,250,0.6)); }
-
-/* Inputs */
-.ng-input { border-radius: 14px; border: 1px solid var(--border); background: linear-gradient(180deg, #fff, #f8fafc); box-shadow: var(--shadow); }
-.ng-input:focus { box-shadow: 0 0 0 3px rgba(96,165,250,0.25), var(--shadow); }
-.section-title { font-weight: 600; color: var(--subtext); }
-
-/* Save button */
-.btn-save-accent, .ng-btn-save { border: none; color: #fff; padding: 8px 14px; border-radius: 20px; background: linear-gradient(90deg, #8ec5fc, #e0c3fc); box-shadow: 0 12px 28px rgba(96,165,250,0.28), 0 0 0 1px rgba(255,255,255,0.6) inset; transition: transform .25s ease, filter .25s ease, box-shadow .3s ease; }
-.btn-save-accent:hover, .ng-btn-save:hover { filter: brightness(1.07); box-shadow: 0 14px 30px rgba(96,165,250,0.35), 0 0 0 2px rgba(255,255,255,0.8) inset; transform: translateY(-1px); }
-
-/* Editor */
-#editorContent { background: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; box-shadow: var(--shadow), var(--glass-inner); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); font-family: 'Inter', system-ui, sans-serif; font-size: 15px; line-height: 1.75; transition: box-shadow .3s ease; }
-#editorContent:focus-within { box-shadow: 0 14px 34px rgba(15,23,42,.12), 0 0 0 3px rgba(167,139,250,0.18); }
-#editorContent h1, #editorContent h2, #editorContent h3 { margin: 1.2em 0 .4em; font-weight: 700; }
-#editorContent p { margin-bottom: 1em; color: var(--text); }
-#editorContent img { max-width: 100%; height: auto; border-radius: 12px; margin: 10px 0; }
-#editorContent table { border-collapse: collapse; margin: 15px 0; }
-#editorContent table td { border: 1px solid var(--border); padding: 10px 12px; min-width: 60px; }
-#editorContent a { color: var(--accent2); text-decoration: underline; }
-#editorContent a:hover { color: #2563eb; }
-
-/* Layout */
-#editorSplit { height: calc(100vh - 120px); gap: 16px; padding: 16px; }
-
-/* Responsive */
-@media (max-width: 992px) {
-  #editorSplit { flex-direction: column; height: auto; }
-  .sidebar-panel { width: 100% !important; min-width: 0 !important; }
-}
-</style>
-
+<!-- All styles moved to external CSS files for consistency -->
+<!-- note_shared.css: Main design system -->
+<!-- note_editor_layout.css: Editor-specific layout -->

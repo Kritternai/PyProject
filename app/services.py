@@ -3,6 +3,8 @@ Simple service classes for MVC architecture.
 Contains business logic for the application.
 """
 
+# app/services.py
+
 import json
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -17,7 +19,7 @@ class UserService:
     """Simple user service for business logic."""
     
     def create_user(self, username: str, email: str, password: str, 
-                   first_name: str = None, last_name: str = None, role: str = 'student'):
+                    first_name: str = None, last_name: str = None, role: str = 'student'):
         """Create a new user."""
         from app.models.user import UserModel
         from app import db
@@ -60,7 +62,7 @@ class UserService:
         
         user = UserModel.query.filter_by(id=user_id).first()
         if not user:
-            raise NotFoundException("User not found")
+            return None  # Return None instead of raising exception
         return user
     
     def get_user_by_email(self, email: str):
@@ -69,7 +71,7 @@ class UserService:
         
         user = UserModel.query.filter_by(email=email).first()
         if not user:
-            raise NotFoundException("User not found")
+            return None  # Return None instead of raising exception
         return user
     
     def authenticate_user(self, email: str, password: str):
@@ -114,22 +116,65 @@ class LessonService:
         if not lesson:
             raise NotFoundException("Lesson not found")
         return lesson
+        
+    # --- โค้ดใหม่ที่เพิ่มเข้ามาใน LessonService ---
+    def get_lessons_count(self, user_id: str):
+        """นับ lessons ทั้งหมด"""
+        from app.models.lesson import LessonModel
+        return LessonModel.query.filter_by(user_id=user_id).count()
+
+    def get_lessons_completed_today(self, user_id: str):
+        """นับ lessons ที่เสร็จวันนี้"""
+        from app.models.lesson import LessonModel
+        from datetime import datetime
+        from app import db
+        
+        today = datetime.now().date()
+        
+        count = LessonModel.query.filter(
+            LessonModel.user_id == user_id,
+            LessonModel.status == 'completed',
+            db.func.date(LessonModel.updated_at) == today
+        ).count()
+        
+        return count
+    # --- จบโค้ดที่เพิ่ม ---
 
 
 class NoteService:
     """Simple note service for business logic."""
     
-    def create_note(self, user_id: str, lesson_id: str, title: str, content: str):
-        """Create a new note."""
+    def create_note(self, user_id: str, title: str, content: str, lesson_id: str = None, **kwargs):
+        """Create a new note (standalone or linked to lesson)."""
         from app.models.note import NoteModel
         from app import db
+        import json
         
         note = NoteModel(
             user_id=user_id,
-            lesson_id=lesson_id,
+            lesson_id=lesson_id,  # Optional: None for standalone notes
             title=title,
             content=content
         )
+        
+        # Set additional fields if provided
+        if 'note_type' in kwargs and kwargs['note_type'] is not None:
+            note.note_type = kwargs['note_type']
+        if 'is_public' in kwargs and kwargs['is_public'] is not None:
+            note.is_public = kwargs['is_public']
+        if 'status' in kwargs and kwargs['status'] is not None:
+            note.status = kwargs['status']
+        if 'external_link' in kwargs and kwargs['external_link'] is not None:
+            note.external_link = kwargs['external_link']
+        
+        # Handle tags (convert list to JSON string)
+        if 'tags' in kwargs and kwargs['tags'] is not None:
+            if isinstance(kwargs['tags'], list):
+                note.tags = json.dumps(kwargs['tags'])
+            elif isinstance(kwargs['tags'], str):
+                note.tags = kwargs['tags']
+            else:
+                note.tags = None
         
         db.session.add(note)
         db.session.commit()
@@ -141,9 +186,14 @@ class NoteService:
         return NoteModel.query.filter_by(user_id=user_id).all()
     
     def get_notes_by_lesson(self, lesson_id: str):
-        """Get all notes for a lesson."""
+        """Get all notes for a lesson (optional feature)."""
         from app.models.note import NoteModel
         return NoteModel.query.filter_by(lesson_id=lesson_id).all()
+    
+    def get_standalone_notes(self, user_id: str):
+        """Get all standalone notes (not linked to any lesson) for a user."""
+        from app.models.note import NoteModel
+        return NoteModel.query.filter_by(user_id=user_id, lesson_id=None).all()
     
     def get_note_by_id(self, note_id: str):
         """Get a specific note by ID."""
@@ -154,19 +204,38 @@ class NoteService:
             raise NotFoundException("Note not found")
         return note
     
-    def update_note(self, note_id: str, title: str = None, content: str = None):
-        """Update a note."""
+    def update_note(self, note_id: str, **kwargs):
+        """Update a note with any provided fields."""
         from app.models.note import NoteModel
         from app import db
+        import json
         
         note = NoteModel.query.filter_by(id=note_id).first()
         if not note:
             raise NotFoundException("Note not found")
         
-        if title is not None:
-            note.title = title
-        if content is not None:
-            note.content = content
+        # Update basic fields
+        if 'title' in kwargs and kwargs['title'] is not None:
+            note.title = kwargs['title']
+        if 'content' in kwargs and kwargs['content'] is not None:
+            note.content = kwargs['content']
+        if 'note_type' in kwargs and kwargs['note_type'] is not None:
+            note.note_type = kwargs['note_type']
+        if 'is_public' in kwargs and kwargs['is_public'] is not None:
+            note.is_public = kwargs['is_public']
+        if 'status' in kwargs and kwargs['status'] is not None:
+            note.status = kwargs['status']
+        if 'external_link' in kwargs and kwargs['external_link'] is not None:
+            note.external_link = kwargs['external_link']
+        
+        # Handle tags (convert list to JSON string)
+        if 'tags' in kwargs and kwargs['tags'] is not None:
+            if isinstance(kwargs['tags'], list):
+                note.tags = json.dumps(kwargs['tags'])
+            elif isinstance(kwargs['tags'], str):
+                note.tags = kwargs['tags']
+            else:
+                note.tags = None
         
         db.session.commit()
         return note
@@ -175,18 +244,120 @@ class NoteService:
         """Get all notes for a user (alias for get_notes_by_user)."""
         return self.get_notes_by_user(user_id)
     
-    def delete_note(self, note_id: str):
+    def delete_note(self, note_id: str, user_id: str = None):
         """Delete a note."""
         from app.models.note import NoteModel
         from app import db
         
-        note = NoteModel.query.filter_by(id=note_id).first()
+        # Build query
+        if user_id:
+            note = NoteModel.query.filter_by(id=note_id, user_id=user_id).first()
+        else:
+            note = NoteModel.query.filter_by(id=note_id).first()
+        
         if not note:
-            raise NotFoundException("Note not found")
+            return False
         
         db.session.delete(note)
         db.session.commit()
         return True
+    
+    def get_public_notes(self, limit=None, offset=None):
+        """Get all public notes."""
+        from app.models.note import NoteModel
+        
+        query = NoteModel.query.filter_by(is_public=True)
+        
+        if offset:
+            query = query.offset(offset)
+        if limit:
+            query = query.limit(limit)
+        
+        return query.all()
+    
+    def get_notes_by_section(self, section_id: str):
+        """Get notes for a specific section."""
+        from app.models.note import NoteModel
+        # For now, return empty list as section integration is not implemented
+        return []
+    
+    def search_notes_by_tags(self, tags: list, user_id: str = None):
+        """Search notes by tags."""
+        from app.models.note import NoteModel
+        import json
+        
+        # Build query
+        query = NoteModel.query
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+        
+        # Search for notes containing any of the tags
+        notes = []
+        for note in query.all():
+            if note.tags:
+                try:
+                    note_tags = json.loads(note.tags) if isinstance(note.tags, str) else note.tags
+                    if any(tag in note_tags for tag in tags):
+                        notes.append(note)
+                except (json.JSONDecodeError, TypeError):
+                    # Handle malformed JSON
+                    if any(tag in str(note.tags) for tag in tags):
+                        notes.append(note)
+        
+        return notes
+    
+    def get_note_statistics(self, user_id: str = None):
+        """Get note statistics."""
+        from app.models.note import NoteModel
+        
+        query = NoteModel.query
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+        
+        notes = query.all()
+        
+        stats = {
+            'total': len(notes),
+            'completed': len([n for n in notes if n.status == 'completed']),
+            'pending': len([n for n in notes if n.status == 'pending']),
+            'in_progress': len([n for n in notes if n.status == 'in-progress']),
+            'public': len([n for n in notes if n.is_public]),
+            'private': len([n for n in notes if not n.is_public])
+        }
+        
+        return stats
+    
+    def get_recent_notes(self, user_id: str = None, limit: int = 10):
+        """Get recent notes."""
+        from app.models.note import NoteModel
+        
+        query = NoteModel.query
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+        
+        return query.order_by(NoteModel.created_at.desc()).limit(limit).all()
+
+    # --- โค้ดใหม่ที่เพิ่มเข้ามาใน NoteService ---
+    def get_notes_count_today(self, user_id: str):
+        """นับ notes ที่สร้างวันนี้"""
+        from datetime import datetime
+        from app.models.note import NoteModel
+        from app import db
+
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        count = NoteModel.query.filter(
+            NoteModel.user_id == user_id,
+            NoteModel.created_at >= today_start
+        ).count()
+        
+        return count
+
+    def get_total_notes_count(self, user_id: str):
+        """นับ notes ทั้งหมด"""
+        from app.models.note import NoteModel
+        return NoteModel.query.filter_by(user_id=user_id).count()
+    # --- จบโค้ดที่เพิ่ม ---
 
 
 class TaskService:
@@ -220,3 +391,33 @@ class TaskService:
         if not task:
             raise NotFoundException("Task not found")
         return task
+
+# --- Class ที่เพิ่มเข้ามา ---
+class PomodoroService:
+    """Service for Pomodoro tracking logic."""
+    
+    def get_pomodoros_count_today(self, user_id: str):
+        """นับ pomodoro ที่ทำวันนี้"""
+        from datetime import date
+        from app.models.pomodoro import PomodoroSessionModel
+        from app import db
+
+        today = date.today()
+        
+        count = PomodoroSessionModel.query.filter(
+            PomodoroSessionModel.user_id == user_id,
+            db.func.date(PomodoroSessionModel.created_at) == today
+        ).count()
+        
+        return count
+    
+    def get_study_time_today(self, user_id: str, duration_per_session: int = 25):
+        """คำนวณเวลาเรียนวันนี้ (นาที)"""
+        count = self.get_pomodoros_count_today(user_id)
+        return count * duration_per_session
+
+    def get_total_pomodoros_count(self, user_id: str):
+        """นับ pomodoros ทั้งหมด"""
+        from app.models.pomodoro import PomodoroSessionModel
+        return PomodoroSessionModel.query.filter_by(user_id=user_id).count()
+    

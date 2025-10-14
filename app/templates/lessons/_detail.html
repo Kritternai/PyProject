@@ -220,8 +220,23 @@
                         <p class="card-text">{{ note.content[:100] }}{% if note.content|length > 100 %}...{% endif %}</p>
                         {% if note.tags %}
                         <div class="mb-2">
-                          {% for tag in note.tags.split(',') %}
-                            <span class="badge bg-secondary me-1">{{ tag.strip() }}</span>
+                          {% for tag in note.tags %}
+                            {% if tag and tag.strip() %}
+                                {% set tag_lower = tag.strip().lower() %}
+                                {% if 'study' in tag_lower or 'studer' in tag_lower %}
+                                    <span class="tag-badge tag-badge-primary tag-badge-sm">{{ tag.strip() }}</span>
+                                {% elif 'math' in tag_lower %}
+                                    <span class="tag-badge tag-badge-warning tag-badge-sm">{{ tag.strip() }}</span>
+                                {% elif 'sci' in tag_lower or 'science' in tag_lower %}
+                                    <span class="tag-badge tag-badge-success tag-badge-sm">{{ tag.strip() }}</span>
+                                {% elif 'eng' in tag_lower or 'engineering' in tag_lower %}
+                                    <span class="tag-badge tag-badge-info tag-badge-sm">{{ tag.strip() }}</span>
+                                {% elif 'code' in tag_lower or 'programming' in tag_lower %}
+                                    <span class="tag-badge tag-badge-purple tag-badge-sm">{{ tag.strip() }}</span>
+                                {% else %}
+                                    <span class="tag-badge tag-badge-sm">{{ tag.strip() }}</span>
+                                {% endif %}
+                            {% endif %}
                           {% endfor %}
                         </div>
                         {% endif %}
@@ -386,3 +401,5 @@
 </div>
 <!-- Bootstrap Icons CDN -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<!-- Enhanced Tag Badges -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/note_style/tag_badges.css') }}">
