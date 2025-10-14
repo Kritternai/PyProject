@@ -548,6 +548,9 @@ class PomodoroSessionService:
             session.actual_duration = int((session.end_time - session.start_time).total_seconds() / 60)
 
         db.session.commit()
+
+        # Best-effort statistics update
+        self._update_daily_statistics(session.user_id)
         return session
 
     def get_active_session(self, user_id: str):
@@ -574,6 +577,9 @@ class PomodoroSessionService:
 
         from app import db
         db.session.commit()
+        
+        # Keep interruption statistics in sync
+        self._update_daily_statistics(session.user_id)
         return session
 
     def delete_session(self, session_id: str) -> bool:
@@ -588,6 +594,76 @@ class PomodoroSessionService:
         db.session.delete(session)
         db.session.commit()
         return True
+
+    def _update_daily_statistics(self, user_id: str) -> None:
+        """Aggregate and persist today's Pomodoro statistics for a user."""
+        from datetime import date
+        from app import db
+        from app.models.pomodoro_session import PomodoroSessionModel
+        from app.models.pomodoro_statistics import PomodoroStatisticsModel
+
+        try:
+            today = date.today()
+
+            stats = PomodoroStatisticsModel.query.filter_by(
+                user_id=user_id,
+                date=today
+            ).first()
+
+            if not stats:
+                stats = PomodoroStatisticsModel(
+                    user_id=user_id,
+                    date=today
+                )
+                db.session.add(stats)
+
+            today_sessions = PomodoroSessionModel.query.filter(
+                PomodoroSessionModel.user_id == user_id,
+                db.func.date(PomodoroSessionModel.created_at) == today
+            ).all()
+
+            total_sessions = len(today_sessions)
+            completed_sessions = sum(1 for s in today_sessions if s.is_completed)
+            interrupted_sessions = sum(1 for s in today_sessions if s.is_interrupted)
+
+            focus_sessions = [s for s in today_sessions if s.session_type == 'focus']
+            short_break_sessions = [s for s in today_sessions if s.session_type == 'short_break']
+            long_break_sessions = [s for s in today_sessions if s.session_type == 'long_break']
+
+            focus_minutes = sum((s.actual_duration or s.duration or 0) for s in focus_sessions)
+            short_break_minutes = sum((s.actual_duration or s.duration or 0) for s in short_break_sessions)
+            long_break_minutes = sum((s.actual_duration or s.duration or 0) for s in long_break_sessions)
+
+            total_time_spent = focus_minutes + short_break_minutes + long_break_minutes
+            total_productivity_score = sum(s.productivity_score or 0 for s in today_sessions if s.productivity_score is not None)
+
+            stats.total_sessions = total_sessions
+            stats.total_completed_sessions = completed_sessions
+            stats.total_interrupted_sessions = interrupted_sessions
+            stats.total_focus_sessions = len(focus_sessions)
+            stats.total_short_break_sessions = len(short_break_sessions)
+            stats.total_long_break_sessions = len(long_break_sessions)
+            stats.total_focus_time = focus_minutes
+            stats.total_break_time = short_break_minutes
+            stats.total_long_break_time = long_break_minutes
+            stats.total_time_spent = total_time_spent
+            stats.total_effective_time = focus_minutes
+            stats.total_ineffective_time = max(total_time_spent - focus_minutes, 0)
+            stats.total_productivity_score = total_productivity_score
+            stats.total_tasks = sum(1 for s in today_sessions if s.task_id)
+            stats.total_tasks_completed = sum(1 for s in today_sessions if s.task_id and s.is_completed)
+            stats.average_session_duration = (
+                total_time_spent / total_sessions if total_sessions else 0.0
+            )
+            stats.productivity_score = (
+                round((completed_sessions / total_sessions) * 10, 2)
+                if total_sessions else 0.0
+            )
+
+            db.session.commit()
+        except Exception as exc:
+            db.session.rollback()
+            print(f"[PomodoroSessionService] Error updating daily statistics: {exc}")
 # --- Class ที่เพิ่มเข้ามา ---
 class PomodoroService:
     """Service for Pomodoro tracking logic."""
@@ -595,7 +671,7 @@ class PomodoroService:
     def get_pomodoros_count_today(self, user_id: str):
         """นับ pomodoro ที่ทำวันนี้"""
         from datetime import date
-        from app.models.pomodoro import PomodoroSessionModel
+        from app.models.pomodoro_session import PomodoroSessionModel
         from app import db
 
         today = date.today()
@@ -614,6 +690,7 @@ class PomodoroService:
 
     def get_total_pomodoros_count(self, user_id: str):
         """นับ pomodoros ทั้งหมด"""
-        from app.models.pomodoro import PomodoroSessionModel
+        from app.models.pomodoro_session import PomodoroSessionModel
+        
         return PomodoroSessionModel.query.filter_by(user_id=user_id).count()
     

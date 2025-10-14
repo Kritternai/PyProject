@@ -84,6 +84,7 @@ def register_blueprints(app):
     from .routes.task_routes import task_bp
     from .routes.pomodoro_routes import pomodoro_bp
     from .routes.pomodoro_session_routes import pomodoro_session_bp
+    from .routes.pomodoro_statistics_routes import pomodoro_stats_bp
 
     from .routes.track_routes import track_bp
     from .routes.grade_routes import grade_bp
@@ -121,7 +122,8 @@ def register_blueprints(app):
     app.register_blueprint(note_bp)           # /api/notes/*
     app.register_blueprint(task_bp)           # /api/tasks/*
     app.register_blueprint(pomodoro_bp)       # /api/pomodoro/*
-    app.register_blueprint(pomodoro_session_bp)  # /pomodoro/session/*, /pomodoro/statistics/*
+    app.register_blueprint(pomodoro_session_bp)  # /api/pomodoro/session/*
+    app.register_blueprint(pomodoro_stats_bp)    # /api/pomodoro/statistics/*
     app.register_blueprint(track_bp)          # /api/track/*
     app.register_blueprint(grade_bp)        # /grades/* - Grade System
     

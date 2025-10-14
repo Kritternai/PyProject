@@ -13,6 +13,7 @@ let pomodoroState = {
   timeLeft: 25 * 60, // seconds
   totalTime: 25 * 60, // seconds
   cycle: 1,
+  currentSessionId: null,
   completedPomodoros: 0,
   tasks: [],
   settings: {
@@ -35,6 +36,127 @@ let pomodoroState = {
   }
 };
 
+const SESSION_TYPE_MAP = {
+  pomodoro: 'focus',
+  shortBreak: 'short_break',
+  longBreak: 'long_break'
+};
+
+async function ensureSessionForCurrentMode() {
+  if (pomodoroState.currentSessionId) {
+    return true;
+  }
+
+  const sessionType = SESSION_TYPE_MAP[pomodoroState.mode];
+  if (!sessionType) {
+    return true;
+  }
+
+  const newSession = await createSessionInDatabase(sessionType);
+  if (newSession && newSession.id) {
+    pomodoroState.currentSessionId = newSession.id;
+    saveState();
+    return true;
+  }
+
+  console.error('Unable to create Pomodoro session in database.');
+  return false;
+}
+
+async function createSessionInDatabase(sessionType) {
+  const durationMinutes = Math.max(1, Math.round(pomodoroState.totalTime / 60));
+  const payload = {
+    session_type: sessionType,
+    duration: durationMinutes,
+    auto_start_next: pomodoroState.settings.autoStartBreaks,
+    notification_enabled: true,
+    sound_enabled: pomodoroState.settings.soundEnabled
+  };
+
+  try {
+    const response = await fetch('/api/pomodoro/session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result && result.success) {
+        console.log('✅ Session created in database:', result.session?.id);
+        return result.session;
+      }
+    } else {
+      console.error('Failed to create session:', response.status);
+    }
+  } catch (error) {
+    console.error('Error creating session:', error);
+  }
+
+  return null;
+}
+
+async function endSessionInDatabase() {
+  if (!pomodoroState.currentSessionId) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/pomodoro/session/${pomodoroState.currentSessionId}/end`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result && result.success) {
+        console.log('✅ Session ended in database:', pomodoroState.currentSessionId);
+      }
+    } else {
+      console.error('Failed to end session:', response.status);
+    }
+  } catch (error) {
+    console.error('Error ending session:', error);
+  }
+}
+
+async function interruptSessionInDatabase() {
+  if (!pomodoroState.currentSessionId) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/pomodoro/session/${pomodoroState.currentSessionId}/interrupt`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result && result.success) {
+        console.log('⚠️ Session interrupted in database:', pomodoroState.currentSessionId);
+      }
+    } else {
+      console.error('Failed to interrupt session:', response.status);
+    }
+  } catch (error) {
+    console.error('Error interrupting session:', error);
+  }
+}
+
+function clearCurrentSession() {
+  pomodoroState.currentSessionId = null;
+}
+
 // Timer variables
 let interval = null;
 let globalTimer = null;
@@ -53,13 +175,6 @@ function getModeTime() {
     case 'longBreak': return pomodoroState.settings.longBreak * 60;
     default: return 25 * 60;
   }
-}
-
-// Reset timer for current mode
-function resetTimer() {
-  pomodoroState.timeLeft = getModeTime();
-  pomodoroState.totalTime = getModeTime();
-  pomodoroState.isRunning = false;
 }
 
 // Switch to next mode
@@ -85,6 +200,7 @@ function nextMode() {
   pomodoroState.timeLeft = getModeTime();
   pomodoroState.totalTime = getModeTime();
   pomodoroState.isRunning = false;
+  clearCurrentSession();
   
   console.log('✅ Next mode set to:', pomodoroState.mode, 'with', pomodoroState.timeLeft, 'seconds');
 }
@@ -107,7 +223,7 @@ function completeSession() {
 // ============================================================================
 
 // Start timer
-function startTimer() {
+async function startTimer() {
   console.log('🎯 startTimer called, current state:', {
     isRunning: pomodoroState.isRunning,
     timeLeft: pomodoroState.timeLeft
@@ -116,6 +232,12 @@ function startTimer() {
   if (pomodoroState.isRunning) {
     console.log('⏸️ Timer is running, calling pauseTimer()');
     pauseTimer();
+    return;
+  }
+
+  const sessionReady = await ensureSessionForCurrentMode();
+  if (!sessionReady) {
+    console.warn('Unable to start timer because session could not be created.');
     return;
   }
 
@@ -148,9 +270,15 @@ function pauseTimer() {
 }
 
 // Reset timer
-function resetTimer() {
+async function resetTimer() {
   console.log('🔄 Resetting Pomodoro timer...');
   console.log('🔄 Current mode:', pomodoroState.mode);
+  
+  if (pomodoroState.currentSessionId) {
+    await interruptSessionInDatabase();
+    clearCurrentSession();
+    saveState();
+  }
   
   pomodoroState.isRunning = false;
   pomodoroState.timeLeft = getModeTime();
@@ -165,7 +293,7 @@ function resetTimer() {
 }
 
 // Skip current session
-function skipTimer() {
+async function skipTimer() {
   console.log('⏭️ Skipping current session...');
   console.log('⏭️ Current mode:', pomodoroState.mode);
   
@@ -177,6 +305,12 @@ function skipTimer() {
   if (pomodoroState.mode === 'pomodoro') {
     console.log('⏭️ Completing pomodoro session...');
     completeSession();
+  }
+
+  if (pomodoroState.currentSessionId) {
+    await interruptSessionInDatabase();
+    clearCurrentSession();
+    saveState();
   }
   
   // Move to next mode
@@ -226,7 +360,9 @@ function startGlobalTimer() {
           updateDisplay();
           
           if (pomodoroState.timeLeft === 0) {
-            timerComplete();
+            timerComplete().catch(error => {
+              console.error('Error completing timer:', error);
+            });
           }
         }
       }
@@ -235,10 +371,13 @@ function startGlobalTimer() {
 }
 
 // Timer completed
-function timerComplete() {
+async function timerComplete() {
   console.log('🔔 Timer completed!');
   pomodoroState.isRunning = false;
   completeSession();
+  await endSessionInDatabase();
+  clearCurrentSession();
+  saveState();
   
   // Play sound if enabled
   if (pomodoroState.settings.soundEnabled) {
@@ -580,7 +719,7 @@ function showSettings() {
 }
 
 // Save settings
-function saveSettings() {
+async function saveSettings() {
   const settings = {
     pomodoro: parseInt(document.getElementById('pomodoroTime').value) || 25,
     shortBreak: parseInt(document.getElementById('shortBreakTime').value) || 5,
@@ -591,7 +730,7 @@ function saveSettings() {
   };
   
   pomodoroState.settings = settings;
-  resetTimer();
+  await resetTimer();
   document.getElementById('settingsDialog').close();
   saveState();
   updateAll();
@@ -648,6 +787,7 @@ function switchMode(mode) {
     // Reset timer for new mode
     pomodoroState.timeLeft = getModeTime();
     pomodoroState.totalTime = getModeTime();
+    clearCurrentSession();
     
     console.log('✅ Mode switched to', mode, 'with', pomodoroState.timeLeft, 'seconds');
     console.log('✅ Timer display should show:', Math.floor(pomodoroState.timeLeft / 60) + ':' + (pomodoroState.timeLeft % 60).toString().padStart(2, '0'));
@@ -1002,7 +1142,9 @@ function syncBackgroundState() {
           // Check if timer completed while away
           if (parsedState.timeLeft === 0) {
             console.log('🔔 Timer completed while away!');
-            timerComplete();
+            timerComplete().catch(error => {
+              console.error('Error completing timer during sync:', error);
+            });
             return;
           }
           
