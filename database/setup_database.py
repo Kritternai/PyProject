@@ -36,6 +36,7 @@ def create_complete_database_schema():
                 bio TEXT,
                 role TEXT DEFAULT 'student',
                 preferences TEXT,
+                google_credentials TEXT,
                 is_active BOOLEAN DEFAULT 1,
                 email_verified BOOLEAN DEFAULT 0,
                 last_login TIMESTAMP,
@@ -55,7 +56,8 @@ def create_complete_database_schema():
             "ALTER TABLE user ADD COLUMN profile_image TEXT",
             "ALTER TABLE user ADD COLUMN bio TEXT",
             "ALTER TABLE user ADD COLUMN preferences TEXT",
-            "ALTER TABLE user ADD COLUMN last_login TIMESTAMP"
+            "ALTER TABLE user ADD COLUMN last_login TIMESTAMP",
+            "ALTER TABLE user ADD COLUMN google_credentials TEXT"
         ]
         
         for column_sql in user_columns:
