@@ -26,7 +26,7 @@ def create_pomodoro_tables():
             CREATE TABLE IF NOT EXISTS pomodoro_session (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
-                session_type TEXT NOT NULL,
+                session_type TEXT NOT NULL CHECK (session_type IN ('pomodoro', 'short_break', 'long_break')),
                 duration INTEGER NOT NULL,
                 start_time TIMESTAMP NOT NULL,
                 end_time TIMESTAMP,

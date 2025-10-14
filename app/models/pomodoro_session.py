@@ -15,7 +15,7 @@ class PomodoroSessionModel(db.Model):
     __tablename__ = 'pomodoro_session'
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False, index=True)
+    user_id = db.Column(db.String(36), nullable=False, index=True)  # Just store user_id as string without foreign key
     session_type = db.Column(db.String(20), nullable=False)  # focus, short_break, long_break
     duration = db.Column(db.Integer, nullable=False)         # ระยะเวลาที่ตั้งไว้ (นาที)
     start_time = db.Column(db.DateTime, nullable=False)
@@ -27,8 +27,8 @@ class PomodoroSessionModel(db.Model):
     interruption_count = db.Column(db.Integer, default=0)
     interruption_reasons = db.Column(db.Text)
     
-    # Related entities
-    lesson_id = db.Column(db.String(36), db.ForeignKey('lesson.id'))
+    # Related entities (removed foreign keys for now)
+    lesson_id = db.Column(db.String(36))
     section_id = db.Column(db.String(36))
     task_id = db.Column(db.String(36))
     task = db.Column(db.String(255))  # Store task name directly

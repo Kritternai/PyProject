@@ -129,7 +129,7 @@ function updateDisplay() {
   document.title = `${formatTime(state.timeLeft)} - Focus Timer`;
 }
 
-async function switchMode(mode) {
+async function switchMode(mode, reset = false, isSkip = false) {
   // End current session if switching from Pomodoro mode
   if (state.mode === 'pomodoro' && state.currentSessionId) {
     try {
@@ -143,6 +143,23 @@ async function switchMode(mode) {
     } catch (error) {
       console.error('Failed to end session:', error);
     }
+  }
+
+  if (isSkip) {
+    if (state.mode === 'pomodoro') {
+      state.completedPomodoros++;
+      // ตรวจสอบว่าควรเป็นพักยาวหรือไม่
+      if (state.completedPomodoros % state.settings.longBreakInterval === 0) {
+        mode = 'long';
+      } else {
+        mode = 'short';
+      }
+      state.cycle++;
+    }
+  } else if (reset) {
+    // รีเซ็ตเมื่อมีการร้องขอ
+    state.cycle = 1;
+    state.completedPomodoros = 0;
   }
   
   state.mode = mode;
@@ -190,12 +207,18 @@ async function startTimer() {
     }
     return;
   }
+
+  // Reset cycle when starting a new Pomodoro session
+  if (!state.isRunning && state.mode === 'pomodoro' && state.timeLeft === state.totalTime) {
+    state.cycle = 1;
+    state.completedPomodoros = 0;
+  }
   
   state.isRunning = true;
   lastTick = Date.now();
   
-  // Create new session if starting a Pomodoro
-  if (state.mode === 'pomodoro' && !state.currentSessionId) {
+  // Create new session for any mode (focus or break)
+  if (!state.currentSessionId) {
     try {
       // Map frontend mode to backend session_type
       const sessionType = state.mode === 'pomodoro' ? 'focus' : 
@@ -278,14 +301,33 @@ async function timerComplete() {
     
     showNotification('🎉 Pomodoro สำเร็จ!');
     
-    if (state.completedPomodoros % state.settings.longBreakInterval === 0) {
-      switchMode('long');
-    } else {
-      switchMode('short');
-    }
+    const nextMode = state.completedPomodoros % state.settings.longBreakInterval === 0 ? 'long' : 'short';
+    switchMode(nextMode);
     
-    if (state.settings.autoStartBreaks) {
-      startTimer();
+    // สร้าง session ใหม่สำหรับช่วงพัก
+    try {
+      const sessionType = nextMode === 'short' ? 'short_break' : 'long_break';
+      console.log('Creating break session:', sessionType);
+      
+      const response = await PomodoroAPI.createSession({
+        session_type: sessionType,
+        duration: nextMode === 'short' ? state.settings.shortBreak : state.settings.longBreak,
+        auto_start_next: state.settings.autoStartBreaks,
+        notification_enabled: true,
+        sound_enabled: state.settings.soundEnabled
+      });
+      
+      if (response.success) {
+        state.currentSessionId = response.session.id;
+        console.log('Created new break session:', response.session);
+        
+        if (state.settings.autoStartBreaks) {
+          startTimer();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to create break session:', error);
+      showNotification('⚠️ เกิดข้อผิดพลาดในการสร้าง session พัก');
     }
   } else {
     state.cycle++;
@@ -486,16 +528,43 @@ function getSessionFeedback() {
 // ---------- Initialize ----------
 function initializeApp() {
   console.log('Initializing Pomodoro Timer...');
+  
+  // รีเซ็ตค่าเริ่มต้น
+  state.cycle = 1;
+  state.completedPomodoros = 0;
 
   // Load saved data
   const savedState = localStorage.getItem('pomodoroState');
   if (savedState) {
     try {
       const parsed = JSON.parse(savedState);
+      
+      // เช็คว่าเป็นวันใหม่หรือไม่
+      const today = new Date().toDateString();
+      if (parsed.stats.lastDate !== today) {
+        // ถ้าเป็นวันใหม่ให้รีเซ็ตค่าต่างๆ
+        parsed.stats.todayPomodoros = 0;
+        parsed.stats.todayFocusTime = 0;
+        parsed.stats.todayTasks = 0;
+        parsed.stats.todayBreaks = 0;
+        parsed.stats.lastDate = today;
+        parsed.cycle = 1;  // รีเซ็ตรอบเมื่อเป็นวันใหม่
+        parsed.completedPomodoros = 0;
+      }
+
+      // เช็คว่ามีการ login ใหม่หรือไม่ (session หมดอายุ)
+      if (!document.cookie.includes('session_id')) {
+        parsed.cycle = 1;  // รีเซ็ตรอบเมื่อ login ใหม่
+        parsed.completedPomodoros = 0;
+      }
+
       Object.assign(state, parsed);
       console.log('Loaded saved state:', state);
     } catch (e) {
       console.error('Failed to load saved state:', e);
+      // กรณีมีข้อผิดพลาดให้เริ่มต้นใหม่
+      state.cycle = 1;
+      state.completedPomodoros = 0;
     }
   }
 
@@ -534,7 +603,10 @@ function initializeApp() {
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
       console.log('Reset button clicked');
-      switchMode(state.mode);
+      if (confirm('ต้องการรีเซ็ตทั้งเวลาและรอบการทำงานหรือไม่?')) {
+        switchMode(state.mode, true);  // ส่ง true เพื่อรีเซ็ต cycle
+        showNotification('🔄 รีเซ็ตเรียบร้อย!');
+      }
     });
   } else {
     console.error('Reset button not found!');
@@ -543,7 +615,13 @@ function initializeApp() {
   if (skipBtn) {
     skipBtn.addEventListener('click', () => {
       console.log('Skip button clicked');
-      timerComplete();
+      if (state.mode === 'pomodoro') {
+        // เมื่อกด Skip ในโหมด Pomodoro
+        switchMode(state.mode, false, true);
+      } else {
+        // เมื่อกด Skip ในโหมดพัก
+        switchMode('pomodoro');
+      }
     });
   } else {
     console.error('Skip button not found!');
@@ -646,7 +724,8 @@ function initializeApp() {
   if (resetStatsBtn) {
     resetStatsBtn.addEventListener('click', () => {
       console.log('Reset stats button clicked');
-      if (confirm('รีเซ็ตสถิติทั้งหมด?')) {
+      if (confirm('รีเซ็ตสถิติและรอบการทำงานทั้งหมด?')) {
+        // รีเซ็ตสถิติ
         state.stats = {
           todayPomodoros: 0,
           todayFocusTime: 0,
@@ -657,7 +736,15 @@ function initializeApp() {
           totalTasks: 0,
           lastDate: new Date().toDateString()
         };
+        // รีเซ็ตรอบการทำงาน
+        state.cycle = 1;
+        state.completedPomodoros = 0;
+        
+        // อัพเดทการแสดงผล
         updateStats();
+        updateDisplay();
+        showNotification('🔄 รีเซ็ตข้อมูลทั้งหมดเรียบร้อย!');
+        document.getElementById('settingsDialog').close();
       }
     });
   }
@@ -694,12 +781,54 @@ function initializeApp() {
 // Cleanup function to stop timer and save state
 function cleanup() {
   console.log('Cleaning up Pomodoro app...');
+  
+  // Stop timer
   if (interval) {
     clearInterval(interval);
     interval = null;
   }
+  
+  // Reset running state
   state.isRunning = false;
+  
+  // Remove all event listeners by cloning and replacing elements
+  const elementsToClean = [
+    'startBtn', 'resetBtn', 'skipBtn', 'settingsBtn', 
+    'closeSettings', 'saveSettings', 'statsBtn', 
+    'closeStats', 'closeStatsBtn', 'resetStatsBtn',
+    'taskInput', 'addTaskBtn'
+  ];
+  
+  elementsToClean.forEach(id => {
+    const element = document.getElementById(id);
+    if (element && element.parentNode) {
+      const newElement = element.cloneNode(true);
+      element.parentNode.replaceChild(newElement, element);
+    }
+  });
+  
+  // Remove mode tab listeners
+  const modeTabs = document.querySelectorAll('.mode-tab');
+  modeTabs.forEach(tab => {
+    if (tab.parentNode) {
+      const newTab = tab.cloneNode(true);
+      tab.parentNode.replaceChild(newTab, tab);
+    }
+  });
+  
+  // Remove task list listeners
+  const taskItems = document.querySelectorAll('.task-item');
+  taskItems.forEach(item => {
+    if (item.parentNode) {
+      const newItem = item.cloneNode(true);
+      item.parentNode.replaceChild(newItem, item);
+    }
+  });
+  
+  // Save state
   localStorage.setItem('pomodoroState', JSON.stringify(state));
+  
+  console.log('✅ Cleanup complete');
 }
 
 // Flag to track initialization status

@@ -52,59 +52,52 @@ function loadPage(page) {
           console.log('⏰ Pomodoro page detected');
           window.isInSpaMode = true;
           
-          // Check if already loaded
-          if (window.pomodoroLoaded && window.pomodoroInitialized) {
-            console.log('✅ Pomodoro already loaded and initialized');
-            return;
+          // Clean up previous Pomodoro if exists
+          if (window.onUnloadPomodoro && typeof window.onUnloadPomodoro === 'function') {
+            console.log('🧹 Cleaning up previous Pomodoro instance...');
+            window.onUnloadPomodoro();
           }
           
-          // โหลด pomodoro.js แบบ dynamic
-          const loadPomodoro = () => {
-            console.log('📥 Loading pomodoro.js dynamically...');
+          // Reset Pomodoro flags
+          window.pomodoroLoaded = false;
+          window.pomodoroInitialized = false;
+          
+          // Remove existing Pomodoro script
+          const existingScript = document.querySelector('script[src*="pomodoro.js"]');
+          if (existingScript) {
+            console.log('🗑️ Removing existing pomodoro.js script...');
+            existingScript.remove();
+          }
+          
+          // Create and load new script
+          const script = document.createElement('script');
+          script.src = '/static/js/pomodoro.js?v=' + Date.now(); // Cache busting
+          script.async = true;
+          
+          script.onload = () => {
+            console.log('✅ pomodoro.js loaded successfully');
             
-            // ตรวจสอบว่ามี script อยู่แล้วหรือไม่
-            const existingScript = document.querySelector('script[src*="pomodoro.js"]');
-            if (existingScript) {
-              console.log('⚠️ Found existing pomodoro.js script, removing...');
-              existingScript.remove();
-            }
-            
-            const script = document.createElement('script');
-            script.src = '/static/js/pomodoro.js';
-            script.async = true;
-            
-            script.onload = () => {
-              console.log('✅ pomodoro.js loaded successfully');
-              
-              // รอให้ script ทำงานและ define functions เสร็จ
-              setTimeout(() => {
-                if (window.onLoadPomodoro) {
-                  console.log('✅ Found onLoadPomodoro function, initializing...');
-                  try {
-                    // ตรวจสอบว่าเคย initialize แล้วหรือยัง
-                    if (!window.pomodoroInitialized) {
-                      window.onLoadPomodoro();
-                      console.log('✅ Pomodoro initialized successfully');
-                    } else {
-                      console.log('⚠️ Pomodoro already initialized');
-                    }
-                  } catch (error) {
-                    console.error('❌ Error initializing Pomodoro:', error);
-                    showPomodoroError('Error initializing Pomodoro Timer');
-                  }
-                } else {
-                  console.error('❌ onLoadPomodoro function not found after script load!');
-                  showPomodoroError('Error loading Pomodoro Timer');
+            // Wait for functions to be defined and initialize
+            setTimeout(() => {
+              if (window.onLoadPomodoro && typeof window.onLoadPomodoro === 'function') {
+                console.log('🚀 Initializing Pomodoro...');
+                try {
+                  window.onLoadPomodoro();
+                  console.log('✅ Pomodoro initialized successfully');
+                } catch (error) {
+                  console.error('❌ Error initializing Pomodoro:', error);
+                  showPomodoroError('Error initializing Pomodoro Timer');
                 }
-              }, 100); // รอ 100ms ให้ script ทำงานเสร็จ
-            };
-            
-            script.onerror = () => {
-              console.error('❌ Failed to load pomodoro.js');
-              showPomodoroError('Failed to load Pomodoro Timer');
-            };
-            
-            document.head.appendChild(script);
+              } else {
+                console.error('❌ onLoadPomodoro function not found!');
+                showPomodoroError('Error loading Pomodoro Timer functions');
+              }
+            }, 200);
+          };
+          
+          script.onerror = () => {
+            console.error('❌ Failed to load pomodoro.js');
+            showPomodoroError('Failed to load Pomodoro Timer');
           };
           
           // Helper function to show error
@@ -113,51 +106,13 @@ function loadPage(page) {
             if (mainContent) {
               mainContent.innerHTML += `
                 <div class="alert alert-danger">
-                  ${message}. Please refresh the page or contact support.
+                  ${message}. Please refresh the page.
                 </div>
               `;
             }
           };
           
-          // Initialize variables for pomodoro loading
-          let attempts = 0;
-          const maxAttempts = 10;
-          
-          // เริ่มโหลด pomodoro.js
-          loadPomodoro();
-          
-          const checkPomodoro = () => {
-            attempts++;
-            
-            if (window.onLoadPomodoro) {
-              console.log('✅ Found onLoadPomodoro function, initializing...');
-              try {
-                window.onLoadPomodoro();
-                console.log('✅ Pomodoro initialized successfully');
-              } catch (error) {
-                console.error('❌ Error initializing Pomodoro:', error);
-              }
-            } else {
-              if (attempts < maxAttempts) {
-                console.log(`⏳ Waiting for onLoadPomodoro function... (attempt ${attempts}/${maxAttempts})`);
-                setTimeout(checkPomodoro, 100);
-              } else {
-                console.error('❌ Timeout waiting for onLoadPomodoro function!');
-                // แสดง error message ให้ user
-                const mainContent = document.getElementById('main-content');
-                if (mainContent) {
-                  mainContent.innerHTML += `
-                    <div class="alert alert-danger">
-                      Error loading Pomodoro Timer. Please refresh the page.
-                    </div>
-                  `;
-                }
-              }
-            }
-          };
-          
-          // เริ่มการตรวจสอบ
-          checkPomodoro();
+          document.head.appendChild(script);
         }
           setupAuthForms();
           setupLessonForms();
