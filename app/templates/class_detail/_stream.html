@@ -158,6 +158,13 @@
     // ============================================
 
     function startRealTimeUpdates() {
+        // Check if posts-container exists before starting updates
+        const container = document.getElementById('posts-container');
+        if (!container) {
+            console.log('📋 posts-container not found, skipping real-time updates');
+            return;
+        }
+        
         updateInterval = setInterval(() => {
             loadPosts(true); // Silent reload
         }, 10000); // 10 seconds
@@ -176,6 +183,13 @@
 
     async function loadPosts(silent = false) {
         try {
+            // Check if posts-container exists before making API call
+            const container = document.getElementById('posts-container');
+            if (!container) {
+                console.log('📋 posts-container not found, skipping loadPosts');
+                return;
+            }
+            
             const params = new URLSearchParams();
             if (currentFilter === 'questions') params.append('type', 'question');
             else if (currentFilter === 'announcements') params.append('type', 'announcement');
@@ -207,6 +221,11 @@
 
     function renderPosts() {
         const container = document.getElementById('posts-container');
+        
+        if (!container) {
+            console.error('❌ posts-container element not found');
+            return;
+        }
         
         if (allPosts.length === 0) {
             container.innerHTML = `

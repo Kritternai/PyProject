@@ -51,7 +51,11 @@ def check_class_permission(lesson_id, user_id, require_owner=False):
         return has_permission, is_owner
         
     except Exception as e:
+        # Log the actual error details for debugging
+        import traceback
         print(f"Error checking permission: {e}")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Traceback: {traceback.format_exc()}")
         return False, False
 
 

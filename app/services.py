@@ -114,7 +114,7 @@ class LessonService:
         
         lesson = LessonModel.query.filter_by(id=lesson_id).first()
         if not lesson:
-            raise NotFoundException("Lesson not found")
+            raise NotFoundException("Lesson", lesson_id)
         return lesson
         
     # --- โค้ดใหม่ที่เพิ่มเข้ามาใน LessonService ---
@@ -201,7 +201,7 @@ class NoteService:
         
         note = NoteModel.query.filter_by(id=note_id).first()
         if not note:
-            raise NotFoundException("Note not found")
+            raise NotFoundException("Note", note_id)
         return note
     
     def update_note(self, note_id: str, **kwargs):
@@ -212,7 +212,7 @@ class NoteService:
         
         note = NoteModel.query.filter_by(id=note_id).first()
         if not note:
-            raise NotFoundException("Note not found")
+            raise NotFoundException("Note", note_id)
         
         # Update basic fields
         if 'title' in kwargs and kwargs['title'] is not None:
@@ -389,7 +389,7 @@ class TaskService:
         
         task = TaskModel.query.filter_by(id=task_id).first()
         if not task:
-            raise NotFoundException("Task not found")
+            raise NotFoundException("Task", task_id)
         return task
 
 
