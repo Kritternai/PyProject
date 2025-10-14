@@ -94,6 +94,7 @@ def register_blueprints(app):
     # ============================================
     from .routes_web_auth import web_auth_bp
     from .routes.stream_routes import stream_bp
+    from .routes.profile_routes import profile_bp
 
     # ============================================
     # REGISTER MAIN WEB ROUTES
@@ -105,6 +106,7 @@ def register_blueprints(app):
     app.register_blueprint(stream_bp)       # /api/stream/* - Stream System (Q&A)
     app.register_blueprint(api_bp)          # /api/* general data endpoints
     app.register_blueprint(web_auth_bp)     # /login, /register, /logout HTML pages
+    app.register_blueprint(profile_bp)      # /profile/* - Profile management
     
     # ============================================
     # REGISTER API BLUEPRINTS

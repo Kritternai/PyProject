@@ -81,6 +81,54 @@ class UserService:
         if not check_password_hash(user.password_hash, password):
             raise ValidationException("รหัสผ่านไม่ถูกต้อง")
         return user
+    
+    def update_user_profile(self, user_id: str, first_name: str = None, last_name: str = None, 
+                          username: str = None, email: str = None, bio: str = None, 
+                          profile_image: str = None):
+        """Update user profile information."""
+        from app.models.user import UserModel
+        from app import db
+        
+        user = UserModel.query.filter_by(id=user_id).first()
+        if not user:
+            raise NotFoundException("ไม่พบผู้ใช้")
+        
+        # Check for username uniqueness if username is being changed
+        if username and username != user.username:
+            existing_user = UserModel.query.filter_by(username=username).first()
+            if existing_user:
+                raise ValidationException("ชื่อผู้ใช้นี้ถูกใช้แล้ว")
+        
+        # Check for email uniqueness if email is being changed
+        if email and email != user.email:
+            existing_user = UserModel.query.filter_by(email=email).first()
+            if existing_user:
+                raise ValidationException("อีเมลนี้ถูกใช้แล้ว")
+        
+        # Update fields if provided
+        if first_name is not None:
+            user.first_name = first_name
+        if last_name is not None:
+            user.last_name = last_name
+        if username is not None:
+            user.username = username
+        if email is not None:
+            user.email = email
+        if bio is not None:
+            user.bio = bio
+        if profile_image is not None:
+            user.profile_image = profile_image
+            
+        # Update timestamp
+        from datetime import datetime
+        user.updated_at = datetime.utcnow()
+        
+        try:
+            db.session.commit()
+            return user
+        except Exception as e:
+            db.session.rollback()
+            raise ValidationException(f"เกิดข้อผิดพลาดในการบันทึกข้อมูล: {str(e)}")
 
 
 class LessonService:

@@ -324,7 +324,7 @@ function setupAuthForms() {
       .then(r => r.json())
       .then(data => {
         if (data.success) {
-          loadPage(data.redirect || 'profile');
+          loadPage(data.redirect || 'profile-view');
         } else {
           showAuthError(changePasswordForm, data.message);
         }

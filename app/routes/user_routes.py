@@ -67,3 +67,17 @@ def search_users():
 def get_user_statistics(user_id):
     """Get user statistics."""
     return user_controller.get_user_statistics(user_id)
+
+
+@user_bp.route('/current/profile', methods=['PUT'])
+@login_required  
+def update_current_user_profile():
+    """Update current user's profile."""
+    return user_controller.update_current_user_profile()
+
+
+@user_bp.route('/current/export', methods=['GET'])
+@login_required
+def export_current_user_data():
+    """Export current user's data."""
+    return user_controller.export_current_user_data()

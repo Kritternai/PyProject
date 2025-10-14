@@ -197,6 +197,15 @@ def callback():
     if not email:
         flash("Could not get email from Google account.", "danger")
         return redirect(url_for("main_routes.index"))
+    
+    current_app.logger.info(f"Google OAuth successful - Email: {email}, Name: {name}")
+    
+    # สร้าง username และ email แทนจากส่วน prefix ของอีเมล
+    email_prefix = email.split("@")[0]
+    # สร้าง email ปลอมสำหรับระบบภายใน (ไม่ใช้อีเมลจริง)
+    system_email = f"{email_prefix}@internal.system"
+
+    current_app.logger.info(f"Processing OAuth for email_prefix: {email_prefix}, system_email: {system_email}")
 
     # ค้นหาหรือสร้างผู้ใช้ใหม่ในฐานข้อมูล - with retry mechanism
     user = None
@@ -211,9 +220,20 @@ def callback():
             current_app.logger.info(f"Database connection health check passed (attempt {retry_count + 1})")
             
             # Ensure we're in the correct app context
-            current_app.logger.info(f"Attempting to find/create user for email: {email} (attempt {retry_count + 1})")
+            current_app.logger.info(f"Attempting to find/create user for system email: {system_email} (attempt {retry_count + 1})")
             
-            user = UserModel.query.filter_by(email=email).first()
+            # Try to find user by system email first
+            user = UserModel.query.filter_by(email=system_email).first()
+            
+            # If not found by email, try by username (for existing OAuth users)
+            if not user:
+                user = UserModel.query.filter_by(username=email_prefix).first()
+                # If found by username, check if it's an OAuth user
+                if user and user.password_hash == "oauth_google":
+                    current_app.logger.info(f"Found existing OAuth user by username: {email_prefix}")
+                else:
+                    user = None  # Not an OAuth user, continue with creation
+            
             current_app.logger.info(f"User query result: {'Found' if user else 'Not found'}")
             
             # If we get here, database operation succeeded
@@ -241,25 +261,42 @@ def callback():
     if not user:
         try:
             current_app.logger.info("Creating new user from Google OAuth")
+            
+            # Check for duplicate username and handle it
+            existing_username = UserModel.query.filter_by(username=email_prefix).first()
+            final_username = email_prefix
+            
+            if existing_username:
+                # Generate unique username by appending number
+                import random
+                final_username = f"{email_prefix}_{random.randint(1000, 9999)}"
+                current_app.logger.info(f"Username {email_prefix} exists, using {final_username}")
+            
             user = UserModel(
                 id=str(uuid.uuid4()),
-                username=name or email.split("@")[0],
-                email=email,
+                username=final_username,    # ใช้ unique username
+                email=system_email,         # ใช้ system email แทนอีเมลจริง
                 password_hash="oauth_google", # ระบุว่าเป็นผู้ใช้จาก Google
-                first_name=name or "",
+                first_name=final_username,    # ใช้ final username เป็นชื่อแทน
                 profile_image=picture,
                 email_verified=True
             )
             db.session.add(user)
             db.session.commit()
-            current_app.logger.info(f"New user created with ID: {user.id}")
+            current_app.logger.info(f"New user created with ID: {user.id}, username: {final_username}")
         except Exception as creation_error:
             current_app.logger.exception("User creation failed: %s", creation_error)
             try:
                 db.session.rollback()
             except:
                 pass
-            flash("Failed to create user account. Please try again.", "danger")
+            
+            # More specific error messages
+            error_msg = str(creation_error).lower()
+            if 'unique' in error_msg or 'duplicate' in error_msg:
+                flash("Account already exists. Please try logging in instead.", "warning")
+            else:
+                flash("Failed to create user account. Please try again.", "danger")
             return redirect(url_for("main_routes.index"))
     else:
         current_app.logger.info(f"Existing user found with ID: {user.id}")
@@ -270,7 +307,9 @@ def callback():
         flash("User authentication failed. Please try again.", "danger")
         return redirect(url_for("main_routes.index"))
 
+    current_app.logger.info(f"OAuth login successful - Setting session for user ID: {user.id}")
     session["user_id"] = user.id
     flash("Logged in successfully with Google!", "success")
+    current_app.logger.info(f"OAuth complete - Redirecting to main page")
     return redirect(url_for("main_routes.index"))
 

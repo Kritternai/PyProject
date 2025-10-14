@@ -335,18 +335,8 @@ def partial_stream(lesson_id):
             return '<div class="alert alert-danger">You do not have permission to view this class.</div>', 403
         
         # Pass user info to template (as dict to avoid serialization issues)
-        user_name = g.user.username
-        if g.user.first_name and g.user.last_name:
-            user_name = f"{g.user.first_name} {g.user.last_name}"
-        elif g.user.first_name:
-            user_name = g.user.first_name
-        
-        user_data = {
-            'id': g.user.id,
-            'name': user_name,
-            'email': g.user.email,
-            'username': g.user.username
-        }
+        from ..utils.user_helpers import format_user_profile_data
+        user_data = format_user_profile_data(g.user)
         
         return render_template('class_detail/_stream.html', 
                              lesson=lesson, 

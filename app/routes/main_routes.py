@@ -102,6 +102,26 @@ def partial_dev():
     return render_template('dev_fragment.html', user=g.user)
 
 
+@main_routes_bp.route('/partial/profile-view')
+def partial_profile_view():
+    """Profile view fragment"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    return render_template('profile_view.html', 
+                         profile_user=g.user, 
+                         is_own_profile=True)
+
+
+@main_routes_bp.route('/partial/profile-edit')
+def partial_profile_edit():
+    """Profile edit fragment"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    return render_template('profile_fragment.html', user=g.user)
+
+
 @main_routes_bp.route('/partial/setting')
 def partial_setting():
     """Settings fragment"""
@@ -109,15 +129,6 @@ def partial_setting():
         return jsonify({'error': 'Not authenticated'}), 401
     
     return render_template('setting_fragment.html', user=g.user)
-
-
-@main_routes_bp.route('/partial/profile')
-def partial_profile():
-    """Profile fragment"""
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    return render_template('profile_fragment.html', user=g.user)
 
 
 @main_routes_bp.route('/partial/change_password')

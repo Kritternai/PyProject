@@ -190,22 +190,32 @@ class UserController:
                     'message': 'Request body is required'
                 }), 400
             
-            # Prepare update data
-            email = None
+            # Prepare update data - handle email validation
+            email_str = None
             if 'email' in data and data['email']:
-                email = Email(data['email'])
+                email_str = data['email']
+                # Basic email validation
+                import re
+                if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email_str):
+                    return jsonify({
+                        'success': False,
+                        'message': 'รูปแบบอีเมลไม่ถูกต้อง'
+                    }), 400
             
             # Update user
             user = self._user_service.update_user_profile(
                 user_id=user_id,
                 first_name=data.get('first_name'),
                 last_name=data.get('last_name'),
-                email=email
+                username=data.get('username'),
+                email=email_str,
+                bio=data.get('bio'),
+                profile_image=data.get('profile_image')
             )
             
             return jsonify({
                 'success': True,
-                'message': 'Profile updated successfully',
+                'message': 'โปรไฟล์อัปเดตเรียบร้อยแล้ว',
                 'data': user.to_dict()
             }), 200
             
@@ -424,6 +434,133 @@ class UserController:
                 'message': e.message,
                 'error_code': e.error_code
             }), 404
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': 'Internal server error',
+                'error': str(e)
+            }), 500
+
+    def update_current_user_profile(self) -> Dict[str, Any]:
+        """
+        Update current user's profile.
+        
+        Returns:
+            JSON response with updated user data
+        """
+        try:
+            current_user = g.user
+            if not current_user:
+                return jsonify({
+                    'success': False,
+                    'message': 'User not authenticated'
+                }), 401
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({
+                    'success': False,
+                    'message': 'Request body is required'
+                }), 400
+            
+            # Use user service to update profile
+            updated_user = self._user_service.update_user_profile(
+                user_id=current_user.id,
+                first_name=data.get('first_name', '').strip(),
+                last_name=data.get('last_name', '').strip(),
+                username=data.get('username', '').strip(),
+                email=data.get('email', '').strip(),
+                bio=data.get('bio', '').strip()
+            )
+            
+            return jsonify({
+                'success': True,
+                'message': 'Profile updated successfully',
+                'data': {
+                    'id': updated_user.id,
+                    'username': updated_user.username,
+                    'email': updated_user.email,
+                    'first_name': updated_user.first_name,
+                    'last_name': updated_user.last_name,
+                    'bio': updated_user.bio,
+                    'profile_image': updated_user.profile_image,
+                    'role': updated_user.role,
+                    'email_verified': updated_user.email_verified
+                }
+            }), 200
+            
+        except ValidationException as e:
+            return jsonify({
+                'success': False,
+                'message': e.message,
+                'error_code': e.error_code
+            }), 400
+            
+        except BusinessLogicException as e:
+            return jsonify({
+                'success': False,
+                'message': e.message,
+                'error_code': e.error_code
+            }), 409
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': 'Internal server error',
+                'error': str(e)
+            }), 500
+
+    def export_current_user_data(self) -> Dict[str, Any]:
+        """
+        Export current user's data as JSON.
+        
+        Returns:
+            JSON response with user data for download
+        """
+        try:
+            current_user = g.user
+            if not current_user:
+                return jsonify({
+                    'success': False,
+                    'message': 'User not authenticated'
+                }), 401
+            
+            # Collect user data
+            user_data = {
+                'profile': {
+                    'id': current_user.id,
+                    'username': current_user.username,
+                    'email': current_user.email,
+                    'first_name': current_user.first_name,
+                    'last_name': current_user.last_name,
+                    'bio': current_user.bio,
+                    'role': current_user.role,
+                    'email_verified': current_user.email_verified,
+                    'created_at': current_user.created_at.isoformat() if current_user.created_at else None,
+                    'updated_at': current_user.updated_at.isoformat() if current_user.updated_at else None,
+                    'last_login': current_user.last_login.isoformat() if current_user.last_login else None
+                },
+                'statistics': {
+                    'total_lessons': current_user.total_lessons or 0,
+                    'total_notes': current_user.total_notes or 0,
+                    'total_tasks': current_user.total_tasks or 0
+                },
+                'privacy_note': {
+                    'oauth_user': current_user.password_hash == 'oauth_google',
+                    'note': 'This data export contains only internal system data. No real personal information from Google OAuth is stored.'
+                }
+            }
+            
+            from flask import make_response
+            import json
+            
+            # Create response with proper headers for download
+            response = make_response(json.dumps(user_data, indent=2, ensure_ascii=False))
+            response.headers['Content-Type'] = 'application/json; charset=utf-8'
+            response.headers['Content-Disposition'] = f'attachment; filename=user_data_{current_user.username}.json'
+            
+            return response
             
         except Exception as e:
             return jsonify({
