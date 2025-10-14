@@ -141,6 +141,18 @@ def partial_pomodoro():
         return render_template('pomodoro_fragment.html', user=g.user)
 
 
+@main_routes_bp.route('/partial/pomodoro_statistics')
+def partial_pomodoro_statistics():
+    """Pomodoro statistics fragment"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    try:
+        return render_template('pomodoro_statistics_fragment.html', user=g.user)
+    except Exception as e:
+        return render_template('pomodoro_statistics_fragment.html', user=g.user)
+
+
 # ============================================
 # DIRECT URL ACCESS ROUTES (for SPA with URLs)
 # ============================================
@@ -171,6 +183,29 @@ def track_page():
 def pomodoro_page():
     """Pomodoro page - Direct URL access"""
     return render_template('base.html', user=g.user)
+
+
+@main_routes_bp.route('/pomodoro/statistics')
+@login_required_web
+def pomodoro_statistics_page():
+    """Pomodoro statistics page - Direct URL access"""
+    return render_template('pomodoro_statistics.html', user=g.user)
+
+
+@main_routes_bp.route('/pomodoro/statistics')
+@login_required_web
+def pomodoro_statistics_page():
+    """Pomodoro Statistics page - Direct URL access"""
+    return render_template('pomodoro_statistics.html', user=g.user)
+
+
+@main_routes_bp.route('/partial/pomodoro_statistics')
+def partial_pomodoro_statistics():
+    """Pomodoro statistics fragment for SPA"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    return render_template('pomodoro_statistics_fragment.html', user=g.user)
 
 
 @main_routes_bp.route('/setting')

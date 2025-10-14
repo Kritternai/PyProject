@@ -1,0 +1,67 @@
+<!-- Pomodoro Statistics Fragment for SPA -->
+<div class="pomodoro-statistics-fragment">
+    <div class="fragment-header">
+        <h3><i class="fas fa-chart-bar"></i> Pomodoro Statistics</h3>
+        <p class="text-muted">Track your productivity and analyze your focus patterns</p>
+    </div>
+    
+    <!-- Statistics Dashboard Container -->
+    <div id="pomodoro-statistics-container">
+        <!-- Statistics content will be dynamically loaded here -->
+        <div class="statistics-placeholder">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted">Loading your Pomodoro statistics...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include required CSS and JS for statistics -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pomodoro-statistics.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<script src="{{ url_for('static', filename='js/pomodoro-statistics.js') }}"></script>
+
+<style>
+/* Fragment-specific adjustments */
+.pomodoro-statistics-fragment {
+    padding: 20px;
+}
+
+.fragment-header {
+    margin-bottom: 30px;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 15px;
+}
+
+.fragment-header h3 {
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fragment-header h3 i {
+    color: #e74c3c;
+}
+
+/* Override container styles for fragment */
+.pomodoro-statistics-fragment #pomodoro-statistics-container {
+    margin: 0;
+    padding: 0;
+    max-width: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pomodoro-statistics-fragment {
+        padding: 15px;
+    }
+}
+</style>

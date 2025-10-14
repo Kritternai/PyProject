@@ -22,8 +22,10 @@ class UserService:
                     first_name: str = None, last_name: str = None, role: str = 'student'):
         """Create a new user."""
         from app.models.user import UserModel
-        from app import db
+        from app.database_utils import get_db
         from werkzeug.security import generate_password_hash
+        
+        db = get_db()
         
         # Validate input
         if not email or not password:
@@ -52,8 +54,8 @@ class UserService:
             role=role
         )
         
-        db.session.add(user)
-        db.session.commit()
+        database.session.add(user)
+        database.session.commit()
         return user
     
     def get_user_by_id(self, user_id: str):
@@ -91,7 +93,7 @@ class LessonService:
     def create_lesson(self, user_id: str, title: str, description: str = None):
         """Create a new lesson."""
         from app.models.lesson import LessonModel
-        from app import db
+        from app import db as database
         
         lesson = LessonModel(
             user_id=user_id,
@@ -99,8 +101,8 @@ class LessonService:
             description=description
         )
         
-        db.session.add(lesson)
-        db.session.commit()
+        database.session.add(lesson)
+        database.session.commit()
         return lesson
     
     def get_lessons_by_user(self, user_id: str):
@@ -127,14 +129,14 @@ class LessonService:
         """นับ lessons ที่เสร็จวันนี้"""
         from app.models.lesson import LessonModel
         from datetime import datetime
-        from app import db
+        from app import db as database
         
         today = datetime.now().date()
         
         count = LessonModel.query.filter(
             LessonModel.user_id == user_id,
             LessonModel.status == 'completed',
-            db.func.date(LessonModel.updated_at) == today
+            database.func.date(LessonModel.updated_at) == today
         ).count()
         
         return count
@@ -147,7 +149,7 @@ class NoteService:
     def create_note(self, user_id: str, title: str, content: str, lesson_id: str = None, **kwargs):
         """Create a new note (standalone or linked to lesson)."""
         from app.models.note import NoteModel
-        from app import db
+        from app import db as database
         import json
         
         note = NoteModel(
@@ -176,8 +178,8 @@ class NoteService:
             else:
                 note.tags = None
         
-        db.session.add(note)
-        db.session.commit()
+        database.session.add(note)
+        database.session.commit()
         return note
     
     def get_notes_by_user(self, user_id: str):
@@ -207,7 +209,7 @@ class NoteService:
     def update_note(self, note_id: str, **kwargs):
         """Update a note with any provided fields."""
         from app.models.note import NoteModel
-        from app import db
+        from app import db as database
         import json
         
         note = NoteModel.query.filter_by(id=note_id).first()
@@ -237,7 +239,7 @@ class NoteService:
             else:
                 note.tags = None
         
-        db.session.commit()
+        database.session.commit()
         return note
     
     def get_user_notes(self, user_id: str):
@@ -247,7 +249,7 @@ class NoteService:
     def delete_note(self, note_id: str, user_id: str = None):
         """Delete a note."""
         from app.models.note import NoteModel
-        from app import db
+        from app import db as database
         
         # Build query
         if user_id:
@@ -258,8 +260,8 @@ class NoteService:
         if not note:
             return False
         
-        db.session.delete(note)
-        db.session.commit()
+        database.session.delete(note)
+        database.session.commit()
         return True
     
     def get_public_notes(self, limit=None, offset=None):
@@ -342,7 +344,7 @@ class NoteService:
         """นับ notes ที่สร้างวันนี้"""
         from datetime import datetime
         from app.models.note import NoteModel
-        from app import db
+        from app import db as database
 
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         
@@ -366,7 +368,7 @@ class TaskService:
     def create_task(self, user_id: str, title: str, description: str = None):
         """Create a new task."""
         from app.models.task import TaskModel
-        from app import db
+        from app import db as database
         
         task = TaskModel(
             user_id=user_id,
@@ -374,8 +376,8 @@ class TaskService:
             description=description
         )
         
-        db.session.add(task)
-        db.session.commit()
+        database.session.add(task)
+        database.session.commit()
         return task
     
     def get_tasks_by_user(self, user_id: str):
@@ -402,7 +404,7 @@ class PomodoroSessionService:
                     auto_start_next: bool = True, notification_enabled: bool = True,
                     sound_enabled: bool = True):
         """Create a new Pomodoro session with all optional parameters"""
-        from app import db
+        from app import db as database
         try:
             from app.models.pomodoro_session import PomodoroSessionModel
             
@@ -434,12 +436,12 @@ class PomodoroSessionService:
                 interruption_count=0
             )
 
-            db.session.add(session)
-            db.session.commit()
+            database.session.add(session)
+            database.session.commit()
             
             return session
         except Exception as e:
-            db.session.rollback()
+            database.session.rollback()
             print(f"Error creating session: {str(e)}")
             raise
 
@@ -457,7 +459,7 @@ class PomodoroSessionService:
         """Update a session with all possible fields"""
         from app.models.pomodoro_session import PomodoroSessionModel
         from app.models.task import TaskModel
-        from app import db
+        from app import db as database
         
         session = self.get_session(session_id)
         if not session:
@@ -521,8 +523,8 @@ class PomodoroSessionService:
                         user_id=session.user_id,
                         title=task_name
                     )
-                    db.session.add(task_obj)
-                    db.session.flush()  # Flush to get the task ID
+                    database.session.add(task_obj)
+                    database.session.flush()  # Flush to get the task ID
                 
                 session.task_id = task_obj.id
                 session.task = task_name
@@ -530,13 +532,13 @@ class PomodoroSessionService:
                 session.task_id = None
                 session.task = None
 
-        db.session.commit()
+        database.session.commit()
         return session
 
     def end_session(self, session_id: str, status: str = 'completed'):
         """End a Pomodoro session"""
         from app.models.pomodoro_session import PomodoroSessionModel
-        from app import db
+        from app import db as database
         
         session = self.get_session(session_id)
         if not session:
@@ -547,7 +549,7 @@ class PomodoroSessionService:
         if session.start_time:
             session.actual_duration = int((session.end_time - session.start_time).total_seconds() / 60)
 
-        db.session.commit()
+        database.session.commit()
         return session
 
     def get_active_session(self, user_id: str):
@@ -572,21 +574,21 @@ class PomodoroSessionService:
         if session.start_time:
             session.actual_duration = int((session.end_time - session.start_time).total_seconds() / 60)
 
-        from app import db
-        db.session.commit()
+        from app import db as database
+        database.session.commit()
         return session
 
     def delete_session(self, session_id: str) -> bool:
         """Delete a session"""
         from app.models.pomodoro_session import PomodoroSessionModel
-        from app import db
+        from app import db as database
         
         session = self.get_session(session_id)
         if not session:
             return False
 
-        db.session.delete(session)
-        db.session.commit()
+        database.session.delete(session)
+        database.session.commit()
         return True
 # --- Class ที่เพิ่มเข้ามา ---
 class PomodoroService:
@@ -596,13 +598,13 @@ class PomodoroService:
         """นับ pomodoro ที่ทำวันนี้"""
         from datetime import date
         from app.models.pomodoro import PomodoroSessionModel
-        from app import db
+        from app import db as database
 
         today = date.today()
         
         count = PomodoroSessionModel.query.filter(
             PomodoroSessionModel.user_id == user_id,
-            db.func.date(PomodoroSessionModel.created_at) == today
+            database.func.date(PomodoroSessionModel.created_at) == today
         ).count()
         
         return count
@@ -616,4 +618,6 @@ class PomodoroService:
         """นับ pomodoros ทั้งหมด"""
         from app.models.pomodoro import PomodoroSessionModel
         return PomodoroSessionModel.query.filter_by(user_id=user_id).count()
-    
+
+
+# End of services.py

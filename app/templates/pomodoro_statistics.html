@@ -1,0 +1,360 @@
+{% extends "layouts/main_layout.html" %}
+
+{% block title %}Pomodoro Statistics - Smart Learning Hub{% endblock %}
+
+{% block extra_css %}
+    <!-- Chart.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css">
+    <!-- Statistics Dashboard CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pomodoro-statistics.css') }}">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">
+                        <i class="fas fa-chart-bar text-primary"></i>
+                        Pomodoro Statistics
+                    </h1>
+                    <p class="text-muted">Track your productivity and analyze your focus patterns</p>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{{ url_for('main_routes.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Pomodoro Statistics</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="container-fluid">
+            <!-- Statistics Dashboard Container -->
+            <div id="pomodoro-statistics-container">
+                <!-- Statistics content will be dynamically loaded here -->
+                <div class="statistics-placeholder">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <p class="mt-3 text-muted">Loading your Pomodoro statistics...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-bolt"></i>
+                                Quick Actions
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6">
+                                    <a href="{{ url_for('main_routes.pomodoro') }}" class="btn btn-primary btn-block">
+                                        <i class="fas fa-play"></i>
+                                        Start Pomodoro
+                                    </a>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <button class="btn btn-success btn-block" id="export-stats">
+                                        <i class="fas fa-download"></i>
+                                        Export Data
+                                    </button>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <button class="btn btn-info btn-block" id="share-stats">
+                                        <i class="fas fa-share"></i>
+                                        Share Progress
+                                    </button>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <a href="{{ url_for('main_routes.settings') }}" class="btn btn-secondary btn-block">
+                                        <i class="fas fa-cog"></i>
+                                        Settings
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips and Insights Card -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-lightbulb"></i>
+                                Productivity Tips
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-info">
+                                            <i class="fas fa-clock"></i>
+                                        </span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Optimal Session</span>
+                                            <span class="info-box-number">25 minutes</span>
+                                            <span class="info-box-more">Focus time for maximum productivity</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-success">
+                                            <i class="fas fa-coffee"></i>
+                                        </span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Break Time</span>
+                                            <span class="info-box-number">5 minutes</span>
+                                            <span class="info-box-more">Short breaks between sessions</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="info-box">
+                                        <span class="info-box-icon bg-warning">
+                                            <i class="fas fa-target"></i>
+                                        </span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">Daily Goal</span>
+                                            <span class="info-box-number">8 sessions</span>
+                                            <span class="info-box-more">Recommended daily target</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportModalLabel">
+                    <i class="fas fa-download"></i>
+                    Export Statistics
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="export-form">
+                    <div class="form-group">
+                        <label for="export-format">Export Format</label>
+                        <select class="form-control" id="export-format">
+                            <option value="csv">CSV (Excel compatible)</option>
+                            <option value="json">JSON (Raw data)</option>
+                            <option value="pdf">PDF (Report)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="export-period">Time Period</label>
+                        <select class="form-control" id="export-period">
+                            <option value="week">Last 7 days</option>
+                            <option value="month">Last 30 days</option>
+                            <option value="quarter">Last 3 months</option>
+                            <option value="year">Last year</option>
+                            <option value="all">All time</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="include-charts" checked>
+                            <label class="form-check-label" for="include-charts">
+                                Include charts and visualizations
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-export">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">
+                    <i class="fas fa-share"></i>
+                    Share Your Progress
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <canvas id="share-chart" width="300" height="200"></canvas>
+                    </div>
+                    <div class="form-group">
+                        <label for="share-message">Share Message</label>
+                        <textarea class="form-control" id="share-message" rows="3" placeholder="Add a personal message..."></textarea>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary" id="share-twitter">
+                            <i class="fab fa-twitter"></i> Twitter
+                        </button>
+                        <button type="button" class="btn btn-info" id="share-linkedin">
+                            <i class="fab fa-linkedin"></i> LinkedIn
+                        </button>
+                        <button type="button" class="btn btn-success" id="copy-link">
+                            <i class="fas fa-link"></i> Copy Link
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <!-- Pomodoro Statistics Manager -->
+    <script src="{{ url_for('static', filename='js/pomodoro-statistics.js') }}"></script>
+    
+    <!-- Additional functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Export functionality
+            document.getElementById('export-stats')?.addEventListener('click', function() {
+                $('#exportModal').modal('show');
+            });
+
+            document.getElementById('confirm-export')?.addEventListener('click', function() {
+                const format = document.getElementById('export-format').value;
+                const period = document.getElementById('export-period').value;
+                const includeCharts = document.getElementById('include-charts').checked;
+                
+                // Handle export logic here
+                exportStatistics(format, period, includeCharts);
+                $('#exportModal').modal('hide');
+            });
+
+            // Share functionality
+            document.getElementById('share-stats')?.addEventListener('click', function() {
+                generateShareChart();
+                $('#shareModal').modal('show');
+            });
+
+            // Social sharing
+            document.getElementById('share-twitter')?.addEventListener('click', function() {
+                const message = document.getElementById('share-message').value;
+                const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message + ' #PomodoroTechnique #Productivity')}`;
+                window.open(url, '_blank', 'width=600,height=400');
+            });
+
+            document.getElementById('copy-link')?.addEventListener('click', function() {
+                navigator.clipboard.writeText(window.location.href).then(function() {
+                    // Show success message
+                    showToast('Link copied to clipboard!', 'success');
+                });
+            });
+        });
+
+        function exportStatistics(format, period, includeCharts) {
+            // Create download link based on format
+            const downloadUrl = `/api/pomodoro/statistics/export?format=${format}&period=${period}&charts=${includeCharts}`;
+            
+            // Create temporary link and trigger download
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `pomodoro_stats_${period}.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function generateShareChart() {
+            // Generate a small chart for sharing
+            const ctx = document.getElementById('share-chart');
+            if (ctx && window.pomodoroStats) {
+                // Use data from the main statistics manager
+                // This is a simplified version for sharing
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Focus Time', 'Break Time', 'Idle Time'],
+                        datasets: [{
+                            data: [180, 45, 15], // Example data
+                            backgroundColor: ['#007bff', '#28a745', '#ffc107']
+                        }]
+                    },
+                    options: {
+                        responsive: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            // Simple toast notification
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Global error handler for API requests
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+            showToast('An error occurred while loading statistics. Please try again.', 'danger');
+        });
+
+        // Check for user authentication
+        if (!document.cookie.includes('session') && !localStorage.getItem('user_id')) {
+            showToast('Please log in to view your statistics.', 'warning');
+        }
+    </script>
+{% endblock %}
