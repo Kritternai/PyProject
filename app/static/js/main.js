@@ -401,9 +401,20 @@ window.openNoteEditorPage = function(noteId) {
   loadPage(target);
 }
 
-// Navigate to class page
-window.navigateToClass = function() {
-  loadPage('class');
+// Navigate to class page or specific class detail
+window.navigateToClass = function(classId, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  
+  if (classId) {
+    // Navigate to specific class detail - use full page navigation
+    window.location.href = `/class/${classId}`;
+  } else {
+    // Navigate to class list page
+    loadPage('class');
+  }
 }
 
 // Attach click on whole note card to open editor (avoid when clicking action buttons/links)
