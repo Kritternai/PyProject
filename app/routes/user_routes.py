@@ -34,6 +34,13 @@ def get_current_user_profile():
     return user_controller.get_current_user_profile()
 
 
+@user_bp.route('/profile', methods=['PUT'])
+@login_required
+def update_current_user_profile():
+    """Update current user's profile."""
+    return user_controller.update_current_user_profile()
+
+
 @user_bp.route('/<user_id>/profile', methods=['PUT'])
 @login_required
 def update_user_profile(user_id):
