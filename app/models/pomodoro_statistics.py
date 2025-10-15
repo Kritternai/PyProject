@@ -3,7 +3,7 @@ Pomodoro Statistics SQLAlchemy model for database persistence.
 Infrastructure layer implementation.
 """
 
-from app import db
+from app.db_instance import db
 from datetime import datetime
 import uuid
 

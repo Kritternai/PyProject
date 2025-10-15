@@ -17,10 +17,16 @@ class PomodoroSessionViews:
     def create_session(self) -> Dict[str, Any]:
         """Create a new Pomodoro session"""
         try:
-            # Get user_id from g.user or use 'anonymous'
-            user_id = 'anonymous'
-            if hasattr(g, 'user') and g.user and hasattr(g.user, 'id'):
-                user_id = g.user.id
+            # Check authentication first
+            if not hasattr(g, 'user') or not g.user:
+                return jsonify({
+                    'error': 'Authentication Required',
+                    'message': 'User must be logged in to create Pomodoro session',
+                    'code': 'AUTH_REQUIRED'
+                }), 401
+
+            user_id = g.user.id
+            print(f"🍅 Creating session for user: {user_id}")
 
             data = request.get_json()
             if not data:
@@ -54,8 +60,16 @@ class PomodoroSessionViews:
                 sound_enabled=data.get('sound_enabled', True)
             )
 
+            print(f"✅ Session created successfully:")
+            print(f"   - Session ID: {session.id}")
+            print(f"   - User ID: {session.user_id}")
+            print(f"   - Type: {session.session_type}")
+            print(f"   - Duration: {session.duration}")
+            print(f"   - Status: {session.status}")
+
             return jsonify({
                 'success': True,
+                'message': 'Session created successfully',
                 'session': session.to_dict()
             }), 201
 
@@ -161,6 +175,56 @@ class PomodoroSessionViews:
 
         except Exception as e:
             return jsonify({'error': 'Internal server error'}), 500
+
+    def end_session(self, session_id: str) -> Dict[str, Any]:
+        """End a Pomodoro session"""
+        try:
+            if not g.user:
+                return jsonify({'error': 'Authentication required'}), 401
+
+            session = self._session_service.get_session(session_id)
+            if not session:
+                return jsonify({'error': 'Session not found'}), 404
+
+            if session.user_id != g.user.id:
+                return jsonify({'error': 'Unauthorized access'}), 403
+
+            # Get any additional data from request
+            data = request.get_json() or {}
+            status = data.get('status', 'completed')
+
+            # End the session
+            print(f"🏁 Ending session {session_id} for user {g.user.id}")
+            ended_session = self._session_service.end_session(session_id, status)
+            
+            if not ended_session:
+                print(f"❌ Failed to end session {session_id}")
+                return jsonify({'error': 'Failed to end session'}), 500
+
+            print(f"✅ Session ended successfully:")
+            print(f"   - Session ID: {ended_session.id}")
+            print(f"   - Status: {ended_session.status}")
+            print(f"   - Is completed: {ended_session.is_completed}")
+            print(f"   - Actual duration: {ended_session.actual_duration}")
+
+            return jsonify({
+                'success': True,
+                'message': 'Session ended successfully',
+                'session': ended_session.to_dict()
+            }), 200
+
+        except ValidationException as e:
+            return jsonify({
+                'error': 'Validation Error',
+                'message': str(e),
+                'code': 'VALIDATION_ERROR'
+            }), 400
+        except Exception as e:
+            print(f"❌ Error ending session: {str(e)}")
+            return jsonify({
+                'error': 'Internal server error',
+                'message': 'Failed to end session'
+            }), 500
 
     def get_active_session(self) -> Dict[str, Any]:
         """Get user's active session"""

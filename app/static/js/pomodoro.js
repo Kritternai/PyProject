@@ -15,6 +15,8 @@ let pomodoroState = {
   cycle: 1,
   completedPomodoros: 0,
   tasks: [],
+  sessionStartTime: null, // Track when current session started
+  currentTask: null, // Current task description
   settings: {
     pomodoro: 25,
     shortBreak: 5,
@@ -99,6 +101,75 @@ function completeSession() {
     pomodoroState.stats.todayFocusTime += pomodoroState.settings.pomodoro;
   } else {
     pomodoroState.stats.todayBreaks++;
+  }
+  
+  // Save session to database
+  saveSessionToDatabase();
+}
+
+// Save session to database
+async function saveSessionToDatabase() {
+  try {
+    const sessionData = {
+      session_type: pomodoroState.mode === 'pomodoro' ? 'focus' : 
+                   pomodoroState.mode === 'shortBreak' ? 'short_break' : 'long_break',
+      duration: pomodoroState.mode === 'pomodoro' ? pomodoroState.settings.pomodoro :
+               pomodoroState.mode === 'shortBreak' ? pomodoroState.settings.shortBreak : 
+               pomodoroState.settings.longBreak,
+      task: pomodoroState.currentTask || null,
+      actual_duration: Math.ceil((Date.now() - pomodoroState.sessionStartTime) / 60000),
+      is_completed: true
+    };
+
+    console.log('💾 Saving session to database:', sessionData);
+    
+    const response = await fetch('/api/pomodoro/session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(sessionData)
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Session saved successfully:', result);
+      
+      // End the session immediately after creating it
+      if (result.success && result.data && result.data.id) {
+        await endSessionInDatabase(result.data.id);
+      }
+    } else {
+      const error = await response.json();
+      console.error('❌ Failed to save session:', error);
+    }
+  } catch (error) {
+    console.error('❌ Error saving session:', error);
+  }
+}
+
+// End session in database
+async function endSessionInDatabase(sessionId) {
+  try {
+    const response = await fetch(`/api/pomodoro/session/${sessionId}/end`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        status: 'completed'
+      })
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Session ended successfully:', result);
+    } else {
+      const error = await response.json();
+      console.error('❌ Failed to end session:', error);
+    }
+  } catch (error) {
+    console.error('❌ Error ending session:', error);
   }
 }
 

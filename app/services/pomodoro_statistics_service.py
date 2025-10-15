@@ -5,7 +5,7 @@ Handles business logic for statistics calculations and management
 
 from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional, Any
-from app import db
+from app.db_instance import db
 from app.models.pomodoro_statistics import PomodoroStatisticsModel
 from app.models.pomodoro_session import PomodoroSessionModel
 import uuid

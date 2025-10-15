@@ -8,13 +8,13 @@ from datetime import datetime, date
 from typing import Dict, Any
 import traceback
 
-from app.simple_pomodoro_stats import SimplePomodoroStatisticsService
+from app.services import PomodoroStatisticsServiceWrapper
 
 class PomodoroStatisticsController:
     """Controller for Pomodoro statistics operations"""
 
     def __init__(self):
-        self.stats_service = SimplePomodoroStatisticsService()
+        self.stats_service = PomodoroStatisticsServiceWrapper()
 
     def _get_current_user_id(self) -> str:
         """Get current user ID from session"""

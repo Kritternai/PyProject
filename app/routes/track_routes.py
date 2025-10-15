@@ -2,7 +2,16 @@
 
 from flask import Blueprint, jsonify, session, g
 from app.middleware.auth_middleware import login_required
-from app.services import NoteService, PomodoroService, LessonService, UserService
+
+# Import services with dynamic loading to avoid circular imports
+def get_services():
+    import importlib.util
+    import os
+    services_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'services.py')
+    spec = importlib.util.spec_from_file_location("app_services", services_path)
+    app_services = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(app_services)
+    return app_services
 
 # สร้าง blueprint
 track_bp = Blueprint('track_api', __name__, url_prefix='/api/track')
@@ -11,6 +20,8 @@ track_bp = Blueprint('track_api', __name__, url_prefix='/api/track')
 def load_user():
     """โหลด user object ก่อนทุก request ใน blueprint นี้"""
     if 'user_id' in session:
+        app_services = get_services()
+        UserService = app_services.UserService
         user_service = UserService()
         try:
             # ใช้ g object ของ Flask เพื่อเก็บข้อมูล user ไว้ใช้ตลอด request
@@ -36,7 +47,12 @@ def get_track_statistics():
 
         user_id = g.user.id
         
-        # สร้าง service instances
+        # สร้าง service instances โดยใช้ dynamic loading
+        app_services = get_services()
+        NoteService = app_services.NoteService
+        PomodoroService = app_services.PomodoroService
+        LessonService = app_services.LessonService
+        
         note_service = NoteService()
         pomodoro_service = PomodoroService()
         lesson_service = LessonService()

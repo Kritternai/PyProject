@@ -4,12 +4,9 @@ Creates and configures Flask application with proper dependency injection.
 """
 
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from .config.settings import get_config
 from .middleware.auth_middleware import load_user
-
-# Initialize extensions
-db = SQLAlchemy()
+from .db_instance import db  # Import from db_instance to avoid multiple instances
 
 # Initialize Flask-Migrate
 from flask_migrate import Migrate

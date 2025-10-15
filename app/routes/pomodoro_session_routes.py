@@ -15,6 +15,7 @@ session_views = PomodoroSessionViews()
 
 # Session routes
 @pomodoro_session_bp.route('', methods=['POST'])
+@login_required
 def create_session():
     """Create new session"""
     return session_views.create_session()

@@ -4,7 +4,6 @@ Authentication middleware for MVC architecture.
 from functools import wraps
 from flask import request, jsonify, session, g
 from typing import Optional
-from app.services import UserService
 from app.utils.exceptions import AuthenticationException, AuthorizationException
 
 
@@ -141,6 +140,21 @@ def load_user():
     user_id = session.get('user_id')
     if user_id:
         try:
+            # Import directly from the main services.py file to avoid circular imports
+            import importlib.util
+            import os
+            
+            # Get the path to the main services.py file
+            services_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'services.py')
+            
+            # Load the services module directly
+            spec = importlib.util.spec_from_file_location("app_services", services_path)
+            app_services = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(app_services)
+            
+            # Get UserService from the loaded module
+            UserService = app_services.UserService
+            
             user_service = UserService()
             user = user_service.get_user_by_id(user_id)
             if user and user.is_active:
@@ -148,7 +162,12 @@ def load_user():
             else:
                 g.user = None
                 session.pop('user_id', None)
-        except Exception:
+        except ImportError as ie:
+            print(f"Import error loading UserService: {str(ie)}")
+            g.user = None
+            session.pop('user_id', None)
+        except Exception as e:
+            print(f"Error loading user: {str(e)}")
             g.user = None
             session.pop('user_id', None)
     else:
