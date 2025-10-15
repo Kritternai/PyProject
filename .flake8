@@ -2,25 +2,6 @@
 max-line-length = 127
 max-complexity = 10
 select = E,W,F,C
-ignore = 
-    E203,  # whitespace before ':'
-    E501,  # line too long (handled by black)
-    W503,  # line break before binary operator
-    E402,  # module level import not at top of file
-exclude = 
-    .git,
-    __pycache__,
-    .venv,
-    venv,
-    .env,
-    migrations,
-    instance,
-    uploads,
-    archive,
-    docs,
-    chrome_extension,
-    demo,
-    scripts
-per-file-ignores =
-    __init__.py:F401
-    migrations/*:E501
+ignore = E203,E501,W503,E402
+exclude = .git,__pycache__,.venv,venv,.env,migrations,instance,uploads,archive,docs,chrome_extension,demo,scripts
+per-file-ignores = __init__.py:F401,migrations/*:E501

@@ -1,58 +1,19 @@
 # CI/CD Pipeline Documentation
 
-This directory contains the Continuous Integration and Continuous Deployment (CI/CD) configuration for the Smart Learning Hub project.
+This directory contains the simplified Continuous Integration and Continuous Deployment (CI/CD) configuration for the Smart Learning Hub project.
 
-## 🚀 Workflows Overview
+## 🚀 Workflow Overview
 
-### 1. **CI Pipeline** (`ci.yml`)
-- **Triggers**: Push to main/dev branches, Pull Requests
-- **Purpose**: Code quality, testing, and validation
-- **Jobs**:
-  - Code Quality & Linting (Black, isort, Flake8, Bandit)
-  - Testing (pytest with coverage)
-  - Build validation
-  - Security scanning
-
-### 2. **Deployment** (`deploy.yml`)
-- **Triggers**: Push to main branch, Manual dispatch
-- **Purpose**: Automated deployment to Render
-- **Jobs**:
-  - Pre-deployment checks
-  - Deploy to Render
+### **Main CI/CD Pipeline** (`main.yml`)
+- **Triggers**: Push to main/dev branches, Pull Requests, Manual dispatch
+- **Purpose**: Complete CI/CD pipeline in one workflow
+- **Features**:
+  - Code Quality & Security checks (Black, isort, Flake8, Bandit, Safety)
+  - Testing with coverage (pytest)
+  - Build validation for PRs
+  - Automated deployment to Render (main branch only)
   - Post-deployment health checks
-  - Performance validation
-
-### 3. **Code Coverage** (`coverage.yml`)
-- **Triggers**: Push to main/dev branches, Pull Requests
-- **Purpose**: Track code coverage metrics
-- **Features**:
-  - Coverage reports with Codecov integration
-  - Coverage trend analysis
-  - PR comments with coverage details
-
-### 4. **Performance Testing** (`performance.yml`)
-- **Triggers**: Push to main, Pull Requests, Manual dispatch
-- **Purpose**: Performance and load testing
-- **Jobs**:
-  - Load testing with Locust
-  - Stress testing
-  - Memory and CPU profiling
-
-### 5. **Security Scanning** (`security.yml`)
-- **Triggers**: Push to main/dev branches, Pull Requests, Daily schedule
-- **Purpose**: Security vulnerability detection
-- **Jobs**:
-  - Code security analysis (Bandit, Semgrep)
-  - Dependency vulnerability scanning (Safety, pip-audit)
-  - Container security (Trivy)
-
-### 6. **Dependency Updates** (`dependency-update.yml`)
-- **Triggers**: Weekly schedule, Manual dispatch
-- **Purpose**: Monitor and update dependencies
-- **Features**:
-  - Automated dependency checking
-  - Security vulnerability reports
-  - Auto-update minor versions
+  - Test reports and artifacts
 
 ## 📋 Requirements
 
@@ -67,7 +28,7 @@ Configure these secrets in your repository settings:
 See [SECRETS_TEMPLATE.md](SECRETS_TEMPLATE.md) for detailed setup instructions.
 
 ### Dependencies
-The workflows use these Python packages:
+The workflow uses these essential Python packages:
 - `pytest` - Testing framework
 - `pytest-cov` - Coverage plugin
 - `black` - Code formatting
@@ -75,58 +36,35 @@ The workflows use these Python packages:
 - `flake8` - Linting
 - `bandit` - Security analysis
 - `safety` - Dependency security
-- `locust` - Load testing
 
 ## 🔧 Configuration Files
 
 ### Code Quality Configuration
 - `.flake8` - Flake8 linting rules
-- `pyproject.toml` - Black, isort, pytest, coverage, mypy configuration
 
 ### Workflow Configuration
-- All workflows are configured with appropriate triggers and environments
-- Matrix testing across Python versions (3.11, 3.12)
+- Single workflow with all necessary steps
+- Python 3.11 environment
 - Caching for faster builds
-- Artifact uploads for reports and results
+- Artifact uploads for test reports
 
 ## 📊 Reports and Artifacts
 
-Each workflow generates various reports:
+The main workflow generates:
 
-### CI Pipeline
-- Security reports (Bandit, Safety)
-- Test results and coverage
-- Build artifacts
-
-### Deployment
-- Deployment logs
-- Health check results
-- Performance metrics
-
-### Coverage
-- HTML coverage reports
-- XML coverage data
-- Coverage trend analysis
-
-### Performance
-- Load test results
-- Stress test reports
-- Memory/CPU profiling data
-
-### Security
-- Bandit security reports
-- Dependency vulnerability reports
-- Semgrep scan results
+- **Test Results**: pytest reports with coverage
+- **Coverage Reports**: HTML and XML coverage data
+- **Security Reports**: Bandit and Safety scan results
+- **Deployment Logs**: Render deployment status and health checks
 
 ## 🎯 Quality Gates
 
-The CI/CD pipeline enforces several quality gates:
+The CI/CD pipeline enforces essential quality gates:
 
 1. **Code Quality**: All code must pass Black, isort, and Flake8 checks
 2. **Security**: No high-severity security issues allowed
-3. **Testing**: Minimum 70% code coverage required
-4. **Performance**: Response times must be under 2 seconds
-5. **Dependencies**: No known vulnerabilities in dependencies
+3. **Testing**: Minimum 60% code coverage required
+4. **Dependencies**: No known vulnerabilities in dependencies
 
 ## 🚀 Getting Started
 

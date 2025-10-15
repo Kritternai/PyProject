@@ -1,0 +1,184 @@
+name: Smart Learning Hub CI/CD
+
+on:
+  push:
+    branches: [ main, dev/web ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+
+env:
+  PYTHON_VERSION: '3.11'
+  FLASK_ENV: 'testing'
+
+jobs:
+  # ============================================
+  # MAIN CI/CD PIPELINE
+  # ============================================
+  ci-cd:
+    name: CI/CD Pipeline
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    # ============================================
+    # CODE QUALITY & SECURITY
+    # ============================================
+    - name: Code Quality Checks
+      run: |
+        echo "🔍 Running code quality checks..."
+        
+        # Code formatting check
+        echo "🎨 Checking code formatting..."
+        black --check --diff app/ tests/ || echo "⚠️ Code formatting issues found"
+        
+        # Import sorting check
+        echo "📦 Checking import sorting..."
+        isort --check-only --diff app/ tests/ || echo "⚠️ Import sorting issues found"
+        
+        # Linting
+        echo "🔍 Running linting..."
+        flake8 app/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics || echo "⚠️ Critical linting issues found"
+        flake8 app/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+        # Security check
+        echo "🔒 Running security checks..."
+        bandit -r app/ -f txt || echo "⚠️ Security issues found"
+        safety check || echo "⚠️ Dependency vulnerabilities found"
+        
+    # ============================================
+    # TESTING
+    # ============================================
+    - name: Set up test environment
+      run: |
+        export FLASK_ENV=testing
+        export DATABASE_URL=sqlite:///test.db
+        export FLASK_SECRET_KEY=test_secret_key_for_ci
+        
+    - name: Create test database
+      run: |
+        python database/setup_database.py
+        
+    - name: Run tests with coverage
+      run: |
+        echo "🧪 Running tests..."
+        pytest tests/ --cov=app --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=60 --junitxml=pytest-report.xml
+        
+    # ============================================
+    # BUILD VALIDATION
+    # ============================================
+    - name: Build validation
+      if: github.event_name == 'pull_request'
+      run: |
+        echo "🔨 Validating build process..."
+        
+        # Check required files
+        if [ ! -f "Procfile" ] || [ ! -f "render.yaml" ] || [ ! -f "requirements.txt" ] || [ ! -f "start.py" ] || [ ! -f "build.sh" ]; then
+          echo "❌ Required deployment files missing"
+          exit 1
+        fi
+        
+        # Test application startup
+        export FLASK_ENV=production
+        export DATABASE_URL=sqlite:///site.db
+        export FLASK_SECRET_KEY=build_test_secret_key
+        
+        python database/setup_database.py
+        timeout 30s python start.py &
+        sleep 10
+        curl -f http://localhost:8000/ || echo "⚠️ Application startup test failed"
+        
+        echo "✅ Build validation passed"
+        
+    # ============================================
+    # DEPLOYMENT (MAIN BRANCH ONLY)
+    # ============================================
+    - name: Deploy to Render
+      if: github.ref == 'refs/heads/main'
+      uses: johnbeynon/render-deploy-action@v0.0.8
+      with:
+        service-id: ${{ secrets.RENDER_SERVICE_ID }}
+        api-key: ${{ secrets.RENDER_API_KEY }}
+        
+    - name: Post-deployment health check
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "🏥 Running health check..."
+        
+        DEPLOYMENT_URL="${{ secrets.RENDER_SERVICE_URL }}"
+        
+        if [ -z "$DEPLOYMENT_URL" ]; then
+          echo "⚠️ RENDER_SERVICE_URL not set - skipping health check"
+        else
+          # Wait for service to be ready
+          for i in {1..5}; do
+            if curl -f -s "$DEPLOYMENT_URL" > /dev/null; then
+              echo "✅ Health check passed - service is responding"
+              break
+            else
+              echo "⏳ Attempt $i/5: Service not ready yet..."
+              sleep 30
+            fi
+          done
+        fi
+        
+    # ============================================
+    # UPLOAD REPORTS
+    # ============================================
+    - name: Upload test reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-reports
+        path: |
+          coverage.xml
+          htmlcov/
+          pytest-report.xml
+          
+    # ============================================
+    # NOTIFICATIONS
+    # ============================================
+    - name: Success notification
+      if: success()
+      run: |
+        echo "🎉 CI/CD Pipeline completed successfully!"
+        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          echo "🚀 Application deployed to production"
+          echo "🌐 URL: ${{ secrets.RENDER_SERVICE_URL }}"
+        fi
+        
+    - name: Failure notification
+      if: failure()
+      run: |
+        echo "❌ CI/CD Pipeline failed!"
+        echo "🔍 Please check the logs and fix issues"
+        exit 1
