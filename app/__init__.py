@@ -12,6 +12,7 @@ from .middleware.auth_middleware import load_user
 
 # Initialize extensions
 db = SQLAlchemy()
+limiter = None  # Will be initialized in create_app
 
 # Initialize Flask-Migrate
 from flask_migrate import Migrate
@@ -39,6 +40,7 @@ def create_app(config_name=None):
     
     # Initialize rate limiting
     from .config.rate_limiting import create_rate_limiter
+    global limiter
     limiter = create_rate_limiter(app)
     if limiter:
         app.limiter = limiter
