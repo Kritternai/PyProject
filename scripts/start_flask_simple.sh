@@ -16,7 +16,6 @@ if [ -z "$GOOGLE_CLIENT_ID" ] || [ -z "$GOOGLE_CLIENT_SECRET" ]; then
     echo "export FLASK_SECRET_KEY='your-secret-key'"
     exit 1
 fi
-
 export OAUTHLIB_INSECURE_TRANSPORT="1"
 export FLASK_ENV="development"
 export FLASK_DEBUG="1"

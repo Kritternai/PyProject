@@ -1,4 +1,841 @@
-<h2>User Profile</h2>
-<p>Username: {{ user.username }}</p>
-<p>Email: {{ user.email }}</p>
-<!-- Add more profile details here if available -->
+<!-- Profile Fragment for AJAX Loading -->
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="avatar-circle">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+            </div>
+            <div class="col">
+                <h2 class="h3 mb-1 text-blue">
+                    <i class="bi bi-person-circle me-2 text-primary"></i>
+                    My Profile
+                </h2>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-gear me-1"></i>
+                    Manage your personal information and account settings
+                </p>
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn btn-primary" onclick="openEditProfileModal()">
+                    <i class="bi bi-pencil me-2"></i>
+                    Edit Profile
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {% if user %}
+    <div class="row">
+        <!-- Profile Information Card -->
+        <div class="col-lg-8 col-md-12 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Profile Information
+                    </h5>
+                    <button type="button" class="btn btn-light btn-sm" onclick="openEditProfileModal()">
+                        <i class="bi bi-pencil me-1"></i>
+                        Edit Profile
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4">
+                            <!-- User Avatar -->
+                            <div class="profile-avatar-large mx-auto mb-3">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <h5 class="mb-1 fw-bold">
+                                {% if user.first_name or user.last_name %}
+                                    {{ user.first_name }} {{ user.last_name }}
+                                {% else %}
+                                    {{ user.username }}
+                                {% endif %}
+                            </h5>
+                            <p class="text-muted mb-0">
+                                <span class="badge bg-primary">{{ user.role|title|default('Student') }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="profile-info-item">
+                                <div class="row align-items-center py-3 border-bottom">
+                                    <div class="col-sm-4">
+                                        <strong class="text-blue">
+                                            <i class="bi bi-person-badge me-2 text-primary"></i>Username
+                                        </strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        <span class="text-muted">{{ user.username }}</span>
+                                    </div>
+                                </div>
+                                <div class="row align-items-center py-3 border-bottom">
+                                    <div class="col-sm-4">
+                                        <strong class="text-blue">
+                                            <i class="bi bi-person-lines-fill me-2 text-primary"></i>Full Name
+                                        </strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        {% if user.first_name or user.last_name %}
+                                            <span class="text-muted">{{ user.first_name }} {{ user.last_name }}</span>
+                                        {% else %}
+                                            <span class="text-muted fst-italic">Not provided</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row align-items-center py-3 border-bottom">
+                                    <div class="col-sm-4">
+                                        <strong class="text-blue">
+                                            <i class="bi bi-envelope-fill me-2 text-primary"></i>Email
+                                        </strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        <span class="text-muted">{{ user.email or 'Not provided' }}</span>
+                                        {% if user.email_verified %}
+                                            <span class="badge bg-success ms-2">
+                                                <i class="bi bi-check-circle me-1"></i>Verified
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning ms-2">
+                                                <i class="bi bi-exclamation-triangle me-1"></i>Unverified
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row align-items-center py-3 border-bottom">
+                                    <div class="col-sm-4">
+                                        <strong class="text-blue">
+                                            <i class="bi bi-chat-text-fill me-2 text-primary"></i>Bio
+                                        </strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        {% if user.bio %}
+                                            <span class="text-muted">{{ user.bio }}</span>
+                                        {% else %}
+                                            <span class="text-muted fst-italic">No bio provided</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row align-items-center py-3 border-bottom">
+                                    <div class="col-sm-4">
+                                        <strong class="text-blue">
+                                            <i class="bi bi-clock-history me-2 text-primary"></i>Last Login
+                                        </strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        {% if user.last_login %}
+                                            <span class="text-muted">
+                                                {{ user.last_login.strftime('%B %d, %Y at %I:%M %p') if user.last_login else 'Never' }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted fst-italic">Never logged in</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row align-items-center py-3">
+                                    <div class="col-sm-4">
+                                        <strong class="text-blue">
+                                            <i class="bi bi-calendar-plus-fill me-2 text-primary"></i>Member Since
+                                        </strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        <span class="text-muted">
+                                            <i class="bi bi-star-fill me-1 text-warning"></i>
+                                            {{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'Unknown' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="col-lg-4 col-md-12 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-gradient-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightning-charge-fill me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-grid gap-3">
+                        <button type="button" class="btn btn-outline-primary d-flex align-items-center justify-content-start p-3" onclick="openEditProfileModal()">
+                            <div class="me-3">
+                                <i class="bi bi-pencil-square fs-4"></i>
+                            </div>
+                            <div class="text-start">
+                                <div class="fw-bold">Edit Profile</div>
+                                <small class="text-muted">Update your personal information</small>
+                            </div>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-start p-3" onclick="loadPage('change_password')">
+                            <div class="me-3">
+                                <i class="bi bi-shield-lock-fill fs-4"></i>
+                            </div>
+                            <div class="text-start">
+                                <div class="fw-bold">Change Password</div>
+                                <small class="text-muted">Secure your account</small>
+                            </div>
+                        </button>
+                        <button type="button" class="btn btn-outline-info d-flex align-items-center justify-content-start p-3" onclick="loadPage('setting')">
+                            <div class="me-3">
+                                <i class="bi bi-gear-fill fs-4"></i>
+                            </div>
+                            <div class="text-start">
+                                <div class="fw-bold">Settings</div>
+                                <small class="text-muted">Configure your preferences</small>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-gradient-primary text-white">
+                    <h5 class="modal-title" id="editProfileModalLabel">
+                        <i class="bi bi-pencil me-2"></i>
+                        Edit Profile
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editProfileForm">
+                    <div class="modal-body p-4">
+                        <div class="row">
+                            <!-- Profile Avatar Display -->
+                            <div class="col-md-4 text-center mb-4">
+                                <div class="profile-avatar-large mx-auto mb-3">
+                                    <i class="bi bi-person-circle"></i>
+                                </div>
+                                <h6 class="text-muted">
+                                    {% if user.first_name or user.last_name %}
+                                        {{ user.first_name }} {{ user.last_name }}
+                                    {% else %}
+                                        {{ user.username }}
+                                    {% endif %}
+                                </h6>
+                            </div>
+                            
+                            <!-- Profile Information -->
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="editFirstName" class="form-label fw-bold">
+                                            <i class="bi bi-person-fill me-2 text-primary"></i>First Name
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control form-control-lg" 
+                                               id="editFirstName" 
+                                               name="first_name" 
+                                               value="{{ user.first_name or '' }}"
+                                               placeholder="Enter your first name">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="editLastName" class="form-label fw-bold">
+                                            <i class="bi bi-person-fill me-2 text-primary"></i>Last Name
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control form-control-lg" 
+                                               id="editLastName" 
+                                               name="last_name" 
+                                               value="{{ user.last_name or '' }}"
+                                               placeholder="Enter your last name">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editEmail" class="form-label fw-bold">
+                                        <i class="bi bi-envelope-fill me-2 text-primary"></i>Email Address
+                                    </label>
+                                    <input type="email" 
+                                           class="form-control form-control-lg" 
+                                           id="editEmail" 
+                                           name="email" 
+                                           value="{{ user.email or '' }}"
+                                           placeholder="Enter your email address">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editBio" class="form-label fw-bold">
+                                        <i class="bi bi-chat-text-fill me-2 text-primary"></i>Bio
+                                    </label>
+                                    <textarea class="form-control" 
+                                              id="editBio" 
+                                              name="bio" 
+                                              rows="4" 
+                                              placeholder="Tell us about yourself...">{{ user.bio or '' }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editUsername" class="form-label fw-bold">
+                                        <i class="bi bi-at me-2 text-secondary"></i>Username
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control form-control-lg" 
+                                           id="editUsername" 
+                                           value="{{ user.username }}"
+                                           readonly 
+                                           disabled>
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle-fill me-1"></i>
+                                        Username cannot be changed
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg me-1"></i>
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-lg me-1"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Please log in to view your profile.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Blue Theme Profile Styles */
+:root {
+    --primary-blue: #2563eb;
+    --secondary-blue: #3b82f6;
+    --light-blue: #dbeafe;
+    --dark-blue: #1e40af;
+    --accent-blue: #60a5fa;
+    --text-blue: #1e3a8a;
+    --bg-blue: #eff6ff;
+}
+
+.avatar-circle {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.profile-avatar-large {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 4rem;
+    margin: 0 auto;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+    border: 4px solid white;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%) !important;
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%) !important;
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, var(--secondary-blue) 0%, var(--accent-blue) 100%) !important;
+}
+
+.profile-info-item .row {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+}
+
+.profile-info-item .row:hover {
+    background-color: var(--bg-blue);
+    padding: 12px 16px !important;
+    transform: translateX(4px);
+}
+
+.statistics-card {
+    transition: all 0.3s ease;
+    border-radius: 16px !important;
+    border: 1px solid var(--light-blue) !important;
+    background: white;
+}
+
+.statistics-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15) !important;
+    border-color: var(--accent-blue) !important;
+}
+
+.statistics-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 28px;
+    color: white;
+}
+
+.statistics-icon.text-primary {
+    background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+}
+
+.statistics-icon.text-success {
+    background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue));
+}
+
+.statistics-icon.text-warning {
+    background: linear-gradient(135deg, var(--secondary-blue), var(--accent-blue));
+}
+
+.statistics-icon.text-info {
+    background: linear-gradient(135deg, var(--accent-blue), var(--secondary-blue));
+}
+
+.statistics-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-blue);
+}
+
+.statistics-label {
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+}
+
+.statistics-progress {
+    margin-top: 12px;
+}
+
+.status-item {
+    background: linear-gradient(135deg, #ffffff 0%, var(--bg-blue) 100%);
+    border: 1px solid var(--light-blue);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.status-item:hover {
+    background: linear-gradient(135deg, var(--bg-blue) 0%, #ffffff 100%);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
+    border-color: var(--accent-blue);
+}
+
+.status-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.status-icon.bg-success {
+    background: linear-gradient(135deg, #059669, #10b981) !important;
+}
+
+.status-icon.bg-warning {
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+}
+
+.status-icon.bg-info {
+    background: linear-gradient(135deg, var(--secondary-blue), var(--accent-blue)) !important;
+}
+
+.status-icon.bg-primary {
+    background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)) !important;
+}
+
+.status-icon.bg-danger {
+    background: linear-gradient(135deg, #dc2626, #ef4444) !important;
+}
+
+.status-icon.bg-secondary {
+    background: linear-gradient(135deg, #6b7280, #9ca3af) !important;
+}
+
+.card {
+    border-radius: 16px !important;
+    overflow: hidden;
+    border: 1px solid var(--light-blue) !important;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.08) !important;
+}
+
+.card-header {
+    border: none !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 20px 24px;
+}
+
+.btn {
+    border-radius: 12px !important;
+    font-weight: 600;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)) !important;
+    border: none !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue)) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+
+.btn-outline-primary {
+    border-color: var(--primary-blue) !important;
+    color: var(--primary-blue) !important;
+    background: transparent !important;
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary-blue) !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+}
+
+.btn-outline-secondary {
+    border-color: var(--secondary-blue) !important;
+    color: var(--secondary-blue) !important;
+    background: transparent !important;
+}
+
+.btn-outline-secondary:hover {
+    background: var(--secondary-blue) !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+}
+
+.btn-outline-info {
+    border-color: var(--accent-blue) !important;
+    color: var(--accent-blue) !important;
+    background: transparent !important;
+}
+
+.btn-outline-info:hover {
+    background: var(--accent-blue) !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(96, 165, 250, 0.3);
+}
+
+.form-control {
+    border-radius: 12px !important;
+    border: 2px solid var(--light-blue);
+    transition: all 0.3s ease;
+    padding: 12px 16px;
+}
+
+.form-control:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+}
+
+.form-control-lg {
+    font-size: 1.1rem;
+    padding: 16px 20px;
+}
+
+.modal-content {
+    border-radius: 20px !important;
+    border: none !important;
+    box-shadow: 0 25px 50px rgba(37, 99, 235, 0.15) !important;
+}
+
+.modal-header {
+    border-radius: 20px 20px 0 0 !important;
+    border: none !important;
+    padding: 24px 32px;
+}
+
+.modal-footer {
+    border: none !important;
+    border-radius: 0 0 20px 20px !important;
+    padding: 24px 32px;
+    background: var(--bg-blue);
+}
+
+.modal-body {
+    padding: 32px;
+}
+
+/* Icon styles */
+.bi {
+    line-height: 1;
+}
+
+/* Badge styles */
+.badge {
+    font-size: 0.8em;
+    border-radius: 8px !important;
+    padding: 6px 12px;
+    font-weight: 600;
+}
+
+.badge.bg-success {
+    background: linear-gradient(135deg, #059669, #10b981) !important;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+}
+
+.badge.bg-primary {
+    background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)) !important;
+}
+
+/* Progress bar styles */
+.progress {
+    background-color: var(--light-blue);
+    border-radius: 10px;
+    height: 6px !important;
+}
+
+.progress-bar {
+    border-radius: 10px;
+}
+
+.progress-bar.bg-primary {
+    background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)) !important;
+}
+
+.progress-bar.bg-success {
+    background: linear-gradient(135deg, #059669, #10b981) !important;
+}
+
+.progress-bar.bg-warning {
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+}
+
+.progress-bar.bg-info {
+    background: linear-gradient(135deg, var(--secondary-blue), var(--accent-blue)) !important;
+}
+
+/* Text colors */
+.text-primary {
+    color: var(--primary-blue) !important;
+}
+
+.text-blue {
+    color: var(--text-blue) !important;
+}
+
+/* Page header styling */
+.page-header {
+    background: linear-gradient(135deg, var(--bg-blue) 0%, #ffffff 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid var(--light-blue);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.card {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.statistics-card:nth-child(1) { animation-delay: 0.1s; }
+.statistics-card:nth-child(2) { animation-delay: 0.2s; }
+.statistics-card:nth-child(3) { animation-delay: 0.3s; }
+.statistics-card:nth-child(4) { animation-delay: 0.4s; }
+
+.profile-avatar-large {
+    animation: scaleIn 0.8s ease forwards;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .profile-avatar-large {
+        width: 100px;
+        height: 100px;
+        font-size: 3rem;
+    }
+    
+    .statistics-number {
+        font-size: 2rem;
+    }
+    
+    .btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .card-header {
+        padding: 16px 20px;
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+}
+</style>
+
+<script>
+function openEditProfileModal() {
+    const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+    modal.show();
+}
+
+// Handle form submission
+document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+    submitBtn.disabled = true;
+    
+    fetch('/api/user/profile', {
+        method: 'PUT',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+            modal.hide();
+            
+            // Show success message
+            showNotification('Profile updated successfully!', 'success');
+            
+            // Reload profile page to show changes
+            setTimeout(() => {
+                loadPage('profile');
+            }, 1000);
+        } else {
+            showNotification(data.message || 'Error updating profile', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error updating profile', 'error');
+    })
+    .finally(() => {
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+function showNotification(message, type) {
+    // Enhanced notification system
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const iconClass = type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle';
+    
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show shadow-sm" role="alert" style="border-radius: 10px; border: none;">
+            <i class="bi ${iconClass} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Find a container to show the alert
+    const container = document.querySelector('.container-fluid');
+    if (container) {
+        container.insertAdjacentHTML('afterbegin', alertHtml);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            const alert = container.querySelector('.alert');
+            if (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 5000);
+    }
+}
+
+// Add smooth scroll animations
+document.addEventListener('DOMContentLoaded', function() {
+    // Add intersection observer for animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all cards
+    document.querySelectorAll('.card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        card.style.transition = 'all 0.6s ease';
+        observer.observe(card);
+    });
+});
+</script>

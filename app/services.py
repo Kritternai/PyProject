@@ -84,6 +84,40 @@ class UserService:
             raise ValidationException("รหัสผ่านไม่ถูกต้อง")
         return user
 
+    def update_user_profile(self, user_id: int, data: Dict[str, Any]):
+        """Update user profile."""
+        from app.models.user import UserModel
+        from app import db
+        
+        # Get user
+        user = UserModel.query.get(user_id)
+        if not user:
+            raise NotFoundException("User not found")
+        
+        # Update fields if provided
+        if 'first_name' in data:
+            user.first_name = data['first_name'] or None
+        if 'last_name' in data:
+            user.last_name = data['last_name'] or None
+        if 'email' in data and data['email']:
+            # Check if email is already taken by another user
+            existing_user = UserModel.query.filter(
+                UserModel.email == data['email'],
+                UserModel.id != user_id
+            ).first()
+            if existing_user:
+                raise BusinessLogicException("This email is already in use")
+            user.email = data['email']
+        if 'bio' in data:
+            user.bio = data['bio'] or None
+        
+        try:
+            db.session.commit()
+            return user
+        except Exception as e:
+            db.session.rollback()
+            raise BusinessLogicException(f"Failed to update profile: {str(e)}")
+
 
 class LessonService:
     """Simple lesson service for business logic."""

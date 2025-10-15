@@ -1,23 +1,5 @@
-// Cleanup function for previous page
-function cleanupPreviousPage() {
-  console.log('🧹 Cleaning up previous page...');
-  
-  // Call page-specific cleanup functions
-  if (window.onUnloadPomodoro && window.pomodoroInitialized) {
-    console.log('🧹 Cleaning up Pomodoro page...');
-    window.onUnloadPomodoro();
-  }
-  
-  // Add other page cleanup here as needed
-  
-  console.log('✅ Previous page cleanup completed');
-}
-
 function loadPage(page, updateHistory = true) {
   console.log('🔄 Loading page:', page);
-  
-  // Cleanup previous page before loading new one
-  cleanupPreviousPage();
   
   const mainContent = document.getElementById('main-content');
   
@@ -50,7 +32,6 @@ function loadPage(page, updateHistory = true) {
       <div class="text-secondary">Loading ${page.charAt(0).toUpperCase() + page.slice(1)}...</div>
     </div>
   `;
-
   
   fetch('/partial/' + page)
     .then(response => {
@@ -65,144 +46,20 @@ function loadPage(page, updateHistory = true) {
         console.log('🔄 Handling HTML response');
         return response.text().then(html => {
           console.log('📝 Updating main-content');
-          document.getElementById('main-content').innerHTML = html;
+          // Remove loading class and update content
+          mainContent.classList.remove('loading');
+          mainContent.innerHTML = html;
         
         if (page === 'dashboard') {
           console.log('📅 Setting up calendar...');
           setupFullCalendar();
         }
         
-        // Load note add page script
-        if (page === 'note/add') {
-          console.log('📝 Note add page detected');
-          
-          // Load note_add.js dynamically
-          const loadNoteAdd = () => {
-            console.log('📥 Loading note_add.js dynamically...');
-            
-            // Check if script already exists
-            const existingScript = document.querySelector('script[src*="note_add.js"]');
-            if (existingScript) {
-              console.log('♻️ note_add.js already loaded, re-initializing...');
-              if (window.initializeNoteAdd) {
-                window.initializeNoteAdd();
-              }
-              return;
-            }
-            
-            const script = document.createElement('script');
-            script.src = '/static/js/note_js/note_add.js?v=' + Date.now();
-            script.async = true;
-            
-            script.onload = () => {
-              console.log('✅ note_add.js loaded successfully');
-              console.log('Functions available:', {
-                saveNewNote: typeof window.saveNewNote,
-                clearNote: typeof window.clearNote,
-                initializeNoteAdd: typeof window.initializeNoteAdd
-              });
-            };
-            
-            script.onerror = () => {
-              console.error('❌ Failed to load note_add.js');
-              alert('Failed to load note editor. Please refresh the page.');
-            };
-            
-            document.head.appendChild(script);
-          };
-          
-          loadNoteAdd();
-        }
-        
-        // Load note list page script
-        if (page === 'note') {
-          console.log('📝 Note list page detected');
-          
-          // Load note_list.js dynamically
-          const loadNoteList = () => {
-            console.log('📥 Loading note_list.js dynamically...');
-            
-            // Check if script already exists
-            const existingScript = document.querySelector('script[src*="note_list.js"]');
-            if (existingScript) {
-              console.log('♻️ note_list.js already loaded, re-initializing...');
-              if (window.initializeNoteList) {
-                window.initializeNoteList();
-              }
-              return;
-            }
-            
-            const script = document.createElement('script');
-            script.src = '/static/js/note_js/note_list.js?v=' + Date.now();
-            script.async = true;
-            
-            script.onload = () => {
-              console.log('✅ note_list.js loaded successfully');
-              console.log('Functions available:', {
-                initializeNoteList: typeof window.initializeNoteList,
-                clearNoteFilters: typeof window.clearNoteFilters,
-                filterNotesByStatus: typeof window.filterNotesByStatus,
-                searchNotes: typeof window.searchNotes
-              });
-            };
-            
-            script.onerror = () => {
-              console.error('❌ Failed to load note_list.js');
-              alert('Failed to load note list. Please refresh the page.');
-            };
-            
-            document.head.appendChild(script);
-          };
-          
-          loadNoteList();
-        }
-        
-        // Load note editor page script
-        if (page.startsWith('note/editor')) {
-          console.log('📝 Note editor page detected');
-          
-          // Load note_editor.js dynamically
-          const loadNoteEditor = () => {
-            console.log('📥 Loading note_editor.js dynamically...');
-            
-            // Check if script already exists
-            const existingScript = document.querySelector('script[src*="note_editor.js"]');
-            if (existingScript) {
-              console.log('♻️ note_editor.js already loaded, re-initializing...');
-              if (window.initializeNoteEditor) {
-                window.initializeNoteEditor();
-              }
-              return;
-            }
-            
-            const script = document.createElement('script');
-            script.src = '/static/js/note_js/note_editor.js?v=' + Date.now();
-            script.async = true;
-            
-            script.onload = () => {
-              console.log('✅ note_editor.js loaded successfully');
-              console.log('Functions available:', {
-                loadEditorNote: typeof window.loadEditorNote,
-                saveEditorNote: typeof window.saveEditorNote,
-                initializeNoteEditor: typeof window.initializeNoteEditor
-              });
-            };
-            
-            script.onerror = () => {
-              console.error('❌ Failed to load note_editor.js');
-              alert('Failed to load note editor. Please refresh the page.');
-            };
-            
-            document.head.appendChild(script);
-          };
-          
-          loadNoteEditor();
-        }
-        
         if (page === 'pomodoro') {
           console.log('⏰ Pomodoro page detected');
           window.isInSpaMode = true;
           
+<<<<<<< HEAD
           // Clean up previous Pomodoro if exists
           if (window.onUnloadPomodoro && typeof window.onUnloadPomodoro === 'function') {
             console.log('🧹 Cleaning up previous Pomodoro instance...');
@@ -210,6 +67,13 @@ function loadPage(page, updateHistory = true) {
           }
           // Always reload Pomodoro to ensure fresh state
           console.log('🔄 Reloading Pomodoro for fresh state...');
+=======
+          // Check if already loaded
+          if (window.pomodoroLoaded && window.pomodoroInitialized) {
+            console.log('✅ Pomodoro already loaded and initialized');
+            return;
+          }
+>>>>>>> dev-web/refactor-auth
           
           // Reset Pomodoro flags
           window.pomodoroLoaded = false;
@@ -230,6 +94,7 @@ function loadPage(page, updateHistory = true) {
           script.onload = () => {
             console.log('✅ pomodoro.js loaded successfully');
             
+<<<<<<< HEAD
             // Wait for functions to be defined and initialize
             setTimeout(() => {
               if (window.onLoadPomodoro && typeof window.onLoadPomodoro === 'function') {
@@ -240,6 +105,41 @@ function loadPage(page, updateHistory = true) {
                 } catch (error) {
                   console.error('❌ Error initializing Pomodoro:', error);
                   showPomodoroError('Error initializing Pomodoro Timer');
+=======
+            // ตรวจสอบว่ามี script อยู่แล้วหรือไม่
+            const existingScript = document.querySelector('script[src*="pomodoro.js"]');
+            if (existingScript) {
+              console.log('⚠️ Found existing pomodoro.js script, removing...');
+              existingScript.remove();
+            }
+            
+            const script = document.createElement('script');
+            script.src = '/static/js/pomodoro.js';
+            script.async = true;
+            
+            script.onload = () => {
+              console.log('✅ pomodoro.js loaded successfully');
+              
+              // รอให้ script ทำงานและ define functions เสร็จ
+              setTimeout(() => {
+                if (window.onLoadPomodoro) {
+                  console.log('✅ Found onLoadPomodoro function, initializing...');
+                  try {
+                    // ตรวจสอบว่าเคย initialize แล้วหรือยัง
+                    if (!window.pomodoroInitialized) {
+                      window.onLoadPomodoro();
+                      console.log('✅ Pomodoro initialized successfully');
+                    } else {
+                      console.log('⚠️ Pomodoro already initialized');
+                    }
+                  } catch (error) {
+                    console.error('❌ Error initializing Pomodoro:', error);
+                    showPomodoroError('Error initializing Pomodoro Timer');
+                  }
+                } else {
+                  console.error('❌ onLoadPomodoro function not found after script load!');
+                  showPomodoroError('Error loading Pomodoro Timer');
+>>>>>>> dev-web/refactor-auth
                 }
               }
             }, 100); // Small delay to ensure functions are defined
@@ -300,11 +200,13 @@ function loadPage(page, updateHistory = true) {
     })
     .catch(error => {
       console.error('Error loading page:', error);
-      // Show error message
+      // Show error message and remove loading state
       const mainContent = document.getElementById('main-content');
+      mainContent.classList.remove('loading');
       mainContent.innerHTML = '<div class="text-center py-5"><div class="alert alert-danger">Error loading page. Please try again.</div></div>';
     });
 }
+<<<<<<< HEAD
 
 // Make loadPage globally available
 window.loadPage = loadPage;
@@ -328,18 +230,30 @@ function preloadPage(pageName) {
     .then(response => response.text())
     .then(data => {
       console.log(`✅ Preloaded: ${pageName}`);
+=======
+// Preload function for faster navigation
+function preloadPage(page) {
+  // Prefetch the page content without displaying it
+  fetch(`/partial/${page}`)
+    .then(response => {
+      if (response.ok) {
+        console.log(`✅ Preloaded: ${page}`);
+      }
+>>>>>>> dev-web/refactor-auth
     })
     .catch(error => {
-      console.log(`⚠️ Preload failed for ${pageName}:`, error);
+      console.log(`⚠️ Preload failed for: ${page}`, error);
     });
 }
 
+// Preload common pages on page load
 document.addEventListener('DOMContentLoaded', function() {
   // Preload dashboard and class pages
   setTimeout(() => {
     preloadPage('dashboard');
     preloadPage('class');
   }, 1000);
+<<<<<<< HEAD
   
   // Check if we should open Google Classroom import modal
   const urlParams = new URLSearchParams(window.location.search);
@@ -363,34 +277,14 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }, 1000);
   }
+=======
+>>>>>>> dev-web/refactor-auth
 });
 
 // Open full-page note editor (fragment) with optional selected note
 window.openNoteEditor = function(noteId) {
   const target = noteId ? `note/editor/${noteId}` : 'note/editor';
   loadPage(target);
-}
-
-// Alternative: Open editor page (for editor view)
-window.openNoteEditorPage = function(noteId) {
-  const target = noteId ? `note/editor/${noteId}` : 'note/editor';
-  loadPage(target);
-}
-
-// Navigate to class page or specific class detail
-window.navigateToClass = function(classId, event) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  
-  if (classId) {
-    // Navigate to specific class detail - use full page navigation
-    window.location.href = `/class/${classId}`;
-  } else {
-    // Navigate to class list page
-    loadPage('class');
-  }
 }
 
 // Attach click on whole note card to open editor (avoid when clicking action buttons/links)
@@ -1642,6 +1536,13 @@ window.toggleAdvancedSearch = function() {
 function setupLessonSearchAndFilter() {
   console.log('setupLessonSearchAndFilter called');
   
+  // Check if we're on the new All Classes page (lessons-page class)
+  if (document.querySelector('.lessons-page')) {
+    console.log('New All Classes page detected - initializing real-time search');
+    initializeClassesRealtimeSearch();
+    return;
+  }
+  
   // Add a small delay to ensure DOM is ready
   setTimeout(() => {
     const searchInput = document.getElementById('lessonSearch');
@@ -1682,7 +1583,7 @@ function setupLessonSearchAndFilter() {
     }
     
     function updateClearButton() {
-      if (clearSearchBtn && searchInput && filterSelect) {
+      if (clearSearchBtn) {
         const hasValue = searchInput.value.trim() !== '' || filterSelect.value !== '';
         clearSearchBtn.style.display = hasValue ? 'block' : 'none';
       }
@@ -1833,7 +1734,7 @@ function setupLessonSearchAndFilter() {
           if (!noResultsDiv) {
             noResultsDiv = document.createElement('div');
             noResultsDiv.id = 'no-results-message';
-            noResultsDiv.className = 'py-5 text-center col-12';
+            noResultsDiv.className = 'col-12 text-center py-5';
             noResultsDiv.innerHTML = `
               <div class="text-muted">
                 <i class="fas fa-search fa-3x mb-3"></i>
@@ -2098,6 +1999,543 @@ window.selectColor = function(element, colorId) {
     console.error('❌ Error in selectColor:', error);
   }
 }
+
+// Modal Color Selection (for new modal design)
+window.selectModalColor = function(element, colorId) {
+    console.log('🎨 Modal selectColor called:', colorId);
+    
+    // Prevent event bubbling
+    if (typeof event !== 'undefined') {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    try {
+        // Find the modal container
+        const modal = element.closest('.modal');
+        if (!modal) {
+            console.error('❌ Modal not found');
+            return;
+        }
+        
+        // Remove selected class from all modal-color-box in modal
+        const colorOptions = modal.querySelectorAll('.modal-color-box');
+        console.log('Found color options:', colorOptions.length);
+        
+        colorOptions.forEach(option => {
+            option.classList.remove('selected');
+            // Add a small shrink animation to deselected items
+            option.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                option.style.transform = '';
+            }, 200);
+        });
+        
+        // Add selected class to clicked option with delay for animation
+        setTimeout(() => {
+            element.classList.add('selected');
+            console.log('✅ Color selected:', colorId);
+        }, 100);
+        
+        // Update hidden input
+        const hiddenInput = modal.querySelector('#selectedColor');
+        if (hiddenInput) {
+            hiddenInput.value = colorId;
+            console.log('✅ Hidden input updated:', colorId);
+        } else {
+            console.error('❌ Hidden input not found');
+        }
+        
+        // Add ripple effect
+        const ripple = document.createElement('div');
+        ripple.style.cssText = `
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            animation: ripple 0.6s ease-out;
+            pointer-events: none;
+        `;
+        element.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+        
+    } catch (error) {
+        console.error('❌ Error in selectModalColor:', error);
+    }
+};
+
+// Character counter for modals
+window.updateCharCount = function(input, counterId, maxLength) {
+    const counter = document.getElementById(counterId);
+    if (counter) {
+        counter.textContent = input.value.length;
+    }
+};
+
+console.log('✅ selectModalColor and updateCharCount functions loaded');
+
+// ============================================
+// ALL CLASSES PAGE FUNCTIONS
+// ============================================
+
+// Initialize Real-time Search for All Classes
+function initializeClassesRealtimeSearch() {
+    console.log('='.repeat(60));
+    console.log('🎓 INITIALIZING REAL-TIME SEARCH FOR ALL CLASSES');
+    console.log('='.repeat(60));
+    
+    // Set initial filter state
+    window.currentLessonFilter = 'all';
+    
+    // Get elements
+    const searchInput = document.getElementById('lessonSearch');
+    const clearButton = document.getElementById('clearSearch');
+    const lessonsGrid = document.getElementById('lessons-grid');
+    
+    console.log('📋 Elements Check:');
+    console.log('  searchInput:', !!searchInput);
+    console.log('  clearButton:', !!clearButton);
+    console.log('  lessonsGrid:', !!lessonsGrid);
+    
+    if (!searchInput) {
+        console.error('❌ Search input not found!');
+        return;
+    }
+    
+    // Check if already initialized
+    if (searchInput.dataset.searchInitialized === 'true') {
+        console.log('⚠️ Already initialized');
+        return;
+    }
+    
+    // Real-time search function
+    function performRealtimeSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const lessonCards = document.querySelectorAll('.lesson-card-modern');
+        let visibleCount = 0;
+        
+        console.log(`🔍 Real-time search: "${searchTerm}"`);
+        
+        // Show/hide clear button
+        if (clearButton) {
+            clearButton.style.display = searchTerm.length > 0 ? 'flex' : 'none';
+        }
+        
+        // Filter cards
+        lessonCards.forEach((card) => {
+            const title = (card.querySelector('.lesson-card-title')?.textContent || '').toLowerCase();
+            const description = (card.querySelector('.lesson-card-description')?.textContent || '').toLowerCase();
+            
+            const matchesSearch = searchTerm === '' || 
+                                 title.includes(searchTerm) || 
+                                 description.includes(searchTerm);
+            
+            const matchesFilter = window.checkFilterMatch ? 
+                                 window.checkFilterMatch(card, window.currentLessonFilter) : 
+                                 true;
+            
+            const shouldShow = matchesSearch && matchesFilter;
+            card.style.display = shouldShow ? '' : 'none';
+            
+            if (shouldShow) visibleCount++;
+        });
+        
+        console.log(`✅ Results: ${visibleCount}/${lessonCards.length} visible`);
+        
+        // Show/hide empty state
+        if (lessonsGrid) {
+            let emptyState = lessonsGrid.querySelector('.lessons-search-empty');
+            
+            if (visibleCount === 0 && lessonCards.length > 0) {
+                if (!emptyState) {
+                    emptyState = document.createElement('div');
+                    emptyState.className = 'lessons-search-empty';
+                    emptyState.innerHTML = `
+                        <div class="lessons-empty">
+                            <div class="lessons-empty-icon">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <h3>No Results Found</h3>
+                            <p>Try adjusting your search term or filter</p>
+                        </div>
+                    `;
+                    lessonsGrid.appendChild(emptyState);
+                }
+                emptyState.style.display = 'block';
+            } else if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+        }
+    }
+    
+    // Attach event listeners
+    console.log('⚡ Attaching event listeners...');
+    
+    // INPUT event - REAL-TIME
+    searchInput.addEventListener('input', function(e) {
+        console.log('⌨️ INPUT:', e.target.value);
+        performRealtimeSearch();
+    });
+    
+    // KEYUP event - backup
+    searchInput.addEventListener('keyup', function() {
+        performRealtimeSearch();
+    });
+    
+    // Clear button
+    if (clearButton) {
+        clearButton.addEventListener('click', function(e) {
+            console.log('🗑️ Clear clicked');
+            e.preventDefault();
+            e.stopPropagation();
+            searchInput.value = '';
+            clearButton.style.display = 'none';
+            searchInput.focus();
+            performRealtimeSearch();
+        });
+    }
+    
+    // Keyboard shortcuts
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchInput.blur();
+        } else if (e.key === 'Escape') {
+            searchInput.value = '';
+            if (clearButton) clearButton.style.display = 'none';
+            performRealtimeSearch();
+        }
+    });
+    
+    // Mark as initialized
+    searchInput.dataset.searchInitialized = 'true';
+    
+    // Initial setup
+    if (clearButton) {
+        clearButton.style.display = 'none';
+    }
+    
+    // Sort by favorites
+    setTimeout(() => {
+        if (typeof window.sortLessonsByFavorite === 'function') {
+            window.sortLessonsByFavorite();
+            console.log('✓ Sorted by favorites');
+        }
+    }, 100);
+    
+    console.log('✅ REAL-TIME SEARCH READY!');
+    console.log('='.repeat(60));
+    
+    // Test immediately
+    performRealtimeSearch();
+}
+
+// Helper function to check filter match
+window.checkFilterMatch = function(card, filter) {
+    if (filter === 'all') return true;
+    if (filter === 'favorites') return card.dataset.isFavorite === 'true';
+    
+    const status = card.dataset.status || 'active';
+    
+    if (filter === 'active') {
+        // Active includes: active, not_started, in_progress, or empty
+        return status === 'active' || status === 'not_started' || status === 'in_progress' || status === '';
+    }
+    
+    if (filter === 'completed') {
+        return status === 'completed';
+    }
+    
+    if (filter === 'archived') {
+        return status === 'archived';
+    }
+    
+    return card.dataset.status === filter;
+};
+
+// Filter lessons function
+window.filterLessons = function(filter, buttonElement) {
+    console.log('🔍 Filtering by:', filter);
+    window.currentLessonFilter = filter;
+    
+    // Update button states
+    const filterButtons = document.querySelectorAll('.filter-compact-btn');
+    filterButtons.forEach(btn => btn.classList.remove('active'));
+    if (buttonElement) {
+        buttonElement.classList.add('active');
+    }
+    
+    // Apply filter
+    const lessonCards = document.querySelectorAll('.lesson-card-modern');
+    const searchInput = document.getElementById('lessonSearch');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    
+    let visibleCount = 0;
+    lessonCards.forEach(card => {
+        const title = card.querySelector('.lesson-card-title')?.textContent.toLowerCase() || '';
+        const description = card.querySelector('.lesson-card-description')?.textContent.toLowerCase() || '';
+        
+        // Check search match
+        const matchesSearch = searchTerm === '' || title.includes(searchTerm) || description.includes(searchTerm);
+        
+        // Check filter match
+        const matchesFilter = window.checkFilterMatch(card, filter);
+        
+        const shouldShow = matchesSearch && matchesFilter;
+        card.style.display = shouldShow ? '' : 'none';
+        
+        if (shouldShow) visibleCount++;
+    });
+    
+    console.log(`✅ Filter applied: ${visibleCount}/${lessonCards.length} cards visible`);
+    
+    // Show/hide empty state
+    const lessonsGrid = document.getElementById('lessons-grid');
+    if (lessonsGrid) {
+        let emptyState = lessonsGrid.querySelector('.lessons-search-empty');
+        
+        if (visibleCount === 0 && lessonCards.length > 0) {
+            if (!emptyState) {
+                emptyState = document.createElement('div');
+                emptyState.className = 'lessons-search-empty';
+                emptyState.innerHTML = `
+                    <div class="lessons-empty">
+                        <div class="lessons-empty-icon">
+                            <i class="bi bi-funnel"></i>
+                        </div>
+                        <h3>No Classes Match Filter</h3>
+                        <p>Try selecting a different filter or search term</p>
+                    </div>
+                `;
+                lessonsGrid.appendChild(emptyState);
+            }
+            emptyState.style.display = 'block';
+        } else if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+    }
+};
+
+// Navigate to class
+window.navigateToClass = function(lessonId, event) {
+    // Don't navigate if clicking on favorite button
+    if (event && event.target.closest('.lesson-card-favorite')) {
+        console.log('🚫 Ignoring click on favorite button');
+        return;
+    }
+    
+    console.log('🔗 Navigating to class:', lessonId);
+    
+    // Direct navigation to class detail page
+    window.location.href = '/class/' + lessonId;
+};
+
+// Sort lessons by favorites (favorites first) - REAL-TIME
+window.sortLessonsByFavorite = function() {
+    const grid = document.getElementById('lessons-grid');
+    if (!grid) {
+        console.warn('⚠️ Grid not found for sorting');
+        return;
+    }
+    
+    const cards = Array.from(grid.querySelectorAll('.lesson-card-modern'));
+    
+    if (cards.length === 0) {
+        console.warn('⚠️ No cards to sort');
+        return;
+    }
+    
+    console.log('🔄 REAL-TIME Sorting by favorites...');
+    console.log(`  → Total cards: ${cards.length}`);
+    
+    // Count favorites before sort
+    const favoritesBefore = cards.filter(c => c.dataset.isFavorite === 'true').length;
+    console.log(`  → Favorites: ${favoritesBefore}`);
+    
+    // Sort: favorites first (0), non-favorites last (1)
+    cards.sort((a, b) => {
+        const aFav = a.dataset.isFavorite === 'true' ? 0 : 1;
+        const bFav = b.dataset.isFavorite === 'true' ? 0 : 1;
+        const result = aFav - bFav;
+        
+        // Debug first few
+        if (cards.indexOf(a) < 3 || cards.indexOf(b) < 3) {
+            const aTitle = a.querySelector('.lesson-card-title')?.textContent.substring(0, 20);
+            const bTitle = b.querySelector('.lesson-card-title')?.textContent.substring(0, 20);
+            console.log(`  → Compare: "${aTitle}" (${aFav}) vs "${bTitle}" (${bFav}) = ${result}`);
+        }
+        
+        return result;
+    });
+    
+    // Clear grid first
+    while (grid.firstChild) {
+        // Keep empty state if exists
+        if (grid.firstChild.classList?.contains('lessons-empty') || 
+            grid.firstChild.classList?.contains('lessons-search-empty')) {
+            break;
+        }
+        grid.removeChild(grid.firstChild);
+    }
+    
+    // Re-append in sorted order
+    cards.forEach((card, index) => {
+        grid.insertBefore(card, grid.firstChild?.classList?.contains('lessons-empty') ? grid.firstChild : null);
+        
+        // Log first 3 cards
+        if (index < 3) {
+            const title = card.querySelector('.lesson-card-title')?.textContent.substring(0, 30);
+            const isFav = card.dataset.isFavorite === 'true';
+            console.log(`  → Card ${index + 1}: ${isFav ? '⭐' : '☆'} "${title}"`);
+        }
+    });
+    
+    console.log('✅ Sorting complete!');
+};
+
+// Toggle favorite function - REAL-TIME with immediate sorting
+window.toggleFavorite = function(lessonId, element) {
+    console.log('='.repeat(60));
+    console.log('⭐ REAL-TIME FAVORITE TOGGLE');
+    console.log('='.repeat(60));
+    console.log(`Lesson ID: ${lessonId}`);
+    
+    const icon = element.querySelector('i');
+    const card = element.closest('.lesson-card-modern');
+    
+    if (!card) {
+        console.error('❌ Card not found!');
+        return;
+    }
+    
+    // Get current state
+    const currentFavorite = card.dataset.isFavorite === 'true';
+    const newFavorite = !currentFavorite;
+    
+    console.log(`Current state: ${currentFavorite} → New state: ${newFavorite}`);
+    
+    // Step 1: Update UI immediately (Optimistic Update)
+    console.log('📝 Step 1: Updating UI...');
+    if (newFavorite) {
+        element.classList.add('active');
+        icon.className = 'bi bi-star-fill';
+        card.dataset.isFavorite = 'true';
+        console.log('  ✓ Set to favorite');
+    } else {
+        element.classList.remove('active');
+        icon.className = 'bi bi-star';
+        card.dataset.isFavorite = 'false';
+        console.log('  ✓ Removed from favorites');
+    }
+    
+    // Step 2: Force a delay to ensure DOM is updated
+    setTimeout(() => {
+        console.log('📝 Step 2: Sorting cards...');
+        
+        // Verify the dataset was updated
+        const verifyFavorite = card.dataset.isFavorite === 'true';
+        console.log(`  → Verified dataset: ${verifyFavorite}`);
+        
+        // Sort immediately
+        if (typeof window.sortLessonsByFavorite === 'function') {
+            window.sortLessonsByFavorite();
+        } else {
+            console.error('❌ sortLessonsByFavorite function not found!');
+        }
+    }, 50); // Small delay to ensure DOM update
+    
+    // Step 3: Send to server
+    console.log('📝 Step 3: Sending to server...');
+    fetch(`/partial/class/${lessonId}/favorite`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('✅ Server response:', data);
+        
+        if (data.success) {
+            const serverFavorite = data.is_favorite;
+            console.log(`  → Server state: ${serverFavorite}`);
+            
+            // Verify server state matches our optimistic update
+            if (serverFavorite !== newFavorite) {
+                console.warn('⚠️ Server state mismatch! Correcting...');
+                // Update to match server
+                if (serverFavorite) {
+                    element.classList.add('active');
+                    icon.className = 'bi bi-star-fill';
+                    card.dataset.isFavorite = 'true';
+                } else {
+                    element.classList.remove('active');
+                    icon.className = 'bi bi-star';
+                    card.dataset.isFavorite = 'false';
+                }
+                
+                // Re-sort with corrected state
+                setTimeout(() => {
+                    window.sortLessonsByFavorite();
+                }, 50);
+            }
+            
+            // Show notification
+            if (typeof window.showSuccess === 'function') {
+                window.showSuccess(serverFavorite ? '⭐ Added to favorites' : 'Removed from favorites');
+            }
+        } else {
+            // Rollback on error
+            console.error('❌ Server error! Rolling back...');
+            if (currentFavorite) {
+                element.classList.add('active');
+                icon.className = 'bi bi-star-fill';
+                card.dataset.isFavorite = 'true';
+            } else {
+                element.classList.remove('active');
+                icon.className = 'bi bi-star';
+                card.dataset.isFavorite = 'false';
+            }
+            
+            setTimeout(() => {
+                window.sortLessonsByFavorite();
+            }, 50);
+            
+            if (typeof window.showError === 'function') {
+                window.showError('Failed to update favorite');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('❌ Network error! Rolling back...', error);
+        
+        // Rollback on network error
+        if (currentFavorite) {
+            element.classList.add('active');
+            icon.className = 'bi bi-star-fill';
+            card.dataset.isFavorite = 'true';
+        } else {
+            element.classList.remove('active');
+            icon.className = 'bi bi-star';
+            card.dataset.isFavorite = 'false';
+        }
+        
+        setTimeout(() => {
+            window.sortLessonsByFavorite();
+        }, 50);
+        
+        if (typeof window.showError === 'function') {
+            window.showError('Network error. Please try again.');
+        }
+    });
+    
+    console.log('='.repeat(60));
+};
+
+console.log('✅ All Classes page functions loaded');
 
 // Class Notes System Functions
 window.openNoteModal = function() {
@@ -3133,6 +3571,7 @@ window.insertHTMLAtCursor = function(html) {
 console.log('✅ Note Editor global functions loaded');
 
 // ========================================
+<<<<<<< HEAD
 // Google Classroom Integration Functions
 // ========================================
 
@@ -3488,6 +3927,8 @@ window.refreshGoogleCourses = function() {
 console.log('✅ Google Classroom integration functions loaded');
 
 // ========================================
+=======
+>>>>>>> dev-web/refactor-auth
 // Browser History Navigation (Back/Forward)
 // ========================================
 
@@ -3532,6 +3973,7 @@ if (window.history && window.history.replaceState) {
   console.log('📍 Initial history state saved:', currentPage);
 }
 
+<<<<<<< HEAD
 console.log('✅ Browser history navigation enabled');
 // Google Classroom Import - New System
 window.openGoogleClassroomImportNew = function() {
@@ -3802,3 +4244,6 @@ window.refreshTeams = function() {
 };
 
 // Close any remaining open blocks
+=======
+console.log('✅ Browser history navigation enabled');
+>>>>>>> dev-web/refactor-auth

@@ -117,7 +117,13 @@ def partial_profile():
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
     
-    return render_template('profile_fragment.html', user=g.user)
+    # Calculate days active (days since account creation)
+    days_active = 0
+    if g.user and g.user.created_at:
+        from datetime import datetime
+        days_active = (datetime.now() - g.user.created_at).days
+    
+    return render_template('profile_fragment.html', user=g.user, days_active=days_active)
 
 
 @main_routes_bp.route('/partial/change_password')
