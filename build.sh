@@ -5,7 +5,7 @@ echo "🚀 Building Smart Learning Hub with SQLite..."
 
 # Install dependencies
 echo "📦 Installing dependencies..."
-pip install -r requirements-sqlite.txt
+pip install -r requirements.txt
 
 # Verify critical dependencies
 echo "🔍 Verifying critical dependencies..."
