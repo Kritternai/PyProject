@@ -87,6 +87,7 @@ function nextMode() {
   pomodoroState.timeLeft = getModeTime();
   pomodoroState.totalTime = getModeTime();
   pomodoroState.isRunning = false;
+  pomodoroState.sessionStartTime = null; // Reset session start time for new mode
   
   console.log('✅ Next mode set to:', pomodoroState.mode, 'with', pomodoroState.timeLeft, 'seconds');
 }
@@ -192,6 +193,13 @@ function startTimer() {
 
   console.log('⏰ Starting Pomodoro timer...');
   console.log('⏰ Current timeLeft:', pomodoroState.timeLeft);
+  
+  // Record session start time if this is a new session
+  if (!pomodoroState.sessionStartTime) {
+    pomodoroState.sessionStartTime = Date.now();
+    console.log('📅 Session start time recorded:', new Date(pomodoroState.sessionStartTime));
+  }
+  
   pomodoroState.isRunning = true;
   lastTick = Date.now();
   
