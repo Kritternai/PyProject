@@ -16,7 +16,11 @@ from app import create_app, db
 app = create_app('production')
 with app.app_context():
     db.create_all()
-    print('✅ Database tables created successfully')
+    print('✅ PostgreSQL database tables created successfully')
 "
+
+# Optional: Run migration script if needed
+# echo "🔄 Running migration script..."
+# python migrate_to_postgresql.py
 
 echo "✅ Build completed successfully!"

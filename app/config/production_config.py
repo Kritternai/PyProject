@@ -18,8 +18,11 @@ class ProductionConfig(Config):
     if not SECRET_KEY or SECRET_KEY == 'your_strong_random_flask_secret_key':
         raise ValueError("FLASK_SECRET_KEY must be set with a secure value in production")
     
-    # Database settings - prefer PostgreSQL for production
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///site.db')
+    # Database settings - PostgreSQL for production
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    if not SQLALCHEMY_DATABASE_URI:
+        raise ValueError("DATABASE_URL must be set in production environment")
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
