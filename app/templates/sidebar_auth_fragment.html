@@ -34,8 +34,14 @@
     </ul>
   </div>
 {% else %}
-    <div class="d-grid gap-2">
-      <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
-      <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">Register</a>
+    <div class="enchat-sidebar__auth-buttons">
+      <a href="{{ url_for('auth.login') }}" class="enchat-sidebar__auth-btn enchat-sidebar__auth-btn--login">
+        <i class="bi bi-box-arrow-in-right"></i>
+        <span>Login</span>
+      </a>
+      <a href="{{ url_for('auth.register') }}" class="enchat-sidebar__auth-btn enchat-sidebar__auth-btn--register">
+        <i class="bi bi-person-plus-fill"></i>
+        <span>Register</span>
+      </a>
     </div>
 {% endif %}
