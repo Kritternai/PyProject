@@ -35,17 +35,17 @@
 .class-hero::before {
   content: '';
   position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-  animation: float 6s ease-in-out infinite;
+  top: -30%;
+  right: -30%;
+  width: 160%;
+  height: 160%;
+  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+  animation: float-subtle 8s ease-in-out infinite;
 }
 
-@keyframes float {
+@keyframes float-subtle {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(180deg); }
+  50% { transform: translateY(-8px) rotate(90deg); }
 }
 
 .hero-content {
@@ -298,28 +298,104 @@
   font-size: 0.95rem;
 }
 
+/* Lessons Section Background */
+.lessons-section {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 40px rgba(25, 118, 210, 0.08);
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.lessons-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(25, 118, 210, 0.03) 0%, transparent 70%);
+  animation: float-subtle 12s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.lessons-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(248, 250, 252, 0.1) 100%);
+  pointer-events: none;
+}
+
+/* Enhanced Section Header */
+.section-header {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(25, 118, 210, 0.1);
+}
+
+.section-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1A202C;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-badge {
+  background: linear-gradient(135deg, #1976D2, #42A5F5);
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.3);
+}
+
+.section-subtitle {
+  color: #718096;
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 500;
+}
+
 /* Enhanced Lesson Cards */
 .lessons-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 2rem;
+  position: relative;
+  z-index: 2;
 }
 
 .lesson-card-professional {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(25, 118, 210, 0.1);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 12px 40px rgba(25, 118, 210, 0.08);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
+  transform: translateY(0);
 }
 
 .lesson-card-professional:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 60px rgba(25, 118, 210, 0.2);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 24px 80px rgba(25, 118, 210, 0.15);
+  border-color: rgba(25, 118, 210, 0.2);
 }
 
 .lesson-card-professional::before {
@@ -328,20 +404,39 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #1976D2, #42A5F5);
+  height: 6px;
+  background: linear-gradient(90deg, #1976D2, #42A5F5, #64B5F6);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease;
+  z-index: 1;
 }
 
 .lesson-card-professional:hover::before {
   opacity: 1;
 }
 
+.lesson-card-professional::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(248, 250, 252, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.lesson-card-professional:hover::after {
+  opacity: 1;
+}
+
 .card-cover {
-  height: 120px;
+  height: 140px;
   position: relative;
   overflow: hidden;
+  border-radius: 20px 20px 0 0;
 }
 
 .card-gradient-cover {
@@ -350,9 +445,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
+  font-size: 3rem;
   color: white;
   position: relative;
+  transition: transform 0.3s ease;
+}
+
+.lesson-card-professional:hover .card-gradient-cover {
+  transform: scale(1.05);
 }
 
 .card-badges {
@@ -361,37 +461,55 @@
   right: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
   align-items: flex-end;
+  z-index: 2;
 }
 
 .card-role-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.7rem;
-  font-weight: 600;
+  padding: 0.4rem 1rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.4rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card-role-badge:hover {
+  transform: scale(1.05);
 }
 
 .card-role-badge.owner {
-  background: rgba(255, 193, 7, 0.9);
+  background: linear-gradient(135deg, #FFD700, #FFA000);
   color: #000;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .card-role-badge.viewer {
-  background: rgba(33, 150, 243, 0.9);
+  background: linear-gradient(135deg, #1976D2, #1565C0);
   color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .card-status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.9);
+  padding: 0.4rem 1rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.95);
   color: #1976D2;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card-status-badge:hover {
+  transform: scale(1.05);
 }
 
 .card-status-badge.completed {
@@ -424,52 +542,76 @@
 }
 
 .card-body {
-  padding: 1.5rem;
+  padding: 2rem;
+  position: relative;
+  z-index: 2;
 }
 
 .card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.4rem;
+  font-weight: 700;
   color: #1A202C;
-  margin-bottom: 0.75rem;
-  line-height: 1.3;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+  transition: color 0.3s ease;
+}
+
+.lesson-card-professional:hover .card-title {
+  color: #1976D2;
 }
 
 .card-description {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #718096;
-  margin-bottom: 1rem;
-  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color 0.3s ease;
+}
+
+.lesson-card-professional:hover .card-description {
+  color: #4A5568;
 }
 
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(25, 118, 210, 0.1);
+  padding-top: 1.5rem;
+  border-top: 2px solid rgba(25, 118, 210, 0.08);
+  position: relative;
+  z-index: 2;
 }
 
 .card-meta {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
+  gap: 0.75rem;
+  font-size: 0.9rem;
   color: #A0AEC0;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.lesson-card-professional:hover .card-meta {
+  color: #718096;
 }
 
 .card-arrow {
   color: #1976D2;
-  font-size: 1.2rem;
-  transition: transform 0.3s ease;
+  font-size: 1.4rem;
+  transition: all 0.3s ease;
+  padding: 0.5rem;
+  border-radius: 50%;
+  background: rgba(25, 118, 210, 0.1);
 }
 
 .lesson-card-professional:hover .card-arrow {
-  transform: translateX(4px);
+  transform: translateX(6px) scale(1.1);
+  background: rgba(25, 118, 210, 0.2);
 }
 
 /* Empty State */
@@ -560,6 +702,41 @@
   
   .filter-pills {
     justify-content: center;
+  }
+  
+  /* Lessons Section Mobile */
+  .lessons-section {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+  }
+  
+  .lessons-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .lesson-card-professional {
+    border-radius: 20px;
+  }
+  
+  .card-cover {
+    height: 120px;
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+  
+  .card-title {
+    font-size: 1.2rem;
+  }
+  
+  .card-description {
+    font-size: 0.9rem;
   }
   
   .class-stats {

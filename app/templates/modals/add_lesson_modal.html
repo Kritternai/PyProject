@@ -1,150 +1,222 @@
-<!-- Add Class Modal - Split Layout Design -->
+<!-- Professional Create Class Modal -->
 <style>
-.modal-split .modal-dialog {
-    max-width: 900px;
+* {
+  font-family: 'Prompt', sans-serif;
 }
 
-.modal-split .modal-content {
+.modal-create-class .modal-dialog {
+    max-width: 1000px;
+    margin: 1rem;
+}
+
+.modal-create-class .modal-content {
     border-radius: 24px;
     border: none;
-    box-shadow: 0 24px 80px rgba(25, 118, 210, 0.25);
+    box-shadow: 0 32px 80px rgba(25, 118, 210, 0.3);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+}
+
+.modal-create-class .modal-header {
+    background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
+    color: white;
+    padding: 2.5rem 3rem;
+    border: none;
+    position: relative;
     overflow: hidden;
 }
 
-.modal-split .modal-header {
-    background: linear-gradient(135deg, #1976D2, #0D47A1);
-    color: white;
-    padding: 2rem 2.5rem;
-    border: none;
-    position: relative;
-}
-
-.modal-split .modal-header::after {
+.modal-create-class .modal-header::before {
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #42A5F5, #1976D2, #0D47A1);
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+    animation: float-subtle 8s ease-in-out infinite;
 }
 
-.modal-split .modal-title {
-    font-weight: 800;
-    font-size: 1.75rem;
+@keyframes float-subtle {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(90deg); }
+}
+
+.modal-create-class .modal-title {
+    font-weight: 700;
+    font-size: 2rem;
     letter-spacing: -0.5px;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
-.modal-split .modal-body {
+.modal-create-class .modal-title-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.modal-create-class .btn-close {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    opacity: 1;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.modal-create-class .btn-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.modal-create-class .modal-body {
     padding: 0;
-    background: #F8F9FD;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 }
 
-.modal-split-layout {
+.modal-create-class-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    min-height: 500px;
+    min-height: 600px;
 }
 
-.modal-split-left {
-    padding: 2.5rem;
-    background: white;
-    border-right: 2px solid #E5E7EB;
+.modal-create-class-left {
+    padding: 3rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(25, 118, 210, 0.1);
 }
 
-.modal-split-right {
-    padding: 2.5rem;
-    background: #F8F9FD;
+.modal-create-class-right {
+    padding: 3rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+    backdrop-filter: blur(20px);
 }
 
-.modal-split-section {
-    margin-bottom: 2rem;
+.modal-section {
+    margin-bottom: 2.5rem;
 }
 
-.modal-split-section:last-child {
+.modal-section:last-child {
     margin-bottom: 0;
 }
 
-.modal-split-section-title {
-    font-size: 0.875rem;
-    font-weight: 700;
+.modal-section-title {
+    font-size: 1rem;
+    font-weight: 600;
     color: #1976D2;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid rgba(25, 118, 210, 0.1);
+}
+
+.modal-section-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #1976D2, #42A5F5);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.modal-create-class .form-label {
+    font-weight: 600;
+    color: #1A202C;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.modal-split .form-label {
-    font-weight: 600;
-    color: #1A202C;
-    margin-bottom: 0.5rem;
-    font-size: 0.9375rem;
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-}
-
-.modal-split .form-control,
-.modal-split .form-select {
-    padding: 0.875rem 1rem;
-    border-radius: 12px;
-    border: 2px solid #E5E7EB;
-    font-size: 0.9375rem;
+.modal-create-class .form-control,
+.modal-create-class .form-select {
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    border: 2px solid rgba(25, 118, 210, 0.1);
+    font-size: 1rem;
     transition: all 0.3s ease;
-    background: white;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
 }
 
-.modal-split .form-control:focus,
-.modal-split .form-select:focus {
+.modal-create-class .form-control:focus,
+.modal-create-class .form-select:focus {
     border-color: #1976D2;
     box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.1);
     outline: none;
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
 }
 
-.modal-split .char-counter {
-    font-size: 0.75rem;
+.modal-create-class .char-counter {
+    font-size: 0.8rem;
     color: #718096;
     margin-left: auto;
+    font-weight: 500;
 }
 
-.modal-split .form-hint {
-    font-size: 0.8125rem;
+.modal-create-class .form-hint {
+    font-size: 0.85rem;
     color: #718096;
-    margin-top: 0.375rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.modal-split .color-picker {
+.modal-create-class .color-picker {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
-.modal-split .modal-color-box {
+.modal-color-box {
     aspect-ratio: 1;
-    border-radius: 12px;
+    border-radius: 16px;
     border: 3px solid transparent;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
-.modal-split .modal-color-box:hover {
-    transform: scale(1.08) rotate(2deg);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+.modal-color-box:hover {
+    transform: scale(1.05) rotate(1deg);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-.modal-split .modal-color-box.selected {
+.modal-color-box.selected {
     border-color: #1976D2;
-    box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.25);
+    box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.25), 0 8px 24px rgba(0, 0, 0, 0.15);
     transform: scale(1.1);
     animation: colorPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-.modal-split .modal-color-box.selected::after {
+.modal-color-box.selected::after {
     content: '\F26B';
     font-family: 'bootstrap-icons';
     position: absolute;
@@ -152,7 +224,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     color: white;
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     animation: checkmarkPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
@@ -185,43 +257,180 @@
     }
 }
 
-.modal-split .modal-footer {
-    background: white;
-    border-top: 2px solid #E5E7EB;
-    padding: 1.75rem 2.5rem;
+.modal-create-class .modal-footer {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(25, 118, 210, 0.1);
+    padding: 2rem 3rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.modal-split .modal-footer-left {
+.modal-footer-left {
     color: #718096;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.modal-split .modal-footer-right {
+.modal-footer-right {
     display: flex;
     gap: 1rem;
 }
 
+.btn-modal-secondary {
+    padding: 1rem 2rem;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(25, 118, 210, 0.2);
+    color: #1976D2;
+    transition: all 0.3s ease;
+}
+
+.btn-modal-secondary:hover {
+    background: rgba(25, 118, 210, 0.05);
+    border-color: #1976D2;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(25, 118, 210, 0.15);
+}
+
+.btn-modal-primary {
+    padding: 1rem 2rem;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 1rem;
+    background: linear-gradient(135deg, #1976D2, #42A5F5);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-modal-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-modal-primary:hover::before {
+    left: 100%;
+}
+
+.btn-modal-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(25, 118, 210, 0.4);
+}
+
+.btn-import {
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 1rem;
+    border: 2px dashed;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.btn-import.google {
+    border-color: #1976D2;
+    color: #1976D2;
+}
+
+.btn-import.teams {
+    border-color: #6264A7;
+    color: #6264A7;
+}
+
+.btn-import:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.import-section {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(25, 118, 210, 0.1);
+    backdrop-filter: blur(10px);
+}
+
 @media (max-width: 768px) {
-    .modal-split-layout {
+    .modal-create-class-layout {
         grid-template-columns: 1fr;
     }
     
-    .modal-split-left {
+    .modal-create-class-left {
         border-right: none;
-        border-bottom: 2px solid #E5E7EB;
+        border-bottom: 1px solid rgba(25, 118, 210, 0.1);
+    }
+    
+    .modal-create-class .modal-header,
+    .modal-create-class-left,
+    .modal-create-class-right,
+    .modal-create-class .modal-footer {
+        padding: 2rem;
+    }
+    
+    .modal-create-class .modal-title {
+        font-size: 1.5rem;
+    }
+    
+    .color-picker {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-create-class .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .modal-create-class .modal-header,
+    .modal-create-class-left,
+    .modal-create-class-right,
+    .modal-create-class .modal-footer {
+        padding: 1.5rem;
+    }
+    
+    .modal-create-class .modal-title {
+        font-size: 1.25rem;
+    }
+    
+    .modal-footer-right {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-modal-secondary,
+    .btn-modal-primary {
+        width: 100%;
     }
 }
 </style>
 
-<div class="modal fade modal-split" id="addLessonModal" tabindex="-1" aria-labelledby="addLessonModalLabel" aria-hidden="true">
+<div class="modal fade modal-create-class" id="addLessonModal" tabindex="-1" aria-labelledby="addLessonModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addLessonModalLabel">
-                    <i class="bi bi-plus-circle-fill me-2"></i>Create New Class
+                    <div class="modal-title-icon">
+                        <i class="bi bi-plus-circle-fill"></i>
+                    </div>
+                    Create New Class
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -230,18 +439,20 @@
                 <input type="hidden" id="selectedColor" name="selectedColor" value="1">
                 
                 <div class="modal-body">
-                    <div class="modal-split-layout">
+                    <div class="modal-create-class-layout">
                         <!-- Left Side: Basic Info -->
-                        <div class="modal-split-left">
-                            <div class="modal-split-section">
-                                <div class="modal-split-section-title">
-                                    <i class="bi bi-info-circle-fill"></i>
-                                    <span>Basic Information</span>
+                        <div class="modal-create-class-left">
+                            <div class="modal-section">
+                                <div class="modal-section-title">
+                                    <div class="modal-section-icon">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                    </div>
+                                    Basic Information
                                 </div>
                                 
-                                <div class="mb-3">
+                                <div class="mb-4">
                                     <label for="lesson-title" class="form-label">
-                                        <i class="bi bi-type"></i>
+                                        <i class="bi bi-type text-primary"></i>
                                         <span>Class Title</span>
                                         <span class="text-danger">*</span>
                                         <span class="char-counter">
@@ -256,11 +467,15 @@
                                            placeholder="Enter class title" 
                                            required
                                            oninput="updateCharCount(this, 'title-counter', 100)">
+                                    <div class="form-hint">
+                                        <i class="bi bi-info-circle"></i>
+                                        Choose a clear, descriptive title for your class
+                                    </div>
                                 </div>
                                 
-                                <div class="mb-0">
+                                <div class="mb-4">
                                     <label for="lesson-description" class="form-label">
-                                        <i class="bi bi-textarea-t"></i>
+                                        <i class="bi bi-textarea-t text-primary"></i>
                                         <span>Description</span>
                                         <span class="char-counter">
                                             <span id="desc-counter">0</span>/500
@@ -271,15 +486,21 @@
                                               name="description" 
                                               rows="4" 
                                               maxlength="500" 
-                                              placeholder="What will students learn?"
+                                              placeholder="What will students learn in this class?"
                                               oninput="updateCharCount(this, 'desc-counter', 500)"></textarea>
+                                    <div class="form-hint">
+                                        <i class="bi bi-info-circle"></i>
+                                        Describe the learning objectives and content
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div class="modal-split-section">
-                                <div class="modal-split-section-title">
-                                    <i class="bi bi-palette-fill"></i>
-                                    <span>Color Theme</span>
+                            <div class="modal-section">
+                                <div class="modal-section-title">
+                                    <div class="modal-section-icon">
+                                        <i class="bi bi-palette-fill"></i>
+                                    </div>
+                                    Color Theme
                                 </div>
                                 
                                 <div class="color-picker">
@@ -308,56 +529,60 @@
                                          style="background: linear-gradient(135deg, #F687B3, #ED64A6);"
                                          onclick="selectModalColor(this, 6)"></div>
                                 </div>
+                                <div class="form-hint">
+                                    <i class="bi bi-palette"></i>
+                                    Choose a color theme for your class
+                                </div>
                             </div>
                         </div>
                         
                         <!-- Right Side: Details -->
-                        <div class="modal-split-right">
-                            <!-- Google Classroom Import Section -->
-                            <div class="modal-split-section">
-                                <div class="modal-split-section-title">
-                                    <i class="bi bi-google"></i>
-                                    <span>Import from Google Classroom</span>
+                        <div class="modal-create-class-right">
+                            <!-- Import Section -->
+                            <div class="modal-section">
+                                <div class="modal-section-title">
+                                    <div class="modal-section-icon">
+                                        <i class="bi bi-download"></i>
+                                    </div>
+                                    Import Options
                                 </div>
                                 
-                                <div class="mb-3">
+                                <div class="import-section">
                                     <button type="button" 
-                                            class="btn btn-outline-primary w-100" 
-                                            onclick="openGoogleClassroomImport()"
-                                            style="padding: 0.875rem 1rem; border-radius: 12px; font-weight: 600; border: 2px dashed #1976D2; background: linear-gradient(135deg, rgba(25, 118, 210, 0.05), rgba(13, 71, 161, 0.05));">
-                                        <i class="bi bi-download me-2"></i>
+                                            class="btn-import google" 
+                                            onclick="openGoogleClassroomImport()">
+                                        <i class="bi bi-google me-2"></i>
                                         Import from Google Classroom
                                     </button>
                                     <div class="form-hint">
-                                        <i class="bi bi-info-circle me-1"></i>
-                                        Import existing Google Classroom courses with students, assignments, and materials
+                                        <i class="bi bi-info-circle"></i>
+                                        Import existing Google Classroom courses
                                     </div>
-                                </div>
-                                
-                                <div class="mb-3">
+                                    
                                     <button type="button" 
-                                            class="btn btn-outline-primary w-100" 
-                                            onclick="openMicrosoftTeamsImport()"
-                                            style="padding: 0.875rem 1rem; border-radius: 12px; font-weight: 600; border: 2px dashed #6264A7; background: linear-gradient(135deg, rgba(98, 100, 167, 0.05), rgba(70, 71, 117, 0.05));">
+                                            class="btn-import teams" 
+                                            onclick="openMicrosoftTeamsImport()">
                                         <i class="fab fa-microsoft me-2"></i>
                                         Import from Microsoft Teams
                                     </button>
                                     <div class="form-hint">
-                                        <i class="bi bi-info-circle me-1"></i>
-                                        Import existing Microsoft Teams with channels, members, and conversations
+                                        <i class="bi bi-info-circle"></i>
+                                        Import existing Microsoft Teams
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="modal-split-section">
-                                <div class="modal-split-section-title">
-                                    <i class="bi bi-gear-fill"></i>
-                                    <span>Class Settings</span>
+                            <div class="modal-section">
+                                <div class="modal-section-title">
+                                    <div class="modal-section-icon">
+                                        <i class="bi bi-gear-fill"></i>
+                                    </div>
+                                    Class Settings
                                 </div>
                                 
-                                <div class="mb-3">
+                                <div class="mb-4">
                                     <label for="lesson-status" class="form-label">
-                                        <i class="bi bi-ui-checks-grid"></i>
+                                        <i class="bi bi-ui-checks-grid text-primary"></i>
                                         <span>Status</span>
                                     </label>
                                     <select class="form-select" id="lesson-status" name="status">
@@ -368,10 +593,10 @@
                                     </select>
                                 </div>
                                 
-                                <div class="mb-0">
+                                <div class="mb-4">
                                     <label for="lesson-difficulty" class="form-label">
-                                        <i class="bi bi-star"></i>
-                                        <span>Difficulty</span>
+                                        <i class="bi bi-star text-primary"></i>
+                                        <span>Difficulty Level</span>
                                     </label>
                                     <select class="form-select" id="lesson-difficulty" name="difficulty_level">
                                         <option value="beginner" selected>Beginner</option>
@@ -379,18 +604,11 @@
                                         <option value="advanced">Advanced</option>
                                     </select>
                                 </div>
-                            </div>
-                            
-                            <div class="modal-split-section">
-                                <div class="modal-split-section-title">
-                                    <i class="bi bi-person-fill"></i>
-                                    <span>Additional Info</span>
-                                </div>
                                 
-                                <div class="mb-3">
+                                <div class="mb-4">
                                     <label for="lesson-author" class="form-label">
-                                        <i class="bi bi-person-circle"></i>
-                                        <span>Author</span>
+                                        <i class="bi bi-person-circle text-primary"></i>
+                                        <span>Instructor</span>
                                     </label>
                                     <input type="text" 
                                            class="form-control" 
@@ -400,10 +618,10 @@
                                            placeholder="Teacher name">
                                 </div>
                                 
-                                <div class="mb-3">
+                                <div class="mb-4">
                                     <label for="lesson-duration" class="form-label">
-                                        <i class="bi bi-clock"></i>
-                                        <span>Duration</span>
+                                        <i class="bi bi-clock text-primary"></i>
+                                        <span>Duration (minutes)</span>
                                     </label>
                                     <input type="number" 
                                            class="form-control" 
@@ -411,20 +629,23 @@
                                            name="estimated_duration" 
                                            min="1"
                                            max="999"
-                                           placeholder="Minutes">
+                                           placeholder="Estimated duration">
                                 </div>
                                 
                                 <div class="mb-0">
                                     <label for="lesson-tags" class="form-label">
-                                        <i class="bi bi-tags"></i>
+                                        <i class="bi bi-tags text-primary"></i>
                                         <span>Tags</span>
                                     </label>
                                     <input type="text" 
                                            class="form-control" 
                                            id="lesson-tags" 
                                            name="tags" 
-                                           placeholder="python, programming">
-                                    <div class="form-hint">Separate with commas</div>
+                                           placeholder="python, programming, web development">
+                                    <div class="form-hint">
+                                        <i class="bi bi-info-circle"></i>
+                                        Separate tags with commas
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -433,20 +654,18 @@
                 
                 <div class="modal-footer">
                     <div class="modal-footer-left">
-                        <i class="bi bi-info-circle me-1"></i>
+                        <i class="bi bi-info-circle"></i>
                         <span>All fields except title are optional</span>
                     </div>
                     <div class="modal-footer-right">
                         <button type="button" 
-                                class="btn btn-secondary" 
-                                data-bs-dismiss="modal"
-                                style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 600;">
-                            Cancel
+                                class="btn-modal-secondary" 
+                                data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
                         </button>
                         <button type="submit" 
-                                class="btn btn-primary"
-                                style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 600; background: linear-gradient(135deg, #1976D2, #0D47A1); border: none;">
-                            <i class="bi bi-plus-circle-fill me-1"></i>Create Class
+                                class="btn-modal-primary">
+                            <i class="bi bi-plus-circle-fill me-2"></i>Create Class
                         </button>
                     </div>
                 </div>
@@ -456,7 +675,7 @@
 </div>
 
 <script>
-// Form submission handler
+// Enhanced form submission handler
 function handleAddLesson(event) {
     event.preventDefault();
     
@@ -512,6 +731,60 @@ function handleAddLesson(event) {
     });
 }
 
-// Google Classroom functions are now in main.js
-</script>
+// Character counter function
+function updateCharCount(element, counterId, maxLength) {
+    const counter = document.getElementById(counterId);
+    const currentLength = element.value.length;
+    counter.textContent = currentLength;
+    
+    if (currentLength > maxLength * 0.8) {
+        counter.parentElement.style.color = '#f56565';
+    } else {
+        counter.parentElement.style.color = '#718096';
+    }
+}
 
+// Color selection function
+function selectModalColor(element, colorId) {
+    // Remove selected class from all color boxes
+    document.querySelectorAll('.modal-color-box').forEach(box => {
+        box.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked element
+    element.classList.add('selected');
+    
+    // Update hidden input
+    document.getElementById('selectedColor').value = colorId;
+}
+
+// Initialize form
+document.addEventListener('DOMContentLoaded', function() {
+    // Set initial character counts
+    const titleInput = document.getElementById('lesson-title');
+    const descInput = document.getElementById('lesson-description');
+    
+    if (titleInput) {
+        titleInput.addEventListener('input', function() {
+            updateCharCount(this, 'title-counter', 100);
+        });
+    }
+    
+    if (descInput) {
+        descInput.addEventListener('input', function() {
+            updateCharCount(this, 'desc-counter', 500);
+        });
+    }
+});
+
+// Google Classroom and Teams import functions (existing)
+function openGoogleClassroomImport() {
+    // Implementation for Google Classroom import
+    console.log('Opening Google Classroom import');
+}
+
+function openMicrosoftTeamsImport() {
+    // Implementation for Microsoft Teams import
+    console.log('Opening Microsoft Teams import');
+}
+</script>
