@@ -5,11 +5,17 @@ Creates and configures Flask application with proper dependency injection.
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from .config.settings import get_config
 from .middleware.auth_middleware import load_user
 
 # Initialize extensions
 db = SQLAlchemy()
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 # Initialize Flask-Migrate
 from flask_migrate import Migrate
@@ -34,6 +40,7 @@ def create_app(config_name=None):
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    limiter.init_app(app)
     
     # No dependency injection needed for simple MVC
     

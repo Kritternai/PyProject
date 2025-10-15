@@ -7,6 +7,8 @@
 - **[Final Summary](status/NOTE_SYSTEM_FINAL_SUMMARY.md)** - สรุปสุดท้ายของระบบ
 - **[File Counting Fix](bug_fixes/NOTE_FILE_COUNTING_FIX.md)** - การแก้ไขการนับจำนวนไฟล์
 - **[Architecture Analysis](OOP_PYTHON_ARCHITECTURE_ANALYSIS.md)** - การวิเคราะห์สถาปัตยกรรม (25/25)
+- **[Security Analysis](security/SECURITY_ANALYSIS_REPORT.md)** - **NEW** การวิเคราะห์ความปลอดภัย (8.5/10)
+- **[Rate Limiting Guide](security/RATE_LIMITING_IMPLEMENTATION.md)** - **NEW** คู่มือ Rate Limiting
 - **[Update Summary](UPDATE_SUMMARY.md)** - สรุปการอัปเดตเอกสารล่าสุด
 
 ## 📁 โครงสร้างโฟลเดอร์
@@ -24,6 +26,10 @@ docs/notes/
 │   ├── NOTE_RESTYLE_PLAN.md
 │   ├── NOTE_RESTYLE_PROGRESS.md
 │   └── REFACTOR_ALL_PHASES_SUMMARY.md
+│
+├── 🔒 security/                ← Security Documentation
+│   ├── SECURITY_ANALYSIS_REPORT.md ← **NEW** Security Analysis (8.5/10)
+│   └── RATE_LIMITING_IMPLEMENTATION.md ← **NEW** Rate Limiting Guide
 │
 ├── 🎨 design/                   ← Design & UX
 │   ├── NOTE_UX_UI_DESIGN_SYSTEM.md

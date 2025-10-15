@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from functools import wraps
 from ..services import NoteService
 from werkzeug.utils import secure_filename
-from app import db
+from app import db, limiter
 import os
 import time
 
@@ -100,6 +100,7 @@ def _register_routes(note_web_bp):
     # ============================================
 
     @note_web_bp.route('/partial/note/add', methods=['GET'])
+    @limiter.limit("30 per minute", per_method=True, methods=["GET"])
     def partial_note_add_form():
         """Show add note form"""
         if 'user_id' not in session:
@@ -122,6 +123,7 @@ def _register_routes(note_web_bp):
 
     @note_web_bp.route('/partial/note/editor', methods=['GET'])
     @note_web_bp.route('/partial/note/editor/<note_id>', methods=['GET'])
+    @limiter.limit("30 per minute", per_method=True, methods=["GET"])
     def partial_note_editor(note_id=None):
         """Show note editor page (split view with list + editor)"""
         if 'user_id' not in session:
@@ -144,6 +146,7 @@ def _register_routes(note_web_bp):
 
 
     @note_web_bp.route('/partial/note/add', methods=['POST'])
+    @limiter.limit("10 per minute", per_method=True, methods=["POST"])
     def partial_note_add():
         """Create a new note from the partial UI"""
         if 'user_id' not in session:
@@ -246,6 +249,7 @@ def _register_routes(note_web_bp):
 
 
     @note_web_bp.route('/partial/note/<note_id>/delete', methods=['POST'])
+    @limiter.limit("20 per minute", per_method=True, methods=["POST"])
     def partial_note_delete(note_id):
         """Delete a note and return updated fragment"""
         if 'user_id' not in session:
@@ -289,6 +293,7 @@ def _register_routes(note_web_bp):
 
 
     @note_web_bp.route('/partial/note/<note_id>/edit', methods=['POST'])
+    @limiter.limit("30 per minute", per_method=True, methods=["POST"])
     def partial_note_edit(note_id):
         """Update a note and return JSON for SPA"""
         if 'user_id' not in session:
@@ -358,6 +363,7 @@ def _register_routes(note_web_bp):
 
 
     @note_web_bp.route('/partial/note/<note_id>/data', methods=['GET'])
+    @limiter.limit("60 per minute", per_method=True, methods=["GET"])
     def partial_note_data(note_id):
         """Fetch latest note data from DB for editing"""
         if 'user_id' not in session:
