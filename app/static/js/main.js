@@ -1649,6 +1649,12 @@ function setupLessonSearchAndFilter() {
     const clearSearchBtn = document.getElementById('clearSearch');
     const searchContainer = document.querySelector('.search-container');
     
+    console.log('🔍 DOM Elements found:');
+    console.log('  - searchInput:', !!searchInput);
+    console.log('  - filterSelect:', !!filterSelect);
+    console.log('  - clearSearchBtn:', !!clearSearchBtn);
+    console.log('  - searchContainer:', !!searchContainer);
+    
     if (!searchInput && !filterSelect) {
       console.log('Not on lessons page - returning early');
       return; // Not on lessons page
@@ -1693,30 +1699,58 @@ function setupLessonSearchAndFilter() {
       };
     }
     
-    function filterLessons() {
+    // Make filterLessons globally accessible - support both old and new formats
+    window.filterLessons = function(filterType = null, buttonElement = null) {
+      console.log('🔍 filterLessons called with:', { filterType, buttonElement });
+      
+      // Handle new filter button format
+      if (filterType && buttonElement) {
+        // Update active button
+        document.querySelectorAll('.filter-compact-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        buttonElement.classList.add('active');
+      }
+      
       const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-      const filterValue = filterSelect ? filterSelect.value : '';
+      const filterValue = filterType || (filterSelect ? filterSelect.value : '');
       const searchOptions = getSearchOptions();
-      const lessonCards = document.querySelectorAll('.lesson-card');
+      // Try both class names to support different templates
+      const lessonCards = document.querySelectorAll('.lesson-card, .lesson-card-modern');
+      
+      console.log('🔍 Filter parameters:', {
+        searchTerm,
+        filterValue,
+        lessonCardsCount: lessonCards.length
+      });
       
       showLoading();
       
       // Use setTimeout to show loading briefly
       setTimeout(() => {
         lessonCards.forEach((card, index) => {
-          const titleElement = card.querySelector('.lesson-title');
-          const descriptionElement = card.querySelector('.lesson-description');
-          const statusElement = card.querySelector('.status-badge');
-          const authorElement = card.querySelector('.author-name');
-          const tagsContainer = card.querySelector('.tags-container');
+          // Try multiple selectors to support different templates
+          const titleElement = card.querySelector('.lesson-title, .card-title, h5, h4, h3');
+          const descriptionElement = card.querySelector('.lesson-description, .card-text, p');
+          const statusElement = card.querySelector('.status-badge, .badge, [data-status]');
+          const authorElement = card.querySelector('.author-name, .author');
+          const tagsContainer = card.querySelector('.tags-container, .tags');
           
-          if (!titleElement || !descriptionElement || !statusElement) {
+          // Get status from data attribute if status badge not found
+          let status = 'active'; // default
+          if (statusElement) {
+            status = statusElement.textContent;
+          } else if (card.getAttribute('data-status')) {
+            status = card.getAttribute('data-status');
+          }
+          
+          if (!titleElement) {
+            console.log(`🔍 Card ${index}: No title element found, skipping`);
             return;
           }
           
           const title = titleElement.textContent.toLowerCase();
-          const description = descriptionElement.textContent.toLowerCase();
-          const status = statusElement.textContent;
+          const description = descriptionElement ? descriptionElement.textContent.toLowerCase() : '';
           const author = authorElement ? authorElement.textContent.toLowerCase() : '';
           const tags = tagsContainer ? Array.from(tagsContainer.querySelectorAll('.tag-badge')).map(tag => tag.textContent.toLowerCase()) : [];
           
@@ -1730,16 +1764,57 @@ function setupLessonSearchAndFilter() {
             if (searchOptions.searchTags && tags.some(tag => tag.includes(searchTerm))) matchesSearch = true;
           }
           
-          const matchesFilter = !filterValue || status === filterValue;
+          // Handle different filter types
+          let matchesFilter = true;
+          if (filterValue) {
+            if (filterValue === 'all') {
+              matchesFilter = true;
+            } else if (filterValue === 'favorites') {
+              // Check if lesson is favorited using data attribute
+              const isFavorite = card.getAttribute('data-is-favorite') === 'true' || 
+                                card.closest('[data-is-favorite]')?.getAttribute('data-is-favorite') === 'true' ||
+                                false;
+              matchesFilter = isFavorite;
+              console.log(`🔍 Favorites check for card ${index}:`, {
+                cardDataAttr: card.getAttribute('data-is-favorite'),
+                closestDataAttr: card.closest('[data-is-favorite]')?.getAttribute('data-is-favorite'),
+                isFavorite,
+                matchesFilter
+              });
+            } else if (filterValue === 'active') {
+              // Map different status values to active
+              matchesFilter = ['active', 'in_progress', 'not_started'].includes(status);
+            } else if (filterValue === 'inactive') {
+              matchesFilter = status === 'inactive';
+            } else if (filterValue === 'completed') {
+              matchesFilter = status === 'completed';
+            } else {
+              // Default to status matching
+              matchesFilter = status === filterValue;
+            }
+          }
           
-          const cardContainer = card.closest('.lesson-card-wrapper');
+          console.log(`🔍 Card ${index}:`, {
+            title,
+            status,
+            matchesSearch,
+            matchesFilter,
+            searchTerm,
+            filterValue,
+            willShow: matchesSearch && matchesFilter
+          });
+          
+          // Try to find container or use card itself
+          const cardContainer = card.closest('.lesson-card-wrapper, .col-md-3, .col-lg-3, .col-sm-6') || card;
           if (cardContainer) {
             if (matchesSearch && matchesFilter) {
               cardContainer.classList.remove('hidden');
               cardContainer.classList.add('visible');
+              cardContainer.style.display = 'block';
             } else {
               cardContainer.classList.add('hidden');
               cardContainer.classList.remove('visible');
+              cardContainer.style.display = 'none';
             }
           }
         });
@@ -1828,6 +1903,16 @@ function setupLessonSearchAndFilter() {
       });
       searchInput.addEventListener('keyup', updateClearButton);
     }
+    
+    // Add event listeners for filter buttons
+    const filterButtons = document.querySelectorAll('.filter-compact-btn');
+    filterButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        const filterType = button.getAttribute('data-filter');
+        filterLessons(filterType, button);
+      });
+    });
     
     if (filterSelect) {
       filterSelect.addEventListener('change', () => {
