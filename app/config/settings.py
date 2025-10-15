@@ -63,6 +63,9 @@ class TestingConfig(Config):
     WTF_CSRF_ENABLED = False
 
 
+# Import production config
+from .production_config import ProductionConfig
+
 # Configuration mapping
 config = {
     'development': DevelopmentConfig,

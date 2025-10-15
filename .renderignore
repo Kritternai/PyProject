@@ -1,0 +1,79 @@
+# Ignore files for Render deployment
+# Development files
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.env
+.env.local
+.env.development
+.env.test
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Archive and old files
+archive/
+demo/
+chrome_extension/
+
+# Development scripts
+scripts/debug/
+scripts/development/
+scripts/start_flask*.sh
+scripts/start_flask*.py
+
+# Test files
+tests/
+test_*.py
+*_test.py
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Database files (will use Render PostgreSQL)
+instance/site.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker files (not needed for Render)
+Dockerfile
+docker-compose.yml
+nginx.conf
+deploy.sh
+
+# Deployment guides (keep only Render guide)
+DEPLOYMENT_GUIDE.md
+DOCKER_DEPLOYMENT_GUIDE.md
