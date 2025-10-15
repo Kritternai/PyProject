@@ -540,14 +540,15 @@ function renderKanbanBoard(tasks) {
     Object.keys(grouped).forEach(status => {
         if (grouped[status].length === 0) {
             columns[status].innerHTML = `
-                <div class="empty-state">
+                <div class="empty-state kanban-empty">
                     <div class="empty-icon">
                         <i class="bi bi-check-circle"></i>
                     </div>
                     <div class="empty-title">Ready for tasks</div>
                     <div class="empty-description">Drag tasks here or create new ones</div>
-                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="openCreateTaskModal()">
-                        <i class="bi bi-plus me-1"></i>Create Task
+                    <button class="btn-classwork-secondary" onclick="openCreateTaskModal()">
+                        <i class="bi bi-plus-lg"></i>
+                        Create Task
                     </button>
                 </div>
             `;
@@ -575,13 +576,16 @@ function renderMaterials(materials) {
             : 'No materials have been shared yet';
         
         container.innerHTML = `
-            <div class="empty-state">
+            <div class="empty-state materials-empty">
                 <div class="empty-icon">
                     <i class="bi bi-folder-x"></i>
                 </div>
                 <div class="empty-title">No materials yet</div>
-                <div class="empty-description">${emptyMessage}</div>
-                ${uploadButton}
+                <div class="empty-description">Upload files and documents to share with class members</div>
+                <button class="btn-classwork" onclick="openCreateMaterialModal()">
+                    <i class="bi bi-cloud-upload"></i>
+                    Upload Material
+                </button>
             </div>
         `;
         return;
