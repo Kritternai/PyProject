@@ -58,7 +58,7 @@ window.initializeNoteAdd = function() {
   }
   
   // Also track title changes
-  const titleInput = document.getElementById('addTitle');
+  const titleInput = document.getElementById('editorTitle');
   if (titleInput) {
     titleInput.addEventListener('input', () => {
       window.updateAddSaveStatus('unsaved');
@@ -86,8 +86,8 @@ window.initializeNoteAdd = function() {
 
 // File upload handler
 window.setupAddFileUpload = function() {
-  const fileInput = document.getElementById('addFileInput');
-  const previewContainer = document.getElementById('addFilePreviewContainer');
+  const fileInput = document.getElementById('editorFileInput');
+  const previewContainer = document.getElementById('editorFilePreviewContainer');
   
   if (!fileInput || !previewContainer) return;
   
@@ -167,7 +167,14 @@ window.setupAddFileUpload = function() {
         reader.onload = function(e) {
           const imgPreview = document.createElement('div');
           imgPreview.className = 'mt-2 mb-2';
-          imgPreview.innerHTML = `<img src="${e.target.result}" class="img-fluid" style="max-height: 200px; border-radius: 12px; box-shadow: var(--note-shadow);" alt="Preview">`;
+          imgPreview.innerHTML = `
+            <div class="image-preview-container" style="border-radius: 12px; overflow: hidden; max-height: 200px; border: 2px solid #e0e0e0;">
+              <img src="${e.target.result}" 
+                   class="img-fluid w-100" 
+                   style="object-fit: cover; height: 150px;" 
+                   alt="Preview">
+            </div>
+          `;
           fileItem.appendChild(imgPreview);
         };
         reader.readAsDataURL(file);
@@ -198,11 +205,11 @@ window.handleNoteSaveShortcut = function(e) {
 
 // Helper functions - Define globally for onclick handlers
 window.getAddEditor = function() { 
-  return document.getElementById('addContent'); 
+  return document.getElementById('editorContent'); 
 };
 
 window.getAddEditorStatus = function() {
-  return document.getElementById('addStatus');
+  return document.getElementById('editorSaveStatus');
 };
 
 window.execCommand = function(command, value = null) {
@@ -265,7 +272,7 @@ window.insertImage = function() {
   fileInput.onchange = function(){
     const file = fileInput.files?.[0]; 
     if (!file) return;
-    const status = document.getElementById('addStatus'); 
+    const status = document.getElementById('editorSaveStatus'); 
     if (status) status.textContent = 'Processing image...';
     
     // Read as base64 for preview
@@ -335,13 +342,140 @@ window.redoAction = function() {
   window.execCommand('redo'); 
 };
 
+// Load note for add (use as template)
+window.loadNoteForAdd = function(noteId) {
+  console.log('Loading note for add template:', noteId);
+  
+  // Fetch note data
+  fetch(`/partial/note/${noteId}/data`)
+    .then(response => {
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    })
+    .then(data => {
+      console.log('Response data:', data);
+      
+      if (data.success && data.data) {
+        const note = data.data;
+        
+        // Fill form with note data
+        const titleInput = document.getElementById('editorTitle');
+        const contentEditor = document.getElementById('editorContent');
+        const statusSelect = document.getElementById('editorNoteStatus');
+        const tagsInput = document.getElementById('editorNoteTags');
+        
+        if (titleInput) titleInput.value = note.title || '';
+        if (contentEditor) contentEditor.innerHTML = note.content || '';
+        if (statusSelect) statusSelect.value = note.status || 'pending';
+        if (tagsInput) tagsInput.value = note.tags || '';
+        
+        // Display existing files if any
+        if (note.files && note.files.length > 0) {
+          displayExistingFiles(note.files);
+        }
+        
+        // Update save status
+        window.updateAddSaveStatus('unsaved');
+        
+        console.log('Note loaded as template');
+      } else {
+        console.error('Failed to load note:', data.message);
+        alert('Failed to load note: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error loading note:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+      alert('Error loading note: ' + error.message);
+    });
+};
+
+// Display existing files from note data
+window.displayExistingFiles = function(files) {
+  const previewContainer = document.getElementById('editorFilePreviewContainer');
+  if (!previewContainer) return;
+  
+  // Clear existing previews
+  previewContainer.innerHTML = '';
+  
+  files.forEach((file, index) => {
+    const fileItem = document.createElement('div');
+    fileItem.className = 'file-preview-item existing-file';
+    
+    // Determine file type
+    let fileType = file.file_type || 'document';
+    let iconClass = 'bi-file-earmark';
+    
+    if (fileType === 'image') {
+      iconClass = 'bi-file-image';
+    } else if (fileType === 'pdf') {
+      iconClass = 'bi-file-pdf';
+    }
+    
+    fileItem.innerHTML = `
+      <div class="d-flex align-items-center flex-grow-1">
+        <div class="file-icon ${fileType}">
+          <i class="bi ${iconClass}"></i>
+        </div>
+        <div>
+          <div class="fw-semibold">${file.filename}</div>
+          <div class="small text-muted">${(file.size / 1024).toFixed(1)} KB</div>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-outline-danger btn-rounded-25" onclick="window.removeExistingFile(${index})">
+        <i class="bi bi-x"></i>
+      </button>
+    `;
+    
+    previewContainer.appendChild(fileItem);
+    
+    // Show image preview if it's an image
+    if (fileType === 'image') {
+      const imgPreview = document.createElement('div');
+      imgPreview.className = 'mt-2 mb-2';
+      imgPreview.innerHTML = `
+        <div class="image-preview-container" style="border-radius: 12px; overflow: hidden; max-height: 200px; border: 2px solid #e0e0e0;">
+          <img src="/static/${file.file_path}" 
+               class="img-fluid w-100" 
+               style="object-fit: cover; height: 150px;" 
+               alt="Preview">
+        </div>
+      `;
+      fileItem.appendChild(imgPreview);
+    }
+  });
+};
+
+// Remove existing file
+window.removeExistingFile = function(index) {
+  // This would need to be implemented based on your backend API
+  console.log('Remove existing file at index:', index);
+  // For now, just remove from display
+  const previewContainer = document.getElementById('editorFilePreviewContainer');
+  if (previewContainer) {
+    const fileItems = previewContainer.querySelectorAll('.existing-file');
+    if (fileItems[index]) {
+      fileItems[index].remove();
+    }
+  }
+};
+
 // Clear note - Define as global function
-window.clearNote = function() {
+window.clearNoteForm = function() {
   if (confirm('Are you sure you want to clear all content?')) {
     // Clear form elements
-    const titleInput = document.getElementById('addTitle');
-    const contentEditor = document.getElementById('addContent');
-    const status = document.getElementById('addStatus');
+    const titleInput = document.getElementById('editorTitle');
+    const contentEditor = document.getElementById('editorContent');
+    const status = document.getElementById('editorSaveStatus');
     
     if (titleInput) titleInput.value = '';
     if (contentEditor) contentEditor.innerHTML = '<em class="text-muted">Start writing your note here...</em>';
@@ -361,9 +495,9 @@ window.saveNewNote = function() {
   console.log('=== saveNewNote called ===');
   
   // Get form elements (only title and content now)
-  const titleInput = document.getElementById('addTitle');
-  const contentEditor = document.getElementById('addContent');
-  const status = document.getElementById('addStatus');
+  const titleInput = document.getElementById('editorTitle');
+  const contentEditor = document.getElementById('editorContent');
+  const status = document.getElementById('editorSaveStatus');
   
   console.log('Elements found:', {
     titleInput: !!titleInput,
@@ -397,8 +531,8 @@ window.saveNewNote = function() {
   window.updateAddSaveStatus('saving');
   
   // Get status and tags
-  const statusSelect = document.getElementById('addNoteStatus');
-  const tagsInput = document.getElementById('addNoteTags');
+  const statusSelect = document.getElementById('editorNoteStatus');
+  const tagsInput = document.getElementById('editorNoteTags');
   const status_value = statusSelect?.value || 'pending';
   const tags = tagsInput?.value || '';
   

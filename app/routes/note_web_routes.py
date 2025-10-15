@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from functools import wraps
 from ..services import NoteService
 from werkzeug.utils import secure_filename
-from app import db
+from app import db, limiter
 import os
 import time
 
@@ -100,16 +100,30 @@ def _register_routes(note_web_bp):
     # ============================================
 
     @note_web_bp.route('/partial/note/add', methods=['GET'])
+    @limiter.limit("30 per minute", per_method=True, methods=["GET"])
     def partial_note_add_form():
         """Show add note form"""
         if 'user_id' not in session:
             return redirect(url_for('auth.login'))
         
-        return render_template('notes/note_add_fragment.html', user=g.user)
+        try:
+            note_service = NoteService()
+            notes = note_service.get_user_notes(g.user.id)
+            print(f"DEBUG: Found {len(notes)} notes for user {g.user.id}")
+            notes = _enrich_notes_with_status_and_files(notes)
+            print(f"DEBUG: After enrichment, {len(notes)} notes")
+            
+            return render_template('notes/note_add_fragment.html', notes=notes, user=g.user)
+        except Exception as e:
+            print(f"DEBUG: Error in partial_note_add_form: {e}")
+            import traceback
+            traceback.print_exc()
+            return render_template('notes/note_add_fragment.html', notes=[], user=g.user)
 
 
     @note_web_bp.route('/partial/note/editor', methods=['GET'])
     @note_web_bp.route('/partial/note/editor/<note_id>', methods=['GET'])
+    @limiter.limit("30 per minute", per_method=True, methods=["GET"])
     def partial_note_editor(note_id=None):
         """Show note editor page (split view with list + editor)"""
         if 'user_id' not in session:
@@ -132,6 +146,7 @@ def _register_routes(note_web_bp):
 
 
     @note_web_bp.route('/partial/note/add', methods=['POST'])
+    @limiter.limit("10 per minute", per_method=True, methods=["POST"])
     def partial_note_add():
         """Create a new note from the partial UI"""
         if 'user_id' not in session:
@@ -234,6 +249,7 @@ def _register_routes(note_web_bp):
 
 
     @note_web_bp.route('/partial/note/<note_id>/delete', methods=['POST'])
+    @limiter.limit("20 per minute", per_method=True, methods=["POST"])
     def partial_note_delete(note_id):
         """Delete a note and return updated fragment"""
         if 'user_id' not in session:
@@ -277,6 +293,7 @@ def _register_routes(note_web_bp):
 
 
     @note_web_bp.route('/partial/note/<note_id>/edit', methods=['POST'])
+    @limiter.limit("30 per minute", per_method=True, methods=["POST"])
     def partial_note_edit(note_id):
         """Update a note and return JSON for SPA"""
         if 'user_id' not in session:
@@ -346,6 +363,7 @@ def _register_routes(note_web_bp):
 
 
     @note_web_bp.route('/partial/note/<note_id>/data', methods=['GET'])
+    @limiter.limit("60 per minute", per_method=True, methods=["GET"])
     def partial_note_data(note_id):
         """Fetch latest note data from DB for editing"""
         if 'user_id' not in session:
@@ -356,6 +374,10 @@ def _register_routes(note_web_bp):
             note = note_service.get_note_by_id(note_id)
             if not note:
                 return jsonify(success=False, message='Note not found or permission denied'), 404
+            
+            # Check if user owns this note
+            if note.user_id != g.user.id:
+                return jsonify(success=False, message='Permission denied'), 403
 
             # Parse tags from JSON
             tags = []
@@ -369,6 +391,16 @@ def _register_routes(note_web_bp):
             # Get files from file system
             note_files = _get_note_files_from_fs(note.id)
             
+            # Convert file objects to dictionaries for JSON serialization
+            files_data = []
+            for file_obj in note_files:
+                files_data.append({
+                    'file_path': file_obj.file_path,
+                    'filename': file_obj.filename,
+                    'file_type': file_obj.file_type,
+                    'size': file_obj.size
+                })
+            
             data = {
                 'id': note.id,
                 'title': note.title,
@@ -379,11 +411,14 @@ def _register_routes(note_web_bp):
                 'tags': ', '.join(tags) if tags else '',
                 'note_type': note.note_type or 'text',
                 'is_public': note.is_public or False,
-                'files': note_files
+                'files': files_data
             }
 
             return jsonify(success=True, data=data)
         except Exception as e:
+            print(f"Error in partial_note_data: {e}")
+            import traceback
+            traceback.print_exc()
             return jsonify(success=False, message=str(e)), 500
 
 
@@ -446,6 +481,7 @@ def _enrich_notes_with_status_and_files(notes):
             
             # Get files for this note from file system
             note_files = _get_note_files_from_fs(n.id)
+            print(f"DEBUG: Note {n.id} enriched with {len(note_files)} files")
             setattr(n, 'files', note_files)
         return notes
     except Exception:
@@ -457,14 +493,24 @@ def _get_note_files_from_fs(note_id):
     try:
         files = []
         static_dir = current_app.static_folder
+        if not static_dir:
+            print(f"Static folder not found for note {note_id}")
+            return []
+            
         uploads_dir = os.path.join(static_dir, 'uploads', 'notes')
         
         # Look for note-specific directory
         note_dir = os.path.join(uploads_dir, str(note_id))
-        if os.path.exists(note_dir):
-            for filename in os.listdir(note_dir):
-                file_path = os.path.join(note_dir, filename)
-                if os.path.isfile(file_path):
+        if not os.path.exists(note_dir):
+            print(f"Note directory not found: {note_dir}")
+            return []
+        
+        print(f"DEBUG: Found note directory: {note_dir}")
+            
+        for filename in os.listdir(note_dir):
+            file_path = os.path.join(note_dir, filename)
+            if os.path.isfile(file_path):
+                try:
                     # Determine file type from extension
                     ext = os.path.splitext(filename)[1].lower()
                     file_type = 'document'
@@ -484,10 +530,17 @@ def _get_note_files_from_fs(note_id):
                     file_obj.size = os.path.getsize(file_path)
                     
                     files.append(file_obj)
+                    print(f"DEBUG: Added file {filename} as {file_type}")
+                except Exception as file_error:
+                    print(f"Error processing file {filename} for note {note_id}: {file_error}")
+                    continue
         
+        print(f"DEBUG: Returning {len(files)} files for note {note_id}")
         return files
     except Exception as e:
         print(f"Error getting files for note {note_id}: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 
@@ -497,7 +550,7 @@ def _save_single_file(note_id, file, user_id):
         return False
         
     static_dir = current_app.static_folder
-    subdir = os.path.join('uploads', 'notes', str(user_id))
+    subdir = os.path.join('uploads', 'notes', str(note_id))  # Use note_id instead of user_id
     target_dir = os.path.join(static_dir, subdir)
     os.makedirs(target_dir, exist_ok=True)
 
@@ -515,7 +568,7 @@ def _save_note_uploads(note_id, image_file, other_file, user_id):
     """Save uploaded files to static/uploads (legacy function)"""
     saved_any = False
     static_dir = current_app.static_folder
-    subdir = os.path.join('uploads', 'notes', str(user_id))
+    subdir = os.path.join('uploads', 'notes', str(note_id))  # Use note_id instead of user_id
     target_dir = os.path.join(static_dir, subdir)
     os.makedirs(target_dir, exist_ok=True)
 

@@ -6,6 +6,7 @@ Defines HTTP endpoints for note operations.
 from flask import Blueprint
 from ..controllers.note_views import NoteController
 from ..middleware.auth_middleware import login_required
+from app import limiter
 # from ..middleware.rate_limiter import rate_limit, strict_rate_limit
 
 # Create blueprint
@@ -19,7 +20,7 @@ def _register_routes(note_bp):
     """Register all note routes to the blueprint."""
     @note_bp.route('', methods=['POST'])
     @login_required
-    # @rate_limit(user_limit=10, ip_limit=20, window=5)
+    @limiter.limit("10 per minute", per_method=True, methods=["POST"])
     def create_note():
         """Create a new note."""
         return note_controller.create_note()
@@ -27,6 +28,7 @@ def _register_routes(note_bp):
 
     @note_bp.route('/<note_id>', methods=['GET'])
     @login_required
+    @limiter.limit('60 per minute', per_method=True, methods=['GET'])
     def get_note(note_id):
         """Get note by ID."""
         return note_controller.get_note(note_id)
@@ -34,6 +36,7 @@ def _register_routes(note_bp):
 
     @note_bp.route('', methods=['GET'])
     @login_required
+    @limiter.limit('60 per minute', per_method=True, methods=['GET'])
     def get_user_notes():
         """Get notes for current user."""
         return note_controller.get_user_notes()
@@ -41,7 +44,7 @@ def _register_routes(note_bp):
 
     @note_bp.route('/<note_id>', methods=['PUT'])
     @login_required
-    # @rate_limit(user_limit=10, ip_limit=20, window=5)
+    @limiter.limit('30 per minute', per_method=True, methods=['PUT'])
     def update_note(note_id):
         """Update note."""
         return note_controller.update_note(note_id)
@@ -49,7 +52,7 @@ def _register_routes(note_bp):
 
     @note_bp.route('/<note_id>', methods=['DELETE'])
     @login_required
-    # @strict_rate_limit(user_limit=5, ip_limit=10, window=5)
+    @limiter.limit('20 per minute', per_method=True, methods=['DELETE'])
     def delete_note(note_id):
         """Delete note."""
         return note_controller.delete_note(note_id)
