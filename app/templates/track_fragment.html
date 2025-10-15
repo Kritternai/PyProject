@@ -150,28 +150,50 @@
             
             <!-- Achievements -->
             <div class="col-lg-6">
-                <div class="glass-card h-100">
-                    <div class="card-header-modern">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-badge icon-badge-gold me-3">
+                <div class="achievements-section">
+                    <div class="section-header">
+                        <div class="header-content">
+                            <div class="header-icon">
                                 <i class="bi bi-trophy"></i>
                             </div>
-                            <div>
-                                <h5 class="card-title-modern mb-0">Achievements</h5>
-                                <p class="card-subtitle-modern mb-0">Your milestones</p>
+                            <div class="header-text">
+                                <h2>Achievements</h2>
+                                <p>Your milestones</p>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body-modern">
-                        <div id="achievements-list" class="achievements-container">
-                            <div class="empty-state">
-                                <div class="empty-icon">
-                                    <i class="bi bi-star"></i>
-                                </div>
-                                <p class="empty-text">Complete goals to unlock achievements!</p>
-                            </div>
+
+                    <div class="achievements-grid" id="achievementsGrid">
+                        <!-- Achievement Cards -->
+                        <div class="achievement-card orange">
+                            <div class="card-badge">Unlocked</div>
+                            <div class="card-icon">🏆</div>
+                            <div class="card-title">Focus Master</div>
+                            <div class="card-description">Completed 8 Pomodoros in one day</div>
+                        </div>
+
+                        <div class="achievement-card blue">
+                            <div class="card-badge">Unlocked</div>
+                            <div class="card-icon">📚</div>
+                            <div class="card-title">Knowledge Seeker</div>
+                            <div class="card-description">Finished 10 lessons</div>
+                        </div>
+
+                        <div class="achievement-card purple">
+                            <div class="card-badge">Unlocked</div>
+                            <div class="card-icon">📝</div>
+                            <div class="card-title">Note Expert</div>
+                            <div class="card-description">Created 20 notes</div>
                         </div>
                     </div>
+
+                    <!-- Empty State (แสดงเมื่อยังไม่มี achievement) -->
+                    <!-- <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="bi bi-star"></i>
+                        </div>
+                        <p class="empty-text">Complete goals to unlock achievements!</p>
+                    </div> -->
                 </div>
             </div>
         </div>
@@ -727,6 +749,243 @@
         border: 1px solid #ddd;
     }
 }
+
+.achievements-section {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.section-header {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.header-text h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.header-text p {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+.achievement-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.achievement-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--card-color-1), var(--card-color-2));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.achievement-card:hover::before {
+    transform: scaleX(1);
+}
+
+.achievement-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.achievement-card.orange {
+    --card-color-1: #f59e0b;
+    --card-color-2: #d97706;
+}
+
+.achievement-card.blue {
+    --card-color-1: #3b82f6;
+    --card-color-2: #2563eb;
+}
+
+.achievement-card.purple {
+    --card-color-1: #a855f7;
+    --card-color-2: #9333ea;
+}
+
+.card-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
+.achievement-card.orange .card-icon {
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.achievement-card.blue .card-icon {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.achievement-card.purple .card-icon {
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.card-description {
+    font-size: 0.875rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.card-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: linear-gradient(135deg, var(--card-color-1), var(--card-color-2));
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.empty-state {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    border: 2px dashed rgba(0, 0, 0, 0.1);
+}
+
+.empty-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2rem;
+    color: #f59e0b;
+}
+
+.empty-text {
+    color: #64748b;
+    font-size: 0.9375rem;
+}
+
+@media (max-width: 768px) {
+    .achievements-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .achievement-card {
+        padding: 1.25rem;
+    }
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.achievement-card {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.achievement-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.achievement-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.achievement-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
 </style>
 
+<script>
+    // ตัวอย่าง: สามารถเพิ่ม achievement ใหม่ได้แบบนี้
+    function addAchievement(icon, title, description, color) {
+        const grid = document.getElementById('achievementsGrid');
+        const card = document.createElement('div');
+        card.className = `achievement-card ${color}`;
+        card.innerHTML = `
+            <div class="card-badge">Unlocked</div>
+            <div class="card-icon">${icon}</div>
+            <div class="card-title">${title}</div>
+            <div class="card-description">${description}</div>
+        `;
+        grid.appendChild(card);
+    }
+
+    // ตัวอย่างการใช้งาน:
+    // addAchievement('🎯', 'Early Bird', 'Started studying before 8 AM', 'blue');
+</script>
 <script src="{{ url_for('static', filename='js/track.js') }}"></script>
