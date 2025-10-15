@@ -24,6 +24,8 @@
                 // วาดกราฟ
                 renderWeeklyChart(data.weekly);
                 renderTimeDistribution();
+                // ✅ แสดง mock achievements
+                renderMockAchievements();
             } else {
                 console.error('❌ API Error:', data.error);
             }
@@ -82,7 +84,7 @@
             window.weeklyChart.destroy();
         }
 
-        // TODO: แทนที่ mock data ด้วย weeklyData จาก API
+        // Mock data
         const mockPomodoroData = [5, 7, 6, 8, 5, 3, 6];
         const mockNoteData = [3, 5, 4, 6, 3, 2, 4];
 
@@ -90,17 +92,20 @@
             type: 'line',
             data: {
                 labels: ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'],
-                datasets: [{
-                    label: 'Pomodoros',
-                    data: mockPomodoroData, // ใช้ mock data ไปก่อน
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-                }, {
-                    label: 'Notes',
-                    data: mockNoteData, // ใช้ mock data ไปก่อน
-                    borderColor: 'rgb(255, 99, 132)',
-                    tension: 0.1
-                }]
+                datasets: [
+                    {
+                        label: 'Pomodoros',
+                        data: mockPomodoroData,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Notes',
+                        data: mockNoteData,
+                        borderColor: 'rgb(255, 99, 132)',
+                        tension: 0.1
+                    }
+                ]
             },
             options: {
                 responsive: true,
@@ -130,7 +135,7 @@
                 labels: ['Study', 'Break', 'Note Taking'],
                 datasets: [{
                     label: 'Time Distribution',
-                    data: [120, 30, 45], // mock data
+                    data: [120, 30, 45],
                     backgroundColor: [
                         'rgb(54, 162, 235)',
                         'rgb(255, 205, 86)',
@@ -144,6 +149,30 @@
             }
         });
         console.log('📊 วาดกราฟการกระจายเวลาเสร็จ');
+    }
+
+    /**
+     * ✅ แสดง Mock-up Achievements
+     */
+    function renderMockAchievements() {
+        const container = document.getElementById('achievements-list');
+        if (!container) return;
+
+        const achievements = [
+            { icon: '🏆', title: 'Focus Master', desc: 'Completed 8 Pomodoros in one day' },
+            { icon: '📘', title: 'Knowledge Seeker', desc: 'Finished 10 lessons' },
+            { icon: '📝', title: 'Note Expert', desc: 'Created 20 notes' }
+        ];
+
+        container.innerHTML = achievements.map(a => `
+            <div class="achievement-item mb-3 d-flex align-items-center">
+                <div class="achievement-icon me-3">${a.icon}</div>
+                <div>
+                    <div class="fw-bold">${a.title}</div>
+                    <div class="text-secondary small">${a.desc}</div>
+                </div>
+            </div>
+        `).join('');
     }
 
     // เริ่มทำงานเมื่อโหลดหน้า
