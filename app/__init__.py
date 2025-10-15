@@ -44,6 +44,19 @@ def create_app(config_name=None):
     limiter = create_rate_limiter(app)
     if limiter:
         app.limiter = limiter
+        # Make limiter available globally
+        globals()['limiter'] = limiter
+    else:
+        # Create a dummy limiter for development
+        class DummyLimiter:
+            def limit(self, *args, **kwargs):
+                def decorator(f):
+                    return f
+                return decorator
+        
+        dummy_limiter = DummyLimiter()
+        app.limiter = dummy_limiter
+        globals()['limiter'] = dummy_limiter
     
     # No dependency injection needed for simple MVC
     

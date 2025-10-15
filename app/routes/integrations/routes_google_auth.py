@@ -140,7 +140,7 @@ def callback():
     # เพิ่มการตรวจสอบ state กับที่ได้จาก request.args
     if not state or state != request.args.get('state'):
         flash("Invalid state or session expired. Please try logging in again.", "warning")
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main_routes.index"))
 
     # สร้าง Flow อีกครั้งโดยใช้ state ที่ได้รับกลับมา
     flow = get_google_flow(state=state, base_url=request.url_root)
@@ -154,7 +154,7 @@ def callback():
     except Exception as e:
         current_app.logger.exception("OAuth token fetch failed: %s", e)
         flash("Authentication failed with Google. Please try again.", "danger")
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main_routes.index"))
 
     # ดึงข้อมูลผู้ใช้จาก Google
     credentials = flow.credentials
@@ -166,7 +166,7 @@ def callback():
     
     if not userinfo_response.ok:
         flash("Failed to retrieve user information from Google.", "danger")
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main_routes.index"))
         
     userinfo = userinfo_response.json()
     email = userinfo.get("email")
@@ -175,7 +175,7 @@ def callback():
 
     if not email:
         flash("Could not get email from Google account.", "danger")
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main_routes.index"))
 
     # ค้นหาหรือสร้างผู้ใช้ใหม่ในฐานข้อมูล
     user = UserModel.query.filter_by(email=email).first()
@@ -194,5 +194,5 @@ def callback():
 
     session["user_id"] = user.id
     flash("Logged in successfully with Google!", "success")
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main_routes.index"))
 
