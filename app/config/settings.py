@@ -58,6 +58,9 @@ class ProductionConfig(Config):
     
     # Override with production database
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///site.db')
+    
+    # Rate limiting
+    RATE_LIMITING_ENABLED = True
 
 
 class TestingConfig(Config):

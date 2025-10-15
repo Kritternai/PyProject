@@ -12,10 +12,6 @@ from .middleware.auth_middleware import load_user
 
 # Initialize extensions
 db = SQLAlchemy()
-limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
-)
 
 # Initialize Flask-Migrate
 from flask_migrate import Migrate
@@ -40,7 +36,12 @@ def create_app(config_name=None):
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    limiter.init_app(app)
+    
+    # Initialize rate limiting
+    from .config.rate_limiting import create_rate_limiter
+    limiter = create_rate_limiter(app)
+    if limiter:
+        app.limiter = limiter
     
     # No dependency injection needed for simple MVC
     
