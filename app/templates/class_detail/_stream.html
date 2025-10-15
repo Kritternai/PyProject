@@ -304,7 +304,10 @@
                         ${getAvatar(currentUserName)}
                         <input type="text" placeholder="Write a comment..." 
                                id="input-${post.id}" 
-                               onkeypress="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); addComment('${post.id}'); }">
+                               onkeypress="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); addComment('${post.id}'); }"
+                               onfocus="preventCommentsClose('${post.id}')"
+                               onblur="allowCommentsClose('${post.id}')"
+                               oninput="preventCommentsClose('${post.id}')">
                         <button onclick="addComment('${post.id}')"><i class="bi bi-send-fill"></i></button>
                     </div>
                     ` : '<div class="comments-disabled"><i class="bi bi-lock"></i> Comments disabled</div>'}
@@ -492,10 +495,35 @@
     // ============================================
     // Comments
     // ============================================
+    
+    // Track which comments sections should stay open
+    const commentsKeepOpen = new Set();
+    
+    window.preventCommentsClose = function(postId) {
+        commentsKeepOpen.add(postId);
+        console.log(`🔒 Preventing comments close for post ${postId}`);
+    };
+    
+    window.allowCommentsClose = function(postId) {
+        // Add a small delay to allow for rapid typing
+        setTimeout(() => {
+            const input = document.getElementById(`input-${postId}`);
+            if (!input || input.value.trim() === '') {
+                commentsKeepOpen.delete(postId);
+                console.log(`🔓 Allowing comments close for post ${postId}`);
+            }
+        }, 1000);
+    };
 
     window.toggleComments = async function(postId) {
         const section = document.getElementById(`comments-${postId}`);
         const list = document.getElementById(`comments-list-${postId}`);
+        
+        // Check if comments section should stay open
+        if (commentsKeepOpen.has(postId)) {
+            console.log('🔒 Comments section kept open - user is interacting');
+            return;
+        }
         
         if (section.style.display === 'none') {
             section.style.display = 'block';
@@ -574,6 +602,10 @@
             
             if (data.success) {
                 input.value = '';
+                
+                // Clear the keep-open tracking since comment was sent
+                commentsKeepOpen.delete(postId);
+                console.log(`🔓 Comment sent, allowing close for post ${postId}`);
                 
                 // Show comments section if hidden
                 const section = document.getElementById(`comments-${postId}`);
