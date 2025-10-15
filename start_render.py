@@ -20,14 +20,29 @@ def check_dependencies():
     missing = []
     for module in required_modules:
         try:
-            __import__(module)
-        except ImportError:
+            if module == 'psycopg2':
+                # Try psycopg2-binary first
+                try:
+                    import psycopg2
+                    print("✅ psycopg2 imported successfully")
+                except ImportError:
+                    print("❌ psycopg2 not found, trying psycopg2-binary...")
+                    os.system("pip install psycopg2-binary==2.9.9")
+                    import psycopg2
+            else:
+                __import__(module)
+        except ImportError as e:
+            print(f"❌ Failed to import {module}: {e}")
             missing.append(module)
     
     if missing:
         print(f"❌ Missing dependencies: {', '.join(missing)}")
         print("Installing missing dependencies...")
-        os.system(f"pip install {' '.join(missing)}")
+        for module in missing:
+            if module == 'psycopg2':
+                os.system("pip install psycopg2-binary==2.9.9")
+            else:
+                os.system(f"pip install {module}")
     
     return len(missing) == 0
 

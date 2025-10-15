@@ -5,14 +5,36 @@ echo "🚀 Building Smart Learning Hub for Render..."
 
 # Install dependencies
 echo "📦 Installing dependencies..."
-pip install -r requirements-production.txt
+pip install -r requirements.txt
 
-# Verify gunicorn installation
-echo "🔍 Verifying gunicorn installation..."
-python -c "import gunicorn; print('✅ Gunicorn installed successfully')" || {
-    echo "❌ Gunicorn not found, installing..."
-    pip install gunicorn==21.2.0
-}
+# Install psycopg2-binary explicitly for PostgreSQL
+echo "🐘 Installing PostgreSQL driver..."
+pip install psycopg2-binary==2.9.9
+
+# Verify critical dependencies
+echo "🔍 Verifying critical dependencies..."
+python -c "
+try:
+    import psycopg2
+    print('✅ psycopg2 imported successfully')
+except ImportError as e:
+    print(f'❌ psycopg2 import failed: {e}')
+    exit(1)
+
+try:
+    import gunicorn
+    print('✅ Gunicorn installed successfully')
+except ImportError as e:
+    print(f'❌ Gunicorn not found: {e}')
+    exit(1)
+
+try:
+    import flask
+    print('✅ Flask installed successfully')
+except ImportError as e:
+    print(f'❌ Flask not found: {e}')
+    exit(1)
+"
 
 # Create necessary directories
 echo "📁 Creating directories..."

@@ -3,7 +3,7 @@ services:
     name: smart-learning-hub
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: ./build.sh
     startCommand: gunicorn --bind 0.0.0.0:$PORT wsgi:app
     envVars:
       - key: FLASK_ENV
