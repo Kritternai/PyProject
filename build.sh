@@ -1,38 +1,27 @@
 #!/bin/bash
-# Build script for Render deployment
+# Build script for SQLite deployment on Render
 
-echo "🚀 Building Smart Learning Hub for Render..."
+echo "🚀 Building Smart Learning Hub with SQLite..."
 
 # Install dependencies
 echo "📦 Installing dependencies..."
-pip install -r requirements.txt
-
-# Install psycopg2-binary explicitly for PostgreSQL
-echo "🐘 Installing PostgreSQL driver..."
-pip install psycopg2-binary==2.9.9
+pip install -r requirements-sqlite.txt
 
 # Verify critical dependencies
 echo "🔍 Verifying critical dependencies..."
 python -c "
 try:
-    import psycopg2
-    print('✅ psycopg2 imported successfully')
-except ImportError as e:
-    print(f'❌ psycopg2 import failed: {e}')
-    exit(1)
-
-try:
-    import gunicorn
-    print('✅ Gunicorn installed successfully')
-except ImportError as e:
-    print(f'❌ Gunicorn not found: {e}')
-    exit(1)
-
-try:
     import flask
     print('✅ Flask installed successfully')
 except ImportError as e:
     print(f'❌ Flask not found: {e}')
+    exit(1)
+
+try:
+    import sqlalchemy
+    print('✅ SQLAlchemy installed successfully')
+except ImportError as e:
+    print(f'❌ SQLAlchemy not found: {e}')
     exit(1)
 "
 
@@ -40,18 +29,8 @@ except ImportError as e:
 echo "📁 Creating directories..."
 mkdir -p instance uploads logs
 
-# Run database migrations (if needed)
-echo "📊 Setting up database..."
-python -c "
-from app import create_app, db
-app = create_app('production')
-with app.app_context():
-    db.create_all()
-    print('✅ PostgreSQL database tables created successfully')
-"
-
-# Optional: Run migration script if needed
-# echo "🔄 Running migration script..."
-# python migrate_to_postgresql.py
+# Run database setup
+echo "📊 Setting up SQLite database..."
+python database/setup_database.py
 
 echo "✅ Build completed successfully!"

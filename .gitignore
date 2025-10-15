@@ -313,14 +313,12 @@ deploy/
 deployment/
 *.deploy
 
-# Docker
-Dockerfile
-docker-compose.yml
-.dockerignore
+# Docker (optional - keep if needed)
+# Dockerfile
+# docker-compose.yml
+# .dockerignore
 
 # Kubernetes
-*.yaml
-*.yml
 k8s/
 
 # =============================================================================

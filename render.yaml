@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: ./build.sh
-    startCommand: gunicorn --bind 0.0.0.0:$PORT wsgi:app
+    startCommand: python start.py
     envVars:
       - key: FLASK_ENV
         value: production

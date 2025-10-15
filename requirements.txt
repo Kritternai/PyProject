@@ -1,12 +1,11 @@
-# Production Requirements for Render (Python 3.11 compatible)
+# SQLite Version for Quick Deployment
 # Core Flask
 Flask==3.1.1
 Flask-SQLAlchemy==3.1.1
 Flask-Migrate==4.1.0
 Werkzeug==3.1.3
 
-# Database (PostgreSQL for Render) - Python 3.13 compatible
-psycopg[binary]==3.2.3
+# Database (SQLite for quick deployment)
 SQLAlchemy==2.0.41
 
 # Production Server
