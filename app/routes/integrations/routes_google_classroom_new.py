@@ -183,13 +183,13 @@ def oauth2callback():
         flash('Successfully connected to Google Classroom!', 'success')
         
         if return_to_import:
-            # Redirect กลับไปที่ class พร้อมเปิด Google Classroom import modal
-            redirect_url = url_for('class.partial_class_list') + '&open_google_import=true'
+            # Redirect กลับไปที่ dashboard พร้อมเปิด Google Classroom import modal
+            redirect_url = url_for('main_routes.dashboard') + '#class&open_google_import=true'
             print(f"🔗 Redirecting to: {redirect_url}")
             return redirect(redirect_url)
         else:
-            # Redirect ไปที่ class ปกติ
-            redirect_url = url_for('class.partial_class_list')
+            # Redirect ไปที่ dashboard ปกติ
+            redirect_url = url_for('main_routes.dashboard') + '#class'
             print(f"🔗 Redirecting to: {redirect_url}")
             return redirect(redirect_url)
         
@@ -409,9 +409,9 @@ def disconnect():
         print("✅ Google Classroom disconnected")
         
         flash('Google Classroom disconnected successfully.', 'success')
-        return redirect(url_for('class.partial_class_list'))
+        return redirect(url_for('main_routes.dashboard') + '#class')
         
     except Exception as e:
         print(f"❌ Error disconnecting: {e}")
         flash(f'Failed to disconnect: {str(e)}', 'danger')
-        return redirect(url_for('class.partial_class_list'))
+        return redirect(url_for('main_routes.dashboard') + '#class')

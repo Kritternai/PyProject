@@ -1,0 +1,151 @@
+<div class="container-fluid" style="padding: 2rem; background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%); min-height: 100vh;">
+  <!-- Welcome Section -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <div class="card border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px);">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center">
+            <div class="me-4">
+              <div class="rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 80px; height: 80px; background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);">
+                <i class="bi bi-person-fill text-white fs-2"></i>
+              </div>
+            </div>
+            <div>
+              <h1 class="h2 mb-2" style="color: #1976D2;">Welcome back, {{ user.username if user else 'User' }}!</h1>
+              <p class="text-muted mb-0 fs-5">Ready to continue your learning journey?</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-lg h-100" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div class="card-body text-center p-4">
+          <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow" style="width: 70px; height: 70px; background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);">
+            <i class="bi bi-book-fill text-white fs-3"></i>
+          </div>
+          <h4 class="card-title mb-2" style="color: #1976D2;">Classes</h4>
+          <p class="card-text text-muted mb-4">Manage your lessons and subjects</p>
+          <a href="#" class="btn btn-primary btn-lg shadow" style="background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%); border: none;" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=class]'));loadPage('class')">
+            <i class="bi bi-arrow-right me-2"></i>Go to Classes
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-lg h-100" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div class="card-body text-center p-4">
+          <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow" style="width: 70px; height: 70px; background: linear-gradient(135deg, #42A5F5 0%, #1976D2 100%);">
+            <i class="bi bi-journal-text text-white fs-3"></i>
+          </div>
+          <h4 class="card-title mb-2" style="color: #42A5F5;">Notes</h4>
+          <p class="card-text text-muted mb-4">Take and organize notes</p>
+          <a href="#" class="btn btn-primary btn-lg shadow" style="background: linear-gradient(135deg, #42A5F5 0%, #1976D2 100%); border: none;" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=note]'));loadPage('note')">
+            <i class="bi bi-arrow-right me-2"></i>Go to Notes
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-lg h-100" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div class="card-body text-center p-4">
+          <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow" style="width: 70px; height: 70px; background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%);">
+            <i class="bi bi-graph-up text-white fs-3"></i>
+          </div>
+          <h4 class="card-title mb-2" style="color: #2196F3;">Track</h4>
+          <p class="card-text text-muted mb-4">Monitor your progress</p>
+          <a href="#" class="btn btn-primary btn-lg shadow" style="background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%); border: none;" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=track]'));loadPage('track')">
+            <i class="bi bi-arrow-right me-2"></i>Go to Track
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-lg h-100" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div class="card-body text-center p-4">
+          <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow" style="width: 70px; height: 70px; background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%);">
+            <i class="bi bi-clock-fill text-white fs-3"></i>
+          </div>
+          <h4 class="card-title mb-2" style="color: #64B5F6;">Pomodoro</h4>
+          <p class="card-text text-muted mb-4">Focus timer for productivity</p>
+          <a href="#" class="btn btn-primary btn-lg shadow" style="background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%); border: none;" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=pomodoro]'));loadPage('pomodoro')">
+            <i class="bi bi-arrow-right me-2"></i>Go to Pomodoro
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="row g-4">
+    <div class="col-md-8">
+      <div class="card border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px);">
+        <div class="card-header bg-transparent border-0 pb-0">
+          <h4 class="card-title mb-0" style="color: #1976D2;">
+            <i class="bi bi-activity me-2"></i>
+            Recent Activity
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-4 p-3 rounded" style="background: rgba(25, 118, 210, 0.1);">
+            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow" style="width: 50px; height: 50px; background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);">
+              <i class="bi bi-rocket-takeoff text-white"></i>
+            </div>
+            <div>
+              <h5 class="mb-1 fw-bold" style="color: #1976D2;">Welcome to Smart Learning Hub</h5>
+              <p class="text-muted mb-0">Get started by exploring your classes and taking notes</p>
+            </div>
+          </div>
+          <div class="d-flex align-items-center mb-4 p-3 rounded" style="background: rgba(66, 165, 245, 0.1);">
+            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow" style="width: 50px; height: 50px; background: linear-gradient(135deg, #42A5F5 0%, #1976D2 100%);">
+              <i class="bi bi-check-circle-fill text-white"></i>
+            </div>
+            <div>
+              <h5 class="mb-1 fw-bold" style="color: #42A5F5;">Account Setup Complete</h5>
+              <p class="text-muted mb-0">Your learning environment is ready</p>
+            </div>
+          </div>
+          <div class="text-center mt-4">
+            <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.8);">
+              <h6 class="mb-0" style="color: #1976D2;">Start your learning journey today!</h6>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px);">
+        <div class="card-header bg-transparent border-0 pb-0">
+          <h4 class="card-title mb-0" style="color: #42A5F5;">
+            <i class="bi bi-lightbulb me-2"></i>
+            Quick Tips
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="mb-4 p-3 rounded" style="background: rgba(25, 118, 210, 0.1);">
+            <h6 class="mb-2 fw-bold" style="color: #1976D2;">
+              <i class="bi bi-1-circle-fill me-2"></i>Create Your First Class
+            </h6>
+            <p class="text-muted mb-0 small">Start by organizing your subjects and lessons</p>
+          </div>
+          <div class="mb-4 p-3 rounded" style="background: rgba(66, 165, 245, 0.1);">
+            <h6 class="mb-2 fw-bold" style="color: #42A5F5;">
+              <i class="bi bi-2-circle-fill me-2"></i>Take Notes
+            </h6>
+            <p class="text-muted mb-0 small">Keep track of important information</p>
+          </div>
+          <div class="mb-0 p-3 rounded" style="background: rgba(33, 150, 243, 0.1);">
+            <h6 class="mb-2 fw-bold" style="color: #2196F3;">
+              <i class="bi bi-3-circle-fill me-2"></i>Use Pomodoro Timer
+            </h6>
+            <p class="text-muted mb-0 small">Stay focused with 25-minute study sessions</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -67,8 +67,8 @@ function loadPage(page, updateHistory = true) {
           console.log('📝 Updating main-content');
           document.getElementById('main-content').innerHTML = html;
         
-        if (page === 'class') {
-          console.log('📅 Setting up calendar...');
+        if (page === 'dashboard') {
+          console.log('📅 Setting up dashboard...');
           setupFullCalendar();
         }
         
@@ -335,9 +335,9 @@ function preloadPage(pageName) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Preload class page
+  // Preload dashboard page
   setTimeout(() => {
-    preloadPage('class');
+    preloadPage('dashboard');
   }, 1000);
   
   // Check if we should open Google Classroom import modal

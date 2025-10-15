@@ -268,13 +268,13 @@ def oauth2callback():
         print(f"DEBUG: Return to import: {return_to_import}")
         
         if return_to_import:
-            # Redirect back to class with Google Classroom import modal open
-            redirect_url = url_for('class.partial_class_list') + '&open_google_import=true'
+            # Redirect back to dashboard with Google Classroom import modal open
+            redirect_url = url_for('main_routes.dashboard') + '#class&open_google_import=true'
             print(f"DEBUG: Redirecting to: {redirect_url}")
             return redirect(redirect_url)
         else:
-            # Redirect to class normally
-            redirect_url = url_for('class.partial_class_list')
+            # Redirect to dashboard normally
+            redirect_url = url_for('main_routes.dashboard') + '#class'
             print(f"DEBUG: Redirecting to: {redirect_url}")
             return redirect(redirect_url)
         

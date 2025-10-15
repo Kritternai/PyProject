@@ -45,7 +45,7 @@ def load_logged_in_user():
 def index():
     """Main index page"""
     if 'user_id' in session:
-        return redirect(url_for('class.partial_class_list'))
+        return redirect(url_for('main_routes.dashboard'))
     
     google_connected = request.args.get('google_classroom_connected') == 'true'
     return render_template('base.html', google_connected=google_connected, user=None)
@@ -67,6 +67,14 @@ def dashboard():
             return redirect(url_for('auth.login'))
     else:
         return redirect(url_for('auth.login'))
+
+
+@main_routes_bp.route('/partial/dashboard')
+def partial_dashboard():
+    """Dashboard fragment for SPA"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    return render_template('dashboard_fragment.html', user=g.user)
 
 
 

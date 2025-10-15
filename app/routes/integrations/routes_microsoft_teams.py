@@ -580,7 +580,7 @@ def authorize():
     }
     
     flash('Successfully connected to Microsoft Teams!', 'success')
-    return redirect(url_for('class.partial_class_list') + '&open_teams_import=true')
+    return redirect(url_for('main_routes.dashboard') + '#class&open_teams_import=true')
 
 @microsoft_teams_bp.route('/fetch_teams')
 @login_required
@@ -842,4 +842,4 @@ def disconnect():
     session.pop('microsoft_teams_user', None)
     
     flash('Disconnected from Microsoft Teams', 'info')
-    return redirect(url_for('class.partial_class_list'))
+    return redirect(url_for('main_routes.dashboard'))
