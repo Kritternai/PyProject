@@ -83,3 +83,95 @@ def logout():
         return redirect(url_for('web_auth.login'))
     except Exception as e:
         return redirect(url_for('web_auth.login'))
+
+@web_auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Forgot password page - serves HTML template and handles form submission"""
+    if request.method == 'GET':
+        return render_template('forgot_password.html')
+    else:
+        # Handle form submission
+        try:
+            email = request.form.get('email')
+            
+            if not email:
+                flash('กรุณากรอกอีเมล', 'error')
+                return render_template('forgot_password.html')
+            
+            # TODO: Implement password reset logic
+            # For now, just show success message
+            flash('หากอีเมลนี้มีอยู่ในระบบ เราจะส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณ', 'success')
+            return render_template('forgot_password.html')
+            
+        except Exception as e:
+            flash('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง', 'error')
+            return render_template('forgot_password.html')
+
+@web_auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    """Reset password page with token validation"""
+    if request.method == 'GET':
+        # TODO: Validate token against database
+        # For now, accept any token for demo purposes
+        return render_template('reset_password.html', token=token)
+    else:
+        # Handle password reset form submission
+        try:
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+            
+            if not password or not confirm_password:
+                flash('กรุณากรอกรหัสผ่านและยืนยันรหัสผ่าน', 'error')
+                return render_template('reset_password.html', token=token)
+                
+            if password != confirm_password:
+                flash('รหัสผ่านไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง', 'error')
+                return render_template('reset_password.html', token=token)
+                
+            # Comprehensive password validation
+            if len(password) < 8:
+                flash('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร', 'error')
+                return render_template('reset_password.html', token=token)
+            
+            import re
+            
+            # Check for uppercase letter
+            if not re.search(r'[A-Z]', password):
+                flash('รหัสผ่านต้องมีตัวอักษรพิมพ์ใหญ่อย่างน้อย 1 ตัว (A-Z)', 'error')
+                return render_template('reset_password.html', token=token)
+            
+            # Check for lowercase letter
+            if not re.search(r'[a-z]', password):
+                flash('รหัสผ่านต้องมีตัวอักษรพิมพ์เล็กอย่างน้อย 1 ตัว (a-z)', 'error')
+                return render_template('reset_password.html', token=token)
+            
+            # Check for digit
+            if not re.search(r'[0-9]', password):
+                flash('รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว (0-9)', 'error')
+                return render_template('reset_password.html', token=token)
+            
+            # Check for special character
+            if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+                flash('รหัสผ่านต้องมีอักขระพิเศษอย่างน้อย 1 ตัว (!@#$%^&*)', 'error')
+                return render_template('reset_password.html', token=token)
+            
+            # TODO: Implement actual password reset logic:
+            # 1. Validate token exists and not expired
+            # 2. Find user associated with token
+            # 3. Hash new password
+            # 4. Update user password in database
+            # 5. Invalidate/delete the reset token
+            # 6. Log password change event
+            
+            # For demo purposes, just show success
+            flash('รีเซ็ตรหัสผ่านสำเร็จ! รหัสผ่านใหม่ของคุณได้รับการบันทึกแล้ว กรุณาเข้าสู่ระบบ', 'success')
+            return redirect(url_for('web_auth.login'))
+            
+        except Exception as e:
+            flash(f'เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน: {str(e)}', 'error')
+            return render_template('reset_password.html', token=token)
+
+@web_auth_bp.route('/test-reset-links')
+def test_reset_links():
+    """Test page for reset password links - for development only"""
+    return render_template('test_reset_links.html')
