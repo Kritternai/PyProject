@@ -3,7 +3,7 @@ services:
     name: smart-learning-hub
     env: python
     plan: free
-    buildCommand: ./build.sh
+    buildCommand: chmod +x build-render.sh && ./build-render.sh
     startCommand: python start.py
     envVars:
       - key: FLASK_ENV
