@@ -120,70 +120,300 @@ class UserService:
             raise BusinessLogicException(f"Failed to update profile: {str(e)}")
 
 
-class LessonService:
-    """Simple lesson service for business logic."""
-    
-    def create_lesson(self, user_id: str, title: str, description: str = None):
-        """Create a new lesson."""
-        from app.models.lesson import LessonModel
+class BaseLessonService:
+    def __init__(self):
         from app import db
-        
-        lesson = LessonModel(
+        self._db = db
+        self._model_class = None
+    
+    def _validate_user_id(self, user_id: str) -> bool:
+        if not user_id or not isinstance(user_id, str) or len(user_id.strip()) == 0:
+            return False
+        return True
+    
+    def _validate_lesson_id(self, lesson_id: str) -> bool:
+        if not lesson_id or not isinstance(lesson_id, str) or len(lesson_id.strip()) == 0:
+            return False
+        return True
+    
+    def _validate_title(self, title: str) -> bool:
+        if not title or not isinstance(title, str) or len(title.strip()) < 3:
+            return False
+        return True
+
+
+class LessonService(BaseLessonService):
+    def __init__(self):
+        super().__init__()
+        from app.models.lesson import LessonModel
+        self._model_class = LessonModel
+        self._max_title_length = 200
+        self._max_description_length = 1000
+    
+    def _create_lesson_model(self, user_id: str, title: str, **kwargs):
+        return self._model_class(
             user_id=user_id,
-            title=title,
-            description=description
+            title=title.strip(),
+            description=kwargs.get('description', '').strip() if kwargs.get('description') else None,
+            difficulty_level=kwargs.get('difficulty_level', 'beginner'),
+            estimated_duration=kwargs.get('estimated_duration'),
+            color_theme=kwargs.get('color_theme', 1),
+            source_platform=kwargs.get('source_platform', 'manual'),
+            external_id=kwargs.get('external_id'),
+            external_url=kwargs.get('external_url'),
+            author_name=kwargs.get('author_name'),
+            subject=kwargs.get('subject'),
+            grade_level=kwargs.get('grade_level')
         )
+    
+    def _validate_lesson_data(self, user_id: str, title: str, **kwargs):
+        if not self._validate_user_id(user_id):
+            raise ValueError("Invalid user ID")
         
-        db.session.add(lesson)
-        db.session.commit()
+        if not self._validate_title(title):
+            raise ValueError("Title must be at least 3 characters long")
+        
+        if len(title) > self._max_title_length:
+            raise ValueError(f"Title cannot exceed {self._max_title_length} characters")
+        
+        description = kwargs.get('description', '')
+        if description and len(description) > self._max_description_length:
+            raise ValueError(f"Description cannot exceed {self._max_description_length} characters")
+    
+    def _get_lesson_query(self, user_id: str = None, lesson_id: str = None, status: str = None):
+        query = self._model_class.query
+        
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+        
+        if lesson_id:
+            query = query.filter_by(id=lesson_id)
+        
+        if status:
+            query = query.filter_by(status=status)
+        
+        return query
+    
+    def _commit_changes(self):
+        try:
+            self._db.session.commit()
+        except Exception as e:
+            self._db.session.rollback()
+            raise e
+    
+    def create_lesson(self, user_id: str, title: str, **kwargs):
+        self._validate_lesson_data(user_id, title, **kwargs)
+        
+        lesson = self._create_lesson_model(user_id, title, **kwargs)
+        self._db.session.add(lesson)
+        self._commit_changes()
+        
         return lesson
     
     def get_lessons_by_user(self, user_id: str):
-        """Get all lessons for a user."""
-        from app.models.lesson import LessonModel
-        return LessonModel.query.filter_by(user_id=user_id).all()
+        if not self._validate_user_id(user_id):
+            raise ValueError("Invalid user ID")
+        
+        return self._get_lesson_query(user_id=user_id).all()
     
     def get_lesson_by_id(self, lesson_id: str):
-        """Get lesson by ID."""
-        from app.models.lesson import LessonModel
+        if not self._validate_lesson_id(lesson_id):
+            raise ValueError("Invalid lesson ID")
         
-        lesson = LessonModel.query.filter_by(id=lesson_id).first()
+        lesson = self._get_lesson_query(lesson_id=lesson_id).first()
         if not lesson:
             raise NotFoundException("Lesson", lesson_id)
-        return lesson
         
-    # --- โค้ดใหม่ที่เพิ่มเข้ามาใน LessonService ---
-    def get_lessons_count(self, user_id: str):
-        """นับ lessons ทั้งหมด"""
-        from app.models.lesson import LessonModel
-        return LessonModel.query.filter_by(user_id=user_id).count()
+        return lesson
     
-    def get_user_lessons_count(self, user_id: str):
-        """Get total number of lessons for a user."""
-        from app.models.lesson import LessonModel
-        return LessonModel.query.filter_by(user_id=user_id).count()
+    def get_lessons_count(self, user_id: str) -> int:
+        if not self._validate_user_id(user_id):
+            return 0
+        
+        return self._get_lesson_query(user_id=user_id).count()
     
-    def get_completed_lessons_count(self, user_id: str):
-        """Get number of completed lessons for a user."""
-        from app.models.lesson import LessonModel
-        return LessonModel.query.filter_by(user_id=user_id, status='completed').count()
-
-    def get_lessons_completed_today(self, user_id: str):
-        """นับ lessons ที่เสร็จวันนี้"""
-        from app.models.lesson import LessonModel
+    def get_user_lessons_count(self, user_id: str) -> int:
+        return self.get_lessons_count(user_id)
+    
+    def get_completed_lessons_count(self, user_id: str) -> int:
+        if not self._validate_user_id(user_id):
+            return 0
+        
+        return self._get_lesson_query(user_id=user_id, status='completed').count()
+    
+    def get_lessons_completed_today(self, user_id: str) -> int:
+        if not self._validate_user_id(user_id):
+            return 0
+        
         from datetime import datetime
-        from app import db
         
         today = datetime.now().date()
         
-        count = LessonModel.query.filter(
-            LessonModel.user_id == user_id,
-            LessonModel.status == 'completed',
-            db.func.date(LessonModel.updated_at) == today
+        count = self._get_lesson_query(user_id=user_id, status='completed').filter(
+            self._db.func.date(self._model_class.updated_at) == today
         ).count()
         
         return count
-    # --- จบโค้ดที่เพิ่ม ---
+    
+    def get_lesson_statistics(self, user_id: str) -> dict:
+        if not self._validate_user_id(user_id):
+            return {
+                'total_lessons': 0,
+                'completed_lessons': 0,
+                'in_progress_lessons': 0,
+                'not_started_lessons': 0,
+                'completed_today': 0
+            }
+        
+        total = self.get_lessons_count(user_id)
+        completed = self.get_completed_lessons_count(user_id)
+        in_progress = self._get_lesson_query(user_id=user_id, status='in_progress').count()
+        not_started = self._get_lesson_query(user_id=user_id, status='not_started').count()
+        completed_today = self.get_lessons_completed_today(user_id)
+        
+        return {
+            'total_lessons': total,
+            'completed_lessons': completed,
+            'in_progress_lessons': in_progress,
+            'not_started_lessons': not_started,
+            'completed_today': completed_today,
+            'completion_rate': (completed / total * 100) if total > 0 else 0
+        }
+    
+    def update_lesson(self, lesson_id: str, user_id: str, **kwargs):
+        if not self._validate_lesson_id(lesson_id):
+            raise ValueError("Invalid lesson ID")
+        
+        if not self._validate_user_id(user_id):
+            raise ValueError("Invalid user ID")
+        
+        lesson = self.get_lesson_by_id(lesson_id)
+        
+        if lesson.user_id != user_id:
+            raise PermissionError("Only lesson owner can update lesson")
+        
+        if 'title' in kwargs:
+            if not self._validate_title(kwargs['title']):
+                raise ValueError("Invalid title")
+            lesson.title = kwargs['title'].strip()
+        
+        if 'description' in kwargs:
+            description = kwargs['description']
+            if description and len(description) > self._max_description_length:
+                raise ValueError(f"Description cannot exceed {self._max_description_length} characters")
+            lesson.description = description.strip() if description else None
+        
+        for field in ['difficulty_level', 'estimated_duration', 'color_theme', 
+                     'author_name', 'subject', 'grade_level', 'status']:
+            if field in kwargs:
+                setattr(lesson, field, kwargs[field])
+        
+        self._commit_changes()
+        return lesson
+    
+    def delete_lesson(self, lesson_id: str, user_id: str):
+        if not self._validate_lesson_id(lesson_id):
+            raise ValueError("Invalid lesson ID")
+        
+        if not self._validate_user_id(user_id):
+            raise ValueError("Invalid user ID")
+        
+        lesson = self.get_lesson_by_id(lesson_id)
+        
+        if lesson.user_id != user_id:
+            raise PermissionError("Only lesson owner can delete lesson")
+        
+        self._db.session.delete(lesson)
+        self._commit_changes()
+        return True
+    
+    def toggle_favorite(self, lesson_id: str, user_id: str):
+        if not self._validate_lesson_id(lesson_id):
+            raise ValueError("Invalid lesson ID")
+        
+        if not self._validate_user_id(user_id):
+            raise ValueError("Invalid user ID")
+        
+        lesson = self.get_lesson_by_id(lesson_id)
+        
+        if lesson.user_id != user_id:
+            raise PermissionError("Only lesson owner can toggle favorite")
+        
+        lesson.is_favorite = not lesson.is_favorite
+        self._commit_changes()
+        return lesson
+
+
+class GoogleClassroomLessonService(LessonService):
+    def __init__(self):
+        super().__init__()
+        self._source_platform = 'google_classroom'
+        self._external_api_client = None
+    
+    def create_lesson(self, user_id: str, title: str, external_id: str = None, **kwargs):
+        if not external_id:
+            raise ValueError("Google Classroom course ID is required")
+        
+        kwargs.update({
+            'source_platform': self._source_platform,
+            'external_id': external_id,
+            'external_url': f"https://classroom.google.com/c/{external_id}"
+        })
+        
+        return super().create_lesson(user_id, title, **kwargs)
+    
+    def sync_with_google_classroom(self, lesson_id: str):
+        lesson = self.get_lesson_by_id(lesson_id)
+        
+        if lesson.source_platform != self._source_platform:
+            raise ValueError("Lesson is not a Google Classroom lesson")
+        
+        return lesson
+
+
+class MicrosoftTeamsLessonService(LessonService):
+    def __init__(self):
+        super().__init__()
+        self._source_platform = 'microsoft_teams'
+        self._external_api_client = None
+    
+    def create_lesson(self, user_id: str, title: str, external_id: str = None, **kwargs):
+        if not external_id:
+            raise ValueError("Microsoft Teams team ID is required")
+        
+        kwargs.update({
+            'source_platform': self._source_platform,
+            'external_id': external_id,
+            'external_url': f"https://teams.microsoft.com/l/team/{external_id}"
+        })
+        
+        return super().create_lesson(user_id, title, **kwargs)
+    
+    def sync_with_microsoft_teams(self, lesson_id: str):
+        lesson = self.get_lesson_by_id(lesson_id)
+        
+        if lesson.source_platform != self._source_platform:
+            raise ValueError("Lesson is not a Microsoft Teams lesson")
+        
+        return lesson
+
+
+class LessonServiceFactory:
+    @staticmethod
+    def create_lesson_service(platform: str = 'manual') -> BaseLessonService:
+        if platform == 'manual':
+            return LessonService()
+        elif platform == 'google_classroom':
+            return GoogleClassroomLessonService()
+        elif platform == 'microsoft_teams':
+            return MicrosoftTeamsLessonService()
+        else:
+            raise ValueError(f"Unsupported platform: {platform}")
+    
+    @staticmethod
+    def get_service_for_lesson(lesson_model) -> BaseLessonService:
+        platform = getattr(lesson_model, 'source_platform', 'manual')
+        return LessonServiceFactory.create_lesson_service(platform)
 
 
 class NoteService:
