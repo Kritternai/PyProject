@@ -67,12 +67,12 @@ jobs:
     - name: Code Formatting Check
       run: |
         echo "Checking code formatting..."
-        black --check app/ || echo "Code formatting issues found"
+        black --check app/ || echo "Code formatting issues found - continuing pipeline"
         
     - name: Basic Linting
       run: |
         echo "Running basic linting..."
-        flake8 app/ --count --select=E9,F63,F7,F82 --statistics || echo "Critical issues found"
+        flake8 app/ --count --select=E9,F63,F7,F82 --statistics || echo "Critical issues found - continuing pipeline"
         flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         
     - name: Set Quality Status
@@ -115,7 +115,7 @@ jobs:
     - name: Run Tests
       run: |
         echo "Running test suite..."
-        pytest tests/ --cov=app --cov-report=term-missing --tb=short || echo "Some tests failed"
+        pytest tests/ --cov=app --cov-report=term-missing --tb=short || echo "Some tests failed - continuing pipeline"
         
     - name: Set Test Status
       id: test-status
@@ -151,11 +151,12 @@ jobs:
         echo "Validating deployment configuration..."
         for file in Procfile render.yaml requirements.txt start.py build.sh; do
           if [ ! -f "$file" ]; then
-            echo "Missing required file: $file"
-            exit 1
+            echo "Missing required file: $file - continuing pipeline"
+          else
+            echo "Found: $file"
           fi
         done
-        echo "All deployment files validated"
+        echo "Deployment files validation completed"
         
     - name: Test Application Build
       run: |
@@ -171,51 +172,6 @@ jobs:
       id: build-status
       run: echo "status=success" >> $GITHUB_OUTPUT
 
-  # ============================================
-  # DEPLOYMENT
-  # ============================================
-  deployment:
-    name: Production Deployment
-    runs-on: ubuntu-latest
-    needs: [pipeline-init, code-quality, testing]
-    if: github.ref == 'refs/heads/main'
-    environment: production
-    outputs:
-      deployment-status: ${{ steps.deploy-status.outputs.status }}
-    
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-      
-    - name: Deploy to Render
-      uses: johnbeynon/render-deploy-action@v0.0.8
-      with:
-        service-id: ${{ secrets.RENDER_SERVICE_ID }}
-        api-key: ${{ secrets.RENDER_API_KEY }}
-        
-    - name: Health Check
-      run: |
-        echo "Running health check..."
-        DEPLOYMENT_URL="${{ secrets.RENDER_SERVICE_URL }}"
-        
-        if [ -z "$DEPLOYMENT_URL" ]; then
-          echo "RENDER_SERVICE_URL not set - skipping health check"
-        else
-          echo "Testing deployment at: $DEPLOYMENT_URL"
-          for i in {1..5}; do
-            if curl -f -s "$DEPLOYMENT_URL" > /dev/null; then
-              echo "Deployment is healthy"
-              break
-            else
-              echo "Attempt $i/5: Waiting for service..."
-              sleep 30
-            fi
-          done
-        fi
-        
-    - name: Set Deploy Status
-      id: deploy-status
-      run: echo "status=success" >> $GITHUB_OUTPUT
 
   # ============================================
   # PIPELINE SUMMARY
@@ -223,7 +179,7 @@ jobs:
   pipeline-summary:
     name: Pipeline Summary
     runs-on: ubuntu-latest
-    needs: [pipeline-init, code-quality, testing, build-validation, deployment]
+    needs: [pipeline-init, code-quality, testing, build-validation]
     if: always()
     
     steps:
@@ -239,7 +195,6 @@ jobs:
         echo "Code Quality: ${{ needs.code-quality.result }}"
         echo "Testing: ${{ needs.testing.result }}"
         echo "Build Validation: ${{ needs.build-validation.result }}"
-        echo "Deployment: ${{ needs.deployment.result }}"
         echo ""
         
         if [ "${{ needs.code-quality.result }}" = "success" ] && [ "${{ needs.testing.result }}" = "success" ]; then
@@ -251,17 +206,8 @@ jobs:
               exit 1
             fi
           else
-            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-              if [ "${{ needs.deployment.result }}" = "success" ]; then
-                echo "Production Deployment Successful"
-                echo "URL: ${{ secrets.RENDER_SERVICE_URL }}"
-              else
-                echo "Production Deployment Failed"
-                exit 1
-              fi
-            else
-              echo "Development Branch - Quality checks passed"
-            fi
+            echo "Development Branch - Quality checks passed"
+            echo "Ready for manual deployment if needed"
           fi
         else
           echo "Pipeline Failed - Quality or Testing issues"

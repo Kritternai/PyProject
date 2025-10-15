@@ -12,7 +12,6 @@ This directory contains the professional Continuous Integration and Continuous D
   - **Code Quality**: Basic quality checks (formatting, linting)
   - **Testing**: Test suite execution with coverage
   - **Build Validation**: PR build validation (PR only)
-  - **Deployment**: Production deployment with health checks (main only)
   - **Pipeline Summary**: Complete pipeline status and reporting
 
 ## Workflow Flow Structure
@@ -26,8 +25,6 @@ Code Push/PR → Pipeline Initiation
             ↓             ↓             ↓
             └─────────────┼─────────────┘
                           ↓
-                  Production Deployment (main)
-                          ↓
                   Pipeline Summary
 ```
 
@@ -36,165 +33,91 @@ Code Push/PR → Pipeline Initiation
 - **code-quality**: Depends on pipeline-init
 - **testing**: Depends on pipeline-init + code-quality
 - **build-validation**: Depends on all previous jobs (PR only)
-- **deployment**: Depends on pipeline-init + code-quality + testing (main only)
 - **pipeline-summary**: Depends on all jobs (always)
 
-## 📋 Requirements
-
-### GitHub Secrets
-Configure these secrets in your repository settings:
-
-- `RENDER_API_KEY`: Render API key for deployments
-- `RENDER_SERVICE_ID`: Your Render service ID
-- `RENDER_SERVICE_URL`: Your deployed service URL
-- `CODECOV_TOKEN`: Codecov token for coverage (optional)
-
-See [SECRETS_TEMPLATE.md](SECRETS_TEMPLATE.md) for detailed setup instructions.
+## Requirements
 
 ### Dependencies
-Each workflow uses these essential Python packages:
+The workflow uses these essential Python packages:
 - `pytest` - Testing framework
 - `pytest-cov` - Coverage plugin
 - `black` - Code formatting
-- `isort` - Import sorting
 - `flake8` - Linting
-- `bandit` - Security analysis
-- `safety` - Dependency security
 
-## 🔧 Configuration Files
+## Configuration Files
 
 ### Code Quality Configuration
 - `.flake8` - Flake8 linting rules
 
 ### Workflow Configuration
-- **Multi-stage architecture** with specialized workflows
+- **Multi-stage architecture** with interconnected jobs
 - **Python 3.11** environment across all workflows
-- **Intelligent caching** for faster builds
 - **Conditional execution** based on branch and event type
-- **Comprehensive artifact** uploads and reporting
+- **Essential quality gates** without complexity
 
-## 📊 Reports and Artifacts
+## Reports and Artifacts
 
-Each workflow generates specialized reports:
+The workflow generates these reports:
 
 ### Code Quality Reports
-- **Security Analysis**: Bandit vulnerability reports
-- **Dependency Security**: Safety scan results
 - **Code Quality**: Flake8 linting reports
+- **Formatting**: Black formatting analysis
 
 ### Testing Reports
 - **Test Results**: pytest execution reports
-- **Coverage Analysis**: HTML and XML coverage data
-- **JUnit Reports**: XML test results for integration
+- **Coverage Analysis**: Coverage data with term output
 
-### Deployment Reports
-- **Deployment Logs**: Render deployment status
-- **Health Check Results**: Endpoint validation reports
-- **Performance Metrics**: Response time analysis
 
-## 🎯 Quality Gates
+## Quality Gates
 
-The CI/CD pipeline enforces comprehensive quality gates:
+The CI/CD pipeline enforces essential quality gates:
 
-1. **Code Quality**: All code must pass Black, isort, and Flake8 checks
-2. **Security**: No high-severity security issues allowed
-3. **Testing**: Minimum 60% code coverage required
-4. **Dependencies**: No known vulnerabilities in dependencies
-5. **Build Validation**: Application must start successfully
-6. **Health Checks**: Deployed service must respond correctly
+1. **Code Quality**: Basic formatting and linting checks
+2. **Testing**: Test suite execution with coverage reporting
+3. **Build Validation**: Application must start successfully
 
-## 🔄 Unified Pipeline Flow
+## Getting Started
 
-```
-📝 Code Push/PR
-    ↓
-🚀 Pipeline Initiation
-    ↓
-    ├── 🔍 Code Quality & Security
-    │   ├── 🎨 Code Formatting Analysis
-    │   ├── 📦 Import Organization Analysis
-    │   ├── 🔍 Code Linting Analysis
-    │   └── 🔒 Security Vulnerability Analysis
-    │
-    ├── 🧪 Testing & Coverage Analysis
-    │   ├── 🗄️ Setup Test Environment
-    │   ├── 🏗️ Initialize Test Database
-    │   ├── 🧪 Execute Test Suite
-    │   └── 📊 Coverage Analysis
-    │
-    ├── 🔨 Build Validation (PR only)
-    │   ├── 🔍 Validate Deployment Files
-    │   ├── 🏗️ Test Application Build
-    │   └── 🚀 Test Application Startup
-    │
-    ├── 🚀 Deployment (main branch only)
-    │   ├── 🚀 Deploy to Render
-    │   └── 🏥 Comprehensive Health Monitoring
-    │
-    └── 📈 Performance & Metrics Collection
-        ├── 📊 Collect Pipeline Metrics
-        └── 📊 Generate Performance Report
-    │
-    ↓
-📊 Unified Pipeline Summary
-```
+1. **Push code** to trigger the CI/CD pipeline
+2. **Monitor progress** through the interconnected jobs
+3. **Review reports** from each stage
+4. **Fix issues** if any jobs fail
+5. **Manual deployment** when ready for production
 
-## 🚀 Getting Started
-
-1. **Set up secrets** in GitHub repository settings
-2. **Push code** to trigger the orchestrator workflow
-3. **Monitor progress** through the interconnected workflows
-4. **Review specialized reports** from each stage
-5. **Fix issues** if any workflows fail
-6. **Enjoy automated deployment** on main branch pushes
-
-## 🔍 Monitoring and Alerts
+## Monitoring
 
 ### Success Notifications
-- Workflows post success messages to PR comments
-- Coverage reports are automatically uploaded to Codecov
-- Deployment status is logged and reported
+- Pipeline shows success status in GitHub Actions
+- Coverage reports are displayed in logs
+- Build validation results are reported
 
 ### Failure Handling
-- Failed workflows block deployments
-- Security issues create GitHub issues
-- Performance regressions are flagged
-- Dependency vulnerabilities are reported
+- Failed jobs show clear error messages
+- Pipeline continues with non-critical failures
+- Build validation blocks PR merges if critical issues found
 
-## 📈 Continuous Improvement
-
-The CI/CD pipeline is designed to evolve:
-
-1. **Add new tests** as features are developed
-2. **Update quality gates** based on project needs
-3. **Enhance security scanning** with new tools
-4. **Improve performance testing** with realistic scenarios
-5. **Expand coverage** to include more scenarios
-
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
 1. **Workflow failures**: Check logs in Actions tab
-2. **Secret errors**: Verify secrets are correctly configured
-3. **Test failures**: Review test output and fix issues
-4. **Deployment issues**: Check Render service configuration
-5. **Performance regressions**: Analyze performance reports
+2. **Test failures**: Review test output and fix issues
+3. **Build issues**: Check deployment file configuration
+4. **Quality check failures**: Fix formatting or linting issues
 
 ### Getting Help
 
 - Review workflow logs for detailed error messages
-- Check uploaded artifacts for reports
-- Ensure all secrets are properly configured
-- Verify external service configurations (Render, Codecov)
+- Ensure all required files exist in project root
+- Check Python environment and dependencies
 
-## 📚 Additional Resources
+## Additional Resources
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [Render Deployment Guide](https://render.com/docs)
-- [Codecov Integration](https://docs.codecov.com/docs)
-- [Security Best Practices](https://docs.github.com/en/code-security)
+- [Python Testing with pytest](https://docs.pytest.org/)
+- [Black Code Formatter](https://black.readthedocs.io/)
+- [Flake8 Linting](https://flake8.pycqa.org/)
 
 ---
 
-**Smart Learning Hub CI/CD Pipeline** - Automated quality assurance and deployment 🚀
+**Smart Learning Hub CI/CD Pipeline** - Automated quality assurance
