@@ -28,7 +28,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem 1rem;
+            padding: 1rem;
             position: relative;
         }
         
@@ -53,9 +53,9 @@
                 0 16px 32px rgba(25, 118, 210, 0.1),
                 inset 0 1px 0 rgba(255, 255, 255, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 3rem;
+            padding: 2rem;
             width: 100%;
-            max-width: 420px;
+            max-width: 800px;
             position: relative;
             overflow: hidden;
         }
@@ -78,9 +78,21 @@
             100% { background-position: -200% 0; }
         }
         
+        .login-layout {
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+        }
+        
         .logo-section {
+            flex: 1;
             text-align: center;
-            margin-bottom: 2.5rem;
+            padding-right: 2rem;
+        }
+        
+        .form-section {
+            flex: 1;
+            padding-left: 2rem;
         }
         
         .logo-icon {
@@ -131,8 +143,7 @@
         }
         
         .login-header {
-            text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
         
         .login-title {
@@ -318,6 +329,20 @@
         }
         
         @media (max-width: 768px) {
+            .login-layout {
+                flex-direction: column;
+                gap: 2rem;
+            }
+            
+            .logo-section {
+                padding-right: 0;
+                margin-bottom: 1rem;
+            }
+            
+            .form-section {
+                padding-left: 0;
+            }
+            
             .login-card {
                 margin: 1rem;
                 padding: 2rem;
@@ -385,49 +410,51 @@
     </style>
 </head>
 <body>
-    <div class="auth-container">
+        <div class="auth-container">
         <div class="floating-elements">
             <div class="floating-element"></div>
             <div class="floating-element"></div>
             <div class="floating-element"></div>
-        </div>
-        
-        <div class="login-card">
-            <div class="logo-section">
-                <div class="logo-icon">
-                    <i class="bi bi-mortarboard-fill"></i>
                 </div>
-                <h1 class="brand-title">Smart Learning Hub</h1>
-                <p class="brand-subtitle">Your Learning Journey Starts Here</p>
-            </div>
+
+        <div class="login-card">
+            <div class="login-layout">
+                <div class="logo-section">
+                    <div class="logo-icon">
+                        <i class="bi bi-mortarboard-fill"></i>
+                    </div>
+                    <h1 class="brand-title">Smart Learning Hub</h1>
+                    <p class="brand-subtitle">Your Learning Journey Starts Here</p>
+                </div>
+                
+                <div class="form-section">
+                    <div class="login-header">
+                        <h2 class="login-title">Welcome Back</h2>
+                        <p class="login-subtitle">Sign in to continue your learning journey</p>
+                    </div>
             
-            <div class="login-header">
-                <h2 class="login-title">Welcome Back</h2>
-                <p class="login-subtitle">Sign in to continue your learning journey</p>
-            </div>
-            
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
                             <i class="bi {{ 'bi-exclamation-triangle-fill' if category == 'error' else 'bi-check-circle-fill' }} me-2"></i>
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            
-            <form method="POST" action="{{ url_for('web_auth.login') }}">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <form method="POST" action="{{ url_for('web_auth.login') }}">
                 <div class="form-floating">
                     <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required>
                     <label for="email">
                         <i class="bi bi-envelope me-2"></i>Email Address
-                    </label>
+                                </label>
                     <div class="input-icon">
                         <i class="bi bi-envelope"></i>
-                    </div>
-                </div>
+                                </div>
+                            </div>
                 
                 <div class="form-floating">
                     <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
@@ -459,6 +486,7 @@
                 <p>Don't have an account? 
                     <a href="{{ url_for('web_auth.register') }}">Sign up here</a>
                 </p>
+                </div>
             </div>
         </div>
     </div>
