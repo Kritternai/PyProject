@@ -437,7 +437,58 @@ function nextMode() {
   pomodoroState.isRunning = false;
   clearCurrentSession();
   
+  // Update UI tabs to reflect new mode
+  updateModeTabs();
+  
   console.log('✅ Next mode set to:', pomodoroState.mode, 'with', pomodoroState.timeLeft, 'seconds');
+}
+
+// Update mode tabs UI to reflect current mode
+function updateModeTabs() {
+  console.log('🔄 Updating mode tabs for mode:', pomodoroState.mode);
+  
+  // Remove active class from all tabs
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Add active class to current mode tab
+  const currentTab = document.querySelector(`[data-mode="${pomodoroState.mode}"]`);
+  if (currentTab) {
+    currentTab.classList.add('active');
+    console.log('✅ Active tab updated to:', pomodoroState.mode);
+    
+    // Add smooth transition effect
+    currentTab.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+    currentTab.style.transform = 'scale(1.05)';
+    setTimeout(() => {
+      currentTab.style.transform = 'scale(1)';
+    }, 200);
+    
+    // Update body class for mode-specific styling
+    document.body.className = document.body.className.replace(/pomodoro|short-break|long-break/g, '').trim();
+    document.body.classList.add(pomodoroState.mode === 'pomodoro' ? 'pomodoro' : 
+                               pomodoroState.mode === 'shortBreak' ? 'short-break' : 'long-break');
+    
+    // Update mode display text
+    const statusText = document.getElementById('statusText');
+    if (statusText) {
+      const modeTexts = {
+        'pomodoro': 'Time to focus!',
+        'shortBreak': 'Time for a short break!',
+        'longBreak': 'Time for a long break!'
+      };
+      statusText.textContent = modeTexts[pomodoroState.mode] || 'Time to focus!';
+    }
+    
+    // Update cycle info
+    const cycleInfo = document.getElementById('cycleInfo');
+    if (cycleInfo) {
+      cycleInfo.textContent = `Cycle #${pomodoroState.cycle}`;
+    }
+  } else {
+    console.warn('⚠️ Could not find tab for mode:', pomodoroState.mode);
+  }
 }
 
 // Complete current session
@@ -628,6 +679,7 @@ async function timerComplete() {
   
   stopAllTimers();
   updateButtons(); // Update button state
+  updateModeTabs(); // Update mode tabs
   saveState();
 }
 
@@ -1144,6 +1196,7 @@ function switchMode(mode) {
     console.log('✅ Timer display should show:', Math.floor(pomodoroState.timeLeft / 60) + ':' + (pomodoroState.timeLeft % 60).toString().padStart(2, '0'));
     
     updateAll();
+    updateModeTabs();
     saveState();
     
     console.log('✅ Mode switch completed');
