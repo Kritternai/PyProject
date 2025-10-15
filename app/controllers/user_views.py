@@ -193,7 +193,7 @@ class UserController:
             # Prepare update data
             email = None
             if 'email' in data and data['email']:
-                email = Email(data['email'])
+                email = data['email']
             
             # Update user
             user = self._user_service.update_user_profile(
@@ -279,8 +279,8 @@ class UserController:
                         'message': f'{field} is required'
                     }), 400
             
-            # Create new password value object
-            new_password = Password(data['new_password'])
+            # Get new password
+            new_password = data['new_password']
             
             # Change password
             self._user_service.change_user_password(

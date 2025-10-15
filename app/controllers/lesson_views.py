@@ -202,10 +202,10 @@ class LessonController:
                     'message': 'Request body is required'
                 }), 400
             
-            # Parse enums if provided
+            # Parse difficulty level if provided
             difficulty_level = None
             if 'difficulty_level' in data:
-                difficulty_level = DifficultyLevel(data['difficulty_level'])
+                difficulty_level = data['difficulty_level']
             
             # Update lesson
             lesson = self._lesson_service.update_lesson(
@@ -326,7 +326,7 @@ class LessonController:
                     'message': 'Status is required'
                 }), 400
             
-            status = LessonStatus(data['status'])
+            status = data['status']
             lesson = self._lesson_service.change_lesson_status(lesson_id, current_user.id, status)
             
             return jsonify({
