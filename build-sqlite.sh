@@ -31,12 +31,6 @@ mkdir -p instance uploads logs
 
 # Run database setup
 echo "📊 Setting up SQLite database..."
-python -c "
-from app import create_app, db
-app = create_app('production')
-with app.app_context():
-    db.create_all()
-    print('✅ SQLite database tables created successfully')
-"
+python database/setup_database.py
 
 echo "✅ Build completed successfully!"
