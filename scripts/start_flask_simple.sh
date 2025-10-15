@@ -7,9 +7,15 @@
 echo "🚀 Starting Smart Learning Hub..."
 
 # Set Environment Variables
-export GOOGLE_CLIENT_ID="40820229782-0f7uoqd5ab94cuipmbdk09jeradqvac0.apps.googleusercontent.com"
-export GOOGLE_CLIENT_SECRET="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"
-export FLASK_SECRET_KEY="your_strong_random_flask_secret_key"
+# CRITICAL: Replace with your actual credentials!
+if [ -z "$GOOGLE_CLIENT_ID" ] || [ -z "$GOOGLE_CLIENT_SECRET" ]; then
+    echo "❌ ERROR: Google OAuth credentials not set!"
+    echo "Please set environment variables:"
+    echo "export GOOGLE_CLIENT_ID='your-client-id'"
+    echo "export GOOGLE_CLIENT_SECRET='your-client-secret'"
+    echo "export FLASK_SECRET_KEY='your-secret-key'"
+    exit 1
+fi
 export OAUTHLIB_INSECURE_TRANSPORT="1"
 export FLASK_ENV="development"
 export FLASK_DEBUG="1"

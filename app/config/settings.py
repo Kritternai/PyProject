@@ -16,6 +16,12 @@ class Config:
     # Database settings
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///site.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+        'pool_timeout': 20,
+        'max_overflow': 0
+    }
     
     # Google OAuth settings
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
@@ -67,6 +73,9 @@ class TestingConfig(Config):
     RATELIMIT_HEADERS_ENABLED = True
     RATELIMIT_SWALLOW_ERRORS = True
 
+
+# Import production config
+from .production_config import ProductionConfig
 
 # Configuration mapping
 config = {

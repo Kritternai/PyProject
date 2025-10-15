@@ -116,10 +116,8 @@ def set_env_defaults() -> None:
         print_status("export GOOGLE_CLIENT_ID='your-client-id-here'")
         print_status("export GOOGLE_CLIENT_SECRET='your-client-secret-here'")
         print_status("export FLASK_SECRET_KEY='your-strong-random-flask-secret-key'")
-        print_warning("Using default development values...")
-        os.environ.setdefault("GOOGLE_CLIENT_ID", "231151462337-sspbadu0r8rlnoht5pgg77un10i26r8d.apps.googleusercontent.com")
-        os.environ.setdefault("GOOGLE_CLIENT_SECRET", "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")
-        os.environ.setdefault("FLASK_SECRET_KEY", "your_strong_random_flask_secret_key")
+        print_error("CRITICAL: Cannot start without proper credentials!")
+        sys.exit(1)
     
     os.environ.setdefault("OAUTHLIB_INSECURE_TRANSPORT", "1")
     os.environ.setdefault("FLASK_ENV", "development")

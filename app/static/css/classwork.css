@@ -950,13 +950,298 @@
     line-height: 1.5;
 }
 
+/* ===== Empty State ===== */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    background: #ffffff;
+    border: 2px dashed #d1d5db;
+    border-radius: 16px;
+    margin: 16px 0;
+    position: relative;
+    transition: all 0.3s ease;
+    min-height: 280px;
+}
+
+.empty-state:hover {
+    border-color: #003B8E;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 59, 142, 0.1);
+}
+
+.empty-state::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, #003B8E, #2B6BCF, #003B8E);
+    border-radius: 16px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.empty-state:hover::before {
+    opacity: 0.1;
+}
+
+.empty-state .empty-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.empty-state:hover .empty-icon {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    transform: scale(1.05);
+}
+
+.empty-state .empty-icon i {
+    font-size: 2rem;
+    color: #94a3b8;
+    transition: all 0.3s ease;
+}
+
+.empty-state:hover .empty-icon i {
+    color: #38bdf8;
+}
+
+.empty-state .empty-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+    text-align: center;
+    letter-spacing: -0.025em;
+}
+
+.empty-state .empty-description {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-bottom: 32px;
+    text-align: center;
+    line-height: 1.6;
+    max-width: 320px;
+}
+
+.empty-state .btn-classwork,
+.empty-state .btn-classwork-secondary {
+    font-size: 0.8rem;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 59, 142, 0.12);
+}
+
+.empty-state .btn-classwork::before,
+.empty-state .btn-classwork-secondary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.empty-state .btn-classwork:hover::before,
+.empty-state .btn-classwork-secondary:hover::before {
+    left: 100%;
+}
+
+.empty-state .btn-classwork:hover,
+.empty-state .btn-classwork-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 59, 142, 0.2);
+}
+
+.empty-state .btn-classwork:active,
+.empty-state .btn-classwork-secondary:active {
+    transform: translateY(-1px);
+    transition: transform 0.1s;
+}
+
+/* Empty state variants for different contexts */
+.empty-state.kanban-empty {
+    border-color: #e9d5ff;
+}
+
+.empty-state.kanban-empty:hover {
+    border-color: #c084fc;
+    background: linear-gradient(135deg, #fef7ff 0%, #f3e8ff 100%);
+}
+
+.empty-state.kanban-empty .empty-icon {
+    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+}
+
+.empty-state.kanban-empty:hover .empty-icon {
+    background: linear-gradient(135deg, #e9d5ff 0%, #c084fc 100%);
+}
+
+.empty-state.kanban-empty .empty-icon i {
+    color: #c084fc;
+}
+
+.empty-state.kanban-empty:hover .empty-icon i {
+    color: #a855f7;
+}
+
+.empty-state.materials-empty {
+    border-color: #bae6fd;
+}
+
+.empty-state.materials-empty:hover {
+    border-color: #38bdf8;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.empty-state.materials-empty .empty-icon {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+}
+
+.empty-state.materials-empty:hover .empty-icon {
+    background: linear-gradient(135deg, #bae6fd 0%, #38bdf8 100%);
+}
+
+.empty-state.materials-empty .empty-icon i {
+    color: #38bdf8;
+}
+
+.empty-state.materials-empty:hover .empty-icon i {
+    color: #0ea5e9;
+}
+
+/* Enhanced hover effects */
+.empty-state:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 59, 142, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* Loading state for buttons */
+.empty-state .btn-classwork.loading,
+.empty-state .btn-classwork-secondary.loading {
+    position: relative;
+    color: transparent;
+}
+
+.empty-state .btn-classwork.loading::after,
+.empty-state .btn-classwork-secondary.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .empty-state {
+        padding: 32px 20px;
+        margin: 12px 0;
+        min-height: 240px;
+    }
+    
+    .empty-state .empty-icon {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 20px;
+    }
+    
+    .empty-state .empty-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .empty-state .empty-title {
+        font-size: 1.125rem;
+        margin-bottom: 6px;
+    }
+    
+    .empty-state .empty-description {
+        font-size: 0.85rem;
+        margin-bottom: 24px;
+        max-width: 280px;
+    }
+    
+    .empty-state .btn-classwork,
+    .empty-state .btn-classwork-secondary {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .empty-state {
+        padding: 24px 16px;
+        margin: 8px 0;
+        min-height: 200px;
+    }
+    
+    .empty-state .empty-icon {
+        width: 56px;
+        height: 56px;
+        margin-bottom: 16px;
+    }
+    
+    .empty-state .empty-icon i {
+        font-size: 1.25rem;
+    }
+    
+    .empty-state .empty-title {
+        font-size: 1rem;
+        margin-bottom: 4px;
+    }
+    
+    .empty-state .empty-description {
+        font-size: 0.8rem;
+        margin-bottom: 20px;
+        max-width: 240px;
+    }
+    
+    .empty-state .btn-classwork,
+    .empty-state .btn-classwork-secondary {
+        font-size: 0.7rem;
+        padding: 5px 10px;
+    }
+}
+
 /* ===== Buttons ===== */
 .btn-classwork {
     background: linear-gradient(135deg, #003B8E, #2B6BCF);
     color: white;
     border: none;
-    border-radius: 12px;
-    padding: 12px 24px;
+    border-radius: 10px;
+    padding: 10px 18px;
     font-size: 0.875rem;
     font-weight: 600;
     transition: all 0.3s ease;
@@ -977,9 +1262,9 @@
 .btn-classwork-secondary {
     background: white;
     color: #003B8E;
-    border: 1px solid #e5e5ea;
-    border-radius: 12px;
-    padding: 12px 24px;
+    border: 2px solid #003B8E;
+    border-radius: 10px;
+    padding: 10px 18px;
     font-size: 0.875rem;
     font-weight: 600;
     transition: all 0.3s ease;
@@ -989,10 +1274,11 @@
 }
 
 .btn-classwork-secondary:hover {
-    background: #f8f9fa;
+    background: #e8f0fe;
     color: #003B8E;
     border-color: #003B8E;
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 59, 142, 0.15);
 }
 
 .btn-icon {

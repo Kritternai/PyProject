@@ -1,0 +1,29 @@
+/* 🎯 สไตล์การ์ด Achievements */
+.achievement-item {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.achievement-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.achievement-icon {
+    font-size: 28px;
+    margin-right: 12px;
+}
+
+.achievement-item .fw-bold {
+    font-size: 1rem;
+    color: #333;
+}
+
+.achievement-item .text-secondary {
+    font-size: 0.9rem;
+    color: #666;
+}

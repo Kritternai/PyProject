@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: smart-learning-hub
+    env: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: python start.py
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: 0
+      - key: OAUTHLIB_INSECURE_TRANSPORT
+        value: 0
+      - key: GOOGLE_CLIENT_ID
+        fromService:
+          type: pserv
+          name: smart-learning-hub-secrets
+          property: GOOGLE_CLIENT_ID
+      - key: GOOGLE_CLIENT_SECRET
+        fromService:
+          type: pserv
+          name: smart-learning-hub-secrets
+          property: GOOGLE_CLIENT_SECRET
+      - key: FLASK_SECRET_KEY
+        fromService:
+          type: pserv
+          name: smart-learning-hub-secrets
+          property: FLASK_SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smart-learning-hub-db
+          property: connectionString
+
+databases:
+  - name: smart-learning-hub-db
+    plan: free
