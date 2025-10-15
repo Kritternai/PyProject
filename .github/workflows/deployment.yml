@@ -1,0 +1,87 @@
+name: 🚀 Deployment & Health Check
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🚀 Deploy to Render
+      uses: johnbeynon/render-deploy-action@v0.0.8
+      with:
+        service-id: ${{ secrets.RENDER_SERVICE_ID }}
+        api-key: ${{ secrets.RENDER_API_KEY }}
+        
+    - name: 🏥 Post-deployment health check
+      run: |
+        echo "🏥 Running comprehensive health checks..."
+        
+        DEPLOYMENT_URL="${{ secrets.RENDER_SERVICE_URL }}"
+        
+        if [ -z "$DEPLOYMENT_URL" ]; then
+          echo "⚠️ RENDER_SERVICE_URL not set - skipping health check"
+          exit 0
+        fi
+        
+        echo "🌐 Testing deployment at: $DEPLOYMENT_URL"
+        
+        # Wait for service to be ready (up to 5 minutes)
+        for i in {1..10}; do
+          echo "⏳ Health check attempt $i/10..."
+          
+          if curl -f -s -o /dev/null "$DEPLOYMENT_URL"; then
+            echo "✅ Health check passed - service is responding"
+            
+            # Test specific endpoints
+            echo "🔍 Testing specific endpoints..."
+            
+            # Test main page
+            if curl -f -s "$DEPLOYMENT_URL" > /dev/null; then
+              echo "✅ Main page accessible"
+            fi
+            
+            # Test API health (if available)
+            if curl -f -s "$DEPLOYMENT_URL/api/health" > /dev/null; then
+              echo "✅ API health endpoint accessible"
+            fi
+            
+            echo "🎉 Deployment successful and service is healthy!"
+            exit 0
+          else
+            echo "⏳ Service not ready yet... waiting 30 seconds"
+            sleep 30
+          fi
+        done
+        
+        echo "❌ Health check failed - service did not respond within timeout"
+        exit 1
+        
+    - name: 📊 Deployment Summary
+      run: |
+        echo "📊 Deployment Summary"
+        echo "==================="
+        echo "✅ Status: Successfully deployed"
+        echo "🌐 URL: ${{ secrets.RENDER_SERVICE_URL }}"
+        echo "🕐 Time: $(date)"
+        echo "🔗 Commit: ${{ github.sha }}"
+        echo "👤 Author: ${{ github.actor }}"
+        echo "==================="

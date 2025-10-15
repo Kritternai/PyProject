@@ -1,0 +1,85 @@
+name: 🔨 Build Validation
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_call:
+    needs: [code-quality, testing]
+
+jobs:
+  build-check:
+    name: 🔨 Build Validation & Compatibility
+    runs-on: ubuntu-latest
+    needs: [code-quality, testing]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: 📦 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: 🔍 Validate required files
+      run: |
+        echo "🔍 Validating deployment files..."
+        
+        REQUIRED_FILES=("Procfile" "render.yaml" "requirements.txt" "start.py" "build.sh")
+        
+        for file in "${REQUIRED_FILES[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "❌ Required file missing: $file"
+            exit 1
+          else
+            echo "✅ Found: $file"
+          fi
+        done
+        
+        echo "✅ All required deployment files present"
+        
+    - name: 🏗️ Test application build
+      run: |
+        echo "🏗️ Testing application build process..."
+        
+        # Set production environment
+        export FLASK_ENV=production
+        export DATABASE_URL=sqlite:///site.db
+        export FLASK_SECRET_KEY=build_test_secret_key
+        
+        # Setup database
+        python database/setup_database.py
+        
+        echo "✅ Database setup completed"
+        
+    - name: 🚀 Test application startup
+      run: |
+        echo "🚀 Testing application startup..."
+        
+        # Start application in background
+        timeout 30s python start.py &
+        APP_PID=$!
+        
+        # Wait for startup
+        sleep 10
+        
+        # Test health endpoint
+        if curl -f -s http://localhost:8000/ > /dev/null; then
+          echo "✅ Application startup test passed"
+          kill $APP_PID 2>/dev/null || true
+        else
+          echo "❌ Application startup test failed"
+          kill $APP_PID 2>/dev/null || true
+          exit 1
+        fi
+        
+    - name: ✅ Build validation complete
+      run: |
+        echo "✅ Build validation completed successfully!"
+        echo "🚀 Application is ready for deployment"
