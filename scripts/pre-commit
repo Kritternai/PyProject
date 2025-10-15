@@ -1,0 +1,49 @@
+#!/bin/bash
+# Pre-commit hook for Smart Learning Hub
+
+echo "🔍 Running pre-commit checks..."
+
+# Check Python syntax
+echo "🐍 Checking Python syntax..."
+python -m py_compile app/*.py
+if [ $? -ne 0 ]; then
+    echo "❌ Python syntax errors found!"
+    exit 1
+fi
+
+# Run basic linting
+echo "🔍 Running basic linting..."
+if command -v flake8 &> /dev/null; then
+    flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+    if [ $? -ne 0 ]; then
+        echo "❌ Linting errors found!"
+        exit 1
+    fi
+fi
+
+# Check for secrets
+echo "🔐 Checking for potential secrets..."
+if grep -r "password\s*=\s*['\"][^'\"]*['\"]" app/ --include="*.py" | grep -v "password_hash" | grep -v "password_field"; then
+    echo "⚠️  Potential hardcoded passwords found!"
+    echo "Please use environment variables for sensitive data."
+    exit 1
+fi
+
+if grep -r "api[_-]?key\s*=\s*['\"][^'\"]*['\"]" app/ --include="*.py"; then
+    echo "⚠️  Potential hardcoded API keys found!"
+    echo "Please use environment variables for API keys."
+    exit 1
+fi
+
+# Run tests
+echo "🧪 Running tests..."
+if command -v pytest &> /dev/null; then
+    pytest tests/test_app.py -v
+    if [ $? -ne 0 ]; then
+        echo "❌ Tests failed!"
+        exit 1
+    fi
+fi
+
+echo "✅ All pre-commit checks passed!"
+exit 0
