@@ -77,16 +77,23 @@ class TestingConfig(Config):
     RATELIMIT_SWALLOW_ERRORS = True
 
 
-# Import production config
-from .production_config import ProductionConfig
-
 # Configuration mapping
 config = {
     'development': DevelopmentConfig,
-    'production': ProductionConfig,
     'testing': TestingConfig,
     'default': DevelopmentConfig
 }
+
+# Conditionally import production config to avoid import errors in development
+if os.environ.get('FLASK_ENV') == 'production':
+    try:
+        from .production_config import ProductionConfig
+        config['production'] = ProductionConfig
+    except (ImportError, ValueError) as e:
+        print(f"Warning: Could not load production config: {e}")
+        config['production'] = DevelopmentConfig
+else:
+    config['production'] = DevelopmentConfig
 
 
 def get_config(config_name: Optional[str] = None) -> Config:

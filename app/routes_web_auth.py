@@ -3,6 +3,7 @@ Web authentication routes for serving HTML pages.
 """
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session
 from app.controllers.auth_views import AuthController
+import re
 
 # Create web auth blueprint (no url_prefix so routes are at root level)
 web_auth_bp = Blueprint('web_auth', __name__)
@@ -84,7 +85,7 @@ def logout():
     except Exception as e:
         return redirect(url_for('web_auth.login'))
 
-@web_auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+@web_auth_bp.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     """Forgot password page - serves HTML template and handles form submission"""
     if request.method == 'GET':
@@ -98,7 +99,13 @@ def forgot_password():
                 flash('กรุณากรอกอีเมล', 'error')
                 return render_template('forgot_password.html')
             
-            # TODO: Implement password reset logic
+            # ตรวจสอบรูปแบบอีเมล
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email):
+                flash('รูปแบบอีเมลไม่ถูกต้อง', 'error')
+                return render_template('forgot_password.html')
+            
+            # TODO: Implement full password reset service
             # For now, just show success message
             flash('หากอีเมลนี้มีอยู่ในระบบ เราจะส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณ', 'success')
             return render_template('forgot_password.html')
