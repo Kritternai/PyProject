@@ -8,6 +8,13 @@ pomodoro_stats_bp = Blueprint('pomodoro_statistics', __name__, url_prefix='/api/
 stats_views = PomodoroStatisticsViews()
 
 
+@pomodoro_stats_bp.route('/daily', methods=['POST'])
+@login_required
+def update_daily_statistics():
+    """Recalculate daily statistics for the authenticated user."""
+    return stats_views.update_daily_statistics()
+
+
 @pomodoro_stats_bp.route('/timer', methods=['GET'])
 @login_required
 def get_timer_stats():

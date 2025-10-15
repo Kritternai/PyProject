@@ -1,22 +1,24 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pomodoro.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dialog-polyfill.css') }}" />
+<!-- Font Awesome CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <div class="container">
     <header>
       <div class="logo">
-        <div class="logo-icon">🍅</div>
+  <div class="logo-icon"><i class="fa-solid fa-stopwatch fa-lg fa-icon"></i></div>
         <span>Pomodoro</span>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" id="statsBtn" title="Statistics">📊</button>
-        <button class="icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+  <button class="icon-btn" id="statsBtn" title="Statistics"><i class="fa-solid fa-chart-bar fa-icon"></i></button>
+  <button class="icon-btn" id="settingsBtn" title="Settings"><i class="fa-solid fa-cog fa-icon"></i></button>
       </div>
     </header>
 
     <div class="main-card">
       <div class="mode-tabs">
-  <button class="mode-tab active" data-mode="pomodoro">Pomodoro</button>
-  <button class="mode-tab" data-mode="short">Short Break</button>
-  <button class="mode-tab" data-mode="long">Long Break</button>
+        <button class="mode-tab active" data-mode="pomodoro">Pomodoro</button>
+        <button class="mode-tab" data-mode="short">Short Break</button>
+        <button class="mode-tab" data-mode="long">Long Break</button>
       </div>
 
       <div class="timer-display">
@@ -27,54 +29,57 @@
       </div>
 
       <div class="controls">
-  <button class="btn btn-primary" id="startBtn">Start</button>
-  <button class="btn btn-secondary" id="resetBtn">Reset</button>
-  <button class="btn btn-secondary" id="skipBtn">Skip</button>
+        <button class="btn btn-primary" id="startBtn">Start</button>
+        <button class="btn btn-secondary" id="resetBtn">Reset</button>
+        <button class="btn btn-secondary" id="skipBtn">Skip</button>
       </div>
 
       <div class="status-info">
         <div class="badge">
-          <span>🔥</span>
+          <span><i class="fa-solid fa-fire fa-icon"></i></span>
           <span id="cycleInfo">Cycle #1</span>
         </div>
         <div class="badge">
-          <span>🎯</span>
+          <span><i class="fa-solid fa-bullseye fa-icon"></i></span>
           <span id="statusText">Time to focus!</span>
         </div>
       </div>
     </div>
 
     <div class="grid-layout">
-      <div class="section-card">
-        <div class="section-title">
-          <span>📝 Your Tasks</span>
-          <span id="taskCount" style="font-size: 14px; color: var(--text-muted);">0 tasks</span>
+  <div class="section-card tasks-card">
+        <div class="section-title" style="display:flex; align-items:center;">
+          <div style="display:flex; align-items:center; flex:1;">
+            <span><i class="fa-solid fa-tasks fa-icon"></i></span>
+            <span style="margin-left:8px;">Your Tasks</span>
+          </div>
+          <span id="taskCount" style="font-size: 14px; color: var(--text-muted); margin-left:24px;">0 tasks</span>
         </div>
-        <div class="task-input">
-          <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="100">
-          <button class="btn btn-primary" id="addTaskBtn">Add</button>
+        <div class="task-input" style="width:100%; display:flex; align-items:center; gap:16px; justify-content:flex-end;">
+          <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="100" style="flex:1 1 auto; min-width:0; font-size:1.1rem; padding:12px 16px; border-radius:8px; border:1px solid #e2e8f0; background:#f8fafc; box-shadow:0 1px 4px rgba(0,0,0,0.04); transition:border 0.2s; margin-right:0;">
+          <button class="btn btn-primary" id="addTaskBtn" style="font-size:1.1rem; padding:12px 32px; border-radius:10px; margin-left:0; box-shadow:0 2px 8px rgba(102,126,234,0.10);">Add</button>
         </div>
-        <ul class="task-list" id="taskList"></ul>
+  <ul class="task-list" id="taskList" style="width:100%;"></ul>
       </div>
 
-      <div class="section-card">
-  <div class="section-title">📈 Today's Stats</div>
-        <div class="stats-grid">
+      <div class="section-card stats-card-top" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+        <div class="section-title" style="width:100%;"><i class="fa-solid fa-chart-line fa-icon"></i> Today's Stats</div>
+        <div class="stats-grid" style="margin:0 auto;">
           <div class="stat-box">
             <div class="stat-value" id="completedPomodoros">0</div>
-            <div class="stat-label">Pomodoros</div>
+            <div class="stat-label">POMODOROS</div>
           </div>
           <div class="stat-box">
             <div class="stat-value" id="focusTime">0h</div>
-            <div class="stat-label">Focus Time</div>
+            <div class="stat-label">FOCUS TIME</div>
           </div>
           <div class="stat-box">
             <div class="stat-value" id="completedTasks">0</div>
-            <div class="stat-label">Tasks Done</div>
+            <div class="stat-label">TASKS DONE</div>
           </div>
           <div class="stat-box">
             <div class="stat-value" id="totalBreaks">0</div>
-            <div class="stat-label">Total Breaks</div>
+            <div class="stat-label">TOTAL BREAKS</div>
           </div>
         </div>
       </div>
@@ -122,7 +127,7 @@
 
   <dialog id="statsDialog">
     <div class="modal-header">
-      <h2 class="modal-title">📊 Detailed Statistics</h2>
+  <h2 class="modal-title"><img src="{{ url_for('static', filename='icons/stats.svg') }}" alt="Stats" height="22"> Detailed Statistics</h2>
       <button class="modal-close" id="closeStats"></button>
     </div>
     <div class="modal-body">
