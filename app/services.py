@@ -157,6 +157,16 @@ class LessonService:
         """นับ lessons ทั้งหมด"""
         from app.models.lesson import LessonModel
         return LessonModel.query.filter_by(user_id=user_id).count()
+    
+    def get_user_lessons_count(self, user_id: str):
+        """Get total number of lessons for a user."""
+        from app.models.lesson import LessonModel
+        return LessonModel.query.filter_by(user_id=user_id).count()
+    
+    def get_completed_lessons_count(self, user_id: str):
+        """Get number of completed lessons for a user."""
+        from app.models.lesson import LessonModel
+        return LessonModel.query.filter_by(user_id=user_id, status='completed').count()
 
     def get_lessons_completed_today(self, user_id: str):
         """นับ lessons ที่เสร็จวันนี้"""
@@ -214,6 +224,17 @@ class NoteService:
         db.session.add(note)
         db.session.commit()
         return note
+    
+    def get_user_notes_count(self, user_id: str):
+        """Get total number of notes for a user."""
+        from app.models.note import NoteModel
+        return NoteModel.query.filter_by(user_id=user_id).count()
+    
+    def get_notes_count_since(self, user_id: str, since_date):
+        """Get number of notes created since a specific date."""
+        from app.models.note import NoteModel
+        return NoteModel.query.filter_by(user_id=user_id)\
+            .filter(NoteModel.created_at >= since_date).count()
     
     def get_notes_by_user(self, user_id: str):
         """Get all notes for a user."""
@@ -461,6 +482,16 @@ class TaskService:
 
         self._refresh_pomodoro_statistics(user_id, task.created_at.date() if task.created_at else date.today())
         return task
+    
+    def get_user_tasks_count(self, user_id: str):
+        """Get total number of tasks for a user."""
+        from app.models.task import TaskModel
+        return TaskModel.query.filter_by(user_id=user_id).count()
+    
+    def get_completed_tasks_count(self, user_id: str):
+        """Get number of completed tasks for a user."""
+        from app.models.task import TaskModel
+        return TaskModel.query.filter_by(user_id=user_id, status='completed').count()
 
     def get_tasks_by_user(self, user_id: str, limit: Optional[int] = None, offset: Optional[int] = None):
         """Return tasks for user ordered by creation date (desc)."""

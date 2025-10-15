@@ -67,7 +67,7 @@ function loadPage(page, updateHistory = true) {
           console.log('📝 Updating main-content');
           document.getElementById('main-content').innerHTML = html;
         
-        if (page === 'dashboard') {
+        if (page === 'class') {
           console.log('📅 Setting up calendar...');
           setupFullCalendar();
         }
@@ -335,9 +335,8 @@ function preloadPage(pageName) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Preload dashboard and class pages
+  // Preload class page
   setTimeout(() => {
-    preloadPage('dashboard');
     preloadPage('class');
   }, 1000);
   

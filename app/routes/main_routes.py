@@ -45,7 +45,7 @@ def load_logged_in_user():
 def index():
     """Main index page"""
     if 'user_id' in session:
-        return redirect(url_for('main_routes.dashboard'))
+        return redirect(url_for('class.partial_class_list'))
     
     google_connected = request.args.get('google_classroom_connected') == 'true'
     return render_template('base.html', google_connected=google_connected, user=None)
@@ -69,12 +69,8 @@ def dashboard():
         return redirect(url_for('auth.login'))
 
 
-@main_routes_bp.route('/partial/dashboard')
-def partial_dashboard():
-    """Dashboard fragment for SPA"""
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    return render_template('dashboard_fragment.html', user=g.user)
+
+
 
 
 # ============================================
@@ -93,22 +89,6 @@ def partial_track():
         return render_template('track_fragment.html', user=g.user)
 
 
-@main_routes_bp.route('/partial/dev')
-def partial_dev():
-    """Development fragment"""
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    return render_template('dev_fragment.html', user=g.user)
-
-
-@main_routes_bp.route('/partial/setting')
-def partial_setting():
-    """Settings fragment"""
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
-    return render_template('setting_fragment.html', user=g.user)
 
 
 @main_routes_bp.route('/partial/profile')
