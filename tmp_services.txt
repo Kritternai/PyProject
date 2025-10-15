@@ -1,0 +1,901 @@
+"""
+Simple service classes for MVC architecture.
+Contains business logic for the application.
+"""
+
+# app/services.py
+
+import json
+from typing import List, Optional, Dict, Any
+from datetime import datetime, date, timedelta
+from sqlalchemy import func, or_
+from app.utils.exceptions import (
+    ValidationException,
+    NotFoundException,
+    BusinessLogicException
+)
+
+
+class UserService:
+    """Simple user service for business logic."""
+    
+    def create_user(self, username: str, email: str, password: str, 
+                    first_name: str = None, last_name: str = None, role: str = 'student'):
+        """Create a new user."""
+        from app.models.user import UserModel
+        from app import db
+        from werkzeug.security import generate_password_hash
+        
+        # Validate input
+        if not email or not password:
+            raise ValidationException("Email and password are required")
+        
+        if len(password) < 8:
+            raise ValidationException("Password must be at least 8 characters long")
+        
+        # Check if user already exists
+        if UserModel.query.filter_by(email=email).first():
+            raise BusinessLogicException("อีเมลนี้มีผู้ใช้แล้ว")
+        
+        if UserModel.query.filter_by(username=username).first():
+            raise BusinessLogicException("ชื่อผู้ใช้นี้มีคนใช้แล้ว")
+        
+        # Hash password
+        password_hash = generate_password_hash(password)
+        
+        # Create new user
+        user = UserModel(
+            username=username,
+            email=email,
+            password_hash=password_hash,
+            first_name=first_name,
+            last_name=last_name,
+            role=role
+        )
+        
+        db.session.add(user)
+        db.session.commit()
+        return user
+    
+    def get_user_by_id(self, user_id: str):
+        """Get user by ID."""
+        from app.models.user import UserModel
+        
+        user = UserModel.query.filter_by(id=user_id).first()
+        if not user:
+            return None  # Return None instead of raising exception
+        return user
+    
+    def get_user_by_email(self, email: str):
+        """Get user by email."""
+        from app.models.user import UserModel
+        
+        user = UserModel.query.filter_by(email=email).first()
+        if not user:
+            return None  # Return None instead of raising exception
+        return user
+    
+    def authenticate_user(self, email: str, password: str):
+        """Authenticate user."""
+        from werkzeug.security import check_password_hash
+        
+        user = self.get_user_by_email(email)
+        # Check password hash
+        if not check_password_hash(user.password_hash, password):
+            raise ValidationException("รหัสผ่านไม่ถูกต้อง")
+        return user
+
+    def update_user_profile(self, user_id: int, data: Dict[str, Any]):
+        """Update user profile."""
+        from app.models.user import UserModel
+        from app import db
+        
+        # Get user
+        user = UserModel.query.get(user_id)
+        if not user:
+            raise NotFoundException("User not found")
+        
+        # Update fields if provided
+        if 'first_name' in data:
+            user.first_name = data['first_name'] or None
+        if 'last_name' in data:
+            user.last_name = data['last_name'] or None
+        if 'email' in data and data['email']:
+            # Check if email is already taken by another user
+            existing_user = UserModel.query.filter(
+                UserModel.email == data['email'],
+                UserModel.id != user_id
+            ).first()
+            if existing_user:
+                raise BusinessLogicException("This email is already in use")
+            user.email = data['email']
+        if 'bio' in data:
+            user.bio = data['bio'] or None
+        
+        try:
+            db.session.commit()
+            return user
+        except Exception as e:
+            db.session.rollback()
+            raise BusinessLogicException(f"Failed to update profile: {str(e)}")
+
+
+class LessonService:
+    """Simple lesson service for business logic."""
+    
+    def create_lesson(self, user_id: str, title: str, description: str = None):
+        """Create a new lesson."""
+        from app.models.lesson import LessonModel
+        from app import db
+        
+        lesson = LessonModel(
+            user_id=user_id,
+            title=title,
+            description=description
+        )
+        
+        db.session.add(lesson)
+        db.session.commit()
+        return lesson
+    
+    def get_lessons_by_user(self, user_id: str):
+        """Get all lessons for a user."""
+        from app.models.lesson import LessonModel
+        return LessonModel.query.filter_by(user_id=user_id).all()
+    
+    def get_lesson_by_id(self, lesson_id: str):
+        """Get lesson by ID."""
+        from app.models.lesson import LessonModel
+        
+        lesson = LessonModel.query.filter_by(id=lesson_id).first()
+        if not lesson:
+            raise NotFoundException("Lesson", lesson_id)
+        return lesson
+        
+    # --- โค้ดใหม่ที่เพิ่มเข้ามาใน LessonService ---
+    def get_lessons_count(self, user_id: str):
+        """นับ lessons ทั้งหมด"""
+        from app.models.lesson import LessonModel
+        return LessonModel.query.filter_by(user_id=user_id).count()
+
+    def get_lessons_completed_today(self, user_id: str):
+        """นับ lessons ที่เสร็จวันนี้"""
+        from app.models.lesson import LessonModel
+        from datetime import datetime
+        from app import db
+        
+        today = datetime.now().date()
+        
+        count = LessonModel.query.filter(
+            LessonModel.user_id == user_id,
+            LessonModel.status == 'completed',
+            db.func.date(LessonModel.updated_at) == today
+        ).count()
+        
+        return count
+    # --- จบโค้ดที่เพิ่ม ---
+
+
+class NoteService:
+    """Simple note service for business logic."""
+    
+    def create_note(self, user_id: str, title: str, content: str, lesson_id: str = None, **kwargs):
+        """Create a new note (standalone or linked to lesson)."""
+        from app.models.note import NoteModel
+        from app import db
+        import json
+        
+        note = NoteModel(
+            user_id=user_id,
+            lesson_id=lesson_id,  # Optional: None for standalone notes
+            title=title,
+            content=content
+        )
+        
+        # Set additional fields if provided
+        if 'note_type' in kwargs and kwargs['note_type'] is not None:
+            note.note_type = kwargs['note_type']
+        if 'is_public' in kwargs and kwargs['is_public'] is not None:
+            note.is_public = kwargs['is_public']
+        if 'status' in kwargs and kwargs['status'] is not None:
+            note.status = kwargs['status']
+        if 'external_link' in kwargs and kwargs['external_link'] is not None:
+            note.external_link = kwargs['external_link']
+        
+        # Handle tags (convert list to JSON string)
+        if 'tags' in kwargs and kwargs['tags'] is not None:
+            if isinstance(kwargs['tags'], list):
+                note.tags = json.dumps(kwargs['tags'])
+            elif isinstance(kwargs['tags'], str):
+                note.tags = kwargs['tags']
+            else:
+                note.tags = None
+        
+        db.session.add(note)
+        db.session.commit()
+        return note
+    
+    def get_notes_by_user(self, user_id: str):
+        """Get all notes for a user."""
+        from app.models.note import NoteModel
+        return NoteModel.query.filter_by(user_id=user_id).all()
+    
+    def get_notes_by_lesson(self, lesson_id: str):
+        """Get all notes for a lesson (optional feature)."""
+        from app.models.note import NoteModel
+        return NoteModel.query.filter_by(lesson_id=lesson_id).all()
+    
+    def get_standalone_notes(self, user_id: str):
+        """Get all standalone notes (not linked to any lesson) for a user."""
+        from app.models.note import NoteModel
+        return NoteModel.query.filter_by(user_id=user_id, lesson_id=None).all()
+    
+    def get_note_by_id(self, note_id: str):
+        """Get a specific note by ID."""
+        from app.models.note import NoteModel
+        
+        note = NoteModel.query.filter_by(id=note_id).first()
+        if not note:
+            raise NotFoundException("Note", note_id)
+        return note
+    
+    def update_note(self, note_id: str, **kwargs):
+        """Update a note with any provided fields."""
+        from app.models.note import NoteModel
+        from app import db
+        import json
+        
+        note = NoteModel.query.filter_by(id=note_id).first()
+        if not note:
+            raise NotFoundException("Note", note_id)
+        
+        # Update basic fields
+        if 'title' in kwargs and kwargs['title'] is not None:
+            note.title = kwargs['title']
+        if 'content' in kwargs and kwargs['content'] is not None:
+            note.content = kwargs['content']
+        if 'note_type' in kwargs and kwargs['note_type'] is not None:
+            note.note_type = kwargs['note_type']
+        if 'is_public' in kwargs and kwargs['is_public'] is not None:
+            note.is_public = kwargs['is_public']
+        if 'status' in kwargs and kwargs['status'] is not None:
+            note.status = kwargs['status']
+        if 'external_link' in kwargs and kwargs['external_link'] is not None:
+            note.external_link = kwargs['external_link']
+        
+        # Handle tags (convert list to JSON string)
+        if 'tags' in kwargs and kwargs['tags'] is not None:
+            if isinstance(kwargs['tags'], list):
+                note.tags = json.dumps(kwargs['tags'])
+            elif isinstance(kwargs['tags'], str):
+                note.tags = kwargs['tags']
+            else:
+                note.tags = None
+        
+        db.session.commit()
+        return note
+    
+    def get_user_notes(self, user_id: str):
+        """Get all notes for a user (alias for get_notes_by_user)."""
+        return self.get_notes_by_user(user_id)
+    
+    def delete_note(self, note_id: str, user_id: str = None):
+        """Delete a note."""
+        from app.models.note import NoteModel
+        from app import db
+        
+        # Build query
+        if user_id:
+            note = NoteModel.query.filter_by(id=note_id, user_id=user_id).first()
+        else:
+            note = NoteModel.query.filter_by(id=note_id).first()
+        
+        if not note:
+            return False
+        
+        db.session.delete(note)
+        db.session.commit()
+        return True
+    
+    def get_public_notes(self, limit=None, offset=None):
+        """Get all public notes."""
+        from app.models.note import NoteModel
+        
+        query = NoteModel.query.filter_by(is_public=True)
+        
+        if offset:
+            query = query.offset(offset)
+        if limit:
+            query = query.limit(limit)
+        
+        return query.all()
+    
+    def get_notes_by_section(self, section_id: str):
+        """Get notes for a specific section."""
+        from app.models.note import NoteModel
+        # For now, return empty list as section integration is not implemented
+        return []
+    
+    def search_notes_by_tags(self, tags: list, user_id: str = None):
+        """Search notes by tags."""
+        from app.models.note import NoteModel
+        import json
+        
+        # Build query
+        query = NoteModel.query
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+        
+        # Search for notes containing any of the tags
+        notes = []
+        for note in query.all():
+            if note.tags:
+                try:
+                    note_tags = json.loads(note.tags) if isinstance(note.tags, str) else note.tags
+                    if any(tag in note_tags for tag in tags):
+                        notes.append(note)
+                except (json.JSONDecodeError, TypeError):
+                    # Handle malformed JSON
+                    if any(tag in str(note.tags) for tag in tags):
+                        notes.append(note)
+        
+        return notes
+    
+    def get_note_statistics(self, user_id: str = None):
+        """Get note statistics."""
+        from app.models.note import NoteModel
+        
+        query = NoteModel.query
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+        
+        notes = query.all()
+        
+        stats = {
+            'total': len(notes),
+            'completed': len([n for n in notes if n.status == 'completed']),
+            'pending': len([n for n in notes if n.status == 'pending']),
+            'in_progress': len([n for n in notes if n.status == 'in-progress']),
+            'public': len([n for n in notes if n.is_public]),
+            'private': len([n for n in notes if not n.is_public])
+        }
+        
+        return stats
+    
+    def get_recent_notes(self, user_id: str = None, limit: int = 10):
+        """Get recent notes."""
+        from app.models.note import NoteModel
+        
+        query = NoteModel.query
+        if user_id:
+            query = query.filter_by(user_id=user_id)
+        
+        return query.order_by(NoteModel.created_at.desc()).limit(limit).all()
+
+    # --- โค้ดใหม่ที่เพิ่มเข้ามาใน NoteService ---
+    def get_notes_count_today(self, user_id: str):
+        """นับ notes ที่สร้างวันนี้"""
+        from datetime import datetime
+        from app.models.note import NoteModel
+        from app import db
+
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        count = NoteModel.query.filter(
+            NoteModel.user_id == user_id,
+            NoteModel.created_at >= today_start
+        ).count()
+        
+        return count
+
+    def get_total_notes_count(self, user_id: str):
+        """นับ notes ทั้งหมด"""
+        from app.models.note import NoteModel
+        return NoteModel.query.filter_by(user_id=user_id).count()
+    # --- จบโค้ดที่เพิ่ม ---
+
+
+class TaskService:
+    """Business logic for task management and Pomodoro integrations."""
+
+    VALID_STATUSES = {"pending", "in_progress", "completed"}
+    VALID_PRIORITIES = {"low", "medium", "high"}
+    VALID_TASK_TYPES = {"focus", "study", "break", "other"}
+
+    # ------------------------------------------------------------------
+    # CRUD OPERATIONS
+    # ------------------------------------------------------------------
+    def create_task(
+        self,
+        user_id: str,
+        title: str,
+        description: Optional[str] = None,
+        task_type: Optional[str] = None,
+        priority: Optional[str] = None,
+        due_date: Optional[datetime] = None,
+        estimated_duration: Optional[int] = None,
+        lesson_id: Optional[str] = None,
+        section_id: Optional[str] = None,
+        tags: Optional[Any] = None,
+        is_reminder_enabled: bool = True,
+        reminder_time: Optional[int] = None,
+        status: Optional[str] = None
+    ):
+        """Create a new task for the given user."""
+        from app.models.task import TaskModel
+        from app import db
+
+        if not user_id:
+            raise ValidationException("User ID is required")
+
+        normalized_title = (title or "").strip()
+        if not normalized_title:
+            raise ValidationException("Task title is required")
+
+        normalized_type = self._normalize_task_type(task_type)
+        normalized_priority = self._normalize_priority(priority)
+        normalized_status = self._normalize_status(status)
+
+        task = TaskModel(
+            user_id=user_id,
+            title=normalized_title,
+            description=description,
+            task_type=normalized_type,
+            status=normalized_status,
+            priority=normalized_priority,
+            due_date=due_date,
+            estimated_duration=self._coerce_int(estimated_duration),
+            lesson_id=lesson_id,
+            section_id=section_id,
+            tags=self._serialize_tags(tags),
+            is_reminder_enabled=bool(is_reminder_enabled),
+            reminder_time=self._coerce_int(reminder_time)
+        )
+
+        if normalized_status == "completed":
+            task.completed_at = datetime.utcnow()
+            task.progress_percentage = 100
+
+        db.session.add(task)
+        db.session.commit()
+
+        self._refresh_pomodoro_statistics(user_id, task.created_at.date() if task.created_at else date.today())
+        return task
+
+    def get_tasks_by_user(self, user_id: str, limit: Optional[int] = None, offset: Optional[int] = None):
+        """Return tasks for user ordered by creation date (desc)."""
+        from app.models.task import TaskModel
+
+        query = TaskModel.query.filter_by(user_id=user_id).order_by(TaskModel.created_at.desc())
+        if offset:
+            query = query.offset(offset)
+        if limit:
+            query = query.limit(limit)
+        return query.all()
+
+    def get_user_tasks(self, user_id: str, limit: Optional[int] = None, offset: Optional[int] = None):
+        """Compatibility wrapper used by existing controllers."""
+        return self.get_tasks_by_user(user_id, limit=limit, offset=offset)
+
+    def get_task_by_id(self, task_id: str, user_id: Optional[str] = None):
+        """Load a task by ID and optional user ownership."""
+        from app.models.task import TaskModel
+
+        query = TaskModel.query.filter_by(id=task_id)
+        if user_id:
+            query = query.filter(TaskModel.user_id == user_id)
+
+        task = query.first()
+        if not task:
+            raise NotFoundException("Task", task_id)
+        return task
+
+    def update_task(
+        self,
+        task_id: str,
+        user_id: str,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        task_type: Optional[str] = None,
+        priority: Optional[str] = None,
+        due_date: Optional[datetime] = None,
+        estimated_duration: Optional[int] = None,
+        lesson_id: Optional[str] = None,
+        section_id: Optional[str] = None,
+        tags: Optional[Any] = None,
+        is_reminder_enabled: Optional[bool] = None,
+        reminder_time: Optional[int] = None
+    ):
+        """Update mutable fields on an existing task."""
+        from app.models.task import TaskModel
+        from app import db
+
+        task = self.get_task_by_id(task_id, user_id)
+
+        if title is not None:
+            normalized_title = title.strip()
+            if not normalized_title:
+                raise ValidationException("Task title cannot be empty")
+            task.title = normalized_title
+
+        if description is not None:
+            task.description = description
+
+        if task_type is not None:
+            task.task_type = self._normalize_task_type(task_type)
+
+        if priority is not None:
+            task.priority = self._normalize_priority(priority)
+
+        if due_date is not None or due_date is None:
+            task.due_date = due_date
+
+        if estimated_duration is not None:
+            task.estimated_duration = self._coerce_int(estimated_duration)
+
+        if lesson_id is not None:
+            task.lesson_id = lesson_id
+
+        if section_id is not None:
+            task.section_id = section_id
+
+        if tags is not None:
+            task.tags = self._serialize_tags(tags)
+
+        if is_reminder_enabled is not None:
+            task.is_reminder_enabled = bool(is_reminder_enabled)
+
+        if reminder_time is not None:
+            task.reminder_time = self._coerce_int(reminder_time)
+
+        db.session.commit()
+        self._refresh_pomodoro_statistics(user_id, date.today())
+        return task
+
+    def delete_task(self, task_id: str, user_id: str) -> bool:
+        """Delete task and refresh statistics."""
+        from app.models.task import TaskModel
+        from app import db
+
+        task = self.get_task_by_id(task_id, user_id)
+
+        created_date = task.created_at.date() if task.created_at else None
+        completed_date = task.completed_at.date() if task.completed_at else None
+
+        db.session.delete(task)
+        db.session.commit()
+
+        if created_date:
+            self._refresh_pomodoro_statistics(user_id, created_date)
+        if completed_date and completed_date != created_date:
+            self._refresh_pomodoro_statistics(user_id, completed_date)
+        if not created_date and not completed_date:
+            self._refresh_pomodoro_statistics(user_id, date.today())
+        return True
+
+    # ------------------------------------------------------------------
+    # TASK PROGRESS & STATUS
+    # ------------------------------------------------------------------
+    def change_task_status(self, task_id: str, user_id: str, status: str):
+        """Update status while keeping Pomodoro data in sync."""
+        from app import db
+
+        task = self.get_task_by_id(task_id, user_id)
+        normalized_status = self._normalize_status(status)
+        previous_status = task.status
+        previous_completed_date = task.completed_at.date() if task.completed_at else None
+
+        task.status = normalized_status
+        if normalized_status == "completed":
+            task.completed_at = datetime.utcnow()
+            task.progress_percentage = 100
+        else:
+            if previous_status == "completed":
+                task.completed_at = None
+            if normalized_status == "pending" and task.progress_percentage == 100:
+                task.progress_percentage = 0
+
+        db.session.commit()
+
+        new_completed_date = task.completed_at.date() if task.completed_at else None
+
+        if previous_completed_date and previous_completed_date != new_completed_date:
+            self._refresh_pomodoro_statistics(user_id, previous_completed_date)
+        if new_completed_date:
+            self._refresh_pomodoro_statistics(user_id, new_completed_date)
+        if not previous_completed_date and not new_completed_date:
+            self._refresh_pomodoro_statistics(user_id, date.today())
+        return task
+
+    def update_task_progress(self, task_id: str, user_id: str, percentage: int):
+        """Set task progress (0-100) and auto-update status when needed."""
+        from app import db
+
+        if percentage is None:
+            raise ValidationException("Progress percentage is required")
+
+        if not isinstance(percentage, (int, float)):
+            raise ValidationException("Progress percentage must be numeric")
+
+        clamped_percentage = max(0, min(int(percentage), 100))
+
+        task = self.get_task_by_id(task_id, user_id)
+        previous_completed_date = task.completed_at.date() if task.completed_at else None
+        task.progress_percentage = clamped_percentage
+
+        if clamped_percentage >= 100:
+            task.status = "completed"
+            task.completed_at = datetime.utcnow()
+        elif task.status == "completed":
+            task.status = "in_progress"
+            task.completed_at = None
+
+        db.session.commit()
+
+        new_completed_date = task.completed_at.date() if task.completed_at else None
+
+        if previous_completed_date and previous_completed_date != new_completed_date:
+            self._refresh_pomodoro_statistics(user_id, previous_completed_date)
+        if new_completed_date:
+            self._refresh_pomodoro_statistics(user_id, new_completed_date)
+        if not previous_completed_date and not new_completed_date:
+            self._refresh_pomodoro_statistics(user_id, date.today())
+        return task
+
+    def add_time_spent(self, task_id: str, user_id: str, minutes: int):
+        """Increment time spent on a task (in minutes)."""
+        from app import db
+
+        if minutes is None:
+            raise ValidationException("Minutes value is required")
+        if not isinstance(minutes, (int, float)) or minutes < 0:
+            raise ValidationException("Minutes must be a non-negative number")
+
+        task = self.get_task_by_id(task_id, user_id)
+        task.time_spent = (task.time_spent or 0) + int(minutes)
+
+        db.session.commit()
+        return task
+
+    # ------------------------------------------------------------------
+    # TASK QUERIES
+    # ------------------------------------------------------------------
+    def get_overdue_tasks(self, user_id: str, limit: Optional[int] = None):
+        """Tasks with due dates in the past and not completed."""
+        from app.models.task import TaskModel
+
+        now = datetime.utcnow()
+        query = TaskModel.query.filter(
+            TaskModel.user_id == user_id,
+            TaskModel.due_date.isnot(None),
+            TaskModel.due_date < now,
+            TaskModel.status != "completed"
+        ).order_by(TaskModel.due_date.asc())
+
+        if limit:
+            query = query.limit(limit)
+        return query.all()
+
+    def get_due_soon_tasks(self, user_id: str, hours: int = 24, limit: Optional[int] = None):
+        """Tasks due within the next X hours."""
+        from app.models.task import TaskModel
+
+        now = datetime.utcnow()
+        window_end = now + timedelta(hours=max(hours, 1))
+        query = TaskModel.query.filter(
+            TaskModel.user_id == user_id,
+            TaskModel.due_date.isnot(None),
+            TaskModel.due_date >= now,
+            TaskModel.due_date <= window_end,
+            TaskModel.status != "completed"
+        ).order_by(TaskModel.due_date.asc())
+
+        if limit:
+            query = query.limit(limit)
+        return query.all()
+
+    def get_high_priority_tasks(self, user_id: str, limit: Optional[int] = None):
+        """Return high-priority tasks (optionally limited)."""
+        from app.models.task import TaskModel
+
+        query = TaskModel.query.filter(
+            TaskModel.user_id == user_id,
+            TaskModel.priority == "high",
+            TaskModel.status != "completed"
+        ).order_by(TaskModel.created_at.desc())
+
+        if limit:
+            query = query.limit(limit)
+        return query.all()
+
+    def search_tasks(self, user_id: str, query_string: str, limit: Optional[int] = None):
+        """Search tasks by title or description substring."""
+        from app.models.task import TaskModel
+
+        if not query_string:
+            raise ValidationException("Search query is required")
+
+        like_query = f"%{query_string.strip()}%"
+        query = TaskModel.query.filter(
+            TaskModel.user_id == user_id,
+            or_(
+                TaskModel.title.ilike(like_query),
+                TaskModel.description.ilike(like_query)
+            )
+        ).order_by(TaskModel.created_at.desc())
+
+        if limit:
+            query = query.limit(limit)
+        return query.all()
+
+    def get_task_statistics(self, user_id: str) -> Dict[str, Any]:
+        """Aggregate task statistics for dashboards."""
+        from app.models.task import TaskModel
+
+        total_tasks = TaskModel.query.filter_by(user_id=user_id).count()
+        completed_tasks = TaskModel.query.filter(
+            TaskModel.user_id == user_id,
+            TaskModel.status == "completed"
+        ).count()
+        in_progress_tasks = TaskModel.query.filter(
+            TaskModel.user_id == user_id,
+            TaskModel.status == "in_progress"
+        ).count()
+        pending_tasks = TaskModel.query.filter(
+            TaskModel.user_id == user_id,
+            TaskModel.status == "pending"
+        ).count()
+
+        overdue_tasks = len(self.get_overdue_tasks(user_id))
+        high_priority_tasks = TaskModel.query.filter(
+            TaskModel.user_id == user_id,
+            TaskModel.priority == "high",
+            TaskModel.status != "completed"
+        ).count()
+
+        today = date.today()
+        completed_today = TaskModel.query.filter(
+            TaskModel.user_id == user_id,
+            TaskModel.status == "completed",
+            TaskModel.completed_at.isnot(None),
+            func.date(TaskModel.completed_at) == today
+        ).count()
+
+        created_today = TaskModel.query.filter(
+            TaskModel.user_id == user_id,
+            func.date(TaskModel.created_at) == today
+        ).count()
+
+        average_progress = 0
+        if total_tasks:
+            average_progress = round(
+                (TaskModel.query.with_entities(func.avg(TaskModel.progress_percentage))
+                 .filter(TaskModel.user_id == user_id)
+                 .scalar() or 0),
+                2
+            )
+
+        return {
+            'total_tasks': total_tasks,
+            'completed_tasks': completed_tasks,
+            'in_progress_tasks': in_progress_tasks,
+            'pending_tasks': pending_tasks,
+            'overdue_tasks': overdue_tasks,
+            'high_priority_tasks': high_priority_tasks,
+            'tasks_completed_today': completed_today,
+            'tasks_created_today': created_today,
+            'average_progress_percent': average_progress
+        }
+
+    # ------------------------------------------------------------------
+    # INTERNAL HELPERS
+    # ------------------------------------------------------------------
+    def _normalize_status(self, status: Optional[str]) -> str:
+        if not status:
+            return "pending"
+        normalized = status.lower()
+        if normalized not in self.VALID_STATUSES:
+            raise ValidationException("Invalid task status")
+        return normalized
+
+    def _normalize_priority(self, priority: Optional[str]) -> str:
+        if not priority:
+            return "medium"
+        normalized = priority.lower()
+        if normalized not in self.VALID_PRIORITIES:
+            raise ValidationException("Invalid task priority")
+        return normalized
+
+    def _normalize_task_type(self, task_type: Optional[str]) -> str:
+        if not task_type:
+            return "other"
+        normalized = task_type.lower()
+        if normalized not in self.VALID_TASK_TYPES:
+            return "other"
+        return normalized
+
+    def _serialize_tags(self, tags: Optional[Any]) -> Optional[str]:
+        if tags is None:
+            return None
+        if isinstance(tags, str):
+            return tags
+        try:
+            return json.dumps(tags)
+        except (TypeError, ValueError):
+            raise ValidationException("Tags must be JSON serializable")
+
+    def _coerce_int(self, value: Optional[Any]) -> Optional[int]:
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            raise ValidationException("Value must be an integer")
+
+    def _refresh_pomodoro_statistics(self, user_id: str, target_date: Optional[date] = None):
+        """Trigger Pomodoro statistics recalculation when task data changes."""
+        try:
+            session_service = PomodoroSessionService()
+            session_service.recalculate_daily_statistics(user_id, target_date)
+        except Exception as exc:
+            # Avoid breaking the main task flow if statistics update fails
+            print(f"[TaskService] Failed to refresh Pomodoro statistics: {exc}")
+
+
+class PomodoroSessionService:
+    """Service layer for Pomodoro session management"""
+
+    def create_session(self, user_id: str, session_type: str, duration: int, task: Optional[str] = None,
+                    lesson_id: Optional[str] = None, section_id: Optional[str] = None,
+                    mood_before: Optional[str] = None, energy_level: Optional[int] = None,
+                    auto_start_next: bool = True, notification_enabled: bool = True,
+                    sound_enabled: bool = True, task_id: Optional[str] = None):
+        """Create a new Pomodoro session with all optional parameters."""
+        from app import db
+        try:
+            from app.models.pomodoro_session import PomodoroSessionModel
+
+            if not user_id:
+                raise ValidationException("User ID is required")
+
+            if session_type not in ['focus', 'short_break', 'long_break']:
+                raise ValidationException("Invalid session type")
+
+            if duration <= 0:
+                raise ValidationException("Duration must be positive")
+
+            task_title = task.strip() if isinstance(task, str) and task.strip() else None
+            resolved_task_id: Optional[str] = None
+
+            if task_id:
+                task_service = TaskService()
+                try:
+                    task_entity = task_service.get_task_by_id(task_id, user_id)
+                except NotFoundException as exc:
+                    raise ValidationException("Invalid task_id provided") from exc
+                resolved_task_id = task_entity.id
+                task_title = task_title or task_entity.title
+
+            session = PomodoroSessionModel(
+                user_id=user_id,
+                session_type=session_type,
+                duration=duration,
+                start_time=datetime.utcnow(),
+                task=task_title,
+                task_id=resolved_task_id,
+                status='active',
+                lesson_id=lesson_id,
+                section_id=section_id,
+                mood_before=mood_before,
+                energy_level=energy_level,
+                auto_start_next=auto_start_next,
+                notification_enabled=notification_enabled,
+                sound_enabled=sound_enabled,
+                is_completed=False,
+                is_interrupted=False,
+                interruption_count=0
+            )
+
+            db.session.add(session)
+            db.session.commit()
+
