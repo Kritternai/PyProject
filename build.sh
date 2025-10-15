@@ -4,9 +4,18 @@
 echo "🚀 Building Smart Learning Hub for Render..."
 
 # Install dependencies
+echo "📦 Installing dependencies..."
 pip install -r requirements-production.txt
 
+# Verify gunicorn installation
+echo "🔍 Verifying gunicorn installation..."
+python -c "import gunicorn; print('✅ Gunicorn installed successfully')" || {
+    echo "❌ Gunicorn not found, installing..."
+    pip install gunicorn==21.2.0
+}
+
 # Create necessary directories
+echo "📁 Creating directories..."
 mkdir -p instance uploads logs
 
 # Run database migrations (if needed)
