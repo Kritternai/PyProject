@@ -1,44 +1,42 @@
-# 🎯 Smart Learning Hub - Unified CI/CD Pipeline Documentation
+# Smart Learning Hub CI/CD Pipeline Documentation
 
-This directory contains the unified Continuous Integration and Continuous Deployment (CI/CD) configuration for the Smart Learning Hub project with a professional workflow graph structure.
+This directory contains the professional Continuous Integration and Continuous Deployment (CI/CD) configuration for the Smart Learning Hub project.
 
-## 🚀 Unified Workflow Architecture
+## Workflow Architecture
 
-### **🎯 Unified CI/CD Pipeline** (`unified-cicd.yml`)
+### **CI/CD Pipeline** (`ci-cd.yml`)
 - **Triggers**: Push to main/dev branches, Pull Requests, Manual dispatch
-- **Purpose**: Complete CI/CD pipeline in a single workflow with interconnected jobs
+- **Purpose**: Professional CI/CD pipeline with interconnected jobs
 - **Features**:
   - **Pipeline Initiation**: Metadata collection and pipeline tracking
-  - **Code Quality & Security**: Comprehensive quality and security analysis
-  - **Testing & Coverage**: Full test suite with coverage analysis
-  - **Build Validation**: PR build validation and startup testing
-  - **Deployment & Health**: Production deployment with health monitoring
-  - **Performance & Metrics**: Comprehensive metrics collection
-  - **Unified Summary**: Complete pipeline status and reporting
+  - **Code Quality**: Basic quality checks (formatting, linting)
+  - **Testing**: Test suite execution with coverage
+  - **Build Validation**: PR build validation (PR only)
+  - **Deployment**: Production deployment with health checks (main only)
+  - **Pipeline Summary**: Complete pipeline status and reporting
 
-## 🔄 Workflow Graph Structure
+## Workflow Flow Structure
 
 ```
-📝 Code Push/PR → 🚀 Pipeline Initiation
-                        ↓
-                ┌─────────────┬─────────────┬─────────────┐
-                ▼             ▼             ▼             ▼
-        🔍 Code Quality  🧪 Testing     🔨 Build        📈 Performance
-        & Security      & Coverage     Validation      & Metrics
-                ↓             ↓             ↓             ↓
-                └─────────────┼─────────────┼─────────────┘
-                              ↓             ↓
-                      🚀 Deployment    📊 Pipeline
-                      & Health         Summary
+Code Push/PR → Pipeline Initiation
+                    ↓
+            ┌─────────────┬─────────────┐
+            ▼             ▼             ▼
+    Code Quality    Testing      Build Validation (PR)
+            ↓             ↓             ↓
+            └─────────────┼─────────────┘
+                          ↓
+                  Production Deployment (main)
+                          ↓
+                  Pipeline Summary
 ```
 
 ### **Job Dependencies**
 - **pipeline-init**: Foundation job (no dependencies)
 - **code-quality**: Depends on pipeline-init
-- **testing-coverage**: Depends on pipeline-init + code-quality
+- **testing**: Depends on pipeline-init + code-quality
 - **build-validation**: Depends on all previous jobs (PR only)
 - **deployment**: Depends on pipeline-init + code-quality + testing (main only)
-- **performance-metrics**: Depends on core jobs (always)
 - **pipeline-summary**: Depends on all jobs (always)
 
 ## 📋 Requirements
