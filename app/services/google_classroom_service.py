@@ -223,12 +223,12 @@ class GoogleClassroomService:
             import os
             sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
             
-            # Try different import paths for LessonService
+            # Import LessonService from services.py
             try:
-                from app.services.lesson_service import LessonService
+                from app.services import LessonService
             except ImportError:
                 try:
-                    from services.lesson_service import LessonService
+                    from services import LessonService
                 except ImportError:
                     # Fallback: create lesson directly
                     print("LessonService not found, creating lesson directly")
@@ -245,7 +245,17 @@ class GoogleClassroomService:
                 'author_name': 'Google Classroom Import'
             }
             
-            lesson = lesson_service.create_lesson(user_id, lesson_data)
+            lesson = lesson_service.create_lesson(
+                user_id=user_id,
+                title=lesson_data['title'],
+                description=lesson_data['description'],
+                status=lesson_data['status'],
+                color_theme=lesson_data['color_theme'],
+                difficulty_level=lesson_data['difficulty_level'],
+                author_name=lesson_data['author_name'],
+                source_platform='google_classroom',
+                external_id=course_id
+            )
             
             if not lesson:
                 raise Exception("Failed to create lesson")

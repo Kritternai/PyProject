@@ -698,7 +698,13 @@ def import_team():
         description = team['description']
         user_id = session['user_id']
         
-        lesson = lesson_service.create_lesson(user_id, title, description)
+        lesson = lesson_service.create_lesson(
+            user_id=user_id, 
+            title=title, 
+            description=description,
+            source_platform='microsoft_teams',
+            external_id=team_id
+        )
         
         # Create mockup data for Stream, Classwork, People, and Grades
         try:
