@@ -84,6 +84,27 @@ class PomodoroStatisticsViews:
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
+    def update_daily_statistics(self) -> Dict[str, Any]:
+        """Recalculate daily statistics for the authenticated user."""
+        try:
+            if not g.user:
+                return jsonify({'error': 'Authentication required'}), 401
+
+            data = request.get_json() or {}
+            target_date = data.get('date')
+
+            statistics = self._pomodoro_service.update_daily_statistics(g.user.id, target_date)
+
+            return jsonify({
+                'success': True,
+                'statistics': statistics
+            }), 200
+
+        except ValidationException as exc:
+            return jsonify({'error': str(exc)}), 400
+        except Exception as exc:
+            return jsonify({'error': 'Internal server error'}), 500
+
     def export_data(self) -> Dict[str, Any]:
         """Export user's Pomodoro data."""
         try:

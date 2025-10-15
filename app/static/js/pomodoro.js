@@ -13,6 +13,7 @@ let pomodoroState = {
   timeLeft: 25 * 60, // seconds
   totalTime: 25 * 60, // seconds
   cycle: 1,
+  currentSessionId: null,
   completedPomodoros: 0,
   tasks: [],
   settings: {
@@ -27,13 +28,369 @@ let pomodoroState = {
     totalPomodoros: 0,
     totalFocusTime: 0,
     totalTasks: 0,
+  totalBreaks: 0,
     todayPomodoros: 0,
     todayFocusTime: 0,
     todayTasks: 0,
     todayBreaks: 0,
+    streak: 0,
+    goalCompletionPercent: 0,
     lastDate: new Date().toDateString()
   }
 };
+
+const SESSION_TYPE_MAP = {
+  pomodoro: 'focus',
+  shortBreak: 'short_break',
+  longBreak: 'long_break'
+};
+
+const TASKS_API_BASE = '/api/tasks';
+
+function mapTaskFromApi(task) {
+  if (!task) {
+    return null;
+  }
+
+  const mapped = {
+    id: task.id || null,
+    text: task.title || task.text || '',
+    completed: task.status === 'completed' || !!task.completed,
+    createdAt: task.created_at || task.createdAt || new Date().toISOString(),
+    completedAt: task.completed_at || task.completedAt || null
+  };
+
+  if (!mapped.text) {
+    mapped.text = 'Untitled task';
+  }
+
+  if (mapped.completed && !mapped.completedAt) {
+    mapped.completedAt = task.updated_at || mapped.createdAt;
+  }
+
+  return mapped;
+}
+
+async function createTaskOnServer(title) {
+  try {
+    const response = await fetch(TASKS_API_BASE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        title,
+        task_type: 'focus',
+        priority: 'medium'
+      })
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        console.info('Task creation requires authentication; storing locally.');
+        return null;
+      }
+      console.error('Failed to create task:', response.status, await response.text());
+      return null;
+    }
+
+    const result = await response.json();
+    if (result && result.success && result.data) {
+      return mapTaskFromApi(result.data);
+    }
+  } catch (error) {
+    console.error('Error creating task on server:', error);
+  }
+  return null;
+}
+
+async function updateTaskStatusOnServer(taskId, status) {
+  try {
+    const response = await fetch(`${TASKS_API_BASE}/${taskId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status })
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        console.info('Task status update requires authentication; keeping local state.');
+        return null;
+      }
+      console.error('Failed to update task status:', response.status, await response.text());
+      return null;
+    }
+
+    const result = await response.json();
+    if (result && result.success && result.data) {
+      return mapTaskFromApi(result.data);
+    }
+  } catch (error) {
+    console.error('Error updating task status on server:', error);
+  }
+  return null;
+}
+
+async function deleteTaskOnServer(taskId) {
+  try {
+    const response = await fetch(`${TASKS_API_BASE}/${taskId}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        console.info('Task deletion requires authentication; removing locally only.');
+        return false;
+      }
+      console.error('Failed to delete task:', response.status, await response.text());
+      return false;
+    }
+
+    const result = await response.json().catch(() => ({ success: true }));
+    return Boolean(result && result.success);
+  } catch (error) {
+    console.error('Error deleting task on server:', error);
+  }
+  return false;
+}
+
+async function syncTasksFromServer() {
+  try {
+    const response = await fetch(`${TASKS_API_BASE}?limit=100`, {
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        console.info('Task API requires authentication; using local task state.');
+        return false;
+      }
+      console.error('Failed to fetch tasks:', response.status, await response.text());
+      return false;
+    }
+
+    const result = await response.json();
+    if (result && result.success && Array.isArray(result.data)) {
+      const mappedTasks = result.data.map(mapTaskFromApi).filter(Boolean);
+      pomodoroState.tasks = mappedTasks;
+      updateTaskStatsFromLocal();
+      updateTaskList();
+      updateStats();
+      saveState();
+      return true;
+    }
+  } catch (error) {
+    console.error('Error syncing tasks from server:', error);
+  }
+  return false;
+}
+
+function updateTaskStatsFromLocal() {
+  const completedTasks = pomodoroState.tasks.filter(task => task.completed).length;
+  pomodoroState.stats.totalTasks = completedTasks;
+
+  const todayString = new Date().toISOString().split('T')[0];
+  const todayCompleted = pomodoroState.tasks.filter(task => {
+    if (!task.completed) {
+      return false;
+    }
+    if (!task.completedAt) {
+      return false;
+    }
+    return task.completedAt.startsWith(todayString);
+  }).length;
+
+  pomodoroState.stats.todayTasks = todayCompleted;
+}
+
+async function ensureSessionForCurrentMode() {
+  if (pomodoroState.currentSessionId) {
+    return true;
+  }
+
+  const sessionType = SESSION_TYPE_MAP[pomodoroState.mode];
+  if (!sessionType) {
+    return true;
+  }
+
+  const newSession = await createSessionInDatabase(sessionType);
+  if (newSession && newSession.id) {
+    pomodoroState.currentSessionId = newSession.id;
+    saveState();
+    return true;
+  }
+
+  console.error('Unable to create Pomodoro session in database.');
+  return false;
+}
+
+async function createSessionInDatabase(sessionType) {
+  const durationMinutes = Math.max(1, Math.round(pomodoroState.totalTime / 60));
+  const payload = {
+    session_type: sessionType,
+    duration: durationMinutes,
+    auto_start_next: pomodoroState.settings.autoStartBreaks,
+    notification_enabled: true,
+    sound_enabled: pomodoroState.settings.soundEnabled
+  };
+
+  try {
+    const response = await fetch('/api/pomodoro/session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result && result.success) {
+        console.log('✅ Session created in database:', result.session?.id);
+        return result.session;
+      }
+    } else {
+      console.error('Failed to create session:', response.status);
+    }
+  } catch (error) {
+    console.error('Error creating session:', error);
+  }
+
+  return null;
+}
+
+async function endSessionInDatabase() {
+  if (!pomodoroState.currentSessionId) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/pomodoro/session/${pomodoroState.currentSessionId}/end`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result && result.success) {
+        console.log('✅ Session ended in database:', pomodoroState.currentSessionId);
+      }
+    } else {
+      console.error('Failed to end session:', response.status);
+    }
+  } catch (error) {
+    console.error('Error ending session:', error);
+  }
+}
+
+async function interruptSessionInDatabase() {
+  if (!pomodoroState.currentSessionId) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/pomodoro/session/${pomodoroState.currentSessionId}/interrupt`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result && result.success) {
+        console.log('⚠️ Session interrupted in database:', pomodoroState.currentSessionId);
+      }
+    } else {
+      console.error('Failed to interrupt session:', response.status);
+    }
+  } catch (error) {
+    console.error('Error interrupting session:', error);
+  }
+}
+
+function applyTimerStats(timerStats) {
+  if (!timerStats) {
+    return;
+  }
+
+  pomodoroState.stats.totalPomodoros = Number(timerStats.total_pomodoros) || 0;
+  pomodoroState.stats.totalFocusTime = Number(timerStats.total_focus_minutes) || 0;
+  pomodoroState.stats.totalTasks = Number(timerStats.total_tasks_completed) || 0;
+  pomodoroState.stats.streak = Number(timerStats.streak) || 0;
+  pomodoroState.stats.totalBreaks = Number(timerStats.total_break_sessions) || 0;
+}
+
+function applyDailyProgress(progress) {
+  if (!progress) {
+    return;
+  }
+
+  pomodoroState.stats.todayPomodoros = Number(progress.completed_sessions) || 0;
+  pomodoroState.stats.todayFocusTime = Number(progress.focus_minutes) || 0;
+  pomodoroState.stats.todayTasks = Number(progress.tasks_completed) || 0;
+  pomodoroState.stats.todayBreaks = Number(progress.break_sessions) || 0;
+  pomodoroState.stats.goalCompletionPercent = Number(progress.goal_completion_percent) || 0;
+  pomodoroState.completedPomodoros = pomodoroState.stats.todayPomodoros;
+}
+
+async function refreshServerStats() {
+  const todayString = new Date().toISOString().split('T')[0];
+
+  try {
+    await fetch('/api/pomodoro/statistics/daily', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({ date: todayString })
+    });
+  } catch (error) {
+    console.error('Error recalculating daily pomodoro statistics:', error);
+  }
+
+  try {
+    const [timerResponse, dailyResponse] = await Promise.all([
+      fetch('/api/pomodoro/statistics/timer', { credentials: 'include' }),
+      fetch('/api/pomodoro/statistics/daily-progress', { credentials: 'include' })
+    ]);
+
+    if ((timerResponse && timerResponse.status === 401) || (dailyResponse && dailyResponse.status === 401)) {
+      console.warn('Pomodoro statistics endpoints require authentication.');
+      return;
+    }
+
+    if (timerResponse && timerResponse.ok) {
+      const timerJson = await timerResponse.json();
+      if (timerJson && timerJson.success) {
+        applyTimerStats(timerJson.stats);
+      }
+    }
+
+    if (dailyResponse && dailyResponse.ok) {
+      const dailyJson = await dailyResponse.json();
+      if (dailyJson && dailyJson.success) {
+        applyDailyProgress(dailyJson.progress);
+      }
+    }
+
+    updateStats();
+    saveState();
+  } catch (error) {
+    console.error('Error fetching pomodoro statistics:', error);
+  }
+}
+
+function clearCurrentSession() {
+  pomodoroState.currentSessionId = null;
+}
 
 // Timer variables
 let interval = null;
@@ -53,13 +410,6 @@ function getModeTime() {
     case 'longBreak': return pomodoroState.settings.longBreak * 60;
     default: return 25 * 60;
   }
-}
-
-// Reset timer for current mode
-function resetTimer() {
-  pomodoroState.timeLeft = getModeTime();
-  pomodoroState.totalTime = getModeTime();
-  pomodoroState.isRunning = false;
 }
 
 // Switch to next mode
@@ -85,8 +435,60 @@ function nextMode() {
   pomodoroState.timeLeft = getModeTime();
   pomodoroState.totalTime = getModeTime();
   pomodoroState.isRunning = false;
+  clearCurrentSession();
+  
+  // Update UI tabs to reflect new mode
+  updateModeTabs();
   
   console.log('✅ Next mode set to:', pomodoroState.mode, 'with', pomodoroState.timeLeft, 'seconds');
+}
+
+// Update mode tabs UI to reflect current mode
+function updateModeTabs() {
+  console.log('🔄 Updating mode tabs for mode:', pomodoroState.mode);
+  
+  // Remove active class from all tabs
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Add active class to current mode tab
+  const currentTab = document.querySelector(`[data-mode="${pomodoroState.mode}"]`);
+  if (currentTab) {
+    currentTab.classList.add('active');
+    console.log('✅ Active tab updated to:', pomodoroState.mode);
+    
+    // Add smooth transition effect
+    currentTab.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+    currentTab.style.transform = 'scale(1.05)';
+    setTimeout(() => {
+      currentTab.style.transform = 'scale(1)';
+    }, 200);
+    
+    // Update body class for mode-specific styling
+    document.body.className = document.body.className.replace(/pomodoro|short-break|long-break/g, '').trim();
+    document.body.classList.add(pomodoroState.mode === 'pomodoro' ? 'pomodoro' : 
+                               pomodoroState.mode === 'shortBreak' ? 'short-break' : 'long-break');
+    
+    // Update mode display text
+    const statusText = document.getElementById('statusText');
+    if (statusText) {
+      const modeTexts = {
+        'pomodoro': 'Time to focus!',
+        'shortBreak': 'Time for a short break!',
+        'longBreak': 'Time for a long break!'
+      };
+      statusText.textContent = modeTexts[pomodoroState.mode] || 'Time to focus!';
+    }
+    
+    // Update cycle info
+    const cycleInfo = document.getElementById('cycleInfo');
+    if (cycleInfo) {
+      cycleInfo.textContent = `Cycle #${pomodoroState.cycle}`;
+    }
+  } else {
+    console.warn('⚠️ Could not find tab for mode:', pomodoroState.mode);
+  }
 }
 
 // Complete current session
@@ -107,7 +509,7 @@ function completeSession() {
 // ============================================================================
 
 // Start timer
-function startTimer() {
+async function startTimer() {
   console.log('🎯 startTimer called, current state:', {
     isRunning: pomodoroState.isRunning,
     timeLeft: pomodoroState.timeLeft
@@ -116,6 +518,12 @@ function startTimer() {
   if (pomodoroState.isRunning) {
     console.log('⏸️ Timer is running, calling pauseTimer()');
     pauseTimer();
+    return;
+  }
+
+  const sessionReady = await ensureSessionForCurrentMode();
+  if (!sessionReady) {
+    console.warn('Unable to start timer because session could not be created.');
     return;
   }
 
@@ -148,9 +556,16 @@ function pauseTimer() {
 }
 
 // Reset timer
-function resetTimer() {
+async function resetTimer() {
   console.log('🔄 Resetting Pomodoro timer...');
   console.log('🔄 Current mode:', pomodoroState.mode);
+  
+  if (pomodoroState.currentSessionId) {
+    await interruptSessionInDatabase();
+    clearCurrentSession();
+    await refreshServerStats();
+    saveState();
+  }
   
   pomodoroState.isRunning = false;
   pomodoroState.timeLeft = getModeTime();
@@ -165,7 +580,7 @@ function resetTimer() {
 }
 
 // Skip current session
-function skipTimer() {
+async function skipTimer() {
   console.log('⏭️ Skipping current session...');
   console.log('⏭️ Current mode:', pomodoroState.mode);
   
@@ -173,10 +588,11 @@ function skipTimer() {
   pomodoroState.isRunning = false;
   stopAllTimers();
   
-  // Complete current session if it's a pomodoro
-  if (pomodoroState.mode === 'pomodoro') {
-    console.log('⏭️ Completing pomodoro session...');
-    completeSession();
+  if (pomodoroState.currentSessionId) {
+    await interruptSessionInDatabase();
+    clearCurrentSession();
+    await refreshServerStats();
+    saveState();
   }
   
   // Move to next mode
@@ -226,7 +642,9 @@ function startGlobalTimer() {
           updateDisplay();
           
           if (pomodoroState.timeLeft === 0) {
-            timerComplete();
+            timerComplete().catch(error => {
+              console.error('Error completing timer:', error);
+            });
           }
         }
       }
@@ -235,10 +653,14 @@ function startGlobalTimer() {
 }
 
 // Timer completed
-function timerComplete() {
+async function timerComplete() {
   console.log('🔔 Timer completed!');
   pomodoroState.isRunning = false;
   completeSession();
+  await endSessionInDatabase();
+  await refreshServerStats();
+  clearCurrentSession();
+  saveState();
   
   // Play sound if enabled
   if (pomodoroState.settings.soundEnabled) {
@@ -257,6 +679,7 @@ function timerComplete() {
   
   stopAllTimers();
   updateButtons(); // Update button state
+  updateModeTabs(); // Update mode tabs
   saveState();
 }
 
@@ -331,8 +754,8 @@ function updateModeDisplay() {
   if (statusText) {
     const statusMessages = {
       'pomodoro': 'Time to focus!',
-      'short': 'Take a short break',
-      'long': 'Take a long break'
+      'shortBreak': 'Take a short break',
+      'longBreak': 'Take a long break'
     };
     statusText.textContent = statusMessages[pomodoroState.mode] || 'Time to focus!';
   }
@@ -445,6 +868,11 @@ function updateStats() {
   if (totalTasks) {
     totalTasks.textContent = stats.totalTasks;
   }
+
+  const streakElement = document.getElementById('streak');
+  if (streakElement) {
+    streakElement.textContent = stats.streak ?? 0;
+  }
   
   // Update today's stats (in main display)
   const todayPomodoros = document.getElementById('completedPomodoros');
@@ -471,24 +899,59 @@ function updateStats() {
 // Update task list
 function updateTaskList() {
   const taskList = document.getElementById('taskList');
-  if (!taskList) return;
-  
+  if (!taskList) {
+    return;
+  }
+
   taskList.innerHTML = '';
+
   pomodoroState.tasks.forEach((task, index) => {
     const taskElement = document.createElement('li');
     taskElement.className = `task-item ${task.completed ? 'completed' : ''}`;
-    taskElement.innerHTML = `
-      <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})">
-      <span class="task-text">${task.text}</span>
-      <button class="btn btn-sm btn-outline-danger" onclick="removeTask(${index})">×</button>
-    `;
+
+    // Task content (checkbox + text)
+    const taskContent = document.createElement('div');
+    taskContent.className = 'task-content';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = Boolean(task.completed);
+    checkbox.addEventListener('change', () => {
+      toggleTask(index).catch(error => {
+        console.error('Error toggling task:', error);
+      });
+    });
+
+    const taskText = document.createElement('span');
+    taskText.className = 'task-text';
+    taskText.textContent = task.text;
+
+    taskContent.appendChild(checkbox);
+    taskContent.appendChild(taskText);
+
+    // Task actions (delete)
+    const taskActions = document.createElement('div');
+    taskActions.className = 'task-actions';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'btn btn-sm btn-outline-danger';
+    removeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    removeBtn.addEventListener('click', () => {
+      removeTask(index).catch(error => {
+        console.error('Error removing task:', error);
+      });
+    });
+    taskActions.appendChild(removeBtn);
+
+    taskElement.appendChild(taskContent);
+    taskElement.appendChild(taskActions);
     taskList.appendChild(taskElement);
   });
-  
-  // Update task count
+
   const taskCount = document.getElementById('taskCount');
   if (taskCount) {
-    taskCount.textContent = `${pomodoroState.tasks.length} tasks`;
+    const count = pomodoroState.tasks.length;
+    taskCount.textContent = `${count} ${count === 1 ? 'task' : 'tasks'}`;
   }
 }
 
@@ -520,41 +983,120 @@ function updateAll() {
 // ============================================================================
 
 // Add new task
-function addTask() {
+async function addTask() {
   const taskInput = document.getElementById('taskInput');
-  if (!taskInput) return;
-  
-  const text = taskInput.value.trim();
-  if (!text) return;
-  
-  pomodoroState.tasks.push({
-    text: text,
-    completed: false,
-    createdAt: new Date().toISOString()
-  });
-  
-  taskInput.value = '';
-  updateTaskList();
-  pomodoroState.stats.totalTasks++;
-  pomodoroState.stats.todayTasks++;
-  saveState();
-}
+  if (!taskInput) {
+    return;
+  }
 
-// Toggle task completion
-function toggleTask(index) {
-  if (index >= 0 && index < pomodoroState.tasks.length) {
-    pomodoroState.tasks[index].completed = !pomodoroState.tasks[index].completed;
-    updateTaskList();
-    saveState();
+  const text = taskInput.value.trim();
+  if (!text) {
+    return;
+  }
+
+  const localTask = {
+    id: null,
+    text,
+    completed: false,
+    createdAt: new Date().toISOString(),
+    completedAt: null
+  };
+
+  taskInput.value = '';
+
+  let createdTask = null;
+  try {
+    createdTask = await createTaskOnServer(text);
+  } catch (error) {
+    console.error('Error while creating task:', error);
+  }
+
+  const taskToStore = createdTask || localTask;
+  pomodoroState.tasks.push(taskToStore);
+
+  updateTaskStatsFromLocal();
+  updateTaskList();
+  updateStats();
+  saveState();
+
+  if (createdTask) {
+    await refreshServerStats();
   }
 }
 
-// Remove task
-function removeTask(index) {
-  if (index >= 0 && index < pomodoroState.tasks.length) {
-    pomodoroState.tasks.splice(index, 1);
-    updateTaskList();
-    saveState();
+async function toggleTask(index) {
+  if (index < 0 || index >= pomodoroState.tasks.length) {
+    return;
+  }
+
+  const task = pomodoroState.tasks[index];
+  const newCompleted = !task.completed;
+  const desiredStatus = newCompleted ? 'completed' : 'pending';
+
+  let updatedTask = null;
+  let serverSynced = false;
+
+  try {
+    if (task.id) {
+      updatedTask = await updateTaskStatusOnServer(task.id, desiredStatus);
+      serverSynced = Boolean(updatedTask);
+    } else {
+      const createdTask = await createTaskOnServer(task.text);
+      if (createdTask && createdTask.id) {
+        pomodoroState.tasks[index] = { ...task, ...createdTask };
+        updatedTask = await updateTaskStatusOnServer(createdTask.id, desiredStatus);
+        serverSynced = Boolean(updatedTask);
+      }
+    }
+  } catch (error) {
+    console.error('Error syncing task status:', error);
+  }
+
+  if (updatedTask) {
+    pomodoroState.tasks[index] = {
+      ...pomodoroState.tasks[index],
+      ...updatedTask
+    };
+  } else {
+    pomodoroState.tasks[index].completed = newCompleted;
+    pomodoroState.tasks[index].completedAt = newCompleted ? new Date().toISOString() : null;
+  }
+
+  updateTaskStatsFromLocal();
+  updateTaskList();
+  updateStats();
+  saveState();
+
+  if (serverSynced) {
+    await refreshServerStats();
+  }
+}
+
+async function removeTask(index) {
+  if (index < 0 || index >= pomodoroState.tasks.length) {
+    return;
+  }
+
+  const task = pomodoroState.tasks[index];
+  let serverDeleted = false;
+
+  if (task.id) {
+    try {
+      serverDeleted = await deleteTaskOnServer(task.id);
+    } catch (error) {
+      console.error('Error deleting task on server:', error);
+    }
+  }
+
+  pomodoroState.tasks.splice(index, 1);
+
+  updateTaskStatsFromLocal();
+  updateTaskList();
+  updateStats();
+  saveState();
+
+  if (serverDeleted) {
+    await refreshServerStats();
   }
 }
 
@@ -580,7 +1122,7 @@ function showSettings() {
 }
 
 // Save settings
-function saveSettings() {
+async function handleSaveSettings() {
   const settings = {
     pomodoro: parseInt(document.getElementById('pomodoroTime').value) || 25,
     shortBreak: parseInt(document.getElementById('shortBreakTime').value) || 5,
@@ -591,7 +1133,7 @@ function saveSettings() {
   };
   
   pomodoroState.settings = settings;
-  resetTimer();
+  await resetTimer();
   document.getElementById('settingsDialog').close();
   saveState();
   updateAll();
@@ -648,11 +1190,13 @@ function switchMode(mode) {
     // Reset timer for new mode
     pomodoroState.timeLeft = getModeTime();
     pomodoroState.totalTime = getModeTime();
+    clearCurrentSession();
     
     console.log('✅ Mode switched to', mode, 'with', pomodoroState.timeLeft, 'seconds');
     console.log('✅ Timer display should show:', Math.floor(pomodoroState.timeLeft / 60) + ':' + (pomodoroState.timeLeft % 60).toString().padStart(2, '0'));
     
     updateAll();
+    updateModeTabs();
     saveState();
     
     console.log('✅ Mode switch completed');
@@ -686,6 +1230,32 @@ function loadState() {
     if (savedState) {
       const parsedState = JSON.parse(savedState);
       Object.assign(pomodoroState, parsedState);
+
+      if (Array.isArray(parsedState.tasks)) {
+        pomodoroState.tasks = parsedState.tasks.map((task) => {
+          const mapped = {
+            id: task.id || task.task_id || null,
+            text: task.text || task.title || '',
+            completed: Boolean(task.completed) || task.status === 'completed',
+            createdAt: task.createdAt || task.created_at || new Date().toISOString(),
+            completedAt: task.completedAt || task.completed_at || null
+          };
+
+          if (!mapped.text) {
+            mapped.text = 'Untitled task';
+          }
+
+          if (mapped.completed && !mapped.completedAt) {
+            mapped.completedAt = new Date().toISOString();
+          }
+
+          return mapped;
+        });
+      } else {
+        pomodoroState.tasks = [];
+      }
+
+      updateTaskStatsFromLocal();
       console.log('📂 Pomodoro state loaded');
       return true;
     }
@@ -720,8 +1290,8 @@ function removeEventListeners() {
   // Clone elements to remove all event listeners
   const elements = [
     'startBtn', 'resetBtn', 'skipBtn', 'pomodoroTab', 'shortBreakTab', 'longBreakTab',
-    'addTaskBtn', 'taskInput', 'settingsBtn', 'closeSettings', 'saveSettings',
-    'statsBtn', 'closeStats', 'resetStatsBtn'
+  'addTaskBtn', 'taskInput', 'settingsBtn', 'closeSettings', 'saveSettings',
+  'statsBtn', 'closeStats', 'closeStatsBtn', 'resetStatsBtn'
   ];
   
   elements.forEach(id => {
@@ -839,9 +1409,12 @@ function setupEventListeners() {
     });
   }
   
-  const saveSettings = document.getElementById('saveSettings');
-  if (saveSettings) {
-    saveSettings.addEventListener('click', saveSettings);
+  const saveSettingsBtn = document.getElementById('saveSettings');
+  if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      handleSaveSettings();
+    });
   }
   
   // Stats
@@ -853,6 +1426,13 @@ function setupEventListeners() {
   const closeStats = document.getElementById('closeStats');
   if (closeStats) {
     closeStats.addEventListener('click', () => {
+      document.getElementById('statsDialog').close();
+    });
+  }
+  
+  const closeStatsBtn = document.getElementById('closeStatsBtn');
+  if (closeStatsBtn) {
+    closeStatsBtn.addEventListener('click', () => {
       document.getElementById('statsDialog').close();
     });
   }
@@ -884,6 +1464,7 @@ function initialize() {
   
   // Check for new day
   checkNewDay();
+  updateTaskStatsFromLocal();
   
   // Display current settings
   console.log('🍅 Pomodoro Settings:', {
@@ -947,6 +1528,14 @@ function initialize() {
   
   // Update UI
   updateAll();
+  syncTasksFromServer().then((synced) => {
+    if (synced) {
+      updateStats();
+    }
+  });
+  refreshServerStats().catch(error => {
+    console.error('Error syncing pomodoro statistics on init:', error);
+  });
   
   isInitialized = true;
   console.log('✅ Pomodoro App initialized');
@@ -1002,7 +1591,9 @@ function syncBackgroundState() {
           // Check if timer completed while away
           if (parsedState.timeLeft === 0) {
             console.log('🔔 Timer completed while away!');
-            timerComplete();
+            timerComplete().catch(error => {
+              console.error('Error completing timer during sync:', error);
+            });
             return;
           }
           

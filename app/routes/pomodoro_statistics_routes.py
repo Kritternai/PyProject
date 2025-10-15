@@ -1,39 +1,50 @@
-"""
-Pomodoro Statistics Routes
-Routes for managing Pomodoro statistics
-"""
+"""Pomodoro statistics API routes."""
 
 from flask import Blueprint
-from app.controllers.pomodoro_statistics_control import PomodoroStatisticsController
-
-# Create blueprint
+from app.controllers.pomodoro_statistics_views import PomodoroStatisticsViews
+from app.middleware.auth_middleware import login_required
 pomodoro_stats_bp = Blueprint('pomodoro_statistics', __name__, url_prefix='/api/pomodoro/statistics')
 
-# Create controller instance
-stats_controller = PomodoroStatisticsController()
+stats_views = PomodoroStatisticsViews()
 
-# Statistics routes
-@pomodoro_stats_bp.route('/user/<user_id>/date/<date>', methods=['GET'])
-def get_statistics(user_id, date):
-    """Get statistics for user on specific date"""
-    return stats_controller.get_statistics(user_id, date)
 
-@pomodoro_stats_bp.route('', methods=['POST'])
-def create_statistics():
-    """Create new statistics entry"""
-    return stats_controller.create_statistics()
+@pomodoro_stats_bp.route('/daily', methods=['POST'])
+@login_required
+def update_daily_statistics():
+    """Recalculate daily statistics for the authenticated user."""
+    return stats_views.update_daily_statistics()
 
-@pomodoro_stats_bp.route('/<stat_id>', methods=['PUT'])
-def update_statistics(stat_id):
-    """Update statistics"""
-    return stats_controller.update_statistics(stat_id)
 
-@pomodoro_stats_bp.route('/<stat_id>', methods=['DELETE'])
-def delete_statistics(stat_id):
-    """Delete statistics"""
-    return stats_controller.delete_statistics(stat_id)
+@pomodoro_stats_bp.route('/timer', methods=['GET'])
+@login_required
+def get_timer_stats():
+    """Return aggregate timer statistics for the authenticated user."""
+    return stats_views.get_timer_stats()
 
-@pomodoro_stats_bp.route('/user/<user_id>/summary', methods=['GET'])
-def get_user_statistics_summary(user_id):
-    """Get user's statistics summary"""
-    return stats_controller.get_statistics_summary(user_id)
+
+@pomodoro_stats_bp.route('/daily-progress', methods=['GET'])
+@login_required
+def get_daily_progress():
+    """Return today's progress metrics for the authenticated user."""
+    return stats_views.get_daily_progress()
+
+
+@pomodoro_stats_bp.route('/productivity', methods=['POST'])
+@login_required
+def get_productivity_report():
+    """Return productivity report for the requested date range."""
+    return stats_views.get_productivity_report()
+
+
+@pomodoro_stats_bp.route('/history', methods=['GET'])
+@login_required
+def get_session_history():
+    """Return Pomodoro session history for the authenticated user."""
+    return stats_views.get_session_history()
+
+
+@pomodoro_stats_bp.route('/export', methods=['GET'])
+@login_required
+def export_data():
+    """Export Pomodoro statistics for the authenticated user."""
+    return stats_views.export_data()

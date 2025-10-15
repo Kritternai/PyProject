@@ -184,15 +184,50 @@ def create_complete_database_schema():
                 user_id TEXT NOT NULL,
                 title TEXT NOT NULL,
                 description TEXT,
+                task_type TEXT DEFAULT 'other',
                 status TEXT DEFAULT 'pending',
                 priority TEXT DEFAULT 'medium',
                 due_date TIMESTAMP,
+                estimated_duration INTEGER,
+                lesson_id TEXT,
+                section_id TEXT,
+                tags TEXT,
+                is_reminder_enabled BOOLEAN DEFAULT 1,
+                reminder_time INTEGER,
+                progress_percentage INTEGER DEFAULT 0,
+                time_spent INTEGER DEFAULT 0,
+                completed_at TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES user(id)
             )
         """)
         print("✅ Created task table")
+        
+        # Add missing columns to task table if they don't exist
+        task_columns = [
+            "ALTER TABLE task ADD COLUMN task_type TEXT DEFAULT 'other'",
+            "ALTER TABLE task ADD COLUMN estimated_duration INTEGER",
+            "ALTER TABLE task ADD COLUMN lesson_id TEXT",
+            "ALTER TABLE task ADD COLUMN section_id TEXT",
+            "ALTER TABLE task ADD COLUMN tags TEXT",
+            "ALTER TABLE task ADD COLUMN is_reminder_enabled BOOLEAN DEFAULT 1",
+            "ALTER TABLE task ADD COLUMN reminder_time INTEGER",
+            "ALTER TABLE task ADD COLUMN progress_percentage INTEGER DEFAULT 0",
+            "ALTER TABLE task ADD COLUMN time_spent INTEGER DEFAULT 0",
+            "ALTER TABLE task ADD COLUMN completed_at TIMESTAMP"
+        ]
+        
+        for column_sql in task_columns:
+            try:
+                cursor.execute(column_sql)
+            except sqlite3.OperationalError as e:
+                if "duplicate column name" in str(e):
+                    print(f"   Task column already exists, skipping...")
+                else:
+                    print(f"   Warning: {e}")
+        
+        print("✅ Updated task table columns")
         
         # 6. Create announcement table
         cursor.execute("""
@@ -284,6 +319,10 @@ def create_complete_database_schema():
             "CREATE INDEX IF NOT EXISTS idx_note_lesson_id ON note(lesson_id)",
             "CREATE INDEX IF NOT EXISTS idx_task_user_id ON task(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_task_status ON task(status)",
+            "CREATE INDEX IF NOT EXISTS idx_task_task_type ON task(task_type)",
+            "CREATE INDEX IF NOT EXISTS idx_task_priority ON task(priority)",
+            "CREATE INDEX IF NOT EXISTS idx_task_lesson_id ON task(lesson_id)",
+            "CREATE INDEX IF NOT EXISTS idx_task_section_id ON task(section_id)",
             "CREATE INDEX IF NOT EXISTS idx_announcement_lesson_id ON announcement(lesson_id)",
             "CREATE INDEX IF NOT EXISTS idx_announcement_user_id ON announcement(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_assignment_lesson_id ON assignment(lesson_id)",
