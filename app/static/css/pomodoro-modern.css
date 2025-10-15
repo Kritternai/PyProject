@@ -296,7 +296,7 @@
     color: var(--pomodoro-text);
     z-index: 2;
     position: relative;
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-family: 'Prompt', monospace;
 }
 
 .timer-controls {

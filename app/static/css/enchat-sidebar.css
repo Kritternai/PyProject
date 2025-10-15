@@ -3,6 +3,10 @@
    Modern, Professional Sidebar Design
    ============================================ */
 
+* {
+  font-family: 'Prompt', sans-serif;
+}
+
 :root {
   /* Enchat Color Palette - Blue & White Theme */
   --enchat-primary: #1976D2;

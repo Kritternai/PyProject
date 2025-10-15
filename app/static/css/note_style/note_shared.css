@@ -116,7 +116,7 @@ body {
   --note-space-xl: 24px;
 
   /* ━━━ Typography ━━━ */
-  --note-font-family: 'Inter', 'SF Pro Text', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --note-font-family: 'Prompt', sans-serif;
   --note-font-size-xs: 11px;
   --note-font-size-sm: 13px;
   --note-font-size: 14px;
