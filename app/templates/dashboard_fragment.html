@@ -1,151 +1,798 @@
-<div class="container-fluid" style="padding: 2rem; background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%); min-height: 100vh;">
-  <!-- Welcome Section -->
-  <div class="row mb-5">
-    <div class="col-12">
-      <div class="card border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px);">
-        <div class="card-body p-4">
-          <div class="d-flex align-items-center">
-            <div class="me-4">
-              <div class="rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 80px; height: 80px; background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);">
-                <i class="bi bi-person-fill text-white fs-2"></i>
+<div class="dashboard-container">
+  <!-- Hero Section -->
+  <div class="dashboard-hero">
+    <div class="hero-content">
+      <div class="hero-avatar">
+        <div class="avatar-circle">
+          <i class="bi bi-person-fill"></i>
+        </div>
+        <div class="avatar-status"></div>
+      </div>
+      <div class="hero-text">
+        <h1 class="hero-title">Welcome back, {{ user.username if user else 'User' }}!</h1>
+        <p class="hero-subtitle">Ready to continue your learning journey?</p>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-number" id="total-lessons">0</span>
+            <span class="stat-label">Lessons</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number" id="total-notes">0</span>
+            <span class="stat-label">Notes</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number" id="total-tasks">0</span>
+            <span class="stat-label">Tasks</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <button class="btn-hero-primary" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=class]'));loadPage('class')">
+        <i class="bi bi-plus-circle me-2"></i>
+        Start Learning
+      </button>
+      <button class="btn-hero-secondary" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=note]'));loadPage('note')">
+        <i class="bi bi-journal-plus me-2"></i>
+        Take Notes
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="dashboard-grid">
+    <!-- Quick Actions -->
+    <div class="dashboard-card quick-actions-card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="bi bi-lightning-charge-fill me-2"></i>
+          Quick Actions
+        </h3>
+        <p class="card-subtitle">Access your most used features</p>
+      </div>
+      <div class="card-body">
+        <div class="actions-grid">
+          <div class="action-item" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=class]'));loadPage('class')">
+            <div class="action-icon classes">
+              <i class="bi bi-book-fill"></i>
+            </div>
+            <div class="action-content">
+              <h4 class="action-title">Classes</h4>
+              <p class="action-description">Manage lessons and subjects</p>
+            </div>
+            <div class="action-arrow">
+              <i class="bi bi-arrow-right"></i>
+            </div>
+          </div>
+          
+          <div class="action-item" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=note]'));loadPage('note')">
+            <div class="action-icon notes">
+              <i class="bi bi-journal-text"></i>
+            </div>
+            <div class="action-content">
+              <h4 class="action-title">Notes</h4>
+              <p class="action-description">Take and organize notes</p>
+            </div>
+            <div class="action-arrow">
+              <i class="bi bi-arrow-right"></i>
+            </div>
+          </div>
+          
+          <div class="action-item" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=track]'));loadPage('track')">
+            <div class="action-icon tracking">
+              <i class="bi bi-graph-up"></i>
+            </div>
+            <div class="action-content">
+              <h4 class="action-title">Progress</h4>
+              <p class="action-description">Monitor your learning</p>
+            </div>
+            <div class="action-arrow">
+              <i class="bi bi-arrow-right"></i>
+            </div>
+          </div>
+          
+          <div class="action-item" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=pomodoro]'));loadPage('pomodoro')">
+            <div class="action-icon pomodoro">
+              <i class="bi bi-clock-fill"></i>
+            </div>
+            <div class="action-content">
+              <h4 class="action-title">Pomodoro</h4>
+              <p class="action-description">Focus timer</p>
+            </div>
+            <div class="action-arrow">
+              <i class="bi bi-arrow-right"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="dashboard-card progress-card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="bi bi-trophy-fill me-2"></i>
+          Learning Progress
+        </h3>
+        <p class="card-subtitle">Your achievements this week</p>
+      </div>
+      <div class="card-body">
+        <div class="progress-stats">
+          <div class="progress-item">
+            <div class="progress-circle">
+              <svg class="progress-ring" width="80" height="80">
+                <circle class="progress-ring-circle" stroke="#e2e8f0" stroke-width="6" fill="transparent" r="34" cx="40" cy="40"/>
+                <circle class="progress-ring-fill" stroke="#1976D2" stroke-width="6" fill="transparent" r="34" cx="40" cy="40" stroke-dasharray="214" stroke-dashoffset="107"/>
+              </svg>
+              <div class="progress-text">
+                <span class="progress-percentage">50%</span>
               </div>
             </div>
-            <div>
-              <h1 class="h2 mb-2" style="color: #1976D2;">Welcome back, {{ user.username if user else 'User' }}!</h1>
-              <p class="text-muted mb-0 fs-5">Ready to continue your learning journey?</p>
+            <div class="progress-info">
+              <h4 class="progress-title">Lessons Completed</h4>
+              <p class="progress-description">5 of 10 lessons</p>
+            </div>
+          </div>
+          
+          <div class="progress-item">
+            <div class="progress-circle">
+              <svg class="progress-ring" width="80" height="80">
+                <circle class="progress-ring-circle" stroke="#e2e8f0" stroke-width="6" fill="transparent" r="34" cx="40" cy="40"/>
+                <circle class="progress-ring-fill" stroke="#42A5F5" stroke-width="6" fill="transparent" r="34" cx="40" cy="40" stroke-dasharray="214" stroke-dashoffset="64"/>
+              </svg>
+              <div class="progress-text">
+                <span class="progress-percentage">70%</span>
+              </div>
+            </div>
+            <div class="progress-info">
+              <h4 class="progress-title">Notes Taken</h4>
+              <p class="progress-description">14 of 20 notes</p>
+            </div>
+          </div>
+          
+          <div class="progress-item">
+            <div class="progress-circle">
+              <svg class="progress-ring" width="80" height="80">
+                <circle class="progress-ring-circle" stroke="#e2e8f0" stroke-width="6" fill="transparent" r="34" cx="40" cy="40"/>
+                <circle class="progress-ring-fill" stroke="#2196F3" stroke-width="6" fill="transparent" r="34" cx="40" cy="40" stroke-dasharray="214" stroke-dashoffset="150"/>
+              </svg>
+              <div class="progress-text">
+                <span class="progress-percentage">30%</span>
+              </div>
+            </div>
+            <div class="progress-info">
+              <h4 class="progress-title">Tasks Done</h4>
+              <p class="progress-description">3 of 10 tasks</p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Quick Stats -->
-  <div class="row g-4 mb-5">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-lg h-100" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-        <div class="card-body text-center p-4">
-          <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow" style="width: 70px; height: 70px; background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);">
-            <i class="bi bi-book-fill text-white fs-3"></i>
+    <!-- Recent Activity -->
+    <div class="dashboard-card activity-card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="bi bi-clock-history me-2"></i>
+          Recent Activity
+        </h3>
+        <p class="card-subtitle">Your latest learning activities</p>
+      </div>
+      <div class="card-body">
+        <div class="activity-list" id="recent-activity">
+          <div class="activity-item">
+            <div class="activity-icon">
+              <i class="bi bi-rocket-takeoff"></i>
+            </div>
+            <div class="activity-content">
+              <h5 class="activity-title">Welcome to Smart Learning Hub</h5>
+              <p class="activity-description">Get started by exploring your classes and taking notes</p>
+              <span class="activity-time">Just now</span>
+            </div>
           </div>
-          <h4 class="card-title mb-2" style="color: #1976D2;">Classes</h4>
-          <p class="card-text text-muted mb-4">Manage your lessons and subjects</p>
-          <a href="#" class="btn btn-primary btn-lg shadow" style="background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%); border: none;" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=class]'));loadPage('class')">
-            <i class="bi bi-arrow-right me-2"></i>Go to Classes
-          </a>
+          
+          <div class="activity-item">
+            <div class="activity-icon success">
+              <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="activity-content">
+              <h5 class="activity-title">Account Setup Complete</h5>
+              <p class="activity-description">Your learning environment is ready</p>
+              <span class="activity-time">2 minutes ago</span>
+            </div>
+          </div>
+          
+          <div class="activity-item">
+            <div class="activity-icon info">
+              <i class="bi bi-lightbulb"></i>
+            </div>
+            <div class="activity-content">
+              <h5 class="activity-title">Learning Journey Started</h5>
+              <p class="activity-description">Begin your first lesson to unlock more features</p>
+              <span class="activity-time">5 minutes ago</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-lg h-100" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-        <div class="card-body text-center p-4">
-          <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow" style="width: 70px; height: 70px; background: linear-gradient(135deg, #42A5F5 0%, #1976D2 100%);">
-            <i class="bi bi-journal-text text-white fs-3"></i>
-          </div>
-          <h4 class="card-title mb-2" style="color: #42A5F5;">Notes</h4>
-          <p class="card-text text-muted mb-4">Take and organize notes</p>
-          <a href="#" class="btn btn-primary btn-lg shadow" style="background: linear-gradient(135deg, #42A5F5 0%, #1976D2 100%); border: none;" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=note]'));loadPage('note')">
-            <i class="bi bi-arrow-right me-2"></i>Go to Notes
-          </a>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-lg h-100" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-        <div class="card-body text-center p-4">
-          <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow" style="width: 70px; height: 70px; background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%);">
-            <i class="bi bi-graph-up text-white fs-3"></i>
-          </div>
-          <h4 class="card-title mb-2" style="color: #2196F3;">Track</h4>
-          <p class="card-text text-muted mb-4">Monitor your progress</p>
-          <a href="#" class="btn btn-primary btn-lg shadow" style="background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%); border: none;" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=track]'));loadPage('track')">
-            <i class="bi bi-arrow-right me-2"></i>Go to Track
-          </a>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-lg h-100" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-        <div class="card-body text-center p-4">
-          <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow" style="width: 70px; height: 70px; background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%);">
-            <i class="bi bi-clock-fill text-white fs-3"></i>
-          </div>
-          <h4 class="card-title mb-2" style="color: #64B5F6;">Pomodoro</h4>
-          <p class="card-text text-muted mb-4">Focus timer for productivity</p>
-          <a href="#" class="btn btn-primary btn-lg shadow" style="background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%); border: none;" onclick="setActiveNav(document.querySelector('.enchat-sidebar__nav-link[data-page=pomodoro]'));loadPage('pomodoro')">
-            <i class="bi bi-arrow-right me-2"></i>Go to Pomodoro
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Recent Activity -->
-  <div class="row g-4">
-    <div class="col-md-8">
-      <div class="card border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px);">
-        <div class="card-header bg-transparent border-0 pb-0">
-          <h4 class="card-title mb-0" style="color: #1976D2;">
-            <i class="bi bi-activity me-2"></i>
-            Recent Activity
-          </h4>
-        </div>
-        <div class="card-body">
-          <div class="d-flex align-items-center mb-4 p-3 rounded" style="background: rgba(25, 118, 210, 0.1);">
-            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow" style="width: 50px; height: 50px; background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);">
-              <i class="bi bi-rocket-takeoff text-white"></i>
-            </div>
-            <div>
-              <h5 class="mb-1 fw-bold" style="color: #1976D2;">Welcome to Smart Learning Hub</h5>
-              <p class="text-muted mb-0">Get started by exploring your classes and taking notes</p>
-            </div>
-          </div>
-          <div class="d-flex align-items-center mb-4 p-3 rounded" style="background: rgba(66, 165, 245, 0.1);">
-            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow" style="width: 50px; height: 50px; background: linear-gradient(135deg, #42A5F5 0%, #1976D2 100%);">
-              <i class="bi bi-check-circle-fill text-white"></i>
-            </div>
-            <div>
-              <h5 class="mb-1 fw-bold" style="color: #42A5F5;">Account Setup Complete</h5>
-              <p class="text-muted mb-0">Your learning environment is ready</p>
-            </div>
-          </div>
-          <div class="text-center mt-4">
-            <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.8);">
-              <h6 class="mb-0" style="color: #1976D2;">Start your learning journey today!</h6>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(15px);">
-        <div class="card-header bg-transparent border-0 pb-0">
-          <h4 class="card-title mb-0" style="color: #42A5F5;">
-            <i class="bi bi-lightbulb me-2"></i>
-            Quick Tips
-          </h4>
-        </div>
-        <div class="card-body">
-          <div class="mb-4 p-3 rounded" style="background: rgba(25, 118, 210, 0.1);">
-            <h6 class="mb-2 fw-bold" style="color: #1976D2;">
-              <i class="bi bi-1-circle-fill me-2"></i>Create Your First Class
-            </h6>
-            <p class="text-muted mb-0 small">Start by organizing your subjects and lessons</p>
-          </div>
-          <div class="mb-4 p-3 rounded" style="background: rgba(66, 165, 245, 0.1);">
-            <h6 class="mb-2 fw-bold" style="color: #42A5F5;">
-              <i class="bi bi-2-circle-fill me-2"></i>Take Notes
-            </h6>
-            <p class="text-muted mb-0 small">Keep track of important information</p>
-          </div>
-          <div class="mb-0 p-3 rounded" style="background: rgba(33, 150, 243, 0.1);">
-            <h6 class="mb-2 fw-bold" style="color: #2196F3;">
-              <i class="bi bi-3-circle-fill me-2"></i>Use Pomodoro Timer
-            </h6>
-            <p class="text-muted mb-0 small">Stay focused with 25-minute study sessions</p>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
+
+<style>
+* {
+  font-family: 'Prompt', sans-serif;
+}
+
+.dashboard-container {
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  min-height: 100vh;
+  position: relative;
+}
+
+.dashboard-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(25,118,210,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  pointer-events: none;
+}
+
+/* Hero Section */
+.dashboard-hero {
+  background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
+  border-radius: 24px;
+  padding: 3rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(25, 118, 210, 0.2);
+}
+
+.dashboard-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.hero-content {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-avatar {
+  position: relative;
+}
+
+.avatar-circle {
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-circle i {
+  font-size: 2.5rem;
+  color: white;
+}
+
+.avatar-status {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  background: #4CAF50;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.hero-text {
+  flex: 1;
+}
+
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 2rem;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 2rem;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.btn-hero-primary, .btn-hero-secondary {
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+}
+
+.btn-hero-primary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-hero-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-hero-primary:hover, .btn-hero-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 2rem;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(25, 118, 210, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(25, 118, 210, 0.15);
+}
+
+.card-header {
+  padding: 2rem 2rem 1rem;
+  border-bottom: 1px solid rgba(25, 118, 210, 0.1);
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1976D2;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.card-subtitle {
+  color: #718096;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.card-body {
+  padding: 1rem 2rem 2rem;
+}
+
+/* Quick Actions */
+.quick-actions-card {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(25, 118, 210, 0.1);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: left 0.5s;
+}
+
+.action-item:hover::before {
+  left: 100%;
+}
+
+.action-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(25, 118, 210, 0.15);
+  border-color: #1976D2;
+}
+
+.action-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.action-icon.classes {
+  background: linear-gradient(135deg, #1976D2, #0D47A1);
+}
+
+.action-icon.notes {
+  background: linear-gradient(135deg, #42A5F5, #1976D2);
+}
+
+.action-icon.tracking {
+  background: linear-gradient(135deg, #2196F3, #42A5F5);
+}
+
+.action-icon.pomodoro {
+  background: linear-gradient(135deg, #64B5F6, #42A5F5);
+}
+
+.action-icon i {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.action-content {
+  flex: 1;
+}
+
+.action-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1A202C;
+  margin-bottom: 0.25rem;
+}
+
+.action-description {
+  font-size: 0.9rem;
+  color: #718096;
+  margin: 0;
+}
+
+.action-arrow {
+  color: #1976D2;
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.action-item:hover .action-arrow {
+  transform: translateX(4px);
+}
+
+/* Progress Card */
+.progress-card {
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+
+.progress-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.progress-item {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.progress-circle {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.progress-percentage {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1976D2;
+}
+
+.progress-info {
+  flex: 1;
+}
+
+.progress-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1A202C;
+  margin-bottom: 0.25rem;
+}
+
+.progress-description {
+  font-size: 0.9rem;
+  color: #718096;
+  margin: 0;
+}
+
+/* Activity Card */
+.activity-card {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(25, 118, 210, 0.1);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(25, 118, 210, 0.1);
+}
+
+.activity-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1976D2, #0D47A1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activity-icon.success {
+  background: linear-gradient(135deg, #4CAF50, #388E3C);
+}
+
+.activity-icon.info {
+  background: linear-gradient(135deg, #42A5F5, #1976D2);
+}
+
+.activity-icon i {
+  font-size: 1.2rem;
+  color: white;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1A202C;
+  margin-bottom: 0.25rem;
+}
+
+.activity-description {
+  font-size: 0.9rem;
+  color: #718096;
+  margin-bottom: 0.5rem;
+}
+
+.activity-time {
+  font-size: 0.8rem;
+  color: #A0AEC0;
+  font-weight: 500;
+}
+
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  
+  .progress-card {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  
+  .activity-card {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+  
+  .dashboard-hero {
+    padding: 2rem;
+  }
+  
+  .hero-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
+  .hero-stats {
+    justify-content: center;
+  }
+  
+  .hero-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .progress-stats {
+    gap: 1.5rem;
+  }
+  
+  .progress-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 1.75rem;
+  }
+  
+  .hero-stats {
+    gap: 1rem;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .btn-hero-primary, .btn-hero-secondary {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+</style>
+
+<script>
+// Load dashboard statistics
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+    loadRecentActivity();
+});
+
+function loadDashboardStats() {
+    // Simulate loading statistics
+    setTimeout(() => {
+        animateCounter('total-lessons', 12);
+        animateCounter('total-notes', 28);
+        animateCounter('total-tasks', 8);
+    }, 500);
+}
+
+function loadRecentActivity() {
+    // This would typically fetch from your API
+    // For now, we'll keep the static content
+}
+
+function animateCounter(elementId, targetValue) {
+    const element = document.getElementById(elementId);
+    let currentValue = 0;
+    const increment = targetValue / 50;
+    const timer = setInterval(() => {
+        currentValue += increment;
+        if (currentValue >= targetValue) {
+            currentValue = targetValue;
+            clearInterval(timer);
+        }
+        element.textContent = Math.floor(currentValue);
+    }, 30);
+}
+</script>
