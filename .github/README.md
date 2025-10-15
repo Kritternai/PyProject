@@ -1,57 +1,45 @@
-# 🎯 Smart Learning Hub CI/CD Pipeline Documentation
+# 🎯 Smart Learning Hub - Unified CI/CD Pipeline Documentation
 
-This directory contains the professional multi-stage Continuous Integration and Continuous Deployment (CI/CD) configuration for the Smart Learning Hub project.
+This directory contains the unified Continuous Integration and Continuous Deployment (CI/CD) configuration for the Smart Learning Hub project with a professional workflow graph structure.
 
-## 🚀 Workflow Architecture
+## 🚀 Unified Workflow Architecture
 
-### **🎯 Main Orchestrator** (`main.yml`)
+### **🎯 Unified CI/CD Pipeline** (`unified-cicd.yml`)
 - **Triggers**: Push to main/dev branches, Pull Requests, Manual dispatch
-- **Purpose**: Orchestrates the entire CI/CD pipeline
+- **Purpose**: Complete CI/CD pipeline in a single workflow with interconnected jobs
 - **Features**:
-  - Pipeline initiation and status tracking
-  - Calls multiple specialized workflows
-  - Comprehensive pipeline summary
-  - Conditional execution based on branch and event type
+  - **Pipeline Initiation**: Metadata collection and pipeline tracking
+  - **Code Quality & Security**: Comprehensive quality and security analysis
+  - **Testing & Coverage**: Full test suite with coverage analysis
+  - **Build Validation**: PR build validation and startup testing
+  - **Deployment & Health**: Production deployment with health monitoring
+  - **Performance & Metrics**: Comprehensive metrics collection
+  - **Unified Summary**: Complete pipeline status and reporting
 
-### **🔍 Code Quality & Security** (`code-quality.yml`)
-- **Purpose**: Comprehensive code quality and security analysis
-- **Features**:
-  - Code formatting checks (Black)
-  - Import sorting validation (isort)
-  - Linting analysis (Flake8)
-  - Security vulnerability scanning (Bandit)
-  - Dependency security checks (Safety)
-  - Quality reports generation
+## 🔄 Workflow Graph Structure
 
-### **🧪 Testing & Coverage** (`testing.yml`)
-- **Dependencies**: Requires code-quality workflow to pass
-- **Purpose**: Comprehensive testing and coverage analysis
-- **Features**:
-  - Full test suite execution (pytest)
-  - Code coverage analysis (60% minimum)
-  - Test database setup
-  - Coverage reports (HTML, XML, terminal)
-  - JUnit test reports
+```
+📝 Code Push/PR → 🚀 Pipeline Initiation
+                        ↓
+                ┌─────────────┬─────────────┬─────────────┐
+                ▼             ▼             ▼             ▼
+        🔍 Code Quality  🧪 Testing     🔨 Build        📈 Performance
+        & Security      & Coverage     Validation      & Metrics
+                ↓             ↓             ↓             ↓
+                └─────────────┼─────────────┼─────────────┘
+                              ↓             ↓
+                      🚀 Deployment    📊 Pipeline
+                      & Health         Summary
+```
 
-### **🔨 Build Validation** (`build-validation.yml`)
-- **Dependencies**: Requires code-quality and testing workflows
-- **Triggers**: Pull Requests only
-- **Purpose**: Validates build process and application startup
-- **Features**:
-  - Required files validation
-  - Application build testing
-  - Startup process validation
-  - Health endpoint testing
-
-### **🚀 Deployment** (`deployment.yml`)
-- **Dependencies**: Requires code-quality and testing workflows
-- **Triggers**: Main branch pushes only
-- **Purpose**: Automated deployment and health monitoring
-- **Features**:
-  - Render deployment integration
-  - Post-deployment health checks
-  - Comprehensive endpoint testing
-  - Deployment summary and reporting
+### **Job Dependencies**
+- **pipeline-init**: Foundation job (no dependencies)
+- **code-quality**: Depends on pipeline-init
+- **testing-coverage**: Depends on pipeline-init + code-quality
+- **build-validation**: Depends on all previous jobs (PR only)
+- **deployment**: Depends on pipeline-init + code-quality + testing (main only)
+- **performance-metrics**: Depends on core jobs (always)
+- **pipeline-summary**: Depends on all jobs (always)
 
 ## 📋 Requirements
 
@@ -117,22 +105,40 @@ The CI/CD pipeline enforces comprehensive quality gates:
 5. **Build Validation**: Application must start successfully
 6. **Health Checks**: Deployed service must respond correctly
 
-## 🔄 Pipeline Flow
+## 🔄 Unified Pipeline Flow
 
 ```
 📝 Code Push/PR
     ↓
-🎯 Main Orchestrator
+🚀 Pipeline Initiation
     ↓
-🔍 Code Quality & Security
+    ├── 🔍 Code Quality & Security
+    │   ├── 🎨 Code Formatting Analysis
+    │   ├── 📦 Import Organization Analysis
+    │   ├── 🔍 Code Linting Analysis
+    │   └── 🔒 Security Vulnerability Analysis
+    │
+    ├── 🧪 Testing & Coverage Analysis
+    │   ├── 🗄️ Setup Test Environment
+    │   ├── 🏗️ Initialize Test Database
+    │   ├── 🧪 Execute Test Suite
+    │   └── 📊 Coverage Analysis
+    │
+    ├── 🔨 Build Validation (PR only)
+    │   ├── 🔍 Validate Deployment Files
+    │   ├── 🏗️ Test Application Build
+    │   └── 🚀 Test Application Startup
+    │
+    ├── 🚀 Deployment (main branch only)
+    │   ├── 🚀 Deploy to Render
+    │   └── 🏥 Comprehensive Health Monitoring
+    │
+    └── 📈 Performance & Metrics Collection
+        ├── 📊 Collect Pipeline Metrics
+        └── 📊 Generate Performance Report
+    │
     ↓
-🧪 Testing & Coverage
-    ↓
-🔨 Build Validation (PR only)
-    ↓
-🚀 Deployment (main branch only)
-    ↓
-📊 Pipeline Summary
+📊 Unified Pipeline Summary
 ```
 
 ## 🚀 Getting Started
