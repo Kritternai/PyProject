@@ -194,5 +194,5 @@ def callback():
 
     session["user_id"] = user.id
     flash("Logged in successfully with Google!", "success")
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main_routes.index"))
 

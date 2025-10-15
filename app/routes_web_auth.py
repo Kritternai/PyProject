@@ -83,3 +83,58 @@ def logout():
         return redirect(url_for('web_auth.login'))
     except Exception as e:
         return redirect(url_for('web_auth.login'))
+
+@web_auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Forgot password page - serves HTML template and handles form submission"""
+    if request.method == 'GET':
+        return render_template('forgot_password.html')
+    else:
+        # Handle form submission
+        try:
+            email = request.form.get('email')
+            
+            if not email:
+                flash('กรุณากรอกอีเมล', 'error')
+                return render_template('forgot_password.html')
+            
+            # TODO: Implement password reset logic
+            # For now, just show success message
+            flash('หากอีเมลนี้มีอยู่ในระบบ เราจะส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณ', 'success')
+            return render_template('forgot_password.html')
+            
+        except Exception as e:
+            flash('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง', 'error')
+            return render_template('forgot_password.html')
+
+@web_auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    """Reset password page with token validation"""
+    if request.method == 'GET':
+        # TODO: Validate token
+        return render_template('reset_password.html', token=token)
+    else:
+        # Handle password reset form submission
+        try:
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+            
+            if not password or not confirm_password:
+                flash('กรุณากรอกรหัสผ่านและยืนยันรหัสผ่าน', 'error')
+                return render_template('reset_password.html', token=token)
+                
+            if password != confirm_password:
+                flash('รหัสผ่านไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง', 'error')
+                return render_template('reset_password.html', token=token)
+                
+            if len(password) < 8:
+                flash('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร', 'error')
+                return render_template('reset_password.html', token=token)
+            
+            # TODO: Implement actual password reset logic
+            flash('รีเซ็ตรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่', 'success')
+            return redirect(url_for('web_auth.login'))
+            
+        except Exception as e:
+            flash('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง', 'error')
+            return render_template('reset_password.html', token=token)

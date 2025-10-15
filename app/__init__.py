@@ -112,7 +112,8 @@ def register_blueprints(app):
     # ============================================
     # REGISTER API BLUEPRINTS
     # ============================================
-    app.register_blueprint(auth_bp)           # /api/auth/* app.register_blueprint(user_bp)           # /api/users/*
+    app.register_blueprint(auth_bp)           # /api/auth/*
+    app.register_blueprint(user_bp)           # /api/users/*
     app.register_blueprint(lesson_bp)         # /api/lessons/*
     app.register_blueprint(note_bp)           # /api/notes/*
     app.register_blueprint(task_bp)           # /api/tasks/*

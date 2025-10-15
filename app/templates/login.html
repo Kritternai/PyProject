@@ -61,6 +61,11 @@
                                 </label>
                                 <input type="password" class="form-control" id="password" name="password" required 
                                        placeholder="Enter your password">
+                                <div class="d-flex justify-content-end mt-2">
+                                    <a href="{{ url_for('web_auth.forgot_password') }}" class="text-decoration-none small text-primary">
+                                        <i class="fas fa-key me-1"></i>ลืมรหัสผ่าน?
+                                    </a>
+                                </div>
                             </div>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-login">
