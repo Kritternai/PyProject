@@ -203,6 +203,7 @@ log/
 # OS generated files
 .DS_Store
 .DS_Store?
+**/.DS_Store
 ._*
 .Spotlight-V100
 .Trashes
@@ -360,6 +361,16 @@ yarn-error.log*
 # Configuration overrides
 config.local.py
 settings.local.py
+
+# Development and temporary files
+*.tmp
+*.temp
+
+# VSCodeCounter (if exists)
+.VSCodeCounter/
+
+# Symbolic links and special directories
+~/
 
 # =============================================================================
 # KEEP THESE FILES
