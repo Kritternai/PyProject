@@ -10,6 +10,73 @@
             <p class="dashboard-subtitle">Monitor your daily learning journey</p>
         </div>
 
+        <!-- Statistics Summary -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="glass-card">
+                    <div class="card-header-modern">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-badge icon-badge-indigo me-3">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title-modern mb-0">Statistics Summary</h5>
+                                <p class="card-subtitle-modern mb-0">Overall performance metrics</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        <div class="row g-4">
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="stat-box stat-box-blue">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-clock-history"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="total-pomodoros">0</div>
+                                        <div class="stat-label">Total Pomodoros</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="stat-box stat-box-teal">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-stopwatch"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="total-study-time">0h</div>
+                                        <div class="stat-label">Study Time</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="stat-box stat-box-purple">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-book"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="total-lessons">0</div>
+                                        <div class="stat-label">Lessons</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="stat-box stat-box-indigo">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-value" id="total-notes">0</div>
+                                        <div class="stat-label">Notes</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Top Row: Today's Progress & Weekly Chart -->
         <div class="row g-4 mb-4">
             <!-- Today's Progress -->
@@ -194,73 +261,6 @@
                         </div>
                         <p class="empty-text">Complete goals to unlock achievements!</p>
                     </div> -->
-                </div>
-            </div>
-        </div>
-        
-        <!-- Statistics Summary -->
-        <div class="row">
-            <div class="col-12">
-                <div class="glass-card">
-                    <div class="card-header-modern">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-badge icon-badge-indigo me-3">
-                                <i class="bi bi-graph-up"></i>
-                            </div>
-                            <div>
-                                <h5 class="card-title-modern mb-0">Statistics Summary</h5>
-                                <p class="card-subtitle-modern mb-0">Overall performance metrics</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body-modern">
-                        <div class="row g-4">
-                            <div class="col-sm-6 col-lg-3">
-                                <div class="stat-box stat-box-blue">
-                                    <div class="stat-icon">
-                                        <i class="bi bi-clock-history"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <div class="stat-value" id="total-pomodoros">0</div>
-                                        <div class="stat-label">Total Pomodoros</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-6 col-lg-3">
-                                <div class="stat-box stat-box-teal">
-                                    <div class="stat-icon">
-                                        <i class="bi bi-stopwatch"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <div class="stat-value" id="total-study-time">0h</div>
-                                        <div class="stat-label">Study Time</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-6 col-lg-3">
-                                <div class="stat-box stat-box-purple">
-                                    <div class="stat-icon">
-                                        <i class="bi bi-book"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <div class="stat-value" id="total-lessons">0</div>
-                                        <div class="stat-label">Lessons</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-6 col-lg-3">
-                                <div class="stat-box stat-box-indigo">
-                                    <div class="stat-icon">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </div>
-                                    <div class="stat-content">
-                                        <div class="stat-value" id="total-notes">0</div>
-                                        <div class="stat-label">Notes</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -988,4 +988,4 @@
     // ตัวอย่างการใช้งาน:
     // addAchievement('🎯', 'Early Bird', 'Started studying before 8 AM', 'blue');
 </script>
-<script src="{{ url_for('static', filename='js/track.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/track.css') }}">

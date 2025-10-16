@@ -8,6 +8,19 @@ function cleanupPreviousPage() {
     window.onUnloadPomodoro();
   }
   
+  // Cleanup track page charts
+  if (window.weeklyChart) {
+    console.log('🧹 Cleaning up weekly chart...');
+    window.weeklyChart.destroy();
+    window.weeklyChart = null;
+  }
+  
+  if (window.timeChart) {
+    console.log('🧹 Cleaning up time chart...');
+    window.timeChart.destroy();
+    window.timeChart = null;
+  }
+  
   // Add other page cleanup here as needed
   
   console.log('✅ Previous page cleanup completed');
@@ -294,6 +307,25 @@ function loadPage(page, updateHistory = true) {
             const lessonContent = document.querySelector('.card-body');
             if (lessonContent) lessonContent.scrollIntoView({behavior: 'smooth', block: 'start'});
           }, 300);
+        }
+        
+        // Initialize track page if needed
+        if (page === 'track') {
+          console.log('📊 Track page detected, initializing charts...');
+          // Wait a bit for DOM to be ready
+          setTimeout(() => {
+            if (window.TrackPage && window.TrackPage.loadTrackDataAndRender) {
+              console.log('🚀 Calling track page initialization...');
+              window.TrackPage.loadTrackDataAndRender();
+            } else {
+              console.warn('⚠️ TrackPage not available, retrying...');
+              setTimeout(() => {
+                if (window.TrackPage && window.TrackPage.loadTrackDataAndRender) {
+                  window.TrackPage.loadTrackDataAndRender();
+                }
+              }, 500);
+            }
+          }, 100);
         }
         });
       }

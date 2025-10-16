@@ -122,6 +122,14 @@ def set_env_defaults() -> None:
     os.environ.setdefault("OAUTHLIB_INSECURE_TRANSPORT", "1")
     os.environ.setdefault("FLASK_ENV", "development")
     os.environ.setdefault("FLASK_DEBUG", "1")
+    
+    # Set DATABASE_URL for development (SQLite)
+    if not os.environ.get("DATABASE_URL"):
+        # Use absolute path to ensure SQLite database works correctly
+        db_path = os.path.join(os.getcwd(), "instance", "site.db")
+        os.environ["DATABASE_URL"] = f"sqlite:///{db_path}"
+        print_status(f"Set DATABASE_URL to: {os.environ['DATABASE_URL']}")
+    
     print_success("Environment variables set successfully")
 
 

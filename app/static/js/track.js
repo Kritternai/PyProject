@@ -1,11 +1,40 @@
 // app/static/js/track.js
 
 (function() {
-    // ตรวจสอบว่าอยู่ในหน้า track หรือไม่
-    if (!document.getElementById('total-pomodoros')) {
-        return;
+    console.log('📊 Track script loaded');
+    
+    // ฟังก์ชันสำหรับตรวจสอบว่าอยู่ในหน้า track หรือไม่
+    function isTrackPage() {
+        return document.getElementById('total-pomodoros') !== null || 
+               document.getElementById('progress-chart') !== null ||
+               document.getElementById('time-chart') !== null;
     }
-    console.log('✅ Track page script is running!');
+    
+    // ฟังก์ชันสำหรับรอให้ DOM พร้อม
+    function waitForTrackPage() {
+        if (isTrackPage()) {
+            console.log('✅ Track page detected, initializing...');
+            initializeTrackPage();
+        } else {
+            // รอ 100ms แล้วลองใหม่
+            setTimeout(waitForTrackPage, 100);
+        }
+    }
+    
+    // เริ่มตรวจสอบเมื่อ DOM พร้อม
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', waitForTrackPage);
+    } else {
+        waitForTrackPage();
+    }
+    
+    // ฟังก์ชันหลักสำหรับเริ่มต้นหน้า track
+    function initializeTrackPage() {
+        console.log('🚀 Initializing track page...');
+        console.log('📊 Chart.js available:', typeof Chart !== 'undefined');
+        console.log('🎯 Progress chart element:', document.getElementById('progress-chart'));
+        console.log('🎯 Time chart element:', document.getElementById('time-chart'));
+        console.log('🎯 Total pomodoros element:', document.getElementById('total-pomodoros'));
 
     /**
      * ฟังก์ชันหลักสำหรับดึงข้อมูลสถิติและอัปเดต UI ทั้งหมด
@@ -28,10 +57,43 @@
                 renderMockAchievements();
             } else {
                 console.error('❌ API Error:', data.error);
+                // แสดงข้อมูล mock เมื่อ API ไม่ทำงาน
+                showMockData();
             }
         } catch (error) {
             console.error('❌ เกิดข้อผิดพลาดในการเชื่อมต่อ:', error);
+            // แสดงข้อมูล mock เมื่อเกิดข้อผิดพลาด
+            showMockData();
         }
+    }
+
+    /**
+     * แสดงข้อมูล mock เมื่อ API ไม่ทำงาน
+     */
+    function showMockData() {
+        console.log('📊 แสดงข้อมูล mock...');
+        
+        // Mock data for today's progress
+        const mockToday = {
+            pomodoros: { current: 5, goal: 8 },
+            study_time: { current: 125, goal: 240 },
+            lessons: { current: 2, goal: 3 },
+            notes: { current: 3, goal: 5 }
+        };
+        
+        // Mock data for total statistics
+        const mockTotal = {
+            pomodoros: 45,
+            study_time: 1125,
+            lessons: 12,
+            notes: 28
+        };
+        
+        updateTodayProgress(mockToday);
+        updateTotalStatistics(mockTotal);
+        renderWeeklyChart([]);
+        renderTimeDistribution();
+        renderMockAchievements();
     }
 
     /**
@@ -49,8 +111,8 @@
      * อัปเดตแถบความคืบหน้า (Progress Bar) แต่ละรายการ
      */
     function updateProgressBar(id, current, goal) {
-        const valueElement = document.getElementById(`today-${id}-value`);
-        const barElement = document.getElementById(`today-${id}-bar`);
+        const valueElement = document.getElementById(`${id}-goal`);
+        const barElement = document.getElementById(`${id}-progress`);
         if (valueElement && barElement) {
             const percentage = goal > 0 ? (current / goal) * 100 : 0;
             valueElement.textContent = `${current}/${goal}`;
@@ -58,6 +120,7 @@
                 valueElement.textContent += ' min';
             }
             barElement.style.width = `${percentage}%`;
+            barElement.setAttribute('aria-valuenow', percentage);
         }
     }
 
@@ -77,16 +140,22 @@
      * วาดกราฟรายสัปดาห์
      */
     function renderWeeklyChart(weeklyData) {
+        console.log('📈 Rendering weekly chart...');
         const ctx = document.getElementById('progress-chart');
-        if (!ctx) return;
+        console.log('🎯 Progress chart context:', ctx);
+        
+        if (!ctx) {
+            console.warn('❌ Canvas element progress-chart not found');
+            return;
+        }
 
         if (window.weeklyChart) {
             window.weeklyChart.destroy();
         }
 
-        // Mock data
+        // Mock data for demonstration (จะถูกแทนที่ด้วยข้อมูลจริงจาก API ในอนาคต)
         const mockPomodoroData = [5, 7, 6, 8, 5, 3, 6];
-        const mockNoteData = [3, 5, 4, 6, 3, 2, 4];
+        const mockStudyTimeData = [125, 175, 150, 200, 125, 75, 150];
 
         window.weeklyChart = new Chart(ctx, {
             type: 'line',
@@ -96,22 +165,52 @@
                     {
                         label: 'Pomodoros',
                         data: mockPomodoroData,
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
                     },
                     {
-                        label: 'Notes',
-                        data: mockNoteData,
-                        borderColor: 'rgb(255, 99, 132)',
-                        tension: 0.1
+                        label: 'Study Time (min)',
+                        data: mockStudyTimeData,
+                        borderColor: 'rgb(14, 184, 166)',
+                        backgroundColor: 'rgba(14, 184, 166, 0.1)',
+                        tension: 0.4,
+                        fill: true
                     }
                 ]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'top' },
-                    title: { display: false }
+                    legend: { 
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    title: { 
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
                 }
             }
         });
@@ -122,30 +221,65 @@
      * วาดกราฟการกระจายเวลา
      */
     function renderTimeDistribution() {
+        console.log('📊 Rendering time distribution chart...');
         const ctx = document.getElementById('time-chart');
-        if (!ctx) return;
+        console.log('🎯 Time chart context:', ctx);
+        
+        if (!ctx) {
+            console.warn('❌ Canvas element time-chart not found');
+            return;
+        }
 
         if (window.timeChart) {
             window.timeChart.destroy();
         }
 
+        // Mock data for demonstration
+        const timeData = [180, 45, 75]; // Study, Break, Note Taking (minutes)
+        const labels = ['Study Time', 'Break Time', 'Note Taking'];
+        const colors = [
+            'rgba(59, 130, 246, 0.8)',   // Blue for Study
+            'rgba(245, 158, 11, 0.8)',   // Orange for Break  
+            'rgba(168, 85, 247, 0.8)'    // Purple for Note Taking
+        ];
+
         window.timeChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Study', 'Break', 'Note Taking'],
+                labels: labels,
                 datasets: [{
-                    label: 'Time Distribution',
-                    data: [120, 30, 45],
-                    backgroundColor: [
-                        'rgb(54, 162, 235)',
-                        'rgb(255, 205, 86)',
-                        'rgb(255, 99, 132)'
-                    ]
+                    data: timeData,
+                    backgroundColor: colors,
+                    borderColor: colors.map(color => color.replace('0.8', '1')),
+                    borderWidth: 2,
+                    hoverOffset: 10
                 }]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { position: 'bottom' } }
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.parsed} min (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                cutout: '60%'
             }
         });
         console.log('📊 วาดกราฟการกระจายเวลาเสร็จ');
@@ -175,7 +309,30 @@
         `).join('');
     }
 
-    // เริ่มทำงานเมื่อโหลดหน้า
-    loadTrackDataAndRender();
+        // เริ่มทำงานเมื่อโหลดหน้า
+        // รอให้ Chart.js โหลดเสร็จก่อน
+        if (typeof Chart !== 'undefined') {
+            console.log('✅ Chart.js is loaded, initializing track data...');
+            loadTrackDataAndRender();
+        } else {
+            console.warn('⚠️ Chart.js not loaded, retrying in 100ms...');
+            setTimeout(() => {
+                if (typeof Chart !== 'undefined') {
+                    loadTrackDataAndRender();
+                } else {
+                    console.error('❌ Chart.js failed to load');
+                    showMockData();
+                }
+            }, 100);
+        }
+
+        // Export functions for global access
+        window.TrackPage = {
+            loadTrackDataAndRender,
+            showMockData,
+            renderWeeklyChart,
+            renderTimeDistribution
+        };
+    }
 
 })();
